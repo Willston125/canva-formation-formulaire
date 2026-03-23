@@ -78,6 +78,23 @@
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             });
         }
+
+        const btnRegisterOther = document.getElementById('btn-register-other');
+        if (btnRegisterOther) {
+            btnRegisterOther.addEventListener('click', () => {
+                try { localStorage.removeItem(REGISTERED_KEY); } catch(e) {}
+                clearSavedData();
+                form.reset();
+                
+                document.getElementById('already-registered-card')?.classList.add('hidden');
+                document.getElementById('form-container')?.classList.remove('hidden');
+                document.querySelector('#poster-section')?.classList.remove('hidden');
+                document.querySelector('#programme-section')?.classList.remove('hidden');
+                document.querySelector('#mobile-progress')?.classList.remove('hidden');
+                document.querySelector('#sidebar')?.classList.remove('hidden');
+                goToStep(1);
+            });
+        }
     }
 
     // ====== EVENTS ======
