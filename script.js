@@ -139,6 +139,18 @@
 
         updateProgress();
 
+        // Show/hide poster (step 1 only)
+        const posterSection = document.getElementById('poster-section');
+        if (posterSection) {
+            posterSection.style.display = (currentStep === 1) ? '' : 'none';
+        }
+
+        // Show/hide programme (steps 1 and 4 only)
+        const programmeSection = document.getElementById('programme-section');
+        if (programmeSection) {
+            programmeSection.style.display = (currentStep === 1 || currentStep === 4) ? '' : 'none';
+        }
+
         // Scroll to top of form card
         const formCard = document.querySelector('.glass-card');
         if (formCard) {
