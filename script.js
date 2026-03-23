@@ -10,6 +10,7 @@
     // ====== CONFIG ======
     const GOOGLE_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbyJCl1lg58y090bkO0OwovV7o60Oc0eAXPeWFu4AGX2IARG58Mqes7mf7h8BubK5KTavA/exec';
     const STORAGE_KEY = 'canvapro_form_data';
+    const REGISTERED_KEY = 'canvapro_registered_user';
     const TOTAL_STEPS = 4;
 
     // ====== DOM REFS ======
@@ -49,10 +50,34 @@
 
     // ====== INIT ======
     function init() {
+        if (localStorage.getItem(REGISTERED_KEY) === 'true') {
+            document.getElementById('form-container')?.classList.add('hidden');
+            document.querySelector('#poster-section')?.classList.add('hidden');
+            document.querySelector('#programme-section')?.classList.add('hidden');
+            document.querySelector('#mobile-progress')?.classList.add('hidden');
+            document.querySelector('#sidebar')?.classList.add('hidden');
+            document.getElementById('already-registered-card')?.classList.remove('hidden');
+            return;
+        }
+
         loadSavedData();
         updateProgress();
         attachEvents();
         updateCharCounter();
+
+        const btnCloseSuccess = document.getElementById('btn-close-success');
+        if (btnCloseSuccess) {
+            btnCloseSuccess.addEventListener('click', () => {
+                successScreen.classList.add('hidden');
+                document.getElementById('form-container')?.classList.add('hidden');
+                document.querySelector('#poster-section')?.classList.add('hidden');
+                document.querySelector('#programme-section')?.classList.add('hidden');
+                document.querySelector('#mobile-progress')?.classList.add('hidden');
+                document.querySelector('#sidebar')?.classList.add('hidden');
+                document.getElementById('already-registered-card')?.classList.remove('hidden');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+        }
     }
 
     // ====== EVENTS ======
@@ -574,6 +599,8 @@ ${data.prenom}`;
         document.querySelector('#mobile-progress')?.classList.add('hidden');
         document.querySelector('#sidebar')?.classList.add('hidden');
         successScreen.classList.remove('hidden');
+        
+        try { localStorage.setItem(REGISTERED_KEY, 'true'); } catch (e) { /* silent */ }
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
