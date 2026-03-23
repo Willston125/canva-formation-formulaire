@@ -8,7 +8,7 @@
     'use strict';
 
     // ====== CONFIG ======
-    const GOOGLE_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbxoskwR94K7ASTS-AHIQpt9v-Z5FxzZjKlpAqaliXqw-uM6FkSks6EfrSBBZ5yf9Vs_UA/exec';
+    const GOOGLE_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbyJCl1lg58y090bkO0OwovV7o60Oc0eAXPeWFu4AGX2IARG58Mqes7mf7h8BubK5KTavA/exec';
     const STORAGE_KEY = 'canvapro_form_data';
     const TOTAL_STEPS = 4;
 
