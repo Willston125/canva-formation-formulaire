@@ -50,21 +50,6 @@
 
     // ====== INIT ======
     function init() {
-        if (localStorage.getItem(REGISTERED_KEY) === 'true') {
-            document.getElementById('form-container')?.classList.add('hidden');
-            document.querySelector('#poster-section')?.classList.add('hidden');
-            document.querySelector('#programme-section')?.classList.add('hidden');
-            document.querySelector('#mobile-progress')?.classList.add('hidden');
-            document.querySelector('#sidebar')?.classList.add('hidden');
-            document.getElementById('already-registered-card')?.classList.remove('hidden');
-            return;
-        }
-
-        loadSavedData();
-        updateProgress();
-        attachEvents();
-        updateCharCounter();
-
         const btnCloseSuccess = document.getElementById('btn-close-success');
         if (btnCloseSuccess) {
             btnCloseSuccess.addEventListener('click', () => {
@@ -95,6 +80,21 @@
                 goToStep(1);
             });
         }
+
+        if (localStorage.getItem(REGISTERED_KEY) === 'true') {
+            document.getElementById('form-container')?.classList.add('hidden');
+            document.querySelector('#poster-section')?.classList.add('hidden');
+            document.querySelector('#programme-section')?.classList.add('hidden');
+            document.querySelector('#mobile-progress')?.classList.add('hidden');
+            document.querySelector('#sidebar')?.classList.add('hidden');
+            document.getElementById('already-registered-card')?.classList.remove('hidden');
+            return;
+        }
+
+        loadSavedData();
+        updateProgress();
+        attachEvents();
+        updateCharCounter();
     }
 
     // ====== EVENTS ======
