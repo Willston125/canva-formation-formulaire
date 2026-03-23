@@ -8,7 +8,7 @@
     'use strict';
 
     // ====== CONFIG ======
-    const GOOGLE_SHEETS_URL = 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL';
+    const GOOGLE_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbxoskwR94K7ASTS-AHIQpt9v-Z5FxzZjKlpAqaliXqw-uM6FkSks6EfrSBBZ5yf9Vs_UA/exec';
     const STORAGE_KEY = 'canvapro_form_data';
     const TOTAL_STEPS = 4;
 
@@ -510,12 +510,12 @@
             prenom: data.prenom,
             telephone: data.telephone,
             email: data.email,
-            age: data.age,
+            age: parseInt(data.age) || data.age,
             profession: data.profession,
-            niveau: data.niveau,
+            niveauCanva: data.niveau,
             motivation: data.motivation,
             objectifs: data.objectifs,
-            paiement: data.paiement,
+            modePaiement: data.paiement,
             telPaiement: data.telPaiement,
             statut: 'En attente',
         };
@@ -533,12 +533,43 @@
             clearSavedData();
         } catch (error) {
             console.error('Erreur soumission:', error);
-            showSuccessScreen();
-            clearSavedData();
+            alert("❌ Erreur lors de l'envoi. Veuillez vérifier votre connexion ou réessayer.");
+            
+            // Réactiver le bouton
+            btnText.classList.remove('hidden');
+            btnLoader.classList.add('hidden');
+            btnLoader.classList.remove('flex');
+            btnSubmit.disabled = false;
         }
     }
 
     function showSuccessScreen() {
+        // Build dynamic WhatsApp URL
+        const data = getFormData();
+        const prenomNom = `${data.nom} ${data.prenom}`.trim();
+        const message = `Bonjour M. Ali William,
+
+Je confirme mon inscription à la Formation Canva Pro.
+
+📋 INFORMATIONS D'INSCRIPTION
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+👤 Participant : ${prenomNom}
+📱 Téléphone : +253 ${data.telephone}
+💳 Paiement : ${data.paiement} - 5000 FDJ
+📅 Formation : 16 avril - 30 mai 2026
+
+📎 Preuve de paiement ci-jointe
+
+En attente de votre confirmation.
+
+Cordialement,
+${data.prenom}`;
+
+        const btnWhatsapp = document.getElementById('btn-whatsapp');
+        if (btnWhatsapp) {
+            btnWhatsapp.href = `https://wa.me/25377145306?text=${encodeURIComponent(message)}`;
+        }
+
         form.closest('.glass-card').style.display = 'none';
         document.querySelector('#mobile-progress')?.classList.add('hidden');
         document.querySelector('#sidebar')?.classList.add('hidden');
