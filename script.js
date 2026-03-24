@@ -70,6 +70,13 @@
                 try { localStorage.removeItem(REGISTERED_KEY); } catch(e) {}
                 clearSavedData();
                 form.reset();
+
+                // Clear any validation states
+                form.querySelectorAll('.invalid, .valid').forEach(el => el.classList.remove('invalid', 'valid'));
+                form.querySelectorAll('.field-error').forEach(el => { el.textContent = ''; el.classList.remove('visible'); });
+                
+                handlePaymentChange();
+                updateCharCounter();
                 
                 document.getElementById('already-registered-card')?.classList.add('hidden');
                 document.getElementById('form-container')?.classList.remove('hidden');
@@ -88,7 +95,6 @@
             document.querySelector('#mobile-progress')?.classList.add('hidden');
             document.querySelector('#sidebar')?.classList.add('hidden');
             document.getElementById('already-registered-card')?.classList.remove('hidden');
-            return;
         }
 
         loadSavedData();
@@ -612,7 +618,7 @@ ${data.prenom}`;
             btnWhatsapp.href = `https://wa.me/25377145306?text=${encodeURIComponent(message)}`;
         }
 
-        form.closest('.glass-card').style.display = 'none';
+        document.getElementById('form-container')?.classList.add('hidden');
         document.querySelector('#mobile-progress')?.classList.add('hidden');
         document.querySelector('#sidebar')?.classList.add('hidden');
         successScreen.classList.remove('hidden');
