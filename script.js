@@ -12,6 +12,8 @@
     const STORAGE_KEY = 'canvapro_form_data';
     const REGISTERED_KEY = 'canvapro_registered_user';
     const TOTAL_STEPS = 4;
+    const PLACES_RESTANTES = 13;
+    const PLACES_TOTAL = 20;
 
     // ====== DOM REFS ======
     const form = document.getElementById('inscription-form');
@@ -48,6 +50,18 @@
 
     let currentStep = 1;
 
+    // ====== PLACES COUNTER ======
+    function initPlacesCounter() {
+        const countEl = document.getElementById('places-count');
+        const barEl = document.getElementById('places-bar');
+        if (countEl) countEl.textContent = PLACES_RESTANTES;
+        if (barEl) {
+            const taken = PLACES_TOTAL - PLACES_RESTANTES;
+            const pct = Math.round((taken / PLACES_TOTAL) * 100);
+            setTimeout(() => { barEl.style.width = pct + '%'; }, 300);
+        }
+    }
+
     // ====== INIT ======
     function init() {
         const btnCloseSuccess = document.getElementById('btn-close-success');
@@ -75,6 +89,14 @@
                 form.querySelectorAll('.invalid, .valid').forEach(el => el.classList.remove('invalid', 'valid'));
                 form.querySelectorAll('.field-error').forEach(el => { el.textContent = ''; el.classList.remove('visible'); });
                 
+                // Reset clickable cards
+                document.querySelectorAll('.profession-card, .niveau-card, .sub-card').forEach(c => {
+                    c.classList.remove('!border-primary', '!bg-primary-fixed/30', '!bg-primary-fixed/20', 'ring-2', 'ring-1', 'ring-primary/30', 'ring-primary/20', 'scale-[1.02]', 'font-bold');
+                });
+                document.getElementById('profession-sub-questions')?.classList.add('hidden');
+                document.querySelectorAll('.profession-sub').forEach(s => s.classList.add('hidden'));
+                document.getElementById('profession-detail').value = '';
+
                 handlePaymentChange();
                 updateCharCounter();
                 
@@ -82,6 +104,7 @@
                 document.getElementById('form-container')?.classList.remove('hidden');
                 document.querySelector('#poster-section')?.classList.remove('hidden');
                 document.querySelector('#programme-section')?.classList.remove('hidden');
+                document.querySelector('#places-counter-section')?.classList.remove('hidden');
                 document.querySelector('#mobile-progress')?.classList.remove('hidden');
                 document.querySelector('#sidebar')?.classList.remove('hidden');
                 goToStep(1);
@@ -101,6 +124,7 @@
         updateProgress();
         attachEvents();
         updateCharCounter();
+        initPlacesCounter();
     }
 
     // ====== EVENTS ======
@@ -156,10 +180,74 @@
         });
 
         // Real-time validation on blur
-        form.querySelectorAll('input, select, textarea').forEach(field => {
+        form.querySelectorAll('input:not([type="hidden"]), select, textarea').forEach(field => {
             field.addEventListener('blur', () => {
                 validateField(field);
             });
+        });
+
+        // ---- Profession Cards ----
+        document.querySelectorAll('.profession-card').forEach(card => {
+            card.addEventListener('click', () => {
+                // Deselect all
+                document.querySelectorAll('.profession-card').forEach(c => {
+                    c.classList.remove('!border-primary', '!bg-primary-fixed/30', 'ring-2', 'ring-primary/30', 'scale-[1.02]');
+                });
+                // Select this
+                card.classList.add('!border-primary', '!bg-primary-fixed/30', 'ring-2', 'ring-primary/30', 'scale-[1.02]');
+                // Set hidden input value
+                document.getElementById('profession').value = card.dataset.value;
+                clearFieldError(document.getElementById('profession'));
+                // Show conditional sub-question
+                showProfessionSub(card.dataset.value);
+                saveData();
+            });
+        });
+
+        // ---- Sub-cards ----
+        document.querySelectorAll('.sub-card').forEach(card => {
+            card.addEventListener('click', () => {
+                // Deselect siblings only
+                const parent = card.closest('.profession-sub');
+                parent.querySelectorAll('.sub-card').forEach(c => {
+                    c.classList.remove('!border-primary', '!bg-primary-fixed/20', 'ring-1', 'ring-primary/20', 'font-bold');
+                });
+                card.classList.add('!border-primary', '!bg-primary-fixed/20', 'ring-1', 'ring-primary/20', 'font-bold');
+                document.getElementById('profession-detail').value = card.dataset.subvalue;
+                saveData();
+            });
+        });
+
+        // ---- Niveau Cards ----
+        document.querySelectorAll('.niveau-card').forEach(card => {
+            card.addEventListener('click', () => {
+                document.querySelectorAll('.niveau-card').forEach(c => {
+                    c.classList.remove('!border-primary', '!bg-primary-fixed/30', 'ring-2', 'ring-primary/30', 'scale-[1.02]');
+                });
+                card.classList.add('!border-primary', '!bg-primary-fixed/30', 'ring-2', 'ring-primary/30', 'scale-[1.02]');
+                document.getElementById('niveau').value = card.dataset.value;
+                clearFieldError(document.getElementById('niveau'));
+                saveData();
+            });
+        });
+    }
+
+    // ====== CONDITIONAL PROFESSION SUB-QUESTIONS ======
+    function showProfessionSub(profession) {
+        const container = document.getElementById('profession-sub-questions');
+        container.classList.remove('hidden');
+        container.querySelectorAll('.profession-sub').forEach(sub => {
+            if (sub.dataset.for === profession) {
+                sub.classList.remove('hidden');
+                sub.style.animation = 'fade-up 0.3s ease-out';
+            } else {
+                sub.classList.add('hidden');
+            }
+        });
+        // Reset detail
+        document.getElementById('profession-detail').value = '';
+        container.querySelectorAll('.sub-card').forEach(c => {
+            c.classList.remove('!border-primary', '!bg-primary-fixed/20', 'ring-1', 'ring-primary/20', 'font-bold');
         });
     }
 
@@ -177,33 +265,60 @@
     function goToStep(step) {
         if (step < 1 || step > TOTAL_STEPS) return;
 
-        sections[currentStep - 1].classList.remove('active');
-        currentStep = step;
-        sections[currentStep - 1].classList.add('active');
+        const prevSection = sections[currentStep - 1];
+        const direction = step > currentStep ? 1 : -1;
 
-        if (currentStep === 4) {
-            buildSummary();
-        }
+        // Animate out
+        prevSection.style.opacity = '0';
+        prevSection.style.transform = `translateX(${direction * -30}px) scale(0.98)`;
 
-        updateProgress();
+        setTimeout(() => {
+            prevSection.classList.remove('active');
+            prevSection.style.opacity = '';
+            prevSection.style.transform = '';
 
-        // Show/hide poster (step 1 only)
-        const posterSection = document.getElementById('poster-section');
-        if (posterSection) {
-            posterSection.style.display = (currentStep === 1) ? '' : 'none';
-        }
+            currentStep = step;
+            const nextSection = sections[currentStep - 1];
 
-        // Show/hide programme (steps 1 and 4 only)
-        const programmeSection = document.getElementById('programme-section');
-        if (programmeSection) {
-            programmeSection.style.display = (currentStep === 1 || currentStep === 4) ? '' : 'none';
-        }
+            // Animate in
+            nextSection.style.opacity = '0';
+            nextSection.style.transform = `translateX(${direction * 30}px) scale(0.98)`;
+            nextSection.classList.add('active');
 
-        // Scroll to top of form card
-        const formCard = document.querySelector('.glass-card');
-        if (formCard) {
-            formCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
+            requestAnimationFrame(() => {
+                nextSection.style.transition = 'opacity 0.35s ease, transform 0.35s ease';
+                nextSection.style.opacity = '1';
+                nextSection.style.transform = 'translateX(0) scale(1)';
+                setTimeout(() => {
+                    nextSection.style.transition = '';
+                    nextSection.style.transform = '';
+                }, 360);
+            });
+
+            if (currentStep === 4) {
+                buildSummary();
+            }
+
+            updateProgress();
+
+            // Show/hide poster & places counter (step 1 only)
+            const posterSection = document.getElementById('poster-section');
+            const placesSection = document.getElementById('places-counter-section');
+            if (posterSection) posterSection.style.display = (currentStep === 1) ? '' : 'none';
+            if (placesSection) placesSection.style.display = (currentStep === 1) ? '' : 'none';
+
+            // Show/hide programme (steps 1 and 4 only)
+            const programmeSection = document.getElementById('programme-section');
+            if (programmeSection) {
+                programmeSection.style.display = (currentStep === 1 || currentStep === 4) ? '' : 'none';
+            }
+
+            // Scroll to top of form card
+            const formContainer = document.getElementById('form-container');
+            if (formContainer) {
+                formContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }, 150);
     }
 
     // ====== PROGRESS ======
@@ -378,8 +493,8 @@
             'prenom': 'Le prénom est obligatoire',
             'telephone': 'Le numéro de téléphone est obligatoire',
             'age': 'L\'âge est obligatoire',
-            'profession': 'La profession est obligatoire',
-            'niveau': 'Veuillez sélectionner votre niveau',
+            'profession': 'Veuillez choisir votre profession',
+            'niveau': 'Veuillez choisir votre niveau',
             'motivation': 'Veuillez expliquer votre motivation',
             'paiement': 'Veuillez choisir un mode de paiement',
             'conditions': 'Vous devez accepter les conditions',
@@ -527,6 +642,7 @@
             objectifs: objectifs,
             paiement: paiementSelect.value,
             telPaiement: document.getElementById('tel-paiement').value.trim(),
+            professionDetail: document.getElementById('profession-detail')?.value || '',
         };
     }
 
@@ -644,18 +760,47 @@ ${data.prenom}`;
             const data = JSON.parse(saved);
             if (!data) return;
 
-            const textFields = ['nom', 'prenom', 'telephone', 'email', 'age', 'profession', 'motivation'];
+            const textFields = ['nom', 'prenom', 'telephone', 'email', 'age', 'motivation'];
             textFields.forEach(id => {
                 const el = document.getElementById(id);
                 if (el && data[id]) el.value = data[id];
             });
 
+            // Profession card restore
+            if (data.profession) {
+                document.getElementById('profession').value = data.profession;
+                document.querySelectorAll('.profession-card').forEach(c => {
+                    if (c.dataset.value === data.profession) {
+                        c.classList.add('!border-primary', '!bg-primary-fixed/30', 'ring-2', 'ring-primary/30', 'scale-[1.02]');
+                        showProfessionSub(data.profession);
+                    }
+                });
+            }
+
+            // Niveau card restore
+            if (data.niveau) {
+                document.getElementById('niveau').value = data.niveau;
+                document.querySelectorAll('.niveau-card').forEach(c => {
+                    if (c.dataset.value === data.niveau) {
+                        c.classList.add('!border-primary', '!bg-primary-fixed/30', 'ring-2', 'ring-primary/30', 'scale-[1.02]');
+                    }
+                });
+            }
+
+            // Profession detail restore
+            if (data.professionDetail) {
+                document.getElementById('profession-detail').value = data.professionDetail;
+                document.querySelectorAll('.sub-card').forEach(c => {
+                    if (c.dataset.subvalue === data.professionDetail) {
+                        c.classList.add('!border-primary', '!bg-primary-fixed/20', 'ring-1', 'ring-primary/20', 'font-bold');
+                    }
+                });
+            }
+
             // tel-paiement
             const telPay = document.getElementById('tel-paiement');
             if (telPay && data.telPaiement) telPay.value = data.telPaiement;
 
-            // Selects
-            if (data.niveau) document.getElementById('niveau').value = data.niveau;
             if (data.paiement) {
                 paiementSelect.value = data.paiement;
                 handlePaymentChange();
