@@ -312,16 +312,19 @@
                     class="glass-card rounded-2xl sm:rounded-3xl shadow-xl shadow-slate-200/50 border border-white/40 overflow-hidden">
 
                     <!-- Header -->
-                    <div class="bg-gradient-to-r from-primary to-primary-container px-6 sm:px-8 py-5 flex items-center gap-3">
-                        <span class="material-symbols-outlined text-white text-2xl"
-                            style="font-variation-settings: 'FILL' 1;">menu_book</span>
-                        <div>
-                            <h2 class="text-lg sm:text-xl font-extrabold text-white font-headline tracking-tight">Qu'allez-vous apprendre ?</h2>
-                            <p class="text-white/70 text-xs font-medium">15 jours · 30 heures · 5 modules · 2 à 3 séances/semaine</p>
+                    <div class="bg-gradient-to-r from-primary to-primary-container px-6 sm:px-8 py-5 flex items-center justify-between gap-3 cursor-pointer group select-none" id="programme-header" role="button" aria-expanded="false" aria-controls="programme-content">
+                        <div class="flex items-center gap-3">
+                            <span class="material-symbols-outlined text-white text-2xl"
+                                style="font-variation-settings: 'FILL' 1;">menu_book</span>
+                            <div>
+                                <h2 class="text-lg sm:text-xl font-extrabold text-white font-headline tracking-tight group-hover:opacity-90 transition-opacity">Qu'allez-vous apprendre ?</h2>
+                                <p class="text-white/80 text-xs font-medium">15 jours · 30 heures · 5 modules · Cliquez pour dérouler</p>
+                            </div>
                         </div>
+                        <span class="material-symbols-outlined text-white text-3xl transition-transform duration-300" id="programme-arrow">expand_more</span>
                     </div>
 
-                    <div class="p-6 sm:p-8 space-y-5">
+                    <div class="p-6 sm:p-8 space-y-5 hidden" id="programme-content">
 
                         <!-- Semaine 1 -->
                         <div class="bg-blue-50/70 border border-blue-100 rounded-2xl p-5 space-y-3">
@@ -764,19 +767,27 @@
                         <div class="space-y-6">
                             <!-- Mode de paiement -->
                             <div class="field-group" id="field-paiement">
-                                <label for="paiement" class="field-label">Mode de paiement <span
-                                        class="text-primary">*</span></label>
-                                <div class="relative">
-                                    <select id="paiement" name="paiement" required
-                                        class="field-input field-select appearance-none pr-10"
-                                        aria-describedby="paiement-error">
-                                        <option value="" disabled selected>Choisissez votre mode de paiement</option>
-                                        <option value="Waafi Mobile Money">Waafi Mobile Money</option>
-                                        <option value="Cacpay">Cacpay</option>
-                                        <option value="Espèces">Espèces (à remettre en main propre)</option>
-                                    </select>
-                                    <span
-                                        class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-xl">expand_more</span>
+                                <label class="field-label">Mode de paiement <span class="text-primary">*</span></label>
+                                <input type="hidden" id="paiement" name="paiement" required>
+                                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 lg:gap-4" id="paiement-cards" role="radiogroup" aria-label="Votre mode de paiement">
+                                    <button type="button" class="paiement-card flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border-2 border-slate-200 bg-white hover:border-primary/40 hover:bg-primary-fixed/20 transition-all duration-200 cursor-pointer group" data-value="Waafi Mobile Money">
+                                        <img src="assets/images/waafi.png" alt="Waafi" class="h-10 sm:h-12 w-auto object-contain group-hover:scale-110 transition-transform">
+                                        <span class="text-xs sm:text-sm font-bold text-slate-700 group-hover:text-primary">Waafi</span>
+                                    </button>
+                                    <button type="button" class="paiement-card flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border-2 border-slate-200 bg-white hover:border-primary/40 hover:bg-primary-fixed/20 transition-all duration-200 cursor-pointer group" data-value="D-Money">
+                                        <img src="assets/images/D-money.png" alt="D-Money" class="h-10 sm:h-12 w-auto object-contain group-hover:scale-110 transition-transform">
+                                        <span class="text-xs sm:text-sm font-bold text-slate-700 group-hover:text-primary">D-Money</span>
+                                    </button>
+                                    <button type="button" class="paiement-card flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border-2 border-slate-200 bg-white hover:border-primary/40 hover:bg-primary-fixed/20 transition-all duration-200 cursor-pointer group" data-value="Cacpay">
+                                        <img src="assets/images/cacpay.png" alt="Cacpay" class="h-10 sm:h-12 w-auto object-contain group-hover:scale-110 transition-transform">
+                                        <span class="text-xs sm:text-sm font-bold text-slate-700 group-hover:text-primary">Cacpay</span>
+                                    </button>
+                                    <button type="button" class="paiement-card flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border-2 border-slate-200 bg-white hover:border-primary/40 hover:bg-primary-fixed/20 transition-all duration-200 cursor-pointer group" data-value="Espèces">
+                                        <span class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-100 transition-colors group-hover:scale-110">
+                                            <span class="material-symbols-outlined text-blue-600 text-xl sm:text-2xl" style="font-variation-settings: 'FILL' 1;">payments</span>
+                                        </span>
+                                        <span class="text-xs sm:text-sm font-bold text-slate-700 group-hover:text-primary text-center">Espèces</span>
+                                    </button>
                                 </div>
                                 <span class="field-error" id="paiement-error" role="alert" aria-live="polite"></span>
                             </div>

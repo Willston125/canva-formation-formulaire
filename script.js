@@ -90,7 +90,7 @@
                 form.querySelectorAll('.field-error').forEach(el => { el.textContent = ''; el.classList.remove('visible'); });
                 
                 // Reset clickable cards
-                document.querySelectorAll('.profession-card, .niveau-card, .sub-card').forEach(c => {
+                document.querySelectorAll('.profession-card, .niveau-card, .sub-card, .paiement-card').forEach(c => {
                     c.classList.remove('!border-primary', '!bg-primary-fixed/30', '!bg-primary-fixed/20', 'ring-2', 'ring-1', 'ring-primary/30', 'ring-primary/20', 'scale-[1.02]', 'font-bold');
                 });
                 document.getElementById('profession-sub-questions')?.classList.add('hidden');
@@ -161,8 +161,41 @@
         // Submit
         form.addEventListener('submit', handleSubmit);
 
-        // Payment conditional
-        paiementSelect.addEventListener('change', handlePaymentChange);
+        // ---- Programme Accordion ----
+        const progHeader = document.getElementById('programme-header');
+        const progContent = document.getElementById('programme-content');
+        const progArrow = document.getElementById('programme-arrow');
+        
+        if (progHeader && progContent && progArrow) {
+            progHeader.addEventListener('click', () => {
+                const isHidden = progContent.classList.contains('hidden');
+                if (isHidden) {
+                    progContent.classList.remove('hidden');
+                    // Add simple slide-down effect
+                    progContent.style.animation = 'fade-up 0.3s ease-out';
+                    progArrow.style.transform = 'rotate(180deg)';
+                    progHeader.setAttribute('aria-expanded', 'true');
+                } else {
+                    progContent.classList.add('hidden');
+                    progContent.style.animation = '';
+                    progArrow.style.transform = 'rotate(0deg)';
+                    progHeader.setAttribute('aria-expanded', 'false');
+                }
+            });
+        }
+
+        // ---- Paiement Cards ----
+        document.querySelectorAll('.paiement-card').forEach(card => {
+            card.addEventListener('click', () => {
+                document.querySelectorAll('.paiement-card').forEach(c => {
+                    c.classList.remove('!border-primary', '!bg-primary-fixed/30', 'ring-2', 'ring-primary/30', 'scale-[1.02]');
+                });
+                card.classList.add('!border-primary', '!bg-primary-fixed/30', 'ring-2', 'ring-primary/30', 'scale-[1.02]');
+                document.getElementById('paiement').value = card.dataset.value;
+                clearFieldError(document.getElementById('paiement'));
+                handlePaymentChange();
+            });
+        });
 
         // Motivation counter
         motivationField.addEventListener('input', updateCharCounter);
@@ -419,7 +452,7 @@
         // Tel-paiement when visible (step 3)
         if (step === 3) {
             const paiementValue = paiementSelect.value;
-            const mobileMethods = ['Waafi Mobile Money', 'Cacpay'];
+            const mobileMethods = ['Waafi Mobile Money', 'Cacpay', 'D-Money'];
             if (mobileMethods.includes(paiementValue)) {
                 const telPaiement = document.getElementById('tel-paiement');
                 if (!telPaiement.value.trim()) {
@@ -533,7 +566,7 @@
     // ====== PAYMENT CONDITIONAL ======
     function handlePaymentChange() {
         const value = paiementSelect.value;
-        const mobileMethods = ['Waafi Mobile Money', 'Cacpay'];
+        const mobileMethods = ['Waafi Mobile Money', 'Cacpay', 'D-Money'];
 
         if (mobileMethods.includes(value)) {
             show(telPaiementGroup);
@@ -815,6 +848,11 @@ ${data.prenom}`;
 
             if (data.paiement) {
                 paiementSelect.value = data.paiement;
+                document.querySelectorAll('.paiement-card').forEach(c => {
+                    if (c.dataset.value === data.paiement) {
+                        c.classList.add('!border-primary', '!bg-primary-fixed/30', 'ring-2', 'ring-primary/30', 'scale-[1.02]');
+                    }
+                });
                 handlePaymentChange();
             }
 
