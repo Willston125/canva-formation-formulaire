@@ -658,13 +658,17 @@
             return;
         }
 
-        // Show loader
-        const btnText = btnSubmit.querySelector('.btn-submit-text');
-        const btnLoader = btnSubmit.querySelector('.btn-loader');
-        btnText.classList.add('hidden');
-        btnLoader.classList.remove('hidden');
-        btnLoader.classList.add('flex');
         btnSubmit.disabled = true;
+
+        // Hide form and show hamster overlay
+        const formContainer = document.getElementById('form-container');
+        const mobileProgress = document.querySelector('#mobile-progress');
+        const hamsterOverlay = document.getElementById('hamster-overlay');
+        
+        if (formContainer) formContainer.classList.add('hidden');
+        if (mobileProgress) mobileProgress.classList.add('hidden');
+        if (hamsterOverlay) hamsterOverlay.classList.remove('hidden');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
 
         const data = getFormData();
 
@@ -685,24 +689,32 @@
         };
 
         try {
+            // Garantir que l'animation du hamster tourne pendant au moins 3.5 secondes
+            const minTimePromise = new Promise(resolve => setTimeout(resolve, 3500));
+            let fetchPromise = Promise.resolve();
+
             if (GOOGLE_SHEETS_URL !== 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL') {
-                await fetch(GOOGLE_SHEETS_URL, {
+                fetchPromise = fetch(GOOGLE_SHEETS_URL, {
                     method: 'POST',
                     mode: 'no-cors',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload),
                 });
             }
+
+            await Promise.all([fetchPromise, minTimePromise]);
+
+            if (hamsterOverlay) hamsterOverlay.classList.add('hidden');
             showSuccessScreen();
             clearSavedData();
         } catch (error) {
             console.error('Erreur soumission:', error);
             alert("❌ Erreur lors de l'envoi. Veuillez vérifier votre connexion ou réessayer.");
             
-            // Réactiver le bouton
-            btnText.classList.remove('hidden');
-            btnLoader.classList.add('hidden');
-            btnLoader.classList.remove('flex');
+            // Réafficher le formulaire en cas d'erreur
+            if (hamsterOverlay) hamsterOverlay.classList.add('hidden');
+            if (formContainer) formContainer.classList.remove('hidden');
+            if (mobileProgress) mobileProgress.classList.remove('hidden');
             btnSubmit.disabled = false;
         }
     }
