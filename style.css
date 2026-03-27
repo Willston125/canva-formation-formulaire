@@ -441,7 +441,7 @@ a:focus-visible {
   background: linear-gradient(
     320deg,
     rgba(0, 140, 255, 0.678), 
-    rgba(128, 0, 128, 0.308)
+    rgba(239, 131, 28, 0.8)
   );
   z-index: 1; /* Le fond reste derrière le texte */
   transition: background 3s;
