@@ -581,7 +581,7 @@
     // ====== PAYMENT CONDITIONAL ======
     function handlePaymentChange() {
         const value = paiementSelect.value;
-        const mobileMethods = ['Waafi Mobile Money', 'Cacpay', 'D-Money'];
+        const mobileMethods = ['Waafi Mobile Money', 'Cacpay'];
 
         if (mobileMethods.includes(value)) {
             show(telPaiementGroup);
