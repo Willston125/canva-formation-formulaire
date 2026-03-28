@@ -96,6 +96,9 @@
                 document.getElementById('form-container')?.classList.add('hidden');
                 document.querySelector('#poster-section')?.classList.add('hidden');
                 document.querySelector('#programme-section')?.classList.add('hidden');
+                document.querySelector('#places-counter-section')?.classList.add('hidden');
+                document.querySelector('#formateur-section')?.classList.add('hidden');
+                document.querySelector('#faq-section')?.classList.add('hidden');
                 document.querySelector('#mobile-progress')?.classList.add('hidden');
                 document.querySelector('#sidebar')?.classList.add('hidden');
                 document.getElementById('already-registered-card')?.classList.remove('hidden');
@@ -130,6 +133,8 @@
                 document.querySelector('#poster-section')?.classList.remove('hidden');
                 document.querySelector('#programme-section')?.classList.remove('hidden');
                 document.querySelector('#places-counter-section')?.classList.remove('hidden');
+                document.querySelector('#formateur-section')?.classList.remove('hidden');
+                document.querySelector('#faq-section')?.classList.remove('hidden');
                 document.querySelector('#mobile-progress')?.classList.remove('hidden');
                 document.querySelector('#sidebar')?.classList.remove('hidden');
                 goToStep(1);
@@ -140,6 +145,9 @@
             document.getElementById('form-container')?.classList.add('hidden');
             document.querySelector('#poster-section')?.classList.add('hidden');
             document.querySelector('#programme-section')?.classList.add('hidden');
+            document.querySelector('#places-counter-section')?.classList.add('hidden');
+            document.querySelector('#formateur-section')?.classList.add('hidden');
+            document.querySelector('#faq-section')?.classList.add('hidden');
             document.querySelector('#mobile-progress')?.classList.add('hidden');
             document.querySelector('#sidebar')?.classList.add('hidden');
             document.getElementById('already-registered-card')?.classList.remove('hidden');
@@ -352,8 +360,12 @@
             // Show/hide poster & places counter (step 1 only)
             const posterSection = document.getElementById('poster-section');
             const placesSection = document.getElementById('places-counter-section');
+            const formateurSection = document.getElementById('formateur-section');
+            const faqSection = document.getElementById('faq-section');
             if (posterSection) posterSection.style.display = (currentStep === 1) ? '' : 'none';
             if (placesSection) placesSection.style.display = (currentStep === 1) ? '' : 'none';
+            if (formateurSection) formateurSection.style.display = (currentStep === 1) ? '' : 'none';
+            if (faqSection) faqSection.style.display = (currentStep === 1) ? '' : 'none';
 
             // Show/hide programme (steps 1 and 4 only)
             const programmeSection = document.getElementById('programme-section');

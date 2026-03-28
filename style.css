@@ -3,42 +3,21 @@
    Companion to Tailwind CSS
    ========================================= */
 
-/* ---------- Aura Soft Gradient Background ---------- */
+/* ---------- Aura Soft Gradient Background (Dark Mode) ---------- */
 .aura-bg {
-  background: #f0f4f8;
+  background: #09083b; /* Bleu nuit cinématique profond */
 }
-
 .aura-orange {
-  position: absolute;
-  top: -200px;
-  right: -200px;
-  width: 850px;
-  height: 850px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 120, 0, 0.18) 0%, transparent 70%);
-  filter: blur(60px);
+  position: absolute; top: -200px; right: -200px; width: 850px; height: 850px;
+  border-radius: 50%; background: radial-gradient(circle, rgba(255, 120, 0, 0.15) 0%, transparent 70%); filter: blur(60px);
 }
-
 .aura-blue {
-  position: absolute;
-  bottom: -200px;
-  left: -200px;
-  width: 750px;
-  height: 750px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%);
-  filter: blur(60px);
+  position: absolute; bottom: -200px; left: -200px; width: 750px; height: 750px;
+  border-radius: 50%; background: radial-gradient(circle, rgba(243, 21, 255, 0.12) 0%, transparent 70%); filter: blur(60px); /* Touche magenta cinématographique */
 }
-
 .aura-amber {
-  position: absolute;
-  top: 40%;
-  left: 35%;
-  width: 500px;
-  height: 500px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 180, 60, 0.09) 0%, transparent 70%);
-  filter: blur(80px);
+  position: absolute; top: 40%; left: 35%; width: 500px; height: 500px;
+  border-radius: 50%; background: radial-gradient(circle, rgba(255, 180, 60, 0.08) 0%, transparent 70%); filter: blur(80px);
 }
 
 
@@ -47,11 +26,13 @@
   font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
 }
 
-/* ---------- Glass Card ---------- */
+/* ---------- Glass Card (Dark Mode) ---------- */
 .glass-card {
-  background: rgba(255, 255, 255, 0.80);
-  -webkit-backdrop-filter: blur(40px) saturate(1.2);
-  backdrop-filter: blur(40px) saturate(1.2);
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(24px) saturate(1.2);
+  -webkit-backdrop-filter: blur(24px) saturate(1.2);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
 }
 
 /* ---------- Form Sections ---------- */
@@ -92,42 +73,25 @@
 }
 
 /* =========================================
-   STYLE DES CHAMPS DE SAISIE (Effet Glow)
+   STYLE DES CHAMPS DE SAISIE (Dark Mode)
    ========================================= */
 
-.field-input {
+.field-input, .field-select {
   width: 100%;
-  background-color: rgba(255, 255, 255, 0.7);
-  /* Fond légèrement transparent pour l'effet verre */
+  background-color: rgba(0, 0, 0, 0.3);
   padding: 12px 16px;
-  border: 2px solid #e2e8f0;
-  /* Bordure grise très douce */
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 12px;
-  /* Coins arrondis modernes */
-  color: #334155;
-  /* Couleur du texte gris foncé (reposant) */
+  color: #f8fafc;
   font-size: 14px;
   font-family: 'Inter', sans-serif;
   transition: all 0.3s ease;
   outline: none;
 }
-
-.field-input::placeholder {
-  color: #94a3b8;
-}
-
-.field-input:hover {
-  background-color: rgba(255, 255, 255, 0.9);
-}
-
-/* L'effet magique quand on clique dedans (Focus) */
-.field-input:focus {
-  background-color: #ffffff;
-  /* Le fond devient blanc pur */
-  color: #9a4600;
-  /* Le texte prend la couleur de ta marque */
-  border-color: #ff7800;
-  /* La bordure devient orange */
+.field-input::placeholder { color: #64748b; }
+.field-input:hover, .field-select:hover { background-color: rgba(0, 0, 0, 0.5); border-color: rgba(255, 255, 255, 0.25); }
+.field-input:focus, .field-select:focus {
+  background-color: rgba(0, 0, 0, 0.6); color: #fff; border-color: #ff7800;
   box-shadow: 0px 0px 15px rgba(255, 120, 0, 0.4);
 }
 
@@ -137,28 +101,7 @@
 
 .field-input.invalid {
   border-color: #ef4444;
-  background-color: #fef2f2;
-}
-
-/* On applique le même style au menu déroulant du paiement */
-.field-select {
-  width: 100%;
-  background-color: rgba(255, 255, 255, 0.7);
-  padding: 12px 16px;
-  border: 2px solid #e2e8f0;
-  border-radius: 12px;
-  color: #334155;
-  transition: all 0.3s ease;
-  cursor: pointer;
-  font-family: 'Inter', sans-serif;
-  font-size: 14px;
-  outline: none;
-}
-
-.field-select:focus {
-  background-color: #ffffff;
-  border-color: #ff7800;
-  box-shadow: 0px 0px 15px rgba(255, 120, 0, 0.4);
+  background-color: rgba(239, 68, 68, 0.1);
 }
 
 /* ---------- Field Errors ---------- */
@@ -184,74 +127,21 @@
   margin-top: 2px;
 }
 
-/* ---------- Checkbox Cards ---------- */
+/* ---------- Checkbox Cards (Dark Mode) ---------- */
 .checkbox-card {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 14px 16px;
-  background: rgba(255, 255, 255, 0.6);
-  border: 1px solid #f1f5f9;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 200ms ease;
-  position: relative;
+  display: flex; align-items: center; gap: 10px; padding: 14px 16px;
+  background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px; cursor: pointer; transition: all 200ms ease; position: relative;
 }
-
 .checkbox-card:hover {
-  border-color: rgba(255, 120, 0, 0.4);
-  background: rgba(255, 120, 0, 0.08);
-  /* Allume le bloc */
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(255, 120, 0, 0.15);
-  /* Halow orange */
+  border-color: rgba(255, 120, 0, 0.4); background: rgba(255, 120, 0, 0.1);
+  transform: translateY(-2px); box-shadow: 0 4px 12px rgba(255, 120, 0, 0.15);
 }
-
-/* Force la couleur de l'icône et du texte au survol */
-.checkbox-card:hover .material-symbols-outlined {
-  color: #ff7800 !important;
-  /* Orange Canva */
-  transform: scale(1.1);
-  transition: all 0.2s ease;
-}
-
-.checkbox-card:hover .text-on-surface {
-  color: #9a4600 !important;
-  /* Text plus sombre pour lisibilité */
-}
-
-.checkbox-input {
-  position: absolute;
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-/* --- ETAT SELECTIONNÉ --- */
+.checkbox-card:hover .text-on-surface { color: #fff !important; }
 .checkbox-card:has(.checkbox-input:checked) {
-  background: rgba(255, 120, 0, 0.12);
-  /* Garde la couleur bien visible */
-  border-color: #ff7800;
-  /* Bordure orange forte */
-  box-shadow: 0 0 0 2px rgba(255, 120, 0, 0.25);
-  /* Focus soft */
+  background: rgba(255, 120, 0, 0.15); border-color: #ff7800; box-shadow: 0 0 0 1px #ff7800;
 }
-
-.checkbox-card:has(.checkbox-input:checked) .material-symbols-outlined {
-  color: #ff7800 !important;
-  font-variation-settings: 'FILL' 1;
-  transform: scale(1.1);
-}
-
-.checkbox-card:has(.checkbox-input:checked) .text-on-surface {
-  color: #9a4600 !important;
-  font-weight: 700;
-}
-
-.checkbox-card:has(.checkbox-input:focus-visible) {
-  outline: 2px solid #9a4600;
-  outline-offset: 2px;
-}
+.checkbox-card:has(.checkbox-input:checked) .text-on-surface { color: #fff !important; font-weight: 700; }
 
 /* ---------- Sidebar Steps ---------- */
 .sidebar-step {
