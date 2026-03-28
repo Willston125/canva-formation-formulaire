@@ -1,5 +1,5 @@
-﻿<!DOCTYPE html>
-<html class="light" lang="fr">
+<!DOCTYPE html>
+<html class="dark" lang="fr">
 
 <head>
     <meta charset="utf-8">
@@ -46,14 +46,14 @@
             theme: {
                 extend: {
                     colors: {
-                        "primary": "#9a4600",
-                        "primary-container": "#ff7800",
-                        "primary-fixed": "#ffdbc9",
-                        "primary-fixed-dim": "#ffb68c",
-                        "on-primary": "#ffffff",
-                        "on-primary-container": "#5c2700",
-                        "on-primary-fixed": "#321200",
-                        "on-primary-fixed-variant": "#753400",
+                        "primary": "#FCA311",
+                        "primary-container": "#FCA311",
+                        "primary-fixed": "#FFD700",
+                        "primary-fixed-dim": "#D98200",
+                        "on-primary": "#000000",
+                        "on-primary-container": "#000000",
+                        "on-primary-fixed": "#000000",
+                        "on-primary-fixed-variant": "#000000",
                         "secondary": "#4f5e7e",
                         "secondary-container": "#c8d7fd",
                         "secondary-fixed": "#d8e2ff",
@@ -70,29 +70,23 @@
                         "on-tertiary-container": "#00395c",
                         "on-tertiary-fixed": "#001d33",
                         "on-tertiary-fixed-variant": "#004a76",
-                        "surface": "#f8f9fa",
-                        "surface-dim": "#d9dadb",
-                        "surface-bright": "#f8f9fa",
-                        "surface-variant": "#e1e3e4",
-                        "surface-container": "#edeeef",
-                        "surface-container-low": "#f3f4f5",
-                        "surface-container-high": "#e7e8e9",
-                        "surface-container-highest": "#e1e3e4",
-                        "surface-container-lowest": "#ffffff",
-                        "surface-tint": "#9a4600",
-                        "on-surface": "#191c1d",
-                        "on-surface-variant": "#584235",
-                        "on-background": "#191c1d",
-                        "background": "#f8f9fa",
-                        "outline": "#8c7263",
-                        "outline-variant": "#e0c0af",
-                        "inverse-surface": "#2e3132",
-                        "inverse-primary": "#ffb68c",
-                        "inverse-on-surface": "#f0f1f2",
-                        "error": "#ba1a1a",
-                        "error-container": "#ffdad6",
+                        "surface": "#000000",
+                        "surface-dim": "#1a1a24",
+                        "surface-bright": "#22222e",
+                        "surface-variant": "#2a2a38",
+                        "on-surface": "#f8fafc",
+                        "on-surface-variant": "#94a3b8",
+                        "on-background": "#f8fafc",
+                        "background": "#000000",
+                        "outline": "#475569",
+                        "outline-variant": "#1e293b",
+                        "inverse-surface": "#f8fafc",
+                        "inverse-primary": "#ff7800",
+                        "inverse-on-surface": "#000000",
+                        "error": "#ef4444",
+                        "error-container": "#450a0a",
                         "on-error": "#ffffff",
-                        "on-error-container": "#93000a",
+                        "on-error-container": "#f87171",
                     },
                     fontFamily: {
                         "headline": ["Plus Jakarta Sans", "sans-serif"],
@@ -140,7 +134,7 @@
     <link rel="stylesheet" href="style.css">
 </head>
 
-<body class="bg-[#09083b] font-body text-slate-200 selection:bg-primary selection:text-white overflow-x-hidden">
+<body class="bg-[#000000] font-body text-[#E5E5E5] selection:bg-[#FCA311] selection:text-[#000000] overflow-x-hidden">
 
     <!-- ====== AURA SOFT GRADIENT BACKGROUND ====== -->
     <div class="fixed inset-0 -z-10 overflow-hidden aura-bg">
@@ -151,15 +145,15 @@
 
     <!-- ====== HEADER ====== -->
     <header
-        class="bg-[#09083b]/80 backdrop-blur-xl sticky top-0 z-50 shadow-sm shadow-black/20 border-b border-white/10">
+        class="bg-[#000000]/80 backdrop-blur-xl sticky top-0 z-50 shadow-sm shadow-black/20 border-b border-[#FCA311]/20">
         <div class="flex justify-between items-center w-full px-4 sm:px-6 py-3.5 max-w-7xl mx-auto">
             <div class="flex items-center gap-2.5">
                 <div
-                    class="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-primary-container flex items-center justify-center">
-                    <span class="material-symbols-outlined text-white text-lg"
+                    class="w-9 h-9 rounded-xl bg-gradient-to-br from-[#FCA311] to-[#D98200] flex items-center justify-center">
+                    <span class="material-symbols-outlined text-[#FFFFFF] text-lg"
                         style="font-variation-settings: 'FILL' 1;">palette</span>
                 </div>
-                <span class="text-xl font-extrabold text-white font-headline tracking-tight">Formation Canva
+                <span class="text-xl font-extrabold text-[#FFFFFF] font-headline tracking-tight">Formation Canva
                     Pro</span>
             </div>
             <div class="hidden md:flex items-center gap-5">
@@ -167,11 +161,11 @@
                     <span class="material-symbols-outlined text-base">calendar_today</span>
                     <span class="text-xs">16 Avril 2026</span>
                 </div>
-                <div class="flex items-center gap-1.5 text-slate-400 font-headline">
+                <div class="flex items-center gap-1.5 text-[#E5E5E5] font-headline">
                     <span class="material-symbols-outlined text-base">schedule</span>
                     <span class="text-xs">Jeu · Ven · Sam</span>
                 </div>
-                <div class="flex items-center gap-1.5 text-slate-400 font-headline">
+                <div class="flex items-center gap-1.5 text-[#E5E5E5] font-headline">
                     <span class="material-symbols-outlined text-base">workspace_premium</span>
                     <span class="text-xs">Certifié</span>
                 </div>
@@ -198,15 +192,15 @@
         <!-- ====== SIDEBAR (Desktop) ====== -->
         <aside class="hidden lg:flex flex-col w-72 flex-shrink-0 sticky top-24 h-fit" id="sidebar">
             <div
-                class="bg-slate-900/40 backdrop-blur-md rounded-2xl p-6 shadow-xl shadow-black/20 border border-white/10/80">
+                class="bg-[#14213D]/40 backdrop-blur-md rounded-2xl p-6 shadow-xl shadow-black/20 border border-[#FCA311]/20/80">
                 <div class="mb-8">
-                    <h2 class="text-lg font-bold text-white font-headline">Inscription</h2>
-                    <p class="text-primary text-sm font-medium" id="sidebar-step-label">Étape 1 sur 4</p>
+                    <h2 class="text-lg font-bold text-[#FFFFFF] font-headline">Inscription</h2>
+                    <p class="text-[#FCA311] text-sm font-bold" id="sidebar-step-label">Étape 1 sur 4</p>
                 </div>
 
                 <!-- Sidebar Step Progress -->
-                <div class="w-full h-1 bg-slate-200/60 rounded-full mb-6 overflow-hidden">
-                    <div class="h-full bg-gradient-to-r from-primary to-primary-container rounded-full transition-all duration-500"
+                <div class="w-full h-1 bg-[#14213D] rounded-full mb-6 overflow-hidden">
+                    <div class="h-full bg-gradient-to-r from-[#FCA311] to-[#D98200] rounded-full transition-all duration-500"
                         id="sidebar-progress-bar" style="width: 0%"></div>
                 </div>
 
@@ -238,13 +232,13 @@
                 </nav>
 
                 <!-- Completion Indicator -->
-                <div class="mt-8 pt-6 border-t border-white/10/60">
+                <div class="mt-8 pt-6 border-t border-[#FCA311]/20/60">
                     <div class="flex items-center justify-between mb-2">
-                        <span class="text-xs font-semibold text-slate-400">Progression</span>
-                        <span class="text-xs font-bold text-primary" id="sidebar-percent">0%</span>
+                        <span class="text-xs font-semibold text-[#E5E5E5]">Progression</span>
+                        <span class="text-xs font-bold text-[#FCA311]" id="sidebar-percent">0%</span>
                     </div>
-                    <div class="w-full h-2 bg-slate-200/60 rounded-full overflow-hidden">
-                        <div class="h-full bg-gradient-to-r from-primary to-primary-container rounded-full transition-all duration-500"
+                    <div class="w-full h-2 bg-[#14213D] rounded-full overflow-hidden">
+                        <div class="h-full bg-gradient-to-r from-[#FCA311] to-[#D98200] rounded-full transition-all duration-500"
                             id="sidebar-completion-bar" style="width: 0%"></div>
                     </div>
                 </div>
@@ -252,14 +246,14 @@
         </aside>
 
         <!-- ====== MOBILE PROGRESS BAR ====== -->
-        <div class="lg:hidden sticky top-[57px] z-40 -mx-4 sm:-mx-6 px-4 sm:px-6 py-3 bg-[#09083b]/90 backdrop-blur-xl border-b border-white/10"
+        <div class="lg:hidden sticky top-[57px] z-40 -mx-4 sm:-mx-6 px-4 sm:px-6 py-3 bg-[#000000]/90 backdrop-blur-xl border-b border-[#FCA311]/20"
             id="mobile-progress">
             <div class="flex items-center justify-between mb-2">
-                <span class="text-xs font-semibold text-slate-400" id="mobile-step-label">Étape 1 sur 4</span>
-                <span class="text-xs font-bold text-primary" id="mobile-percent">0%</span>
+                <span class="text-xs font-semibold text-[#E5E5E5]" id="mobile-step-label">Étape 1 sur 4</span>
+                <span class="text-xs font-bold text-[#FCA311]" id="mobile-percent">0%</span>
             </div>
-            <div class="w-full h-1.5 bg-slate-200/60 rounded-full overflow-hidden">
-                <div class="h-full bg-gradient-to-r from-primary to-primary-container rounded-full transition-all duration-500 relative overflow-hidden"
+            <div class="w-full h-1.5 bg-[#14213D] rounded-full overflow-hidden">
+                <div class="h-full bg-gradient-to-r from-[#FCA311] to-[#D98200] rounded-full transition-all duration-500 relative overflow-hidden"
                     id="mobile-progress-bar" style="width: 0%">
                     <div
                         class="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer">
@@ -288,9 +282,9 @@
             <!-- Hero Section -->
             <section class="mb-8 text-center lg:text-left animate-fade-up">
                 <h1
-                    class="text-3xl sm:text-4xl lg:text-5xl font-extrabold font-headline tracking-tight text-slate-100 mb-3 leading-tight">
+                    class="text-3xl sm:text-4xl lg:text-5xl font-extrabold font-headline tracking-tight text-[#FFFFFF] font-bold mb-3 leading-tight">
                     Apprenez canva pro :<br class="hidden sm:block" />
-                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary-container">
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#FCA311] to-[#D98200]">
                         Devenez des créateurs de contenu</span>
                 </h1>
                 <p class="text-secondary font-medium text-base sm:text-lg max-w-2xl leading-relaxed">
@@ -325,7 +319,7 @@
                         <div class="flex items-center gap-2">
                             <span class="material-symbols-outlined text-red-500 text-xl"
                                 style="font-variation-settings: 'FILL' 1;">local_fire_department</span>
-                            <span class="text-sm font-extrabold text-white font-headline" id="places-text">Il ne
+                            <span class="text-sm font-extrabold text-[#FFFFFF] font-headline" id="places-text">Il ne
                                 reste que <span class="text-red-500" id="places-count">13</span> places sur 20</span>
                         </div>
                         <span
@@ -346,13 +340,13 @@
 
                     <!-- Header -->
                     <div
-                        class="bg-gradient-to-r from-primary to-primary-container px-6 sm:px-8 py-5 flex items-center gap-3">
-                        <span class="material-symbols-outlined text-white text-2xl"
+                        class="bg-gradient-to-r from-[#FCA311] to-[#D98200] px-6 sm:px-8 py-5 flex items-center gap-3">
+                        <span class="material-symbols-outlined text-[#FFFFFF] text-2xl"
                             style="font-variation-settings: 'FILL' 1;">menu_book</span>
                         <div>
-                            <h2 class="text-lg sm:text-xl font-extrabold text-white font-headline tracking-tight">
+                            <h2 class="text-lg sm:text-xl font-extrabold text-[#FFFFFF] font-headline tracking-tight">
                                 Qu'allez-vous apprendre ?</h2>
-                            <p class="text-white/70 text-xs font-medium">15 jours · 30 heures · 5 modules · 2 à 3
+                            <p class="text-[#FFFFFF]/70 text-xs font-medium">15 jours · 30 heures · 5 modules · 2 à 3
                                 séances/semaine</p>
                         </div>
                     </div>
@@ -361,39 +355,39 @@
 
                         <!-- Semaine 1 -->
                         <div
-                            class="programme-accordion bg-blue-900/20 border border-blue-500/20 rounded-2xl overflow-hidden accordion-open">
+                            class="programme-accordion bg-[#14213D]/40 border border-[#FCA311]/20 rounded-2xl overflow-hidden accordion-open">
                             <button type="button"
                                 class="accordion-header w-full flex items-center gap-2.5 p-5 text-left"
                                 aria-expanded="true">
                                 <span
                                     class="w-8 h-8 rounded-xl bg-blue-500 flex items-center justify-center flex-shrink-0">
-                                    <span class="material-symbols-outlined text-white text-base"
+                                    <span class="material-symbols-outlined text-[#FFFFFF] text-base"
                                         style="font-variation-settings: 'FILL' 1;">design_services</span>
                                 </span>
-                                <h3 class="text-sm font-extrabold text-blue-200 font-headline flex-1">SEMAINE 1 &middot;
+                                <h3 class="text-sm font-extrabold text-[#FFFFFF] font-headline flex-1">SEMAINE 1 &middot;
                                     FONDATIONS DU DESIGN</h3>
                                 <span
                                     class="accordion-arrow material-symbols-outlined text-blue-400 text-xl transition-transform duration-300">expand_more</span>
                             </button>
                             <div class="accordion-body px-5 pb-5">
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pl-1">
-                                    <div class="flex items-center gap-2 text-sm text-blue-300"><span
+                                    <div class="flex items-center gap-2 text-sm text-[#E5E5E5]"><span
                                             class="material-symbols-outlined text-green-500 text-base"
                                             style="font-variation-settings: 'FILL' 1;">check_circle</span>Prise en main
                                         experte de Canva Pro</div>
-                                    <div class="flex items-center gap-2 text-sm text-blue-300"><span
+                                    <div class="flex items-center gap-2 text-sm text-[#E5E5E5]"><span
                                             class="material-symbols-outlined text-green-500 text-base"
                                             style="font-variation-settings: 'FILL' 1;">check_circle</span>Brand Kit
                                         &amp; psychologie des couleurs</div>
-                                    <div class="flex items-center gap-2 text-sm text-blue-300"><span
+                                    <div class="flex items-center gap-2 text-sm text-[#E5E5E5]"><span
                                             class="material-symbols-outlined text-green-500 text-base"
                                             style="font-variation-settings: 'FILL' 1;">check_circle</span>Raccourcis
                                         clavier &amp; gestion dossiers</div>
-                                    <div class="flex items-center gap-2 text-sm text-blue-300"><span
+                                    <div class="flex items-center gap-2 text-sm text-[#E5E5E5]"><span
                                             class="material-symbols-outlined text-green-500 text-base"
                                             style="font-variation-settings: 'FILL' 1;">check_circle</span>R&egrave;gles
                                         d'or du graphisme</div>
-                                    <div class="flex items-center gap-2 text-sm text-blue-300"><span
+                                    <div class="flex items-center gap-2 text-sm text-[#E5E5E5]"><span
                                             class="material-symbols-outlined text-green-500 text-base"
                                             style="font-variation-settings: 'FILL' 1;">check_circle</span>Exercice :
                                         refonte d'un design amateur</div>
@@ -403,39 +397,39 @@
 
                         <!-- Semaine 2 -->
                         <div
-                            class="programme-accordion bg-purple-900/20 border border-purple-500/20 rounded-2xl overflow-hidden">
+                            class="programme-accordion bg-[#14213D]/40 border border-[#FCA311]/20 rounded-2xl overflow-hidden">
                             <button type="button"
                                 class="accordion-header w-full flex items-center gap-2.5 p-5 text-left"
                                 aria-expanded="false">
                                 <span
                                     class="w-8 h-8 rounded-xl bg-purple-500 flex items-center justify-center flex-shrink-0">
-                                    <span class="material-symbols-outlined text-white text-base"
+                                    <span class="material-symbols-outlined text-[#FFFFFF] text-base"
                                         style="font-variation-settings: 'FILL' 1;">phone_iphone</span>
                                 </span>
-                                <h3 class="text-sm font-extrabold text-purple-200 font-headline flex-1">SEMAINE 2
+                                <h3 class="text-sm font-extrabold text-[#FFFFFF] font-headline flex-1">SEMAINE 2
                                     &middot; LES RÉSEAUX SOCIAUX</h3>
                                 <span
                                     class="accordion-arrow material-symbols-outlined text-purple-400 text-xl transition-transform duration-300">expand_more</span>
                             </button>
                             <div class="accordion-body px-5 pb-5 hidden">
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pl-1">
-                                    <div class="flex items-center gap-2 text-sm text-purple-300"><span
+                                    <div class="flex items-center gap-2 text-sm text-[#E5E5E5]"><span
                                             class="material-symbols-outlined text-green-500 text-base"
                                             style="font-variation-settings: 'FILL' 1;">check_circle</span>Posts
                                         Instagram, Facebook &amp; LinkedIn</div>
-                                    <div class="flex items-center gap-2 text-sm text-purple-300"><span
+                                    <div class="flex items-center gap-2 text-sm text-[#E5E5E5]"><span
                                             class="material-symbols-outlined text-green-500 text-base"
                                             style="font-variation-settings: 'FILL' 1;">check_circle</span>Grilles de
                                         composition expertes</div>
-                                    <div class="flex items-center gap-2 text-sm text-purple-300"><span
+                                    <div class="flex items-center gap-2 text-sm text-[#E5E5E5]"><span
                                             class="material-symbols-outlined text-green-500 text-base"
                                             style="font-variation-settings: 'FILL' 1;">check_circle</span>Carrousels
                                         &amp; storytelling visuel</div>
-                                    <div class="flex items-center gap-2 text-sm text-purple-300"><span
+                                    <div class="flex items-center gap-2 text-sm text-[#E5E5E5]"><span
                                             class="material-symbols-outlined text-green-500 text-base"
                                             style="font-variation-settings: 'FILL' 1;">check_circle</span>Stories
                                         interactives &amp; banni&egrave;res</div>
-                                    <div class="flex items-center gap-2 text-sm text-purple-300"><span
+                                    <div class="flex items-center gap-2 text-sm text-[#E5E5E5]"><span
                                             class="material-symbols-outlined text-green-500 text-base"
                                             style="font-variation-settings: 'FILL' 1;">check_circle</span>Planification
                                         de contenu int&eacute;gr&eacute;e</div>
@@ -445,35 +439,35 @@
 
                         <!-- Semaine 3 -->
                         <div
-                            class="programme-accordion bg-pink-900/20 border border-pink-500/20 rounded-2xl overflow-hidden">
+                            class="programme-accordion bg-[#14213D]/40 border border-[#FCA311]/20 rounded-2xl overflow-hidden">
                             <button type="button"
                                 class="accordion-header w-full flex items-center gap-2.5 p-5 text-left"
                                 aria-expanded="false">
                                 <span
                                     class="w-8 h-8 rounded-xl bg-pink-500 flex items-center justify-center flex-shrink-0">
-                                    <span class="material-symbols-outlined text-white text-base"
+                                    <span class="material-symbols-outlined text-[#FFFFFF] text-base"
                                         style="font-variation-settings: 'FILL' 1;">movie</span>
                                 </span>
-                                <h3 class="text-sm font-extrabold text-pink-200 font-headline flex-1">SEMAINE 3 &middot;
+                                <h3 class="text-sm font-extrabold text-[#FFFFFF] font-headline flex-1">SEMAINE 3 &middot;
                                     VID&Eacute;O, MOUVEMENT &amp; IA</h3>
                                 <span
                                     class="accordion-arrow material-symbols-outlined text-pink-400 text-xl transition-transform duration-300">expand_more</span>
                             </button>
                             <div class="accordion-body px-5 pb-5 hidden">
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pl-1">
-                                    <div class="flex items-center gap-2 text-sm text-pink-300"><span
+                                    <div class="flex items-center gap-2 text-sm text-[#E5E5E5]"><span
                                             class="material-symbols-outlined text-green-500 text-base"
                                             style="font-variation-settings: 'FILL' 1;">check_circle</span>Montage
                                         vid&eacute;o Reels &amp; TikTok</div>
-                                    <div class="flex items-center gap-2 text-sm text-pink-300"><span
+                                    <div class="flex items-center gap-2 text-sm text-[#E5E5E5]"><span
                                             class="material-symbols-outlined text-green-500 text-base"
                                             style="font-variation-settings: 'FILL' 1;">check_circle</span>Timeline,
                                         d&eacute;coupage &amp; transitions</div>
-                                    <div class="flex items-center gap-2 text-sm text-pink-300"><span
+                                    <div class="flex items-center gap-2 text-sm text-[#E5E5E5]"><span
                                             class="material-symbols-outlined text-green-500 text-base"
                                             style="font-variation-settings: 'FILL' 1;">check_circle</span>Studio Magique
                                         (IA) &amp; g&eacute;n&eacute;ration</div>
-                                    <div class="flex items-center gap-2 text-sm text-pink-300"><span
+                                    <div class="flex items-center gap-2 text-sm text-[#E5E5E5]"><span
                                             class="material-symbols-outlined text-green-500 text-base"
                                             style="font-variation-settings: 'FILL' 1;">check_circle</span>Retouche photo
                                         &amp; d&eacute;tourage pro</div>
@@ -483,35 +477,35 @@
 
                         <!-- Semaine 4 -->
                         <div
-                            class="programme-accordion bg-amber-900/20 border border-amber-500/20 rounded-2xl overflow-hidden">
+                            class="programme-accordion bg-[#14213D]/40 border border-[#FCA311]/20 rounded-2xl overflow-hidden">
                             <button type="button"
                                 class="accordion-header w-full flex items-center gap-2.5 p-5 text-left"
                                 aria-expanded="false">
                                 <span
                                     class="w-8 h-8 rounded-xl bg-amber-500 flex items-center justify-center flex-shrink-0">
-                                    <span class="material-symbols-outlined text-white text-base"
+                                    <span class="material-symbols-outlined text-[#FFFFFF] text-base"
                                         style="font-variation-settings: 'FILL' 1;">print</span>
                                 </span>
-                                <h3 class="text-sm font-extrabold text-amber-200 font-headline flex-1">SEMAINE 4
+                                <h3 class="text-sm font-extrabold text-[#FFFFFF] font-headline flex-1">SEMAINE 4
                                     &middot; SUPPORTS D'ENTREPRISE &amp; PRINT</h3>
                                 <span
                                     class="accordion-arrow material-symbols-outlined text-amber-400 text-xl transition-transform duration-300">expand_more</span>
                             </button>
                             <div class="accordion-body px-5 pb-5 hidden">
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pl-1">
-                                    <div class="flex items-center gap-2 text-sm text-amber-300"><span
+                                    <div class="flex items-center gap-2 text-sm text-[#E5E5E5]"><span
                                             class="material-symbols-outlined text-green-500 text-base"
                                             style="font-variation-settings: 'FILL' 1;">check_circle</span>Pr&eacute;sentations
                                         &amp; Pitch Decks anim&eacute;s</div>
-                                    <div class="flex items-center gap-2 text-sm text-amber-300"><span
+                                    <div class="flex items-center gap-2 text-sm text-[#E5E5E5]"><span
                                             class="material-symbols-outlined text-green-500 text-base"
                                             style="font-variation-settings: 'FILL' 1;">check_circle</span>Affiches &amp;
                                         flyers (CMJN, fonds perdus)</div>
-                                    <div class="flex items-center gap-2 text-sm text-amber-300"><span
+                                    <div class="flex items-center gap-2 text-sm text-[#E5E5E5]"><span
                                             class="material-symbols-outlined text-green-500 text-base"
                                             style="font-variation-settings: 'FILL' 1;">check_circle</span>Marges de
                                         s&eacute;curit&eacute; &amp; fichiers techniques</div>
-                                    <div class="flex items-center gap-2 text-sm text-amber-300"><span
+                                    <div class="flex items-center gap-2 text-sm text-[#E5E5E5]"><span
                                             class="material-symbols-outlined text-green-500 text-base"
                                             style="font-variation-settings: 'FILL' 1;">check_circle</span>Mockups
                                         r&eacute;alistes (t-shirts, smartphones)</div>
@@ -521,35 +515,35 @@
 
                         <!-- Semaine 5 -->
                         <div
-                            class="programme-accordion bg-emerald-900/20 border border-emerald-500/20 rounded-2xl overflow-hidden">
+                            class="programme-accordion bg-[#14213D]/40 border border-[#FCA311]/20 rounded-2xl overflow-hidden">
                             <button type="button"
                                 class="accordion-header w-full flex items-center gap-2.5 p-5 text-left"
                                 aria-expanded="false">
                                 <span
                                     class="w-8 h-8 rounded-xl bg-emerald-500 flex items-center justify-center flex-shrink-0">
-                                    <span class="material-symbols-outlined text-white text-base"
+                                    <span class="material-symbols-outlined text-[#FFFFFF] text-base"
                                         style="font-variation-settings: 'FILL' 1;">emoji_events</span>
                                 </span>
-                                <h3 class="text-sm font-extrabold text-emerald-200 font-headline flex-1">SEMAINE 5
+                                <h3 class="text-sm font-extrabold text-[#FFFFFF] font-headline flex-1">SEMAINE 5
                                     &middot; GRAND D&Eacute;FI &amp; LANCEMENT PRO</h3>
                                 <span
                                     class="accordion-arrow material-symbols-outlined text-emerald-400 text-xl transition-transform duration-300">expand_more</span>
                             </button>
                             <div class="accordion-body px-5 pb-5 hidden">
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pl-1">
-                                    <div class="flex items-center gap-2 text-sm text-emerald-300"><span
+                                    <div class="flex items-center gap-2 text-sm text-[#E5E5E5]"><span
                                             class="material-symbols-outlined text-green-500 text-base"
                                             style="font-variation-settings: 'FILL' 1;">check_circle</span>Simulation
                                         commande : brief client r&eacute;el</div>
-                                    <div class="flex items-center gap-2 text-sm text-emerald-300"><span
+                                    <div class="flex items-center gap-2 text-sm text-[#E5E5E5]"><span
                                             class="material-symbols-outlined text-green-500 text-base"
                                             style="font-variation-settings: 'FILL' 1;">check_circle</span>Cr&eacute;ation
                                         site portfolio sur Canva</div>
-                                    <div class="flex items-center gap-2 text-sm text-emerald-300"><span
+                                    <div class="flex items-center gap-2 text-sm text-[#E5E5E5]"><span
                                             class="material-symbols-outlined text-green-500 text-base"
                                             style="font-variation-settings: 'FILL' 1;">check_circle</span>Pitch projets
                                         finaux &amp; retours</div>
-                                    <div class="flex items-center gap-2 text-sm text-emerald-300"><span
+                                    <div class="flex items-center gap-2 text-sm text-[#E5E5E5]"><span
                                             class="material-symbols-outlined text-green-500 text-base"
                                             style="font-variation-settings: 'FILL' 1;">check_circle</span>Strat&eacute;gies
                                         pour trouver ses clients</div>
@@ -557,35 +551,35 @@
                             </div>
                         </div>
 
-                        <!-- R&eacute;sultat garanti -->
+                        <!-- Résultat garanti -->
                         <div
-                            class="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200 rounded-2xl p-5">
+                            class="bg-[#14213D]/40 border border-[#FCA311]/20 rounded-2xl p-5">
                             <div class="flex items-center gap-2.5 mb-3">
-                                <span class="material-symbols-outlined text-green-600 text-xl"
+                                <span class="material-symbols-outlined text-[#FCA311] text-xl"
                                     style="font-variation-settings: 'FILL' 1;">emoji_events</span>
-                                <h3 class="text-sm font-extrabold text-green-200 font-headline">R&Eacute;SULTAT GARANTI
+                                <h3 class="text-sm font-extrabold text-[#FFFFFF] font-headline">RÉSULTAT GARANTI
                                 </h3>
                             </div>
                             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                 <div
-                                    class="flex items-center gap-2.5 bg-white/5 rounded-xl px-4 py-3 border border-green-100">
-                                    <span class="material-symbols-outlined text-primary text-lg"
+                                    class="flex items-center gap-2.5 bg-[#000000]/40 rounded-xl px-4 py-3 border border-[#FCA311]/10">
+                                    <span class="material-symbols-outlined text-[#FCA311] text-lg"
                                         style="font-variation-settings: 'FILL' 1;">folder_special</span>
-                                    <span class="text-sm font-bold text-green-200">Portfolio complet
-                                        valid&eacute;</span>
+                                    <span class="text-sm font-bold text-[#FFFFFF]">Portfolio complet
+                                        validé</span>
                                 </div>
                                 <div
-                                    class="flex items-center gap-2.5 bg-white/5 rounded-xl px-4 py-3 border border-green-100">
-                                    <span class="material-symbols-outlined text-primary text-lg"
+                                    class="flex items-center gap-2.5 bg-[#000000]/40 rounded-xl px-4 py-3 border border-[#FCA311]/10">
+                                    <span class="material-symbols-outlined text-[#FCA311] text-lg"
                                         style="font-variation-settings: 'FILL' 1;">rocket_launch</span>
-                                    <span class="text-sm font-bold text-green-200">Pr&ecirc;t pour clients /
+                                    <span class="text-sm font-bold text-[#FFFFFF]">Prêt pour clients /
                                         emploi</span>
                                 </div>
                                 <div
-                                    class="flex items-center gap-2.5 bg-white/5 rounded-xl px-4 py-3 border border-green-100">
-                                    <span class="material-symbols-outlined text-primary text-lg"
+                                    class="flex items-center gap-2.5 bg-[#000000]/40 rounded-xl px-4 py-3 border border-[#FCA311]/10">
+                                    <span class="material-symbols-outlined text-[#FCA311] text-lg"
                                         style="font-variation-settings: 'FILL' 1;">workspace_premium</span>
-                                    <span class="text-sm font-bold text-green-200">Certificat de formation</span>
+                                    <span class="text-sm font-bold text-[#FFFFFF]">Certificat de formation</span>
                                 </div>
                             </div>
                         </div>
@@ -605,7 +599,7 @@
                                 <div class="circle" id="bottom"></div>
                                 <div class="circle" id="right"></div>
                                 <div class="back-content">
-                                    <span class="material-symbols-outlined text-4xl text-primary-fixed"
+                                    <span class="material-symbols-outlined text-4xl text-[#FCA311]"
                                         style="font-variation-settings: 'FILL' 1;">workspace_premium</span>
                                     <p style="text-align: center; font-size: 13px; padding: 0 15px;">Réalisateur,
                                         stratège digital et expert en création de contenu à haut niveau.</p>
@@ -614,12 +608,12 @@
                             <div class="front">
                                 <img src="assets/images/formation canva.jpg" alt="Ali William" class="img">
                                 <div class="front-content">
-                                    <small class="badge text-white font-bold" style="letter-spacing: 1px;">CANVA <span
-                                            class="text-primary-fixed-dim">PRO</span></small>
+                                    <small class="badge bg-gradient-to-br from-[#FCA311] to-[#D98200] text-[#000000] font-bold" style="letter-spacing: 1px;">CANVA <span
+                                            class="text-[#000000]/60">PRO</span></small>
                                     <div class="description">
                                         <div class="title">
                                             <p class="font-bold text-[13px] font-headline">Ali William</p>
-                                            <span class="material-symbols-outlined text-primary text-[15px]"
+                                            <span class="material-symbols-outlined text-[#FCA311] text-[15px]"
                                                 style="font-variation-settings: 'FILL' 1;">verified</span>
                                         </div>
                                         <p class="card-footer">Votre Formateur</p>
@@ -631,16 +625,16 @@
 
                     <div class="flex-1 text-center md:text-left">
                         <div class="flex items-center justify-center md:justify-start gap-2 mb-3">
-                            <span class="material-symbols-outlined text-primary text-2xl"
+                            <span class="material-symbols-outlined text-[#FCA311] text-2xl"
                                 style="font-variation-settings: 'FILL' 1;">verified</span>
-                            <h3 class="text-xl sm:text-2xl font-extrabold text-white font-headline">Votre Formateur
+                            <h3 class="text-xl sm:text-2xl font-extrabold text-[#FFFFFF] font-headline">Votre Formateur
                             </h3>
                         </div>
-                        <p class="text-sm sm:text-base text-slate-400 leading-relaxed mb-5">
+                        <p class="text-sm sm:text-base text-[#E5E5E5] leading-relaxed mb-5">
                             Expert en communication multimédia, réalisateur primé et stratège digital. Fort de son
-                            expérience de terrain, notamment en tant que <strong class="text-slate-200">Responsable de
+                            expérience de terrain, notamment en tant que <strong class="text-[#FFFFFF] font-bold">Responsable de
                                 Communication Multimédia à l'UNICEF</strong> et fondateur de <strong
-                                class="text-slate-200">CINEWORLD ACADEMIE</strong>, Ali maîtrise l'art absolu de
+                                class="text-[#FFFFFF] font-bold">CINEWORLD ACADEMIE</strong>, Ali maîtrise l'art absolu de
                             captiver une audience. Avec son œil aiguisé de réalisateur et son expertise en création de
                             contenu à haut niveau, il vous transmettra non seulement la maîtrise de Canva Pro, mais
                             surtout la <strong class="text-primary">vision créative et stratégique</strong> exigée par
@@ -648,13 +642,13 @@
                         </p>
                         <div class="flex flex-wrap justify-center md:justify-start gap-2">
                             <span
-                                class="bg-primary/10 text-primary px-3 py-1.5 rounded-full text-xs font-bold border border-primary/20">Design
+                                class="bg-[#FCA311]/10 text-[#FCA311] px-3 py-1.5 rounded-full text-xs font-bold border border-[#FCA311]/20">Design
                                 Digital</span>
                             <span
-                                class="bg-primary/10 text-primary px-3 py-1.5 rounded-full text-xs font-bold border border-primary/20">Social
+                                class="bg-[#FCA311]/10 text-[#FCA311] px-3 py-1.5 rounded-full text-xs font-bold border border-[#FCA311]/20">Social
                                 Media</span>
                             <span
-                                class="bg-primary/10 text-primary px-3 py-1.5 rounded-full text-xs font-bold border border-primary/20">Vidéaste</span>
+                                class="bg-[#FCA311]/10 text-[#FCA311] px-3 py-1.5 rounded-full text-xs font-bold border border-[#FCA311]/20">Vidéaste</span>
                         </div>
                     </div>
 
@@ -665,55 +659,55 @@
             <section class="mb-12 animate-fade-up" style="animation-delay: 0.09s;" id="faq-section">
                 <div class="flex items-center gap-3 mb-5 px-2">
                     <span
-                        class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-slate-400 font-bold">?</span>
-                    <h3 class="text-lg sm:text-xl font-extrabold text-white font-headline">Questions Fréquentes</h3>
+                        class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-[#E5E5E5] font-bold">?</span>
+                    <h3 class="text-lg sm:text-xl font-extrabold text-[#FFFFFF] font-headline">Questions Fréquentes</h3>
                 </div>
                 <div class="space-y-3">
                     <div
-                        class="programme-accordion bg-white/5 border border-white/10 rounded-2xl overflow-hidden hover:border-primary/30 transition-colors">
+                        class="programme-accordion bg-[#14213D]/40 border border-[#FCA311]/20 rounded-2xl overflow-hidden hover:border-[#FCA311]/30 transition-colors">
                         <button type="button"
                             class="accordion-header w-full flex items-center justify-between p-5 text-left"
                             aria-expanded="false">
-                            <h4 class="text-sm font-bold text-slate-200 font-headline pr-4">Faut-il un ordinateur
+                            <h4 class="text-sm font-bold text-[#FFFFFF] font-headline pr-4">Faut-il un ordinateur
                                 portable pour participer ?</h4>
                             <span
-                                class="accordion-arrow material-symbols-outlined text-slate-400 text-xl transition-transform duration-300">expand_more</span>
+                                class="accordion-arrow material-symbols-outlined text-[#E5E5E5] text-xl transition-transform duration-300">expand_more</span>
                         </button>
                         <div class="accordion-body px-5 pb-5 hidden">
-                            <p class="text-sm text-slate-400">C'est fortement recommandé pour être à l'aise avec les
+                            <p class="text-sm text-[#E5E5E5]">C'est fortement recommandé pour être à l'aise avec les
                                 exercices pratiques et les raccourcis. Cependant, si vous avez une tablette performante
                                 ou un grand smartphone, vous pouvez tout de même suivre la formation, l'application
                                 Canva étant très bien optimisée sur mobile.</p>
                         </div>
                     </div>
                     <div
-                        class="programme-accordion bg-white/5 border border-white/10 rounded-2xl overflow-hidden hover:border-primary/30 transition-colors">
+                        class="programme-accordion bg-[#14213D]/40 border border-[#FCA311]/20 rounded-2xl overflow-hidden hover:border-[#FCA311]/30 transition-colors">
                         <button type="button"
                             class="accordion-header w-full flex items-center justify-between p-5 text-left"
                             aria-expanded="false">
-                            <h4 class="text-sm font-bold text-slate-200 font-headline pr-4">Dois-je déjà avoir la
+                            <h4 class="text-sm font-bold text-[#FFFFFF] font-headline pr-4">Dois-je déjà avoir la
                                 version Canva Pro payante ?</h4>
                             <span
-                                class="accordion-arrow material-symbols-outlined text-slate-400 text-xl transition-transform duration-300">expand_more</span>
+                                class="accordion-arrow material-symbols-outlined text-[#E5E5E5] text-xl transition-transform duration-300">expand_more</span>
                         </button>
                         <div class="accordion-body px-5 pb-5 hidden">
-                            <p class="text-sm text-slate-400">Non, pas d'inquiétude ! Venez avec votre compte Canva
+                            <p class="text-sm text-[#E5E5E5]">Non, pas d'inquiétude ! Venez avec votre compte Canva
                                 gratuit. Je vous montrerai comment exploiter l'outil à 100% et vous donnerai toutes les
                                 astuces concernant les fonctionnalités "Pro" pendant nos sessions.</p>
                         </div>
                     </div>
                     <div
-                        class="programme-accordion bg-white/5 border border-white/10 rounded-2xl overflow-hidden hover:border-primary/30 transition-colors">
+                        class="programme-accordion bg-[#14213D]/40 border border-[#FCA311]/20 rounded-2xl overflow-hidden hover:border-[#FCA311]/30 transition-colors">
                         <button type="button"
                             class="accordion-header w-full flex items-center justify-between p-5 text-left"
                             aria-expanded="false">
-                            <h4 class="text-sm font-bold text-slate-200 font-headline pr-4">Je suis totalement
+                            <h4 class="text-sm font-bold text-[#FFFFFF] font-headline pr-4">Je suis totalement
                                 débutant(e), est-ce fait pour moi ?</h4>
                             <span
-                                class="accordion-arrow material-symbols-outlined text-slate-400 text-xl transition-transform duration-300">expand_more</span>
+                                class="accordion-arrow material-symbols-outlined text-[#E5E5E5] text-xl transition-transform duration-300">expand_more</span>
                         </button>
                         <div class="accordion-body px-5 pb-5 hidden">
-                            <p class="text-sm text-slate-400">Absolument ! La première semaine est consacrée aux
+                            <p class="text-sm text-[#E5E5E5]">Absolument ! La première semaine est consacrée aux
                                 "Fondations du Design". Nous reprenons les bases pas-à-pas. Que vous n'ayez jamais
                                 ouvert l'application ou que vous bricoliez déjà un peu, le programme intensif est conçu
                                 pour vous amener au niveau professionnel en 15 jours.</p>
@@ -730,19 +724,19 @@
                     <span class="material-symbols-outlined text-4xl"
                         style="font-variation-settings: 'FILL' 1;">check_circle</span>
                 </div>
-                <h2 class="text-2xl font-bold text-white mb-4 font-headline">Vous êtes déjà inscrit !</h2>
-                <p class="text-slate-400 mb-8 leading-relaxed">Nous avons bien enregistré votre inscription pour la
+                <h2 class="text-2xl font-bold text-[#FFFFFF] mb-4 font-headline">Vous êtes déjà inscrit !</h2>
+                <p class="text-[#E5E5E5] mb-8 leading-relaxed">Nous avons bien enregistré votre inscription pour la
                     <strong class="text-primary tracking-wide">FORMATION CANVA PRO</strong>. Merci de votre confiance,
                     nous reviendrons vers vous très vite !
                 </p>
                 <div class="flex flex-col sm:flex-row gap-4 justify-center items-center mt-8">
                     <a href="https://wa.me/25377145306" target="_blank" rel="noopener noreferrer"
-                        class="inline-flex items-center justify-center gap-3 px-6 py-3.5 bg-[#25D366] text-white font-bold rounded-xl hover:bg-[#1ebe5d] transition-colors w-full sm:w-auto">
+                        class="inline-flex items-center justify-center gap-3 px-6 py-3.5 bg-[#25D366] text-[#FFFFFF] font-bold rounded-xl hover:bg-[#1ebe5d] transition-colors w-full sm:w-auto">
                         <span class="material-symbols-outlined text-lg">chat</span>
                         Contacter le formateur
                     </a>
                     <button type="button" id="btn-register-other"
-                        class="inline-flex items-center justify-center gap-3 px-6 py-3.5 bg-white/10 text-slate-200 font-bold rounded-xl hover:bg-white/10 transition-colors w-full sm:w-auto">
+                        class="inline-flex items-center justify-center gap-3 px-6 py-3.5 bg-white/10 text-[#FFFFFF] font-bold font-bold rounded-xl hover:bg-[#14213D]/70 transition-colors w-full sm:w-auto">
                         <span class="material-symbols-outlined text-lg">person_add</span>
                         Inscrire une autre personne
                     </button>
@@ -756,7 +750,7 @@
 
                 <!-- Top Progress Bar -->
                 <div class="absolute top-0 left-0 w-full h-1 bg-white/10 flex">
-                    <div class="h-full bg-gradient-to-r from-primary to-primary-container transition-all duration-500"
+                    <div class="h-full bg-gradient-to-r from-[#FCA311] to-[#D98200] transition-all duration-500"
                         id="form-top-bar" style="width: 25%"></div>
                 </div>
 
@@ -799,14 +793,14 @@
                                         pattern="^(77|67)\d{6}$" maxlength="8"
                                         aria-describedby="telephone-help telephone-error" autocomplete="tel-local">
                                 </div>
-                                <span class="text-[11px] text-slate-400 mt-0.5 ml-1" id="telephone-help">Format :
+                                <span class="text-[11px] text-[#E5E5E5] mt-0.5 ml-1" id="telephone-help">Format :
                                     77XXXXXX ou 67XXXXXX</span>
                                 <span class="field-error" id="telephone-error" role="alert" aria-live="polite"></span>
                             </div>
 
                             <div class="field-group" id="field-email">
                                 <label for="email" class="field-label">Email <span
-                                        class="text-slate-400 font-normal text-[11px]">(optionnel)</span></label>
+                                        class="text-[#E5E5E5] font-normal text-[11px]">(optionnel)</span></label>
                                 <input type="email" id="email" name="email" autocomplete="email" class="field-input"
                                     placeholder="exemple@email.com" aria-describedby="email-error">
                                 <span class="field-error" id="email-error" role="alert" aria-live="polite"></span>
@@ -816,7 +810,7 @@
                                 <label for="age" class="field-label">Âge <span class="text-primary">*</span></label>
                                 <input type="number" id="age" name="age" required min="16" max="80" class="field-input"
                                     placeholder="Ex : 25" aria-describedby="age-help age-error">
-                                <span class="text-[11px] text-slate-400 mt-0.5 ml-1" id="age-help">Entre 16 et 80
+                                <span class="text-[11px] text-[#E5E5E5] mt-0.5 ml-1" id="age-help">Entre 16 et 80
                                     ans</span>
                                 <span class="field-error" id="age-error" role="alert" aria-live="polite"></span>
                             </div>
@@ -827,7 +821,7 @@
                                 <div class="grid grid-cols-2 gap-2.5 sm:gap-3" id="profession-cards" role="radiogroup"
                                     aria-label="Votre profession">
                                     <button type="button"
-                                        class="profession-card flex items-center gap-3 px-3 py-3.5 sm:px-4 sm:py-4 rounded-xl sm:rounded-2xl border-2 border-white/10 bg-white/5 hover:border-primary/40 hover:bg-primary-fixed/20 hover:shadow-sm transition-all duration-200 cursor-pointer group"
+                                        class="profession-card flex items-center gap-3 px-3 py-3.5 sm:px-4 sm:py-4 rounded-xl sm:rounded-2xl border-2 border-[#FCA311]/20 bg-[#14213D]/40 hover:border-[#FCA311]/40 hover:bg-primary/20 hover:shadow-sm transition-all duration-200 cursor-pointer group"
                                         data-value="Étudiant">
                                         <span
                                             class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-100 transition-colors">
@@ -835,10 +829,10 @@
                                                 class="material-symbols-outlined text-blue-600 text-lg sm:text-xl">school</span>
                                         </span>
                                         <span
-                                            class="text-xs sm:text-sm font-semibold text-slate-200 group-hover:text-primary truncate">Étudiant</span>
+                                            class="text-xs sm:text-sm font-semibold text-[#FFFFFF] font-bold group-hover:text-primary truncate">Étudiant</span>
                                     </button>
                                     <button type="button"
-                                        class="profession-card flex items-center gap-3 px-3 py-3.5 sm:px-4 sm:py-4 rounded-xl sm:rounded-2xl border-2 border-white/10 bg-white/5 hover:border-primary/40 hover:bg-primary-fixed/20 hover:shadow-sm transition-all duration-200 cursor-pointer group"
+                                        class="profession-card flex items-center gap-3 px-3 py-3.5 sm:px-4 sm:py-4 rounded-xl sm:rounded-2xl border-2 border-[#FCA311]/20 bg-[#14213D]/40 hover:border-[#FCA311]/40 hover:bg-primary/20 hover:shadow-sm transition-all duration-200 cursor-pointer group"
                                         data-value="Employé">
                                         <span
                                             class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-purple-50 flex items-center justify-center flex-shrink-0 group-hover:bg-purple-100 transition-colors">
@@ -846,10 +840,10 @@
                                                 class="material-symbols-outlined text-purple-600 text-lg sm:text-xl">business_center</span>
                                         </span>
                                         <span
-                                            class="text-xs sm:text-sm font-semibold text-slate-200 group-hover:text-primary truncate">Employé</span>
+                                            class="text-xs sm:text-sm font-semibold text-[#FFFFFF] font-bold group-hover:text-primary truncate">Employé</span>
                                     </button>
                                     <button type="button"
-                                        class="profession-card flex items-center gap-3 px-3 py-3.5 sm:px-4 sm:py-4 rounded-xl sm:rounded-2xl border-2 border-white/10 bg-white/5 hover:border-primary/40 hover:bg-primary-fixed/20 hover:shadow-sm transition-all duration-200 cursor-pointer group"
+                                        class="profession-card flex items-center gap-3 px-3 py-3.5 sm:px-4 sm:py-4 rounded-xl sm:rounded-2xl border-2 border-[#FCA311]/20 bg-[#14213D]/40 hover:border-[#FCA311]/40 hover:bg-primary/20 hover:shadow-sm transition-all duration-200 cursor-pointer group"
                                         data-value="Entrepreneur">
                                         <span
                                             class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-amber-50 flex items-center justify-center flex-shrink-0 group-hover:bg-amber-100 transition-colors">
@@ -857,10 +851,10 @@
                                                 class="material-symbols-outlined text-amber-600 text-lg sm:text-xl">rocket_launch</span>
                                         </span>
                                         <span
-                                            class="text-xs sm:text-sm font-semibold text-slate-200 group-hover:text-primary truncate">Entrepreneur</span>
+                                            class="text-xs sm:text-sm font-semibold text-[#FFFFFF] font-bold group-hover:text-primary truncate">Entrepreneur</span>
                                     </button>
                                     <button type="button"
-                                        class="profession-card flex items-center gap-3 px-3 py-3.5 sm:px-4 sm:py-4 rounded-xl sm:rounded-2xl border-2 border-white/10 bg-white/5 hover:border-primary/40 hover:bg-primary-fixed/20 hover:shadow-sm transition-all duration-200 cursor-pointer group"
+                                        class="profession-card flex items-center gap-3 px-3 py-3.5 sm:px-4 sm:py-4 rounded-xl sm:rounded-2xl border-2 border-[#FCA311]/20 bg-[#14213D]/40 hover:border-[#FCA311]/40 hover:bg-primary/20 hover:shadow-sm transition-all duration-200 cursor-pointer group"
                                         data-value="En recherche d'emploi">
                                         <span
                                             class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-emerald-50 flex items-center justify-center flex-shrink-0 group-hover:bg-emerald-100 transition-colors">
@@ -868,7 +862,7 @@
                                                 class="material-symbols-outlined text-emerald-600 text-lg sm:text-xl">person_search</span>
                                         </span>
                                         <span
-                                            class="text-xs sm:text-sm font-semibold text-slate-200 group-hover:text-primary truncate">En
+                                            class="text-xs sm:text-sm font-semibold text-[#FFFFFF] font-bold group-hover:text-primary truncate">En
                                             recherche</span>
                                     </button>
                                 </div>
@@ -880,22 +874,22 @@
                                 <!-- Étudiant -->
                                 <div class="profession-sub hidden" data-for="Étudiant">
                                     <label class="field-label">Que veux-tu ajouter à ton CV ? <span
-                                            class="text-slate-400 font-normal text-[11px]">(optionnel)</span></label>
+                                            class="text-[#E5E5E5] font-normal text-[11px]">(optionnel)</span></label>
                                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
                                         <button type="button"
-                                            class="sub-card flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-white/10 bg-white/5 hover:border-primary/40 hover:bg-primary-fixed/10 transition-all text-[13px] font-medium text-slate-400"
+                                            class="sub-card flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-[#FCA311]/20 bg-[#14213D]/40 hover:border-[#FCA311]/40 hover:bg-primary-fixed/10 transition-all text-[13px] font-medium text-[#E5E5E5]"
                                             data-subvalue="Design freelance">
                                             <span class="material-symbols-outlined text-primary text-lg">brush</span>
                                             Design freelance
                                         </button>
                                         <button type="button"
-                                            class="sub-card flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-white/10 bg-white/5 hover:border-primary/40 hover:bg-primary-fixed/10 transition-all text-[13px] font-medium text-slate-400"
+                                            class="sub-card flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-[#FCA311]/20 bg-[#14213D]/40 hover:border-[#FCA311]/40 hover:bg-primary-fixed/10 transition-all text-[13px] font-medium text-[#E5E5E5]"
                                             data-subvalue="Community Manager">
                                             <span class="material-symbols-outlined text-primary text-lg">forum</span>
                                             Community Manager
                                         </button>
                                         <button type="button"
-                                            class="sub-card flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-white/10 bg-white/5 hover:border-primary/40 hover:bg-primary-fixed/10 transition-all text-[13px] font-medium text-slate-400"
+                                            class="sub-card flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-[#FCA311]/20 bg-[#14213D]/40 hover:border-[#FCA311]/40 hover:bg-primary-fixed/10 transition-all text-[13px] font-medium text-[#E5E5E5]"
                                             data-subvalue="Portfolio pro">
                                             <span
                                                 class="material-symbols-outlined text-primary text-lg">folder_open</span>
@@ -906,24 +900,24 @@
                                 <!-- Employé -->
                                 <div class="profession-sub hidden" data-for="Employé">
                                     <label class="field-label">Quel est ton objectif ? <span
-                                            class="text-slate-400 font-normal text-[11px]">(optionnel)</span></label>
+                                            class="text-[#E5E5E5] font-normal text-[11px]">(optionnel)</span></label>
                                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
                                         <button type="button"
-                                            class="sub-card flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-white/10 bg-white/5 hover:border-primary/40 hover:bg-primary-fixed/10 transition-all text-[13px] font-medium text-slate-400"
+                                            class="sub-card flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-[#FCA311]/20 bg-[#14213D]/40 hover:border-[#FCA311]/40 hover:bg-primary-fixed/10 transition-all text-[13px] font-medium text-[#E5E5E5]"
                                             data-subvalue="Évoluer en poste">
                                             <span
                                                 class="material-symbols-outlined text-primary text-lg">trending_up</span>
                                             Évoluer en poste
                                         </button>
                                         <button type="button"
-                                            class="sub-card flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-white/10 bg-white/5 hover:border-primary/40 hover:bg-primary-fixed/10 transition-all text-[13px] font-medium text-slate-400"
+                                            class="sub-card flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-[#FCA311]/20 bg-[#14213D]/40 hover:border-[#FCA311]/40 hover:bg-primary-fixed/10 transition-all text-[13px] font-medium text-[#E5E5E5]"
                                             data-subvalue="Lancer un side-business">
                                             <span
                                                 class="material-symbols-outlined text-primary text-lg">lightbulb</span>
                                             Side-business
                                         </button>
                                         <button type="button"
-                                            class="sub-card flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-white/10 bg-white/5 hover:border-primary/40 hover:bg-primary-fixed/10 transition-all text-[13px] font-medium text-slate-400"
+                                            class="sub-card flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-[#FCA311]/20 bg-[#14213D]/40 hover:border-[#FCA311]/40 hover:bg-primary-fixed/10 transition-all text-[13px] font-medium text-[#E5E5E5]"
                                             data-subvalue="Changer de carrière">
                                             <span
                                                 class="material-symbols-outlined text-primary text-lg">swap_horiz</span>
@@ -934,31 +928,31 @@
                                 <!-- Entrepreneur -->
                                 <div class="profession-sub hidden" data-for="Entrepreneur">
                                     <label class="field-label">Ton secteur ? <span
-                                            class="text-slate-400 font-normal text-[11px]">(optionnel)</span></label>
+                                            class="text-[#E5E5E5] font-normal text-[11px]">(optionnel)</span></label>
                                     <div class="grid grid-cols-2 gap-2">
                                         <button type="button"
-                                            class="sub-card flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-white/10 bg-white/5 hover:border-primary/40 hover:bg-primary-fixed/10 transition-all text-[13px] font-medium text-slate-400"
+                                            class="sub-card flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-[#FCA311]/20 bg-[#14213D]/40 hover:border-[#FCA311]/40 hover:bg-primary-fixed/10 transition-all text-[13px] font-medium text-[#E5E5E5]"
                                             data-subvalue="E-commerce">
                                             <span
                                                 class="material-symbols-outlined text-primary text-lg">shopping_cart</span>
                                             E-commerce
                                         </button>
                                         <button type="button"
-                                            class="sub-card flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-white/10 bg-white/5 hover:border-primary/40 hover:bg-primary-fixed/10 transition-all text-[13px] font-medium text-slate-400"
+                                            class="sub-card flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-[#FCA311]/20 bg-[#14213D]/40 hover:border-[#FCA311]/40 hover:bg-primary-fixed/10 transition-all text-[13px] font-medium text-[#E5E5E5]"
                                             data-subvalue="Services">
                                             <span
                                                 class="material-symbols-outlined text-primary text-lg">handshake</span>
                                             Services
                                         </button>
                                         <button type="button"
-                                            class="sub-card flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-white/10 bg-white/5 hover:border-primary/40 hover:bg-primary-fixed/10 transition-all text-[13px] font-medium text-slate-400"
+                                            class="sub-card flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-[#FCA311]/20 bg-[#14213D]/40 hover:border-[#FCA311]/40 hover:bg-primary-fixed/10 transition-all text-[13px] font-medium text-[#E5E5E5]"
                                             data-subvalue="Restauration">
                                             <span
                                                 class="material-symbols-outlined text-primary text-lg">restaurant</span>
                                             Restauration
                                         </button>
                                         <button type="button"
-                                            class="sub-card flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-white/10 bg-white/5 hover:border-primary/40 hover:bg-primary-fixed/10 transition-all text-[13px] font-medium text-slate-400"
+                                            class="sub-card flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-[#FCA311]/20 bg-[#14213D]/40 hover:border-[#FCA311]/40 hover:bg-primary-fixed/10 transition-all text-[13px] font-medium text-[#E5E5E5]"
                                             data-subvalue="Autre">
                                             <span
                                                 class="material-symbols-outlined text-primary text-lg">more_horiz</span>
@@ -969,23 +963,23 @@
                                 <!-- En recherche -->
                                 <div class="profession-sub hidden" data-for="En recherche d'emploi">
                                     <label class="field-label">Ton projet ? <span
-                                            class="text-slate-400 font-normal text-[11px]">(optionnel)</span></label>
+                                            class="text-[#E5E5E5] font-normal text-[11px]">(optionnel)</span></label>
                                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
                                         <button type="button"
-                                            class="sub-card flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-white/10 bg-white/5 hover:border-primary/40 hover:bg-primary-fixed/10 transition-all text-[13px] font-medium text-slate-400"
+                                            class="sub-card flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-[#FCA311]/20 bg-[#14213D]/40 hover:border-[#FCA311]/40 hover:bg-primary-fixed/10 transition-all text-[13px] font-medium text-[#E5E5E5]"
                                             data-subvalue="Trouver un emploi">
                                             <span class="material-symbols-outlined text-primary text-lg">work</span>
                                             Trouver un emploi
                                         </button>
                                         <button type="button"
-                                            class="sub-card flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-white/10 bg-white/5 hover:border-primary/40 hover:bg-primary-fixed/10 transition-all text-[13px] font-medium text-slate-400"
+                                            class="sub-card flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-[#FCA311]/20 bg-[#14213D]/40 hover:border-[#FCA311]/40 hover:bg-primary-fixed/10 transition-all text-[13px] font-medium text-[#E5E5E5]"
                                             data-subvalue="Devenir freelance">
                                             <span
                                                 class="material-symbols-outlined text-primary text-lg">laptop_mac</span>
                                             Freelance
                                         </button>
                                         <button type="button"
-                                            class="sub-card flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-white/10 bg-white/5 hover:border-primary/40 hover:bg-primary-fixed/10 transition-all text-[13px] font-medium text-slate-400"
+                                            class="sub-card flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-[#FCA311]/20 bg-[#14213D]/40 hover:border-[#FCA311]/40 hover:bg-primary-fixed/10 transition-all text-[13px] font-medium text-[#E5E5E5]"
                                             data-subvalue="Créer mon entreprise">
                                             <span class="material-symbols-outlined text-primary text-lg">store</span>
                                             Créer mon business
@@ -997,7 +991,7 @@
                         </div>
 
                         <!-- Navigation -->
-                        <div class="flex justify-end mt-10 pt-6 border-t border-white/10">
+                        <div class="flex justify-end mt-10 pt-6 border-t border-[#FCA311]/20">
                             <button type="button" class="btn-flip btn-next" data-next="2">
                                 <span class="btn-text">Je sécurise ma place</span>
                             </button>
@@ -1021,31 +1015,31 @@
                                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3" id="niveau-cards" role="radiogroup"
                                     aria-label="Votre niveau sur Canva">
                                     <button type="button"
-                                        class="niveau-card flex flex-col items-center gap-1.5 p-5 rounded-2xl border-2 border-white/10 bg-white/5 hover:border-green-400 hover:bg-green-50/50 transition-all duration-200 cursor-pointer group"
+                                        class="niveau-card flex flex-col items-center gap-1.5 p-5 rounded-2xl border-2 border-[#FCA311]/20 bg-[#14213D]/40 hover:border-green-400 hover:bg-green-50/50 transition-all duration-200 cursor-pointer group"
                                         data-value="Jamais utilisé">
                                         <span class="text-3xl group-hover:scale-110 transition-transform">🌱</span>
                                         <span
-                                            class="text-sm font-bold text-slate-200 group-hover:text-green-700">Débutant
+                                            class="text-sm font-bold text-[#FFFFFF] font-bold group-hover:text-green-700">Débutant
                                             total</span>
-                                        <span class="text-[11px] text-slate-400 text-center leading-tight">Je n'ai
+                                        <span class="text-[11px] text-[#E5E5E5] text-center leading-tight">Je n'ai
                                             jamais utilisé Canva</span>
                                     </button>
                                     <button type="button"
-                                        class="niveau-card flex flex-col items-center gap-1.5 p-5 rounded-2xl border-2 border-white/10 bg-white/5 hover:border-amber-400 hover:bg-amber-50/50 transition-all duration-200 cursor-pointer group"
+                                        class="niveau-card flex flex-col items-center gap-1.5 p-5 rounded-2xl border-2 border-[#FCA311]/20 bg-[#14213D]/40 hover:border-amber-400 hover:bg-amber-50/50 transition-all duration-200 cursor-pointer group"
                                         data-value="Intermédiaire">
                                         <span class="text-3xl group-hover:scale-110 transition-transform">⚡</span>
                                         <span
-                                            class="text-sm font-bold text-slate-200 group-hover:text-amber-700">Intermédiaire</span>
-                                        <span class="text-[11px] text-slate-400 text-center leading-tight">J'utilise
+                                            class="text-sm font-bold text-[#FFFFFF] font-bold group-hover:text-amber-700">Intermédiaire</span>
+                                        <span class="text-[11px] text-[#E5E5E5] text-center leading-tight">J'utilise
                                             Canva de temps en temps</span>
                                     </button>
                                     <button type="button"
-                                        class="niveau-card flex flex-col items-center gap-1.5 p-5 rounded-2xl border-2 border-white/10 bg-white/5 hover:border-red-400 hover:bg-red-50/50 transition-all duration-200 cursor-pointer group"
+                                        class="niveau-card flex flex-col items-center gap-1.5 p-5 rounded-2xl border-2 border-[#FCA311]/20 bg-[#14213D]/40 hover:border-red-400 hover:bg-red-50/50 transition-all duration-200 cursor-pointer group"
                                         data-value="Avancé">
                                         <span class="text-3xl group-hover:scale-110 transition-transform">🔥</span>
                                         <span
-                                            class="text-sm font-bold text-slate-200 group-hover:text-red-700">Avancé</span>
-                                        <span class="text-[11px] text-slate-400 text-center leading-tight">J'utilise
+                                            class="text-sm font-bold text-[#FFFFFF] font-bold group-hover:text-red-700">Avancé</span>
+                                        <span class="text-[11px] text-[#E5E5E5] text-center leading-tight">J'utilise
                                             Canva régulièrement</span>
                                     </button>
                                 </div>
@@ -1057,7 +1051,7 @@
                                 <div class="flex justify-between items-end mb-1">
                                     <label for="motivation" class="field-label !mb-0">Motivation <span
                                             class="text-primary">*</span></label>
-                                    <span class="text-[10px] text-slate-400 font-medium" id="motivation-counter">0 /
+                                    <span class="text-[10px] text-[#E5E5E5] font-medium" id="motivation-counter">0 /
                                         500</span>
                                 </div>
                                 <textarea id="motivation" name="motivation" required rows="4" maxlength="500"
@@ -1071,7 +1065,7 @@
                             <div class="field-group" id="field-objectifs">
                                 <label class="field-label">Objectifs professionnels <span
                                         class="text-primary">*</span></label>
-                                <p class="text-[11px] text-slate-400 -mt-0.5 mb-2 ml-1">Sélectionnez au moins un
+                                <p class="text-[11px] text-[#E5E5E5] -mt-0.5 mb-2 ml-1">Sélectionnez au moins un
                                     objectif</p>
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5" role="group"
                                     aria-describedby="objectifs-error" aria-label="Objectifs professionnels">
@@ -1080,35 +1074,35 @@
                                             class="checkbox-input">
                                         <span
                                             class="material-symbols-outlined text-lg text-primary/60 group-hover:text-primary">forum</span>
-                                        <span class="text-sm text-slate-100">Devenir Community Manager</span>
+                                        <span class="text-sm text-[#FFFFFF] font-bold">Devenir Community Manager</span>
                                     </label>
                                     <label class="checkbox-card">
                                         <input type="checkbox" name="objectifs"
                                             value="Travailler comme Graphiste freelance" class="checkbox-input">
                                         <span
                                             class="material-symbols-outlined text-lg text-primary/60 group-hover:text-primary">brush</span>
-                                        <span class="text-sm text-slate-100">Graphiste freelance</span>
+                                        <span class="text-sm text-[#FFFFFF] font-bold">Graphiste freelance</span>
                                     </label>
                                     <label class="checkbox-card">
                                         <input type="checkbox" name="objectifs"
                                             value="Créer du contenu pour mon entreprise" class="checkbox-input">
                                         <span
                                             class="material-symbols-outlined text-lg text-primary/60 group-hover:text-primary">business_center</span>
-                                        <span class="text-sm text-slate-100">Contenu pour mon entreprise</span>
+                                        <span class="text-sm text-[#FFFFFF] font-bold">Contenu pour mon entreprise</span>
                                     </label>
                                     <label class="checkbox-card">
                                         <input type="checkbox" name="objectifs" value="Changer de carrière"
                                             class="checkbox-input">
                                         <span
                                             class="material-symbols-outlined text-lg text-primary/60 group-hover:text-primary">swap_horiz</span>
-                                        <span class="text-sm text-slate-100">Changer de carrière</span>
+                                        <span class="text-sm text-[#FFFFFF] font-bold">Changer de carrière</span>
                                     </label>
                                     <label class="checkbox-card md:col-span-2">
                                         <input type="checkbox" name="objectifs"
                                             value="Améliorer mes compétences actuelles" class="checkbox-input">
                                         <span
                                             class="material-symbols-outlined text-lg text-primary/60 group-hover:text-primary">trending_up</span>
-                                        <span class="text-sm text-slate-100">Améliorer mes compétences actuelles</span>
+                                        <span class="text-sm text-[#FFFFFF] font-bold">Améliorer mes compétences actuelles</span>
                                     </label>
                                 </div>
                                 <span class="field-error" id="objectifs-error" role="alert" aria-live="polite"></span>
@@ -1116,7 +1110,7 @@
                         </div>
 
                         <!-- Navigation -->
-                        <div class="flex justify-between mt-10 pt-6 border-t border-white/10">
+                        <div class="flex justify-between mt-10 pt-6 border-t border-[#FCA311]/20">
                             <button type="button" class="btn-prev" data-prev="1">
                                 <span class="material-symbols-outlined text-lg">arrow_back</span>
                                 Précédent
@@ -1144,23 +1138,23 @@
                                 <div class="grid grid-cols-2 md:grid-cols-3 gap-3 lg:gap-4" id="paiement-cards"
                                     role="radiogroup" aria-label="Votre mode de paiement">
                                     <button type="button"
-                                        class="paiement-card flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border-2 border-white/10 bg-white/5 hover:border-primary/40 hover:bg-primary-fixed/20 transition-all duration-200 cursor-pointer group"
+                                        class="paiement-card flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border-2 border-[#FCA311]/20 bg-[#14213D]/40 hover:border-[#FCA311]/40 hover:bg-primary/20 transition-all duration-200 cursor-pointer group"
                                         data-value="Waafi Mobile Money">
                                         <img src="assets/images/waafi.png" alt="Waafi"
                                             class="h-10 sm:h-12 w-auto object-contain group-hover:scale-110 transition-transform">
                                         <span
-                                            class="text-xs sm:text-sm font-bold text-slate-200 group-hover:text-primary">Waafi</span>
+                                            class="text-xs sm:text-sm font-bold text-[#FFFFFF] font-bold group-hover:text-primary">Waafi</span>
                                     </button>
                                     <button type="button"
-                                        class="paiement-card flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border-2 border-white/10 bg-white/5 hover:border-primary/40 hover:bg-primary-fixed/20 transition-all duration-200 cursor-pointer group"
+                                        class="paiement-card flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border-2 border-[#FCA311]/20 bg-[#14213D]/40 hover:border-[#FCA311]/40 hover:bg-primary/20 transition-all duration-200 cursor-pointer group"
                                         data-value="Cacpay">
                                         <img src="assets/images/cacpay.png" alt="Cacpay"
                                             class="h-10 sm:h-12 w-auto object-contain group-hover:scale-110 transition-transform">
                                         <span
-                                            class="text-xs sm:text-sm font-bold text-slate-200 group-hover:text-primary">Cacpay</span>
+                                            class="text-xs sm:text-sm font-bold text-[#FFFFFF] font-bold group-hover:text-primary">Cacpay</span>
                                     </button>
                                     <button type="button"
-                                        class="paiement-card flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border-2 border-white/10 bg-white/5 hover:border-primary/40 hover:bg-primary-fixed/20 transition-all duration-200 cursor-pointer group"
+                                        class="paiement-card flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border-2 border-[#FCA311]/20 bg-[#14213D]/40 hover:border-[#FCA311]/40 hover:bg-primary/20 transition-all duration-200 cursor-pointer group"
                                         data-value="Espèces">
                                         <span
                                             class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-100 transition-colors group-hover:scale-110">
@@ -1168,7 +1162,7 @@
                                                 style="font-variation-settings: 'FILL' 1;">payments</span>
                                         </span>
                                         <span
-                                            class="text-xs sm:text-sm font-bold text-slate-200 group-hover:text-primary text-center">Espèces</span>
+                                            class="text-xs sm:text-sm font-bold text-[#FFFFFF] font-bold group-hover:text-primary text-center">Espèces</span>
                                     </button>
                                 </div>
                                 <span class="field-error" id="paiement-error" role="alert" aria-live="polite"></span>
@@ -1218,12 +1212,12 @@
 
                             <!-- Payment Info: Cash -->
                             <div id="payment-info-cash" style="display:none;" aria-hidden="true"
-                                class="p-5 sm:p-6 bg-blue-50 border border-blue-500/20 rounded-2xl space-y-4 animate-fade-up">
+                                class="p-5 sm:p-6 bg-blue-50 border border-[#FCA311]/20 rounded-2xl space-y-4 animate-fade-up">
                                 <div class="flex items-start gap-3">
                                     <span class="material-symbols-outlined text-blue-600 mt-0.5">location_on</span>
                                     <div class="space-y-3 flex-1">
-                                        <p class="text-sm font-bold text-blue-200">Paiement en espèces</p>
-                                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm text-blue-300">
+                                        <p class="text-sm font-bold text-[#FFFFFF]">Paiement en espèces</p>
+                                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm text-[#E5E5E5]">
                                             <div>
                                                 <p class="opacity-60 text-xs">À remettre à</p>
                                                 <p class="font-bold">Ali William</p>
@@ -1247,7 +1241,7 @@
                         </div>
 
                         <!-- Navigation -->
-                        <div class="flex justify-between mt-10 pt-6 border-t border-white/10">
+                        <div class="flex justify-between mt-10 pt-6 border-t border-[#FCA311]/20">
                             <button type="button" class="btn-prev" data-prev="2">
                                 <span class="material-symbols-outlined text-lg">arrow_back</span>
                                 Précédent
@@ -1268,17 +1262,17 @@
                         </div>
 
                         <!-- Affiche de la formation -->
-                        <div class="mb-6 rounded-2xl overflow-hidden border border-white/10 shadow-sm">
+                        <div class="mb-6 rounded-2xl overflow-hidden border border-[#FCA311]/20 shadow-sm">
                             <img src="assets/images/formation canva.jpg" alt="Formation Canva Pro — Programme"
                                 class="w-full h-auto object-cover" loading="lazy">
                         </div>
 
                         <!-- Summary Card -->
-                        <div class="bg-slate-900/40 border border-white/10 rounded-2xl overflow-hidden mb-6">
+                        <div class="bg-[#14213D]/40 border border-[#FCA311]/20 rounded-2xl overflow-hidden mb-6">
                             <div
-                                class="flex items-center gap-2.5 px-5 py-3.5 bg-gradient-to-r from-primary-fixed/30 to-transparent border-b border-white/10">
+                                class="flex items-center gap-2.5 px-5 py-3.5 bg-gradient-to-r from-primary-fixed/30 to-transparent border-b border-[#FCA311]/20">
                                 <span class="material-symbols-outlined text-primary text-lg">description</span>
-                                <h3 class="text-sm font-bold text-slate-200 font-headline">Récapitulatif de votre
+                                <h3 class="text-sm font-bold text-[#FFFFFF] font-headline">Récapitulatif de votre
                                     inscription</h3>
                             </div>
                             <div class="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4" id="summary-content">
@@ -1289,11 +1283,11 @@
                         <!-- Conditions checkbox -->
                         <div class="field-group" id="field-conditions">
                             <label
-                                class="flex items-start gap-4 p-5 bg-white/5 border border-white/10 rounded-2xl cursor-pointer select-none group hover:border-primary/20 transition-colors">
+                                class="flex items-start gap-4 p-5 bg-[#14213D]/40 border border-[#FCA311]/20 rounded-2xl cursor-pointer select-none group hover:border-[#FCA311]/20 transition-colors">
                                 <input type="checkbox" id="conditions" name="conditions" required
                                     class="mt-0.5 w-5 h-5 rounded-lg text-primary focus:ring-primary-container border-white/20"
                                     aria-describedby="conditions-error">
-                                <span class="text-sm leading-relaxed text-slate-400">
+                                <span class="text-sm leading-relaxed text-[#E5E5E5]">
                                     J'accepte les conditions de la formation : Formation du <strong
                                         class="text-primary">16 avril au 29 mai 2026</strong>, les <strong
                                         class="text-primary">jeudis, vendredis et samedis de 18h à 20h</strong>. Places
@@ -1306,7 +1300,7 @@
 
                         <!-- Final Actions -->
                         <div
-                            class="flex flex-col sm:flex-row items-center justify-between gap-4 mt-10 pt-6 border-t border-white/10">
+                            class="flex flex-col sm:flex-row items-center justify-between gap-4 mt-10 pt-6 border-t border-[#FCA311]/20">
                             <button type="button" class="btn-prev order-2 sm:order-1" data-prev="3">
                                 <span class="material-symbols-outlined text-lg">arrow_back</span>
                                 Précédent
@@ -1350,21 +1344,21 @@
             </div>
             <div class="spoke"></div>
         </div>
-        <p class="mt-8 text-lg font-bold text-slate-200 font-headline animate-pulse">Envoi en cours...</p>
-        <p class="mt-2 text-sm text-slate-400">Ton inscription est en cours de traitement</p>
+        <p class="mt-8 text-lg font-bold text-[#FFFFFF] font-headline animate-pulse">Envoi en cours...</p>
+        <p class="mt-2 text-sm text-[#E5E5E5]">Ton inscription est en cours de traitement</p>
     </div>
 
     <!-- ====== SUCCESS MODAL ====== -->
-    <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-900/40 backdrop-blur-md hidden"
+    <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-[#14213D]/40 backdrop-blur-md hidden"
         id="success-screen" aria-live="polite">
         <div
-            class="bg-white/5 rounded-3xl p-8 sm:p-10 max-w-lg w-full text-center shadow-2xl relative overflow-hidden animate-pop-in">
+            class="bg-[#14213D]/40 rounded-3xl p-8 sm:p-10 max-w-lg w-full text-center shadow-2xl relative overflow-hidden animate-pop-in">
             <!-- Top gradient bar -->
             <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-green-400 to-emerald-600"></div>
 
             <!-- Close Button -->
             <button type="button" id="btn-close-success" aria-label="Fermer"
-                class="absolute top-4 right-4 w-10 h-10 flex items-center justify-center rounded-full bg-white/5 text-slate-400 hover:bg-white/10 hover:text-slate-200 transition-colors">
+                class="absolute top-4 right-4 w-10 h-10 flex items-center justify-center rounded-full bg-[#14213D]/40 text-[#E5E5E5] hover:bg-[#14213D]/70 hover:text-[#FFFFFF] font-bold transition-colors">
                 <span class="material-symbols-outlined text-xl">close</span>
             </button>
 
@@ -1375,17 +1369,17 @@
                     style="font-variation-settings: 'FILL' 1;">check_circle</span>
             </div>
 
-            <h2 class="text-2xl font-bold text-white mb-2 font-headline">Inscription reçue avec succès !</h2>
-            <p class="text-slate-400 mb-8 leading-relaxed">
+            <h2 class="text-2xl font-bold text-[#FFFFFF] mb-2 font-headline">Inscription reçue avec succès !</h2>
+            <p class="text-[#E5E5E5] mb-8 leading-relaxed">
                 Merci pour votre inscription à la <strong class="text-primary">Formation Canva Pro</strong> !
             </p>
 
             <!-- WhatsApp CTA (prominent) -->
             <div class="mb-6">
-                <p class="text-xs text-slate-400 text-center mb-3 font-medium uppercase tracking-wider">Étape suivante
+                <p class="text-xs text-[#E5E5E5] text-center mb-3 font-medium uppercase tracking-wider">Étape suivante
                     obligatoire</p>
                 <a id="btn-whatsapp" href="https://wa.me/25377145306" target="_blank" rel="noopener noreferrer"
-                    class="flex items-center justify-center gap-3 w-full py-4 px-6 bg-[#25D366] hover:bg-[#1ebe5d] active:bg-[#18a852] text-white font-extrabold text-base rounded-2xl shadow-lg shadow-green-200 transition-all duration-200 font-headline">
+                    class="flex items-center justify-center gap-3 w-full py-4 px-6 bg-[#25D366] hover:bg-[#1ebe5d] active:bg-[#18a852] text-[#FFFFFF] font-extrabold text-base rounded-2xl shadow-lg shadow-green-200 transition-all duration-200 font-headline">
                     <!-- WhatsApp SVG icon -->
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-6 h-6 flex-shrink-0"
                         fill="currentColor">
@@ -1394,18 +1388,18 @@
                     </svg>
                     <span>Envoyer ma preuve de paiement</span>
                 </a>
-                <p class="text-center text-xs text-slate-400 mt-2">Appuyez pour ouvrir WhatsApp · +253 77 14 53 06</p>
+                <p class="text-center text-xs text-[#E5E5E5] mt-2">Appuyez pour ouvrir WhatsApp · +253 77 14 53 06</p>
             </div>
 
             <!-- Footer -->
-            <div class="pt-6 border-t border-white/10 space-y-2 mb-6">
-                <p class="text-slate-400 text-sm">À très bientôt !</p>
-                <p class="font-bold text-slate-200 text-sm">Ali William — Formateur Canva Pro</p>
+            <div class="pt-6 border-t border-[#FCA311]/20 space-y-2 mb-6">
+                <p class="text-[#E5E5E5] text-sm">À très bientôt !</p>
+                <p class="font-bold text-[#FFFFFF] font-bold text-sm">Ali William — Formateur Canva Pro</p>
                 <p class="text-primary font-headline font-bold text-sm">Formation canva</p>
             </div>
 
             <button type="button"
-                class="w-full py-3.5 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 transition-colors flex items-center justify-center gap-2 text-sm"
+                class="w-full py-3.5 bg-[#14213D] text-[#FFFFFF] font-bold rounded-xl hover:bg-slate-800 transition-colors flex items-center justify-center gap-2 text-sm"
                 id="btn-print" onclick="window.print()">
                 <span class="material-symbols-outlined text-lg">print</span>
                 Imprimer le récapitulatif
@@ -1415,19 +1409,19 @@
 
     <!-- ====== FOOTER ====== -->
     <footer
-        class="w-full py-8 px-4 sm:px-6 flex flex-col sm:flex-row justify-between items-center max-w-7xl mx-auto mt-12 border-t border-white/10"
+        class="w-full py-8 px-4 sm:px-6 flex flex-col sm:flex-row justify-between items-center max-w-7xl mx-auto mt-12 border-t border-[#FCA311]/20"
         id="site-footer">
         <div class="flex flex-col gap-1 items-center sm:items-start mb-4 sm:mb-0">
-            <span class="font-headline font-bold text-white text-sm">Formation canva</span>
-            <span class="font-body text-[11px] tracking-wide text-slate-400">&copy; 2026 Formation canva. Tous droits
+            <span class="font-headline font-bold text-[#FFFFFF] text-sm">Formation canva</span>
+            <span class="font-body text-[11px] tracking-wide text-[#E5E5E5]">&copy; 2026 Formation canva. Tous droits
                 réservés.</span>
         </div>
         <div class="flex gap-6">
-            <a class="text-[11px] tracking-wide text-slate-400 hover:text-primary transition-colors"
+            <a class="text-[11px] tracking-wide text-[#E5E5E5] hover:text-primary transition-colors"
                 href="#">Contact</a>
-            <a class="text-[11px] tracking-wide text-slate-400 hover:text-primary transition-colors" href="#">Mentions
+            <a class="text-[11px] tracking-wide text-[#E5E5E5] hover:text-primary transition-colors" href="#">Mentions
                 Légales</a>
-            <a class="text-[11px] tracking-wide text-slate-400 hover:text-primary transition-colors"
+            <a class="text-[11px] tracking-wide text-[#E5E5E5] hover:text-primary transition-colors"
                 href="#">Support</a>
         </div>
     </footer>
@@ -1437,7 +1431,7 @@
         target="_blank" rel="noopener noreferrer" id="whatsapp-float"
         class="fixed bottom-6 right-6 z-50 w-14 h-14 bg-[#25D366] rounded-full flex items-center justify-center shadow-lg shadow-green-300/40 hover:scale-110 hover:shadow-xl hover:shadow-green-300/50 transition-all duration-300 group"
         aria-label="Besoin d'aide ? Contactez-nous sur WhatsApp">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-7 h-7 text-white" fill="currentColor">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-7 h-7 text-[#FFFFFF]" fill="currentColor">
             <path
                 d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.940 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.890-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
         </svg>
@@ -1445,7 +1439,7 @@
         <span class="absolute inset-0 rounded-full bg-[#25D366] animate-ping opacity-20"></span>
         <!-- Tooltip -->
         <span
-            class="absolute right-16 bg-slate-900 text-white text-xs font-bold px-3 py-2 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg">Besoin
+            class="absolute right-16 bg-[#14213D] text-[#FFFFFF] text-xs font-bold px-3 py-2 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg">Besoin
             d'aide ?</span>
     </a>
 
@@ -1453,3 +1447,8 @@
 </body>
 
 </html>
+
+
+
+
+
