@@ -71,26 +71,41 @@ body {
 }
 
 /* =========================================
-   STYLE DES CHAMPS DE SAISIE (Dark Mode)
+   STYLE DES CHAMPS DE SAISIE (Animated Shutter Effect Black & Gold)
    ========================================= */
 
 .field-input, .field-select {
   width: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
+  margin: 0;
   padding: 12px 16px;
-  border: 1px solid rgba(229, 229, 229, 0.15); /* #E5E5E5 */
-  border-radius: 12px;
-  color: #FFFFFF;
   font-size: 14px;
-  font-family: 'Inter', sans-serif;
-  transition: all 0.3s ease;
+  font-family: inherit; /* On garde la police moderne du site */
+  font-weight: 600;
   outline: none;
+  border-radius: 8px;
+  
+  /* L'effet 'Volet fermé' au repos */
+  background-color: rgba(20, 33, 61, 0.8); /* Bleu Nuit transparent */
+  color: #E5E5E5;
+  border: 1px solid transparent;
+  border-top-width: 1.5em; /* La fameuse bordure épaisse */
+  border-top-color: #14213D; /* Bleu nuit opaque */
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.field-input::placeholder { color: rgba(229, 229, 229, 0.5); }
-.field-input:hover, .field-select:hover { background-color: rgba(20, 33, 61, 0.6); border-color: rgba(252, 163, 17, 0.5); }
+
+.field-input::placeholder { 
+  color: rgba(229, 229, 229, 0.5); 
+  transition: opacity 0.3s;
+}
+
+/* Quand on survole ou qu'on clique : le volet s'ouvre avec l'Or ! */
+.field-input:hover, .field-select:hover,
 .field-input:focus, .field-select:focus {
-  background-color: rgba(20, 33, 61, 0.8); color: #FFFFFF; border-color: #FCA311;
-  box-shadow: 0px 0px 15px rgba(252, 163, 17, 0.3);
+  border-top-width: 2px; /* La bordure se réduit (l'effet waouh) */
+  border-color: #FCA311; /* Accent Or */
+  background-color: rgba(0, 0, 0, 0.6); /* Fond noir profond */
+  color: #FFFFFF;
+  box-shadow: 0px 5px 15px rgba(252, 163, 17, 0.15); /* Léger halo doré */
 }
 
 .field-input.valid {
