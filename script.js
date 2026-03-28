@@ -691,6 +691,7 @@
             paiement: paiementSelect.value,
             telPaiement: document.getElementById('tel-paiement').value.trim(),
             professionDetail: document.getElementById('profession-detail')?.value || '',
+            source: document.getElementById('source-tracking')?.value || 'Direct'
         };
     }
 
@@ -734,6 +735,7 @@
             modePaiement: data.paiement,
             telPaiement: data.telPaiement,
             statut: 'En attente',
+            source: data.source
         };
 
         try {
@@ -898,5 +900,31 @@ ${data.prenom}`;
 
     // ====== START ======
     document.addEventListener('DOMContentLoaded', init);
+
+    // ====== TRACKING INTELLIGENT DES SOURCES ======
+    function captureTrafficSource() {
+        const urlParams = new URLSearchParams(window.location.search);
+        let trafficSource = urlParams.get('source'); // Cherche ?source=...
+        
+        if (!trafficSource) {
+            const referrer = document.referrer;
+            if (referrer) {
+                if (referrer.includes('facebook.com')) trafficSource = 'Facebook (Auto)';
+                else if (referrer.includes('instagram.com')) trafficSource = 'Instagram (Auto)';
+                else if (referrer.includes('linkedin.com')) trafficSource = 'LinkedIn (Auto)';
+                else if (referrer.includes('tiktok.com')) trafficSource = 'TikTok (Auto)';
+                else trafficSource = new URL(referrer).hostname;
+            }
+        }
+        
+        if (trafficSource) {
+            const hiddenSourceInput = document.getElementById('source-tracking');
+            if (hiddenSourceInput) {
+                hiddenSourceInput.value = trafficSource;
+            }
+        }
+    }
+    
+    document.addEventListener('DOMContentLoaded', captureTrafficSource);
 
 })();
