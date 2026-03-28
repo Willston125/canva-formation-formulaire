@@ -215,6 +215,33 @@
     color: #64748b;
 }
 
+/* ---------- Programme Accordéon ---------- */
+.accordion-header {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    transition: background 200ms ease;
+}
+
+.accordion-header:hover {
+    background: rgba(0, 0, 0, 0.03);
+}
+
+/* Corps masqué par défaut — la visibilité est gérée par la classe Tailwind "hidden" + JS */
+
+/* Flèche en rotation quand ouvert */
+.programme-accordion.accordion-open .accordion-arrow {
+    transform: rotate(180deg);
+}
+
+/* Feedback tactile sur mobile */
+@media (hover: none) {
+    .accordion-header:active {
+        background: rgba(0, 0, 0, 0.05);
+    }
+}
+
 /* ---------- Buttons ---------- */
 /* .btn-next replaced by custom .btn-container drawer button from Uiverse */
 
@@ -447,8 +474,10 @@ a:focus-visible {
   transition: background 3s;
 }
 
-/* L'animation au survol */
-.btn-flip:hover::before {
+/* L'animation au survol et au clic (mobile) */
+.btn-flip:hover::before,
+.btn-flip:active::before,
+.btn-flip.is-animating::before {
   animation: rotate 1s;
   transition: all 0.5s;
 }

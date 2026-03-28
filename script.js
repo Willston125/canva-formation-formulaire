@@ -50,6 +50,31 @@
 
     let currentStep = 1;
 
+    // ====== PROGRAMME ACCORDÉON (Mobile) ======
+    function initAccordions() {
+        document.querySelectorAll('.programme-accordion .accordion-header').forEach(header => {
+            header.addEventListener('click', () => {
+                // Ne fait rien si on est sur desktop (pointer-events: none via CSS)
+                // mais on garde la logique pour robustesse
+                const accordion = header.closest('.programme-accordion');
+                const body = accordion.querySelector('.accordion-body');
+                const isOpen = accordion.classList.contains('accordion-open');
+
+                if (isOpen) {
+                    // Fermer
+                    accordion.classList.remove('accordion-open');
+                    body.classList.add('hidden');
+                    header.setAttribute('aria-expanded', 'false');
+                } else {
+                    // Ouvrir
+                    accordion.classList.add('accordion-open');
+                    body.classList.remove('hidden');
+                    header.setAttribute('aria-expanded', 'true');
+                }
+            });
+        });
+    }
+
     // ====== PLACES COUNTER ======
     function initPlacesCounter() {
         const countEl = document.getElementById('places-count');
@@ -125,6 +150,7 @@
         attachEvents();
         updateCharCounter();
         initPlacesCounter();
+        initAccordions();
     }
 
     // ====== EVENTS ======
@@ -160,29 +186,6 @@
 
         // Submit
         form.addEventListener('submit', handleSubmit);
-
-        // ---- Programme Accordion ----
-        const progHeader = document.getElementById('programme-header');
-        const progContent = document.getElementById('programme-content');
-        const progArrow = document.getElementById('programme-arrow');
-        
-        if (progHeader && progContent && progArrow) {
-            progHeader.addEventListener('click', () => {
-                const isHidden = progContent.classList.contains('hidden');
-                if (isHidden) {
-                    progContent.classList.remove('hidden');
-                    // Add simple slide-down effect
-                    progContent.style.animation = 'fade-up 0.3s ease-out';
-                    progArrow.style.transform = 'rotate(180deg)';
-                    progHeader.setAttribute('aria-expanded', 'true');
-                } else {
-                    progContent.classList.add('hidden');
-                    progContent.style.animation = '';
-                    progArrow.style.transform = 'rotate(0deg)';
-                    progHeader.setAttribute('aria-expanded', 'false');
-                }
-            });
-        }
 
         // ---- Paiement Cards ----
         document.querySelectorAll('.paiement-card').forEach(card => {
@@ -262,6 +265,18 @@
                 clearFieldError(document.getElementById('niveau'));
                 saveData();
             });
+        });
+
+        // ---- Animation btn-flip sur Mobile ----
+        document.querySelectorAll('.btn-flip').forEach(btn => {
+            btn.addEventListener('touchstart', function() {
+                // Ajouter la classe pour déclencher l'animation CSS
+                this.classList.add('is-animating');
+                // La retirer après 1 seconde (durée de l'animation dans le CSS)
+                setTimeout(() => {
+                    this.classList.remove('is-animating');
+                }, 1000);
+            }, { passive: true });
         });
     }
 

@@ -312,99 +312,111 @@
                     class="glass-card rounded-2xl sm:rounded-3xl shadow-xl shadow-slate-200/50 border border-white/40 overflow-hidden">
 
                     <!-- Header -->
-                    <div class="bg-gradient-to-r from-primary to-primary-container px-6 sm:px-8 py-5 flex items-center justify-between gap-3 cursor-pointer group select-none" id="programme-header" role="button" aria-expanded="false" aria-controls="programme-content">
-                        <div class="flex items-center gap-3">
-                            <span class="material-symbols-outlined text-white text-2xl"
-                                style="font-variation-settings: 'FILL' 1;">menu_book</span>
-                            <div>
-                                <h2 class="text-lg sm:text-xl font-extrabold text-white font-headline tracking-tight group-hover:opacity-90 transition-opacity">Qu'allez-vous apprendre ?</h2>
-                                <p class="text-white/80 text-xs font-medium">15 jours · 30 heures · 5 modules · Cliquez pour dérouler</p>
-                            </div>
+                    <div class="bg-gradient-to-r from-primary to-primary-container px-6 sm:px-8 py-5 flex items-center gap-3">
+                        <span class="material-symbols-outlined text-white text-2xl"
+                            style="font-variation-settings: 'FILL' 1;">menu_book</span>
+                        <div>
+                            <h2 class="text-lg sm:text-xl font-extrabold text-white font-headline tracking-tight">Qu'allez-vous apprendre ?</h2>
+                            <p class="text-white/70 text-xs font-medium">15 jours · 30 heures · 5 modules · 2 à 3 séances/semaine</p>
                         </div>
-                        <span class="material-symbols-outlined text-white text-3xl transition-transform duration-300" id="programme-arrow">expand_more</span>
                     </div>
 
-                    <div class="p-6 sm:p-8 space-y-5 hidden" id="programme-content">
+                    <div class="p-6 sm:p-8 space-y-5">
 
                         <!-- Semaine 1 -->
-                        <div class="bg-blue-50/70 border border-blue-100 rounded-2xl p-5 space-y-3">
-                            <div class="flex items-center gap-2.5">
-                                <span class="w-8 h-8 rounded-xl bg-blue-500 flex items-center justify-center">
+                        <div class="programme-accordion bg-blue-50/70 border border-blue-100 rounded-2xl overflow-hidden accordion-open">
+                            <button type="button" class="accordion-header w-full flex items-center gap-2.5 p-5 text-left" aria-expanded="true">
+                                <span class="w-8 h-8 rounded-xl bg-blue-500 flex items-center justify-center flex-shrink-0">
                                     <span class="material-symbols-outlined text-white text-base" style="font-variation-settings: 'FILL' 1;">design_services</span>
                                 </span>
-                                <h3 class="text-sm font-extrabold text-blue-900 font-headline">SEMAINE 1 &middot; FONDATIONS DU DESIGN</h3>
-                            </div>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pl-1">
-                                <div class="flex items-center gap-2 text-sm text-blue-800"><span class="material-symbols-outlined text-green-500 text-base" style="font-variation-settings: 'FILL' 1;">check_circle</span>Prise en main experte de Canva Pro</div>
-                                <div class="flex items-center gap-2 text-sm text-blue-800"><span class="material-symbols-outlined text-green-500 text-base" style="font-variation-settings: 'FILL' 1;">check_circle</span>Brand Kit &amp; psychologie des couleurs</div>
-                                <div class="flex items-center gap-2 text-sm text-blue-800"><span class="material-symbols-outlined text-green-500 text-base" style="font-variation-settings: 'FILL' 1;">check_circle</span>Raccourcis clavier &amp; gestion dossiers</div>
-                                <div class="flex items-center gap-2 text-sm text-blue-800"><span class="material-symbols-outlined text-green-500 text-base" style="font-variation-settings: 'FILL' 1;">check_circle</span>R&egrave;gles d'or du graphisme</div>
-                                <div class="flex items-center gap-2 text-sm text-blue-800"><span class="material-symbols-outlined text-green-500 text-base" style="font-variation-settings: 'FILL' 1;">check_circle</span>Exercice : refonte d'un design amateur</div>
+                                <h3 class="text-sm font-extrabold text-blue-900 font-headline flex-1">SEMAINE 1 &middot; FONDATIONS DU DESIGN</h3>
+                                <span class="accordion-arrow material-symbols-outlined text-blue-400 text-xl transition-transform duration-300">expand_more</span>
+                            </button>
+                            <div class="accordion-body px-5 pb-5">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pl-1">
+                                    <div class="flex items-center gap-2 text-sm text-blue-800"><span class="material-symbols-outlined text-green-500 text-base" style="font-variation-settings: 'FILL' 1;">check_circle</span>Prise en main experte de Canva Pro</div>
+                                    <div class="flex items-center gap-2 text-sm text-blue-800"><span class="material-symbols-outlined text-green-500 text-base" style="font-variation-settings: 'FILL' 1;">check_circle</span>Brand Kit &amp; psychologie des couleurs</div>
+                                    <div class="flex items-center gap-2 text-sm text-blue-800"><span class="material-symbols-outlined text-green-500 text-base" style="font-variation-settings: 'FILL' 1;">check_circle</span>Raccourcis clavier &amp; gestion dossiers</div>
+                                    <div class="flex items-center gap-2 text-sm text-blue-800"><span class="material-symbols-outlined text-green-500 text-base" style="font-variation-settings: 'FILL' 1;">check_circle</span>R&egrave;gles d'or du graphisme</div>
+                                    <div class="flex items-center gap-2 text-sm text-blue-800"><span class="material-symbols-outlined text-green-500 text-base" style="font-variation-settings: 'FILL' 1;">check_circle</span>Exercice : refonte d'un design amateur</div>
+                                </div>
                             </div>
                         </div>
 
                         <!-- Semaine 2 -->
-                        <div class="bg-purple-50/70 border border-purple-100 rounded-2xl p-5 space-y-3">
-                            <div class="flex items-center gap-2.5">
-                                <span class="w-8 h-8 rounded-xl bg-purple-500 flex items-center justify-center">
+                        <div class="programme-accordion bg-purple-50/70 border border-purple-100 rounded-2xl overflow-hidden">
+                            <button type="button" class="accordion-header w-full flex items-center gap-2.5 p-5 text-left" aria-expanded="false">
+                                <span class="w-8 h-8 rounded-xl bg-purple-500 flex items-center justify-center flex-shrink-0">
                                     <span class="material-symbols-outlined text-white text-base" style="font-variation-settings: 'FILL' 1;">phone_iphone</span>
                                 </span>
-                                <h3 class="text-sm font-extrabold text-purple-900 font-headline">SEMAINE 2 &middot; L'ART DES R&Eacute;SEAUX SOCIAUX</h3>
-                            </div>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pl-1">
-                                <div class="flex items-center gap-2 text-sm text-purple-800"><span class="material-symbols-outlined text-green-500 text-base" style="font-variation-settings: 'FILL' 1;">check_circle</span>Posts Instagram, Facebook &amp; LinkedIn</div>
-                                <div class="flex items-center gap-2 text-sm text-purple-800"><span class="material-symbols-outlined text-green-500 text-base" style="font-variation-settings: 'FILL' 1;">check_circle</span>Grilles de composition expertes</div>
-                                <div class="flex items-center gap-2 text-sm text-purple-800"><span class="material-symbols-outlined text-green-500 text-base" style="font-variation-settings: 'FILL' 1;">check_circle</span>Carrousels &amp; storytelling visuel</div>
-                                <div class="flex items-center gap-2 text-sm text-purple-800"><span class="material-symbols-outlined text-green-500 text-base" style="font-variation-settings: 'FILL' 1;">check_circle</span>Stories interactives &amp; banni&egrave;res</div>
-                                <div class="flex items-center gap-2 text-sm text-purple-800"><span class="material-symbols-outlined text-green-500 text-base" style="font-variation-settings: 'FILL' 1;">check_circle</span>Planification de contenu int&eacute;gr&eacute;e</div>
+                                <h3 class="text-sm font-extrabold text-purple-900 font-headline flex-1">SEMAINE 2 &middot; L'ART DES R&Eacute;SEAUX SOCIAUX</h3>
+                                <span class="accordion-arrow material-symbols-outlined text-purple-400 text-xl transition-transform duration-300">expand_more</span>
+                            </button>
+                            <div class="accordion-body px-5 pb-5 hidden">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pl-1">
+                                    <div class="flex items-center gap-2 text-sm text-purple-800"><span class="material-symbols-outlined text-green-500 text-base" style="font-variation-settings: 'FILL' 1;">check_circle</span>Posts Instagram, Facebook &amp; LinkedIn</div>
+                                    <div class="flex items-center gap-2 text-sm text-purple-800"><span class="material-symbols-outlined text-green-500 text-base" style="font-variation-settings: 'FILL' 1;">check_circle</span>Grilles de composition expertes</div>
+                                    <div class="flex items-center gap-2 text-sm text-purple-800"><span class="material-symbols-outlined text-green-500 text-base" style="font-variation-settings: 'FILL' 1;">check_circle</span>Carrousels &amp; storytelling visuel</div>
+                                    <div class="flex items-center gap-2 text-sm text-purple-800"><span class="material-symbols-outlined text-green-500 text-base" style="font-variation-settings: 'FILL' 1;">check_circle</span>Stories interactives &amp; banni&egrave;res</div>
+                                    <div class="flex items-center gap-2 text-sm text-purple-800"><span class="material-symbols-outlined text-green-500 text-base" style="font-variation-settings: 'FILL' 1;">check_circle</span>Planification de contenu int&eacute;gr&eacute;e</div>
+                                </div>
                             </div>
                         </div>
 
                         <!-- Semaine 3 -->
-                        <div class="bg-pink-50/70 border border-pink-100 rounded-2xl p-5 space-y-3">
-                            <div class="flex items-center gap-2.5">
-                                <span class="w-8 h-8 rounded-xl bg-pink-500 flex items-center justify-center">
+                        <div class="programme-accordion bg-pink-50/70 border border-pink-100 rounded-2xl overflow-hidden">
+                            <button type="button" class="accordion-header w-full flex items-center gap-2.5 p-5 text-left" aria-expanded="false">
+                                <span class="w-8 h-8 rounded-xl bg-pink-500 flex items-center justify-center flex-shrink-0">
                                     <span class="material-symbols-outlined text-white text-base" style="font-variation-settings: 'FILL' 1;">movie</span>
                                 </span>
-                                <h3 class="text-sm font-extrabold text-pink-900 font-headline">SEMAINE 3 &middot; VID&Eacute;O, MOUVEMENT &amp; IA</h3>
-                            </div>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pl-1">
-                                <div class="flex items-center gap-2 text-sm text-pink-800"><span class="material-symbols-outlined text-green-500 text-base" style="font-variation-settings: 'FILL' 1;">check_circle</span>Montage vid&eacute;o Reels &amp; TikTok</div>
-                                <div class="flex items-center gap-2 text-sm text-pink-800"><span class="material-symbols-outlined text-green-500 text-base" style="font-variation-settings: 'FILL' 1;">check_circle</span>Timeline, d&eacute;coupage &amp; transitions</div>
-                                <div class="flex items-center gap-2 text-sm text-pink-800"><span class="material-symbols-outlined text-green-500 text-base" style="font-variation-settings: 'FILL' 1;">check_circle</span>Studio Magique (IA) &amp; g&eacute;n&eacute;ration</div>
-                                <div class="flex items-center gap-2 text-sm text-pink-800"><span class="material-symbols-outlined text-green-500 text-base" style="font-variation-settings: 'FILL' 1;">check_circle</span>Retouche photo &amp; d&eacute;tourage pro</div>
+                                <h3 class="text-sm font-extrabold text-pink-900 font-headline flex-1">SEMAINE 3 &middot; VID&Eacute;O, MOUVEMENT &amp; IA</h3>
+                                <span class="accordion-arrow material-symbols-outlined text-pink-400 text-xl transition-transform duration-300">expand_more</span>
+                            </button>
+                            <div class="accordion-body px-5 pb-5 hidden">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pl-1">
+                                    <div class="flex items-center gap-2 text-sm text-pink-800"><span class="material-symbols-outlined text-green-500 text-base" style="font-variation-settings: 'FILL' 1;">check_circle</span>Montage vid&eacute;o Reels &amp; TikTok</div>
+                                    <div class="flex items-center gap-2 text-sm text-pink-800"><span class="material-symbols-outlined text-green-500 text-base" style="font-variation-settings: 'FILL' 1;">check_circle</span>Timeline, d&eacute;coupage &amp; transitions</div>
+                                    <div class="flex items-center gap-2 text-sm text-pink-800"><span class="material-symbols-outlined text-green-500 text-base" style="font-variation-settings: 'FILL' 1;">check_circle</span>Studio Magique (IA) &amp; g&eacute;n&eacute;ration</div>
+                                    <div class="flex items-center gap-2 text-sm text-pink-800"><span class="material-symbols-outlined text-green-500 text-base" style="font-variation-settings: 'FILL' 1;">check_circle</span>Retouche photo &amp; d&eacute;tourage pro</div>
+                                </div>
                             </div>
                         </div>
 
                         <!-- Semaine 4 -->
-                        <div class="bg-amber-50/70 border border-amber-100 rounded-2xl p-5 space-y-3">
-                            <div class="flex items-center gap-2.5">
-                                <span class="w-8 h-8 rounded-xl bg-amber-500 flex items-center justify-center">
+                        <div class="programme-accordion bg-amber-50/70 border border-amber-100 rounded-2xl overflow-hidden">
+                            <button type="button" class="accordion-header w-full flex items-center gap-2.5 p-5 text-left" aria-expanded="false">
+                                <span class="w-8 h-8 rounded-xl bg-amber-500 flex items-center justify-center flex-shrink-0">
                                     <span class="material-symbols-outlined text-white text-base" style="font-variation-settings: 'FILL' 1;">print</span>
                                 </span>
-                                <h3 class="text-sm font-extrabold text-amber-900 font-headline">SEMAINE 4 &middot; SUPPORTS D'ENTREPRISE &amp; PRINT</h3>
-                            </div>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pl-1">
-                                <div class="flex items-center gap-2 text-sm text-amber-800"><span class="material-symbols-outlined text-green-500 text-base" style="font-variation-settings: 'FILL' 1;">check_circle</span>Pr&eacute;sentations &amp; Pitch Decks anim&eacute;s</div>
-                                <div class="flex items-center gap-2 text-sm text-amber-800"><span class="material-symbols-outlined text-green-500 text-base" style="font-variation-settings: 'FILL' 1;">check_circle</span>Affiches &amp; flyers (CMJN, fonds perdus)</div>
-                                <div class="flex items-center gap-2 text-sm text-amber-800"><span class="material-symbols-outlined text-green-500 text-base" style="font-variation-settings: 'FILL' 1;">check_circle</span>Marges de s&eacute;curit&eacute; &amp; fichiers techniques</div>
-                                <div class="flex items-center gap-2 text-sm text-amber-800"><span class="material-symbols-outlined text-green-500 text-base" style="font-variation-settings: 'FILL' 1;">check_circle</span>Mockups r&eacute;alistes (t-shirts, smartphones)</div>
+                                <h3 class="text-sm font-extrabold text-amber-900 font-headline flex-1">SEMAINE 4 &middot; SUPPORTS D'ENTREPRISE &amp; PRINT</h3>
+                                <span class="accordion-arrow material-symbols-outlined text-amber-400 text-xl transition-transform duration-300">expand_more</span>
+                            </button>
+                            <div class="accordion-body px-5 pb-5 hidden">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pl-1">
+                                    <div class="flex items-center gap-2 text-sm text-amber-800"><span class="material-symbols-outlined text-green-500 text-base" style="font-variation-settings: 'FILL' 1;">check_circle</span>Pr&eacute;sentations &amp; Pitch Decks anim&eacute;s</div>
+                                    <div class="flex items-center gap-2 text-sm text-amber-800"><span class="material-symbols-outlined text-green-500 text-base" style="font-variation-settings: 'FILL' 1;">check_circle</span>Affiches &amp; flyers (CMJN, fonds perdus)</div>
+                                    <div class="flex items-center gap-2 text-sm text-amber-800"><span class="material-symbols-outlined text-green-500 text-base" style="font-variation-settings: 'FILL' 1;">check_circle</span>Marges de s&eacute;curit&eacute; &amp; fichiers techniques</div>
+                                    <div class="flex items-center gap-2 text-sm text-amber-800"><span class="material-symbols-outlined text-green-500 text-base" style="font-variation-settings: 'FILL' 1;">check_circle</span>Mockups r&eacute;alistes (t-shirts, smartphones)</div>
+                                </div>
                             </div>
                         </div>
 
                         <!-- Semaine 5 -->
-                        <div class="bg-emerald-50/70 border border-emerald-100 rounded-2xl p-5 space-y-3">
-                            <div class="flex items-center gap-2.5">
-                                <span class="w-8 h-8 rounded-xl bg-emerald-500 flex items-center justify-center">
+                        <div class="programme-accordion bg-emerald-50/70 border border-emerald-100 rounded-2xl overflow-hidden">
+                            <button type="button" class="accordion-header w-full flex items-center gap-2.5 p-5 text-left" aria-expanded="false">
+                                <span class="w-8 h-8 rounded-xl bg-emerald-500 flex items-center justify-center flex-shrink-0">
                                     <span class="material-symbols-outlined text-white text-base" style="font-variation-settings: 'FILL' 1;">emoji_events</span>
                                 </span>
-                                <h3 class="text-sm font-extrabold text-emerald-900 font-headline">SEMAINE 5 &middot; GRAND D&Eacute;FI &amp; LANCEMENT PRO</h3>
-                            </div>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pl-1">
-                                <div class="flex items-center gap-2 text-sm text-emerald-800"><span class="material-symbols-outlined text-green-500 text-base" style="font-variation-settings: 'FILL' 1;">check_circle</span>Simulation commande : brief client r&eacute;el</div>
-                                <div class="flex items-center gap-2 text-sm text-emerald-800"><span class="material-symbols-outlined text-green-500 text-base" style="font-variation-settings: 'FILL' 1;">check_circle</span>Cr&eacute;ation site portfolio sur Canva</div>
-                                <div class="flex items-center gap-2 text-sm text-emerald-800"><span class="material-symbols-outlined text-green-500 text-base" style="font-variation-settings: 'FILL' 1;">check_circle</span>Pitch projets finaux &amp; retours</div>
-                                <div class="flex items-center gap-2 text-sm text-emerald-800"><span class="material-symbols-outlined text-green-500 text-base" style="font-variation-settings: 'FILL' 1;">check_circle</span>Strat&eacute;gies pour trouver ses clients</div>
+                                <h3 class="text-sm font-extrabold text-emerald-900 font-headline flex-1">SEMAINE 5 &middot; GRAND D&Eacute;FI &amp; LANCEMENT PRO</h3>
+                                <span class="accordion-arrow material-symbols-outlined text-emerald-400 text-xl transition-transform duration-300">expand_more</span>
+                            </button>
+                            <div class="accordion-body px-5 pb-5 hidden">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pl-1">
+                                    <div class="flex items-center gap-2 text-sm text-emerald-800"><span class="material-symbols-outlined text-green-500 text-base" style="font-variation-settings: 'FILL' 1;">check_circle</span>Simulation commande : brief client r&eacute;el</div>
+                                    <div class="flex items-center gap-2 text-sm text-emerald-800"><span class="material-symbols-outlined text-green-500 text-base" style="font-variation-settings: 'FILL' 1;">check_circle</span>Cr&eacute;ation site portfolio sur Canva</div>
+                                    <div class="flex items-center gap-2 text-sm text-emerald-800"><span class="material-symbols-outlined text-green-500 text-base" style="font-variation-settings: 'FILL' 1;">check_circle</span>Pitch projets finaux &amp; retours</div>
+                                    <div class="flex items-center gap-2 text-sm text-emerald-800"><span class="material-symbols-outlined text-green-500 text-base" style="font-variation-settings: 'FILL' 1;">check_circle</span>Strat&eacute;gies pour trouver ses clients</div>
+                                </div>
                             </div>
                         </div>
 
