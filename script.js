@@ -109,7 +109,7 @@
         const btnRegisterOther = document.getElementById('btn-register-other');
         if (btnRegisterOther) {
             btnRegisterOther.addEventListener('click', () => {
-                try { localStorage.removeItem(REGISTERED_KEY); } catch(e) {}
+                try { localStorage.removeItem(REGISTERED_KEY); } catch (e) { }
                 clearSavedData();
 
                 // ✅ FIX 1 : Remettre currentStep à 1 
@@ -130,7 +130,7 @@
                 // ✅ FIX 3 : Réafficher toutes les sections correctement
                 const sectionsToShow = [
                     '#poster-section',
-                    '#programme-section', 
+                    '#programme-section',
                     '#places-counter-section',
                     '#formateur-section',
                     '#faq-section',
@@ -141,13 +141,13 @@
                     const el = document.querySelector(sel);
                     if (el) {
                         el.classList.remove('hidden');
-                        el.style.display = ''; 
+                        el.style.display = '';
                     }
                 });
 
                 // Masquer la carte "déjà inscrit"
                 document.getElementById('already-registered-card')?.classList.add('hidden');
-                
+
                 // Réafficher le formulaire
                 const formContainer = document.getElementById('form-container');
                 if (formContainer) {
@@ -745,7 +745,7 @@
         const formContainer = document.getElementById('form-container');
         const mobileProgress = document.querySelector('#mobile-progress');
         const hamsterOverlay = document.getElementById('hamster-overlay');
-        
+
         if (formContainer) formContainer.classList.add('hidden');
         if (mobileProgress) mobileProgress.classList.add('hidden');
         if (hamsterOverlay) hamsterOverlay.classList.remove('hidden');
@@ -775,7 +775,7 @@
             const minTimePromise = new Promise(resolve => setTimeout(resolve, 2000));
             // Timeout de sécurité pour ne jamais dépasser 4 secondes de chargement
             const timeoutPromise = new Promise(resolve => setTimeout(resolve, 4000));
-            
+
             let fetchPromise = Promise.resolve();
 
             if (GOOGLE_SHEETS_URL !== 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL') {
@@ -800,7 +800,7 @@
         } catch (error) {
             console.error('Erreur soumission:', error);
             alert("❌ Erreur lors de l'envoi. Veuillez vérifier votre connexion ou réessayer.");
-            
+
             // Réafficher le formulaire en cas d'erreur
             if (hamsterOverlay) hamsterOverlay.classList.add('hidden');
             if (formContainer) formContainer.classList.remove('hidden');
@@ -821,7 +821,7 @@ Je confirme mon inscription à la Formation Canva Pro.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━
 👤 Participant : ${prenomNom}
 📱 Téléphone : +253 ${data.telephone}
-💳 Paiement : ${data.paiement} - 5000 FDJ
+💳 Paiement : ${data.paiement} - 7 500 FDJ
 📅 Formation : 16 avril - 30 mai 2026
 
 📎 Preuve de paiement ci-jointe
@@ -840,7 +840,7 @@ ${data.prenom}`;
         document.querySelector('#mobile-progress').style.display = 'none';
         document.querySelector('#sidebar').style.display = 'none';
         successScreen.classList.remove('hidden');
-        
+
         try { localStorage.setItem(REGISTERED_KEY, 'true'); } catch (e) { /* silent */ }
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -945,7 +945,7 @@ ${data.prenom}`;
     function captureTrafficSource() {
         const urlParams = new URLSearchParams(window.location.search);
         let trafficSource = urlParams.get('source'); // Cherche ?source=...
-        
+
         if (!trafficSource) {
             const referrer = document.referrer;
             if (referrer) {
@@ -956,7 +956,7 @@ ${data.prenom}`;
                 else trafficSource = new URL(referrer).hostname;
             }
         }
-        
+
         if (trafficSource) {
             const hiddenSourceInput = document.getElementById('source-tracking');
             if (hiddenSourceInput) {
@@ -964,7 +964,7 @@ ${data.prenom}`;
             }
         }
     }
-    
+
     document.addEventListener('DOMContentLoaded', captureTrafficSource);
 
 })();
