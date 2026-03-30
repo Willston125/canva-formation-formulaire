@@ -93,7 +93,7 @@
         if (btnCloseSuccess) {
             btnCloseSuccess.addEventListener('click', () => {
                 successScreen.classList.add('hidden');
-                document.getElementById('form-container'); // On ne fait rien ici car il est déjà caché par showSuccessScreen
+                // Réinitialiser la visibilité des éléments périphériques
                 document.querySelector('#poster-section').style.display = 'none';
                 document.querySelector('#programme-section').style.display = 'none';
                 document.querySelector('#places-counter-section').style.display = 'none';
@@ -159,21 +159,29 @@
                 updateCharCounter();
 
                 // ✅ FIX 3 : Réafficher toutes les sections annexes correctement (respect du responsive)
-                const sectionsToShow = [
+                const sectionsToReset = [
                     '#poster-section',
                     '#programme-section', 
                     '#places-counter-section',
                     '#formateur-section',
-                    '#faq-section',
-                    '#mobile-progress',
-                    '#sidebar'
+                    '#faq-section'
                 ];
-                sectionsToShow.forEach(sel => {
+                sectionsToReset.forEach(sel => {
                     const el = document.querySelector(sel);
-                    if (el) {
-                        el.style.display = ''; // Retire le "display: none" inline et laisse le CSS gérer (responsive)
-                    }
+                    if (el) el.style.display = '';
                 });
+
+                // Gestion spécifique du Sidebar et Mobile Progress pour éviter les doublons
+                const sidebar = document.querySelector('#sidebar');
+                if (sidebar) {
+                    sidebar.style.display = '';
+                    sidebar.classList.add('hidden'); // Reprendre le réglage "hidden lg:flex"
+                }
+                const mobileProgress = document.querySelector('#mobile-progress');
+                if (mobileProgress) {
+                    mobileProgress.style.display = '';
+                    mobileProgress.classList.remove('hidden'); // Reprendre le réglage "lg:hidden"
+                }
 
                 // Masquer la carte "déjà inscrit"
                 document.getElementById('already-registered-card')?.classList.add('hidden');
