@@ -112,76 +112,38 @@
                 try { localStorage.removeItem(REGISTERED_KEY); } catch(e) {}
                 clearSavedData();
 
-                // ✅ FIX 1 : Remettre currentStep à 1 IMMÉDIATEMENT avant tout
+                // ✅ FIX 1 : Remettre currentStep à 1 
                 currentStep = 1;
 
-                // ✅ FIX 2 : Remettre toutes les sections en état propre AVANT l'animation
-                sections.forEach((section, index) => {
-                    section.classList.remove('active');
-                    section.style.opacity = '';
-                    section.style.transform = '';
-                    section.style.transition = '';
+                // ✅ FIX 2 : Reset direct du DOM sans passer par goToStep (évite race condition)
+                sections.forEach(s => {
+                    s.classList.remove('active');
+                    s.style.opacity = '';
+                    s.style.transform = '';
+                    s.style.transition = '';
                 });
-                // Activer uniquement la section 1, sans animation
                 sections[0].classList.add('active');
 
                 // Reset formulaire
                 form.reset();
 
-                // Reset états visuels des cartes
-                form.querySelectorAll('.invalid, .valid').forEach(el => 
-                    el.classList.remove('invalid', 'valid'));
-                form.querySelectorAll('.field-error').forEach(el => { 
-                    el.textContent = ''; 
-                    el.classList.remove('visible'); 
-                });
-                
-                // Reset cartes cliquables
-                document.querySelectorAll('.profession-card, .niveau-card, .sub-card, .paiement-card')
-                    .forEach(c => {
-                        c.classList.remove(
-                            '!border-primary', '!bg-primary-fixed/30', '!bg-primary-fixed/20',
-                            'ring-2', 'ring-1', 'ring-primary/30', 'ring-primary/20',
-                            'scale-[1.02]', 'font-bold'
-                        );
-                    });
-
-                // Reset questions conditionnelles
-                document.getElementById('profession-sub-questions')?.classList.add('hidden');
-                document.querySelectorAll('.profession-sub').forEach(s => s.classList.add('hidden'));
-                document.getElementById('profession-detail').value = '';
-                document.getElementById('profession').value = '';
-                document.getElementById('niveau').value = '';
-                document.getElementById('paiement').value = '';
-
-                // Reset paiement conditionnel
-                handlePaymentChange();
-                updateCharCounter();
-
-                // ✅ FIX 3 : Réafficher toutes les sections annexes correctement (respect du responsive)
-                const sectionsToReset = [
+                // ✅ FIX 3 : Réafficher toutes les sections correctement
+                const sectionsToShow = [
                     '#poster-section',
                     '#programme-section', 
                     '#places-counter-section',
                     '#formateur-section',
-                    '#faq-section'
+                    '#faq-section',
+                    '#mobile-progress',
+                    '#sidebar'
                 ];
-                sectionsToReset.forEach(sel => {
+                sectionsToShow.forEach(sel => {
                     const el = document.querySelector(sel);
-                    if (el) el.style.display = '';
+                    if (el) {
+                        el.classList.remove('hidden');
+                        el.style.display = ''; 
+                    }
                 });
-
-                // Gestion spécifique du Sidebar et Mobile Progress pour éviter les doublons
-                const sidebar = document.querySelector('#sidebar');
-                if (sidebar) {
-                    sidebar.style.display = '';
-                    sidebar.classList.add('hidden'); // Reprendre le réglage "hidden lg:flex"
-                }
-                const mobileProgress = document.querySelector('#mobile-progress');
-                if (mobileProgress) {
-                    mobileProgress.style.display = '';
-                    mobileProgress.classList.remove('hidden'); // Reprendre le réglage "lg:hidden"
-                }
 
                 // Masquer la carte "déjà inscrit"
                 document.getElementById('already-registered-card')?.classList.add('hidden');
@@ -193,7 +155,7 @@
                     formContainer.style.display = '';
                 }
 
-                // ✅ FIX 4 : Mettre à jour la progression APRÈS avoir tout réinitialisé
+                // Mettre à jour barre de progression
                 updateProgress();
 
                 // Scroll en haut
