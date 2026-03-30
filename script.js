@@ -297,16 +297,14 @@
             });
         });
 
-        // ---- Animation btn-flip sur Mobile ----
+        // ---- Animation btn-flip (Unified for Web & Mobile) ----
         document.querySelectorAll('.btn-flip').forEach(btn => {
-            btn.addEventListener('touchstart', function() {
-                // Ajouter la classe pour déclencher l'animation CSS
-                this.classList.add('is-animating');
-                // La retirer après 1 seconde (durée de l'animation dans le CSS)
-                setTimeout(() => {
-                    this.classList.remove('is-animating');
-                }, 1000);
-            }, { passive: true });
+            const triggerAnim = () => {
+                btn.classList.add('is-animating');
+                setTimeout(() => btn.classList.remove('is-animating'), 1000);
+            };
+            btn.addEventListener('touchstart', triggerAnim, { passive: true });
+            btn.addEventListener('mousedown', triggerAnim);
         });
     }
 
@@ -400,7 +398,7 @@
             if (formContainer) {
                 formContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
-        }, 150);
+        }, 400);
     }
 
     // ====== PROGRESS ======
