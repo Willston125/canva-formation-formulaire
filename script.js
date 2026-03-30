@@ -771,8 +771,11 @@
         };
 
         try {
-            // Garantir que l'animation du hamster tourne pendant au moins 3.5 secondes
-            const minTimePromise = new Promise(resolve => setTimeout(resolve, 3500));
+            // Garantir que l'animation du hamster tourne pendant au moins 2 secondes (plus fluide)
+            const minTimePromise = new Promise(resolve => setTimeout(resolve, 2000));
+            // Timeout de sécurité pour ne jamais dépasser 4 secondes de chargement
+            const timeoutPromise = new Promise(resolve => setTimeout(resolve, 4000));
+            
             let fetchPromise = Promise.resolve();
 
             if (GOOGLE_SHEETS_URL !== 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL') {
@@ -784,7 +787,12 @@
                 });
             }
 
-            await Promise.all([fetchPromise, minTimePromise]);
+            // On attend soit que l'envoi ET le délai minimum soient finis,
+            // soit que le timeout de 4 secondes soit atteint.
+            await Promise.race([
+                Promise.all([fetchPromise, minTimePromise]),
+                timeoutPromise
+            ]);
 
             if (hamsterOverlay) hamsterOverlay.classList.add('hidden');
             showSuccessScreen();
