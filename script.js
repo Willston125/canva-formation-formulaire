@@ -111,33 +111,86 @@
             btnRegisterOther.addEventListener('click', () => {
                 try { localStorage.removeItem(REGISTERED_KEY); } catch(e) {}
                 clearSavedData();
+
+                // ✅ FIX 1 : Remettre currentStep à 1 IMMÉDIATEMENT avant tout
+                currentStep = 1;
+
+                // ✅ FIX 2 : Remettre toutes les sections en état propre AVANT l'animation
+                sections.forEach((section, index) => {
+                    section.classList.remove('active');
+                    section.style.opacity = '';
+                    section.style.transform = '';
+                    section.style.transition = '';
+                });
+                // Activer uniquement la section 1, sans animation
+                sections[0].classList.add('active');
+
+                // Reset formulaire
                 form.reset();
 
-                // Clear any validation states
-                form.querySelectorAll('.invalid, .valid').forEach(el => el.classList.remove('invalid', 'valid'));
-                form.querySelectorAll('.field-error').forEach(el => { el.textContent = ''; el.classList.remove('visible'); });
-                
-                // Reset clickable cards
-                document.querySelectorAll('.profession-card, .niveau-card, .sub-card, .paiement-card').forEach(c => {
-                    c.classList.remove('!border-primary', '!bg-primary-fixed/30', '!bg-primary-fixed/20', 'ring-2', 'ring-1', 'ring-primary/30', 'ring-primary/20', 'scale-[1.02]', 'font-bold');
+                // Reset états visuels des cartes
+                form.querySelectorAll('.invalid, .valid').forEach(el => 
+                    el.classList.remove('invalid', 'valid'));
+                form.querySelectorAll('.field-error').forEach(el => { 
+                    el.textContent = ''; 
+                    el.classList.remove('visible'); 
                 });
+                
+                // Reset cartes cliquables
+                document.querySelectorAll('.profession-card, .niveau-card, .sub-card, .paiement-card')
+                    .forEach(c => {
+                        c.classList.remove(
+                            '!border-primary', '!bg-primary-fixed/30', '!bg-primary-fixed/20',
+                            'ring-2', 'ring-1', 'ring-primary/30', 'ring-primary/20',
+                            'scale-[1.02]', 'font-bold'
+                        );
+                    });
+
+                // Reset questions conditionnelles
                 document.getElementById('profession-sub-questions')?.classList.add('hidden');
                 document.querySelectorAll('.profession-sub').forEach(s => s.classList.add('hidden'));
                 document.getElementById('profession-detail').value = '';
+                document.getElementById('profession').value = '';
+                document.getElementById('niveau').value = '';
+                document.getElementById('paiement').value = '';
 
+                // Reset paiement conditionnel
                 handlePaymentChange();
                 updateCharCounter();
-                
+
+                // ✅ FIX 3 : Réafficher toutes les sections annexes correctement
+                const sectionsToShow = [
+                    '#poster-section',
+                    '#programme-section', 
+                    '#places-counter-section',
+                    '#formateur-section',
+                    '#faq-section',
+                    '#mobile-progress',
+                    '#sidebar'
+                ];
+                sectionsToShow.forEach(sel => {
+                    const el = document.querySelector(sel);
+                    if (el) {
+                        el.style.display = '';
+                        el.classList.remove('hidden');
+                    }
+                });
+
+                // Masquer la carte "déjà inscrit"
                 document.getElementById('already-registered-card')?.classList.add('hidden');
-                document.getElementById('form-container')?.classList.remove('hidden');
-                document.querySelector('#poster-section')?.classList.remove('hidden');
-                document.querySelector('#programme-section')?.classList.remove('hidden');
-                document.querySelector('#places-counter-section')?.classList.remove('hidden');
-                document.querySelector('#formateur-section')?.classList.remove('hidden');
-                document.querySelector('#faq-section')?.classList.remove('hidden');
-                document.querySelector('#mobile-progress')?.classList.remove('hidden');
-                document.querySelector('#sidebar')?.classList.remove('hidden');
-                goToStep(1);
+                
+                // Réafficher le formulaire
+                const formContainer = document.getElementById('form-container');
+                if (formContainer) {
+                    formContainer.classList.remove('hidden');
+                    formContainer.style.display = '';
+                }
+
+                // ✅ FIX 4 : Mettre à jour la progression APRÈS avoir tout réinitialisé
+                updateProgress();
+
+                // Scroll en haut
+                window.scrollTo({ top: 0, behavior: 'smooth' });
             });
         }
 
