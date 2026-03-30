@@ -93,14 +93,14 @@
         if (btnCloseSuccess) {
             btnCloseSuccess.addEventListener('click', () => {
                 successScreen.classList.add('hidden');
-                document.getElementById('form-container')?.classList.add('hidden');
-                document.querySelector('#poster-section')?.classList.add('hidden');
-                document.querySelector('#programme-section')?.classList.add('hidden');
-                document.querySelector('#places-counter-section')?.classList.add('hidden');
-                document.querySelector('#formateur-section')?.classList.add('hidden');
-                document.querySelector('#faq-section')?.classList.add('hidden');
-                document.querySelector('#mobile-progress')?.classList.add('hidden');
-                document.querySelector('#sidebar')?.classList.add('hidden');
+                document.getElementById('form-container'); // On ne fait rien ici car il est déjà caché par showSuccessScreen
+                document.querySelector('#poster-section').style.display = 'none';
+                document.querySelector('#programme-section').style.display = 'none';
+                document.querySelector('#places-counter-section').style.display = 'none';
+                document.querySelector('#formateur-section').style.display = 'none';
+                document.querySelector('#faq-section').style.display = 'none';
+                document.querySelector('#mobile-progress').style.display = 'none';
+                document.querySelector('#sidebar').style.display = 'none';
                 document.getElementById('already-registered-card')?.classList.remove('hidden');
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             });
@@ -158,7 +158,7 @@
                 handlePaymentChange();
                 updateCharCounter();
 
-                // ✅ FIX 3 : Réafficher toutes les sections annexes correctement
+                // ✅ FIX 3 : Réafficher toutes les sections annexes correctement (respect du responsive)
                 const sectionsToShow = [
                     '#poster-section',
                     '#programme-section', 
@@ -171,8 +171,7 @@
                 sectionsToShow.forEach(sel => {
                     const el = document.querySelector(sel);
                     if (el) {
-                        el.style.display = '';
-                        el.classList.remove('hidden');
+                        el.style.display = ''; // Retire le "display: none" inline et laisse le CSS gérer (responsive)
                     }
                 });
 
@@ -862,8 +861,8 @@ ${data.prenom}`;
         }
 
         document.getElementById('form-container')?.classList.add('hidden');
-        document.querySelector('#mobile-progress')?.classList.add('hidden');
-        document.querySelector('#sidebar')?.classList.add('hidden');
+        document.querySelector('#mobile-progress').style.display = 'none';
+        document.querySelector('#sidebar').style.display = 'none';
         successScreen.classList.remove('hidden');
         
         try { localStorage.setItem(REGISTERED_KEY, 'true'); } catch (e) { /* silent */ }
