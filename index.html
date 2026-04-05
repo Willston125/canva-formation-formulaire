@@ -1080,6 +1080,26 @@
                         </div>
 
                         <div class="space-y-6">
+
+                            <!-- ⚠️ CLAUSE JURIDIQUE — Politique de remboursement -->
+                            <div class="rounded-2xl border border-amber-500/40 bg-amber-500/10 p-5 flex items-start gap-4" role="alert" aria-label="Politique de remboursement">
+                                <span class="material-symbols-outlined text-amber-400 text-2xl flex-shrink-0 mt-0.5" style="font-variation-settings: 'FILL' 1;">warning</span>
+                                <div class="space-y-2">
+                                    <p class="text-sm font-extrabold text-amber-300 font-headline tracking-wide uppercase">⚠️ Politique de remboursement — À lire avant de payer</p>
+                                    <p class="text-[13px] leading-relaxed text-[#E5E5E5]">
+                                        Nous vous recommandons de <strong class="text-white">vérifier attentivement les informations relatives à cette formation</strong> avant tout engagement. Assurez-vous que le programme, les dates et le lieu vous conviennent.
+                                    </p>
+                                    <div class="mt-3 pt-3 border-t border-amber-500/30">
+                                        <p class="text-[13px] leading-relaxed text-[#E5E5E5]">
+                                            Tout paiement effectué est soumis à la politique suivante :
+                                            <strong class="text-amber-300"> un remboursement peut être accordé dans un délai strict de 3 jours calendaires</strong>
+                                            à compter de la date du paiement, sous réserve d'une demande explicite adressée à l'organisateur.
+                                            <strong class="text-red-400"> Passé ce délai de 3 jours, aucun remboursement ne sera accordé</strong>, quelle que soit la raison invoquée.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
                             <!-- Mode de paiement -->
                             <div class="field-group" id="field-paiement">
                                 <label class="field-label">Mode de paiement <span class="text-primary">*</span></label>
@@ -1212,7 +1232,7 @@
 
                         <!-- Affiche de la formation -->
                         <div class="mb-6 rounded-2xl overflow-hidden border border-[#FCA311]/20 shadow-sm">
-                            <img src="assets/images/formation canva.jpg" alt="Formation Canva Pro — Programme"
+                            <img src="assets/images/formation canva (2).jpg" alt="Formation Canva Pro — Programme"
                                 class="w-full h-auto object-cover" loading="lazy">
                         </div>
 
@@ -1247,6 +1267,27 @@
                                 </span>
                             </label>
                             <span class="field-error" id="conditions-error" role="alert" aria-live="polite"></span>
+                        </div>
+
+                        <!-- ⚖️ CLAUSE JURIDIQUE — Checkbox remboursement obligatoire -->
+                        <div class="field-group" id="field-remboursement">
+                            <label
+                                class="flex items-start gap-4 p-5 bg-red-950/30 border border-red-500/30 rounded-2xl cursor-pointer select-none group hover:border-red-500/50 transition-colors">
+                                <input type="checkbox" id="remboursement" name="remboursement" required
+                                    class="mt-0.5 w-5 h-5 rounded-lg accent-red-500 focus:ring-red-500 border-white/20 flex-shrink-0"
+                                    aria-describedby="remboursement-error">
+                                <span class="text-sm leading-relaxed text-[#E5E5E5]">
+                                    <span class="flex items-center gap-1.5 mb-1.5">
+                                        <span class="material-symbols-outlined text-red-400 text-base" style="font-variation-settings: 'FILL' 1;">gavel</span>
+                                        <strong class="text-red-300 font-bold text-[13px] uppercase tracking-wide">Politique de remboursement — Mention légale</strong>
+                                    </span>
+                                    Je reconnais avoir pris connaissance de la politique de remboursement et l'accepte sans réserve :
+                                    <strong class="text-white"> tout paiement versé à cette formation ne peut être remboursé que dans un délai de 3 jours calendaires</strong>
+                                    suivant la date du paiement, sous réserve d'une demande explicite auprès de l'organisateur.
+                                    <strong class="text-red-400"> Au-delà de ce délai de 3 jours, aucun remboursement ne sera accordé</strong>, quelle que soit la raison invoquée.
+                                </span>
+                            </label>
+                            <span class="field-error" id="remboursement-error" role="alert" aria-live="polite"></span>
                         </div>
 
                         <!-- Final Actions -->

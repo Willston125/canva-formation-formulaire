@@ -456,7 +456,7 @@
         ];
 
         let filled = 0;
-        let total = allFields.length + 2; // +objectifs +conditions
+        let total = allFields.length + 3; // +objectifs +conditions +remboursement
 
         allFields.forEach(id => {
             const el = document.getElementById(id);
@@ -468,6 +468,9 @@
 
         const conditions = document.getElementById('conditions');
         if (conditions && conditions.checked) filled++;
+
+        const remboursement = document.getElementById('remboursement');
+        if (remboursement && remboursement.checked) filled++;
 
         return Math.round((filled / total) * 100);
     }
@@ -578,6 +581,7 @@
             'motivation': 'Veuillez expliquer votre motivation',
             'paiement': 'Veuillez choisir un mode de paiement',
             'conditions': 'Vous devez accepter les conditions',
+            'remboursement': 'Vous devez accepter la politique de remboursement',
         };
         return messages[name] || 'Ce champ est obligatoire';
     }
@@ -736,6 +740,14 @@
         const conditionsCheckbox = document.getElementById('conditions');
         if (!conditionsCheckbox.checked) {
             showFieldError(conditionsCheckbox, 'Vous devez accepter les conditions');
+            conditionsCheckbox.closest('.field-group').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+        }
+
+        const remboursementCheckbox = document.getElementById('remboursement');
+        if (!remboursementCheckbox.checked) {
+            showFieldError(remboursementCheckbox, 'Vous devez accepter la politique de remboursement pour continuer');
+            remboursementCheckbox.closest('.field-group').scrollIntoView({ behavior: 'smooth', block: 'center' });
             return;
         }
 
