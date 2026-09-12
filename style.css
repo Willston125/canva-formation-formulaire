@@ -3989,3 +3989,38 @@ a:focus-visible {
 @media (max-width: 767px) {
   .landing-hero { padding-bottom: 215px; }
 }
+
+/* ---------- Jonction hero / carrousel : cartes posées sur la courbe, plus d'air ---------- */
+.landing-hero { padding-bottom: 240px; }
+
+.catalogue {
+  margin-top: -130px;
+  border-radius: 50% 50% 0 0 / 130px 130px 0 0;
+}
+
+/* Les cartes ne dépassent plus que légèrement l'apex de la courbe */
+.training-carousel--on-curve { margin-top: -60px; }
+.training-carousel--on-curve .carousel-viewport { padding-top: 34px; }
+
+/* Effet flottant sur le fond clair */
+.training-carousel--on-curve .training-card {
+  box-shadow: 0 22px 48px rgba(9, 11, 16, 0.28);
+}
+
+.training-carousel--on-curve .training-card.is-active {
+  box-shadow: 0 34px 70px rgba(9, 11, 16, 0.38), 0 0 0 1px rgba(245, 158, 11, 0.35);
+}
+
+@media (max-width: 1023px) {
+  .landing-hero { padding-bottom: 290px; }
+}
+
+@media (max-width: 767px) {
+  .landing-hero { padding-bottom: 215px; }
+  .catalogue { margin-top: -100px; border-radius: 50% 50% 0 0 / 76px 76px 0 0; }
+  .training-carousel--on-curve { margin-top: -50px; }
+}
+
+/* Équilibre : autant d'air sous les cartes qu'au-dessus */
+.training-carousel--on-curve { padding-bottom: 46px; }
+.catalogue__heading { margin-top: 18px; }
