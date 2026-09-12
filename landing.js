@@ -304,23 +304,55 @@
         const image = document.getElementById('training-dialog-image');
         image.src = formation.image;
         image.alt = formation.imageAlt || '';
-        document.getElementById('training-dialog-category').textContent = formation.category;
+        dialog.classList.toggle('is-open-registration', Boolean(formation.registrationOpen));
+
+        const status = document.getElementById('training-dialog-status');
+        if (status) {
+            status.textContent = formation.registrationOpen ? 'Inscriptions ouvertes' : 'Programme en préparation';
+            status.className = `badge ${formation.registrationOpen ? 'badge--accent' : 'badge--muted'}`;
+        }
+        document.getElementById('training-dialog-category').textContent = `${formation.family ? formation.family + ' · ' : ''}${formation.category}`;
         document.getElementById('training-dialog-title').textContent = formation.title;
         document.getElementById('training-dialog-description').textContent = formation.shortDescription;
-        document.getElementById('training-dialog-meta').innerHTML = `
-            <div><dt>Durée</dt><dd>${escapeHtml(formation.duration)}</dd></div>
-            <div><dt>Niveau</dt><dd>${escapeHtml(formation.level)}</dd></div>
-            <div><dt>Mode</dt><dd>${escapeHtml(formation.mode)}</dd></div>
-            <div><dt>Tarif</dt><dd>${escapeHtml(formatPrice(formation.price))}</dd></div>
-            <div><dt>Prochaine session</dt><dd>${escapeHtml(formatSessionDate(formation.nextSession) || 'À annoncer')}</dd></div>
-            <div><dt>Places</dt><dd>${formation.places === null || formation.places === undefined ? 'À confirmer' : `${escapeHtml(String(formation.places))} disponibles`}</dd></div>`;
+
+        // Informations pratiques : uniquement les valeurs confirmées
+        const facts = [];
+        if (isKnown(formation.duration)) facts.push(['schedule', 'Durée', formation.duration]);
+        if (typeof formation.modules === 'number') facts.push(['view_module', 'Programme', `${formation.modules} modules`]);
+        if (isKnown(formation.level)) facts.push(['signal_cellular_alt', 'Niveau', formation.level]);
+        if (isKnown(formation.mode)) facts.push(['co_present', 'Mode', formation.mode]);
+        if (typeof formation.price === 'number') facts.push(['payments', 'Tarif', formatPrice(formation.price)]);
+        const session = upcomingSessions().find(item => item.formId === formation.formId);
+        if (session) facts.push(['event', 'Prochaine session', formatSessionDate(session.startDate)]);
+        if (session && typeof session.placesAvailable === 'number') facts.push(['group', 'Places', `${session.placesAvailable} disponibles`]);
+
+        const meta = document.getElementById('training-dialog-meta');
+        meta.hidden = !facts.length;
+        meta.innerHTML = facts.map(([icon, label, value]) =>
+            `<div><dt><span class="material-symbols-outlined" aria-hidden="true">${icon}</span>${escapeHtml(label)}</dt><dd>${escapeHtml(value)}</dd></div>`).join('');
+
+        // Ce que vous obtenez : acquis du programme s'ils existent, sinon les engagements communs à toutes les formations
+        const learnings = Array.isArray(formation.learnings) && formation.learnings.length
+            ? formation.learnings
+            : ['Une formation 100 % pratique, sur des projets concrets', 'Un portfolio de réalisations à présenter', 'Un certificat de formation à l’issue du parcours'];
+        const includes = document.getElementById('training-dialog-includes');
+        if (includes) {
+            includes.querySelector('strong').textContent = formation.learnings?.length ? 'Vous apprendrez' : 'Ce que comprend la formation';
+            includes.querySelector('ul').innerHTML = learnings.map(item =>
+                `<li><span class="material-symbols-outlined" aria-hidden="true">check_circle</span>${escapeHtml(item)}</li>`).join('');
+        }
+
+        const pending = document.getElementById('training-dialog-pending');
+        if (pending) pending.hidden = Boolean(formation.registrationOpen);
 
         const actions = document.getElementById('training-dialog-actions');
         const askMessage = `Bonjour, je souhaite être informé(e) de la prochaine session de la formation « ${formation.title} ».`;
+        const questionMessage = `Bonjour, j’ai une question concernant la formation « ${formation.title} ».`;
         actions.innerHTML = formation.registrationOpen
-            ? `<a class="button button--primary" href="${escapeHtml(registrationHref(formation))}">S’inscrire<span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a>`
-            : `<p class="training-dialog__notice">Programme, dates et tarif en cours de finalisation.</p>
-               <a class="button button--secondary" href="${escapeHtml(common.whatsappUrl(askMessage))}" target="_blank" rel="noopener noreferrer">Être informé(e) de l’ouverture<span class="material-symbols-outlined" aria-hidden="true">notifications</span></a>`;
+            ? `<a class="button button--primary" href="${escapeHtml(registrationHref(formation))}">S’inscrire à cette formation<span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a>
+               <a class="button button--secondary" href="${escapeHtml(common.whatsappUrl(questionMessage))}" target="_blank" rel="noopener noreferrer">Poser une question<span class="material-symbols-outlined" aria-hidden="true">chat</span></a>`
+            : `<a class="button button--primary" href="${escapeHtml(common.whatsappUrl(askMessage))}" target="_blank" rel="noopener noreferrer">Être informé(e) de l’ouverture<span class="material-symbols-outlined" aria-hidden="true">notifications</span></a>
+               <button class="button button--secondary" type="button" data-dialog-close data-scroll-to="#catalogue">Voir les autres formations<span class="material-symbols-outlined" aria-hidden="true">grid_view</span></button>`;
 
         if (typeof dialog.showModal === 'function') dialog.showModal();
         else dialog.setAttribute('open', '');
@@ -335,7 +367,13 @@
             if (trigger) openTrainingDialog(trigger.dataset.openTraining);
         });
 
-        dialog.querySelector('[data-dialog-close]')?.addEventListener('click', () => dialog.close());
+        dialog.addEventListener('click', event => {
+            const closer = event.target.closest('[data-dialog-close]');
+            if (!closer) return;
+            dialog.close();
+            const target = closer.dataset.scrollTo && document.querySelector(closer.dataset.scrollTo);
+            if (target) window.setTimeout(() => target.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
+        });
         dialog.addEventListener('click', event => {
             const rect = dialog.getBoundingClientRect();
             const outside = event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom;

@@ -497,12 +497,25 @@
         <button class="training-dialog__close" type="button" data-dialog-close aria-label="Fermer la fiche">
             <span class="material-symbols-outlined" aria-hidden="true">close</span>
         </button>
-        <img id="training-dialog-image" src="assets/illustrations/canva-pro.svg" alt="" width="800" height="480" loading="lazy" decoding="async">
+        <div class="training-dialog__media" aria-hidden="true">
+            <img id="training-dialog-image" src="assets/illustrations/canva-pro.svg" alt="" width="800" height="480" loading="lazy" decoding="async">
+        </div>
         <div class="training-dialog__content">
-            <p class="eyebrow" id="training-dialog-category"></p>
+            <div class="training-dialog__top">
+                <span class="badge badge--muted" id="training-dialog-status">Programme en préparation</span>
+                <p class="training-dialog__category" id="training-dialog-category"></p>
+            </div>
             <h2 id="training-dialog-title"></h2>
             <p id="training-dialog-description"></p>
-            <dl class="training-dialog__meta" id="training-dialog-meta"></dl>
+            <dl class="training-dialog__meta" id="training-dialog-meta" hidden></dl>
+            <div class="training-dialog__includes" id="training-dialog-includes">
+                <strong>Ce que comprend la formation</strong>
+                <ul></ul>
+            </div>
+            <p class="training-dialog__pending" id="training-dialog-pending" hidden>
+                <span class="material-symbols-outlined" aria-hidden="true">schedule</span>
+                Programme détaillé, dates et tarif en cours de finalisation. Laissez-nous vous prévenir dès l’ouverture des inscriptions.
+            </p>
             <div class="training-dialog__actions" id="training-dialog-actions"></div>
         </div>
     </dialog>
