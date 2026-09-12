@@ -4073,3 +4073,221 @@ a:focus-visible {
   .catalogue { border-radius: 50% 50% 0 0 / 80px 80px 0 0; }
   .training-carousel--on-curve { margin-top: 62px; }
 }
+
+/* =========================================
+   CORRECTIFS D'AFFICHAGE
+   ========================================= */
+
+/* 1. WhatsApp : le texte blanc sur le vert de marque tombait à 1,98:1.
+   On garde le vert, on passe le texte en foncé, comme les boutons orange du site. */
+#btn-whatsapp,
+#already-registered-card a[href*="wa.me"] {
+  color: #06281A !important;
+}
+
+#btn-whatsapp:hover,
+#already-registered-card a[href*="wa.me"]:hover {
+  color: #06281A !important;
+}
+
+/* 2. Zones tactiles portées à 44 px sans décaler la mise en page */
+.carousel-dot { position: relative; }
+.carousel-dot::after {
+  content: '';
+  position: absolute;
+  inset: -10px -4px;
+}
+
+.breadcrumb a { position: relative; }
+.breadcrumb a::after {
+  content: '';
+  position: absolute;
+  inset: -13px -6px;
+}
+
+.pro-form__alt a { position: relative; }
+.pro-form__alt a::after {
+  content: '';
+  position: absolute;
+  inset: -15px -8px;
+}
+
+.brand { min-height: 44px; }
+
+/* 3. Impression : la feuille datait du design clair d'origine.
+   Le récapitulatif sortait en texte blanc sur papier blanc. */
+@media print {
+  .session-banner,
+  .site-header,
+  .mobile-cta,
+  #whatsapp-float,
+  #hamster-overlay,
+  .skip-link,
+  .breadcrumb,
+  .aura-bg,
+  .training-dialog,
+  .training-carousel,
+  .catalogue-filters,
+  .fiche-hero__actions,
+  .selected-training-summary button,
+  .selected-training-summary a {
+    display: none !important;
+  }
+
+  body {
+    background: #FFFFFF !important;
+    color: #101318 !important;
+  }
+
+  #inscription,
+  #success-screen,
+  .fiche-hero,
+  .fiche-content {
+    background: #FFFFFF !important;
+  }
+
+  .glass-card,
+  #inscription .glass-card,
+  #success-screen > div,
+  .selected-training-summary,
+  .fiche-places,
+  .programme-accordion,
+  .checkbox-card,
+  .field-input {
+    background: #FFFFFF !important;
+    border: 1px solid #CBD5E1 !important;
+    box-shadow: none !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+
+  #inscription :not(.material-symbols-outlined),
+  #success-screen :not(.material-symbols-outlined),
+  .fiche-hero :not(.material-symbols-outlined),
+  .fiche-content :not(.material-symbols-outlined) {
+    color: #101318 !important;
+    text-shadow: none !important;
+  }
+
+  #success-screen {
+    position: static !important;
+    display: block !important;
+    background: none !important;
+    padding: 0 !important;
+  }
+
+  .summary-item-label { color: #475569 !important; }
+
+  /* L'écran de succès se suffit à lui-même : on n'imprime pas le formulaire derrière */
+  #success-screen:not(.hidden) ~ * { display: none !important; }
+}
+
+/* 4. Fiche rapide : en colonne sur mobile, flex-basis fixait la HAUTEUR des boutons à 220 px.
+   On ne l'applique donc qu'en disposition horizontale. */
+.training-dialog__actions .button { flex: 0 1 auto; }
+
+@media (min-width: 768px) {
+  .training-dialog__actions .button { flex: 1 1 220px; }
+}
+
+/* 5. Écran de succès : défilable si la fenêtre est plus courte que la modale */
+#success-screen {
+  overflow-y: auto;
+  align-items: flex-start;
+}
+
+#success-screen > div { margin-block: auto; }
+
+/* 6. Sous-questions de profession : elles occupaient une demi-colonne et se tassaient */
+#profession-sub-questions { grid-column: 1 / -1; }
+
+/* 7. La colonne des étapes n'a pas de sens quand le formulaire est remplacé
+   par la carte « vous êtes déjà inscrit » */
+body:has(#already-registered-card:not(.hidden)) #sidebar,
+body:has(#already-registered-card:not(.hidden)) #mobile-progress {
+  display: none !important;
+}
+
+/* 8. Les libellés de la bande de réassurance restaient en 0.98rem sous 420 px */
+@media (max-width: 420px) {
+  .reassurance strong { font-size: 0.8rem; }
+  .reassurance .material-symbols-outlined { font-size: 26px; }
+}
+
+/* 9. [hidden] doit toujours l'emporter : plusieurs blocs déclarent display:flex/grid
+   et rendaient visibles des zones que le JS avait masquées (état vide des sessions,
+   bandeau « programme en préparation », liste de métadonnées vide). */
+[hidden] { display: none !important; }
+
+/* 10. Bandeau orange du programme : le texte blanc tombait à 2,02:1 */
+#programme-section .bg-gradient-to-r h2,
+#programme-section .bg-gradient-to-r p {
+  color: #15100A !important;
+}
+
+#programme-section .bg-gradient-to-r .material-symbols-outlined {
+  color: #15100A !important;
+}
+
+/* 11. Cartes « niveau » : le survol posait un fond clair sous un texte clair (1,35:1) */
+#inscription .niveau-card:hover {
+  background: rgba(245, 158, 11, 0.14) !important;
+  border-color: var(--color-primary) !important;
+}
+
+#inscription .niveau-card:hover span { color: var(--color-white) !important; }
+#inscription .niveau-card:hover span:last-child { color: #CDD5E0 !important; }
+
+/* 12. Focus clavier : l'orange était illisible sur les sections claires */
+.catalogue *:focus-visible,
+.catalogue-grid *:focus-visible,
+.portfolio *:focus-visible,
+.method *:focus-visible,
+.catalogue-grid .filter-chip:focus-visible,
+.course-grid .course-card__link:focus-visible {
+  outline: 3px solid #0A0D13 !important;
+  outline-offset: 2px;
+}
+
+/* 13. Pastilles du carrousel : presque invisibles sur le fond crème */
+.carousel-dot::before { background: #A3988A; }
+
+/* 14. Emplacements de portfolio : libellé trop pâle */
+.portfolio-card__placeholder { color: #4B5563; }
+
+/* 15. Récapitulatif de formation : sous 420 px la règle visait un <button> devenu <a> */
+@media (max-width: 420px) {
+  .selected-training-summary a,
+  .selected-training-summary button {
+    grid-column: 1 / -1;
+    width: 100%;
+    justify-content: center;
+    border-top: 1px solid rgba(245, 158, 11, 0.18);
+    border-radius: 0;
+  }
+}
+
+/* 16. Récapitulatif d'inscription : une adresse e-mail longue était coupée net */
+.summary-item-value { overflow-wrap: anywhere; }
+
+/* 17. Pastille de la fiche rapide : un sélecteur hérité plus spécifique la grossissait */
+.training-dialog__content > p.training-dialog__pill {
+  margin: 0 0 16px;
+  font: 700 0.78rem/1 'Inter', sans-serif;
+  color: var(--color-white);
+}
+
+/* 18. Mobile : le CTA fixe recouvrait le bas du formulaire */
+@media (max-width: 767px) {
+  .registration-layout { padding-bottom: 104px; }
+}
+
+/* 19. Texte du bouton d'étape posé sur un dégradé clair par endroits */
+.btn-flip .btn-text { text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45); }
+
+/* La pastille de la fiche rapide était encore écrasée par un sélecteur à trois classes */
+.training-dialog .training-dialog__content > p.training-dialog__pill {
+  margin: 0 0 16px;
+  font: 700 0.78rem/1 'Inter', sans-serif;
+  color: var(--color-white);
+}

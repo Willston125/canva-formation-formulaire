@@ -295,14 +295,17 @@
         motivationField.addEventListener('input', updateCharCounter);
 
         // Auto-save & clear errors on all inputs
+        // updateProgress() : sans lui la barre restait figée jusqu'au changement d'étape
         form.querySelectorAll('input, select, textarea').forEach(field => {
             field.addEventListener('input', () => {
                 saveData();
                 clearFieldError(field);
+                updateProgress();
             });
             field.addEventListener('change', () => {
                 saveData();
                 clearFieldError(field);
+                updateProgress();
             });
         });
 
@@ -511,8 +514,9 @@
     }
 
     function computeFormCompletion() {
+        // L'e-mail est facultatif : l'inclure empêchait la barre d'atteindre 100 %
         const allFields = [
-            'nom', 'prenom', 'telephone', 'email', 'age',
+            'nom', 'prenom', 'telephone', 'age',
             'profession', 'niveau', 'motivation', 'paiement',
         ];
 

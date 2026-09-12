@@ -461,5 +461,7 @@
         initTrainingDialog();
         renderSessions();
         renderPortfolio();
+        // Le contenu créé ci-dessus n'existait pas au premier passage de l'observateur
+        common.observeReveals?.();
     });
 })();

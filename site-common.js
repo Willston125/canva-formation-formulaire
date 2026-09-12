@@ -124,26 +124,42 @@
     }
 
     // ---------- Apparition au scroll ----------
-    function initScrollReveals() {
-        const items = document.querySelectorAll('.reveal-on-scroll');
+    let revealObserver = null;
+
+    /**
+     * Observe les éléments .reveal-on-scroll pas encore révélés.
+     * Appelable après coup : le contenu créé en JS (cartes du catalogue) arrive
+     * APRÈS le premier passage et doit être observé à son tour, sinon il reste invisible.
+     */
+    function observeReveals(root) {
+        const items = (root || document).querySelectorAll(".reveal-on-scroll:not(.is-visible)");
         if (!items.length) return;
 
-        if (!('IntersectionObserver' in window) || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-            items.forEach(item => item.classList.add('is-visible'));
+        if (!revealObserver) {
+            items.forEach(item => item.classList.add("is-visible"));
             return;
         }
 
-        const observer = new IntersectionObserver(entries => {
-            entries.forEach(entry => {
-                if (!entry.isIntersecting) return;
-                entry.target.classList.add('is-visible');
-                observer.unobserve(entry.target);
-            });
-        }, { threshold: 0.01, rootMargin: '0px 0px -24px' });
-
-        items.forEach(item => observer.observe(item));
+        items.forEach(item => revealObserver.observe(item));
         // Filet de sécurité : rien ne doit rester invisible
-        window.setTimeout(() => items.forEach(item => item.classList.add('is-visible')), 4000);
+        window.setTimeout(() => items.forEach(item => item.classList.add("is-visible")), 4000);
+    }
+
+    function initScrollReveals() {
+        const animable = "IntersectionObserver" in window &&
+            !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+        if (animable) {
+            revealObserver = new IntersectionObserver(entries => {
+                entries.forEach(entry => {
+                    if (!entry.isIntersecting) return;
+                    entry.target.classList.add("is-visible");
+                    revealObserver.unobserve(entry.target);
+                });
+            }, { threshold: 0.01, rootMargin: "0px 0px -24px" });
+        }
+
+        observeReveals();
     }
 
     // ---------- Liens WhatsApp préremplis ----------
@@ -154,6 +170,7 @@
     }
 
     window.SiteCommon = Object.freeze({
+        observeReveals,
         formatSessionDate,
         escapeHtml,
         findFormation,
