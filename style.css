@@ -3977,3 +3977,15 @@ a:focus-visible {
    pour garder des cartes de hauteur raisonnable. */
 .course-grid .course-card__media { aspect-ratio: 1 / 1; }
 .course-grid .course-card__media img { object-position: 50% 0; }
+
+/* Respiration sous le hero : les cartes ne doivent pas coller au contenu du hero
+   ni à la photo du formateur, pour rester entièrement lisibles. */
+.landing-hero { padding-bottom: 275px; }
+
+@media (max-width: 1023px) {
+  .landing-hero { padding-bottom: 300px; }
+}
+
+@media (max-width: 767px) {
+  .landing-hero { padding-bottom: 215px; }
+}
