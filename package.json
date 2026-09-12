@@ -5,6 +5,7 @@
   "description": "Site statique Formation Canva Pro — CSS Tailwind compilé",
   "scripts": {
     "build:css": "tailwindcss -c tailwind.config.js -i tailwind.src.css -o tailwind.css --minify",
+    "build:fonts": "node scripts/fetch-fonts.js",
     "watch:css": "tailwindcss -c tailwind.config.js -i tailwind.src.css -o tailwind.css --watch",
     "serve": "serve -l 5173 ."
   },
