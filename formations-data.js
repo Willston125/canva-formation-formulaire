@@ -23,7 +23,7 @@
  * @property {string} mode
  * @property {number|null} price         FDJ, null si non confirmé
  * @property {number|null} modules       Nombre de modules du programme, null si non défini
- * @property {string[]} learnings        2 à 3 acquis concrets tirés du programme (vide si programme non publié)
+ * @property {string[]} learnings        2 à 3 acquis concrets (programme publié, ou reformulation de la description éditoriale)
  * @property {boolean} featured          Mise en avant dans la grille (programme publié et inscriptions ouvertes)
  * @property {string|null} nextSession   ISO (YYYY-MM-DD), null si non annoncée
  * @property {number|null} places        Places réellement disponibles, null si inconnu
@@ -80,7 +80,11 @@ window.FORMATIONS = Object.freeze([
     mode: 'À confirmer',
     price: null,
     modules: null,
-    learnings: [],
+    learnings: [
+      'Structurer une présence sociale claire et cohérente',
+      'Planifier un calendrier de publications',
+      'Produire des contenus adaptés à chaque canal'
+    ],
     featured: false,
     nextSession: null,
     places: null,
@@ -105,7 +109,11 @@ window.FORMATIONS = Object.freeze([
     mode: 'À confirmer',
     price: null,
     modules: null,
-    learnings: [],
+    learnings: [
+      'Créer une charte graphique cohérente',
+      'Choisir typographies et couleurs avec justesse',
+      'Décliner l’identité sur tous vos supports'
+    ],
     featured: false,
     nextSession: null,
     places: null,
@@ -130,7 +138,11 @@ window.FORMATIONS = Object.freeze([
     mode: 'À confirmer',
     price: null,
     modules: null,
-    learnings: [],
+    learnings: [
+      'Maîtriser le cadrage et la composition',
+      'Gérer la lumière et le son en tournage',
+      'Préparer une production visuelle de A à Z'
+    ],
     featured: false,
     nextSession: null,
     places: null,
@@ -155,7 +167,11 @@ window.FORMATIONS = Object.freeze([
     mode: 'À confirmer',
     price: null,
     modules: null,
-    learnings: [],
+    learnings: [
+      'Organiser et dérusher vos séquences',
+      'Donner du rythme à un montage pensé pour le numérique',
+      'Finaliser une vidéo sur CapCut Pro et DaVinci Resolve'
+    ],
     featured: false,
     nextSession: null,
     places: null,
@@ -180,7 +196,11 @@ window.FORMATIONS = Object.freeze([
     mode: 'À confirmer',
     price: null,
     modules: null,
-    learnings: [],
+    learnings: [
+      'Faire des choix de mise en scène clairs',
+      'Préparer un tournage avec méthode',
+      'Diriger un court-métrage de bout en bout'
+    ],
     featured: false,
     nextSession: null,
     places: null,

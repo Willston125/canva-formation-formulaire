@@ -499,23 +499,29 @@
         </button>
         <div class="training-dialog__media" aria-hidden="true">
             <img id="training-dialog-image" src="assets/illustrations/canva-pro.svg" alt="" width="800" height="480" loading="lazy" decoding="async">
+            <span class="training-dialog__media-label training-dialog__media-label--top" id="training-dialog-media-category"></span>
+            <span class="training-dialog__media-label training-dialog__media-label--bottom" id="training-dialog-media-promise"></span>
         </div>
         <div class="training-dialog__content">
-            <div class="training-dialog__top">
-                <span class="badge badge--muted" id="training-dialog-status">Programme en préparation</span>
-                <p class="training-dialog__category" id="training-dialog-category"></p>
-            </div>
+            <p class="training-dialog__pill" id="training-dialog-category"></p>
             <h2 id="training-dialog-title"></h2>
             <p id="training-dialog-description"></p>
             <dl class="training-dialog__meta" id="training-dialog-meta" hidden></dl>
-            <div class="training-dialog__includes" id="training-dialog-includes">
-                <strong>Ce que comprend la formation</strong>
+            <div class="training-dialog__learn" id="training-dialog-includes">
+                <h3>Ce que vous allez apprendre</h3>
                 <ul></ul>
             </div>
-            <p class="training-dialog__pending" id="training-dialog-pending" hidden>
-                <span class="material-symbols-outlined" aria-hidden="true">schedule</span>
-                Programme détaillé, dates et tarif en cours de finalisation. Laissez-nous vous prévenir dès l’ouverture des inscriptions.
-            </p>
+            <div class="training-dialog__pending" id="training-dialog-pending" hidden>
+                <span class="training-dialog__pending-icon"><span class="material-symbols-outlined" aria-hidden="true">calendar_month</span></span>
+                <div>
+                    <strong>Programme en préparation</strong>
+                    <p>Le programme détaillé, les dates et les modalités seront publiés prochainement.</p>
+                </div>
+            </div>
+            <ul class="training-dialog__perks" aria-label="Inclus dans la formation">
+                <li><span class="material-symbols-outlined" aria-hidden="true">workspace_premium</span>Certificat inclus</li>
+                <li><span class="material-symbols-outlined" aria-hidden="true">groups</span>Accompagnement pratique</li>
+            </ul>
             <div class="training-dialog__actions" id="training-dialog-actions"></div>
         </div>
     </dialog>

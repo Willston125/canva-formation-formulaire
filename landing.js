@@ -306,12 +306,11 @@
         image.alt = formation.imageAlt || '';
         dialog.classList.toggle('is-open-registration', Boolean(formation.registrationOpen));
 
-        const status = document.getElementById('training-dialog-status');
-        if (status) {
-            status.textContent = formation.registrationOpen ? 'Inscriptions ouvertes' : 'Programme en préparation';
-            status.className = `badge ${formation.registrationOpen ? 'badge--accent' : 'badge--muted'}`;
-        }
-        document.getElementById('training-dialog-category').textContent = `${formation.family ? formation.family + ' · ' : ''}${formation.category}`;
+        const mediaCategory = document.getElementById('training-dialog-media-category');
+        const mediaPromise = document.getElementById('training-dialog-media-promise');
+        if (mediaCategory) mediaCategory.textContent = formation.category;
+        if (mediaPromise) mediaPromise.textContent = formation.promise || '';
+        document.getElementById('training-dialog-category').textContent = formation.category;
         document.getElementById('training-dialog-title').textContent = formation.title;
         document.getElementById('training-dialog-description').textContent = formation.shortDescription;
 
@@ -333,11 +332,11 @@
 
         // Ce que vous obtenez : acquis du programme s'ils existent, sinon les engagements communs à toutes les formations
         const learnings = Array.isArray(formation.learnings) && formation.learnings.length
-            ? formation.learnings
+            ? formation.learnings.slice(0, 3)
             : ['Une formation 100 % pratique, sur des projets concrets', 'Un portfolio de réalisations à présenter', 'Un certificat de formation à l’issue du parcours'];
         const includes = document.getElementById('training-dialog-includes');
         if (includes) {
-            includes.querySelector('strong').textContent = formation.learnings?.length ? 'Vous apprendrez' : 'Ce que comprend la formation';
+            includes.querySelector('h3').textContent = formation.learnings?.length ? 'Ce que vous allez apprendre' : 'Ce que comprend la formation';
             includes.querySelector('ul').innerHTML = learnings.map(item =>
                 `<li><span class="material-symbols-outlined" aria-hidden="true">check_circle</span>${escapeHtml(item)}</li>`).join('');
         }
@@ -350,9 +349,11 @@
         const questionMessage = `Bonjour, j’ai une question concernant la formation « ${formation.title} ».`;
         actions.innerHTML = formation.registrationOpen
             ? `<a class="button button--primary" href="${escapeHtml(registrationHref(formation))}">S’inscrire à cette formation<span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a>
-               <a class="button button--secondary" href="${escapeHtml(common.whatsappUrl(questionMessage))}" target="_blank" rel="noopener noreferrer">Poser une question<span class="material-symbols-outlined" aria-hidden="true">chat</span></a>`
+               ${formation.hasDetailPage
+                   ? `<a class="button button--secondary" href="${escapeHtml(formation.href)}">Voir la fiche formation</a>`
+                   : `<a class="button button--secondary" href="${escapeHtml(common.whatsappUrl(questionMessage))}" target="_blank" rel="noopener noreferrer">Poser une question<span class="material-symbols-outlined" aria-hidden="true">chat</span></a>`}`
             : `<a class="button button--primary" href="${escapeHtml(common.whatsappUrl(askMessage))}" target="_blank" rel="noopener noreferrer">Être informé(e) de l’ouverture<span class="material-symbols-outlined" aria-hidden="true">notifications</span></a>
-               <button class="button button--secondary" type="button" data-dialog-close data-scroll-to="#catalogue">Voir les autres formations<span class="material-symbols-outlined" aria-hidden="true">grid_view</span></button>`;
+               <button class="button button--secondary" type="button" data-dialog-close data-scroll-to="#catalogue">Voir les autres formations</button>`;
 
         if (typeof dialog.showModal === 'function') dialog.showModal();
         else dialog.setAttribute('open', '');
