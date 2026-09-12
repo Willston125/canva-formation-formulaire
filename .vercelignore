@@ -1,0 +1,7 @@
+# Sources et outillage : versionnés, mais jamais déployés
+node_modules
+module de william
+scripts
+tailwind.src.css
+tailwind.config.js
+update_html_script.py

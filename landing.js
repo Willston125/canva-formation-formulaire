@@ -75,7 +75,7 @@
 
         return `<article class="${classes}" data-training-slug="${escapeHtml(formation.slug)}" data-family="${escapeHtml(formation.family || '')}">
             <div class="course-card__media">
-                <img src="${escapeHtml(formation.image)}" alt="${escapeHtml(formation.imageAlt || '')}" loading="lazy" decoding="async" width="800" height="450">
+                <img src="${escapeHtml(formation.image)}" alt="${escapeHtml(formation.imageAlt || '')}" loading="lazy" decoding="async" width="760" height="950">
                 <div class="course-card__badges">${cardBadges(formation)}</div>
             </div>
             <div class="course-card__body">

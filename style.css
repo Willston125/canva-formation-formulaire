@@ -3959,3 +3959,21 @@ a:focus-visible {
 }
 
 .training-dialog__actions .button { flex: 1 1 220px; padding-inline: 20px; font-size: 0.86rem; }
+
+/* ---------- Affiches de formation : format portrait 4:5 ---------- */
+.course-card__media { aspect-ratio: 4 / 5; }
+
+/* Carrousel : hauteur fixe, l'affiche occupe la partie haute */
+.training-card { height: 480px; }
+.training-card .course-card__media { aspect-ratio: auto; height: 58%; flex: 0 0 auto; }
+.course-card--dark .course-card__title { font-size: 0.98rem; }
+.course-card--dark .course-card__promise { -webkit-line-clamp: 1; }
+
+@media (max-width: 767px) {
+  .training-card { flex-basis: min(76vw, 300px); height: 470px; }
+}
+
+/* Grille : on cadre le haut de l'affiche (pastille, titre, accroche, puces, sujet)
+   pour garder des cartes de hauteur raisonnable. */
+.course-grid .course-card__media { aspect-ratio: 1 / 1; }
+.course-grid .course-card__media img { object-position: 50% 0; }
