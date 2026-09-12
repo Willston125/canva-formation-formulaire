@@ -1,11 +1,14 @@
 /* =========================================
    FORMATION CANVA PRO — Form Logic
    Multi-step, validation, auto-save, Google Sheets
-   Works with Tailwind-based design
+   Chargé sur la fiche formation (après formations-data.js et site-common.js).
+   Les fonctions d'accueil (header, carrousel, sessions) vivent dans site-common.js / landing.js.
    ========================================= */
 
 (function () {
     'use strict';
+
+    document.documentElement.classList.add('has-js');
 
     // ====== CONFIG ======
     const GOOGLE_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbyJCl1lg58y090bkO0OwovV7o60Oc0eAXPeWFu4AGX2IARG58Mqes7mf7h8BubK5KTavA/exec';
@@ -14,6 +17,18 @@
     const TOTAL_STEPS = 4;
     const PLACES_RESTANTES = 13;
     const PLACES_TOTAL = 20;
+    const FORMATIONS = Array.isArray(window.FORMATIONS) ? window.FORMATIONS : [];
+    const DEFAULT_FORMATION_ID = 'canva-pro';
+
+    let selectedFormation = FORMATIONS.find(item => item.formId === DEFAULT_FORMATION_ID) || FORMATIONS[0] || null;
+
+    /** Formate une date ISO (YYYY-MM-DD) en français, ex. "16 avril 2026". */
+    function formatSessionDate(isoDate) {
+        if (!isoDate) return '';
+        const date = new Date(`${isoDate}T12:00:00`);
+        if (Number.isNaN(date.getTime())) return '';
+        return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+    }
 
     // ====== DOM REFS ======
     const form = document.getElementById('inscription-form');
@@ -50,45 +65,91 @@
 
     let currentStep = 1;
 
-    // ====== PROGRAMME ACCORDÉON (Mobile) ======
-    function initAccordions() {
-        document.querySelectorAll('.programme-accordion .accordion-header').forEach(header => {
-            header.addEventListener('click', () => {
-                // Ne fait rien si on est sur desktop (pointer-events: none via CSS)
-                // mais on garde la logique pour robustesse
-                const accordion = header.closest('.programme-accordion');
-                const body = accordion.querySelector('.accordion-body');
-                const isOpen = accordion.classList.contains('accordion-open');
+    // ====== FORMATION & SESSION SÉLECTIONNÉES (page fiche) ======
+    const SESSIONS = Array.isArray(window.SESSIONS) ? window.SESSIONS : [];
+    let selectedSession = null;
 
-                if (isOpen) {
-                    // Fermer
-                    accordion.classList.remove('accordion-open');
-                    body.classList.add('hidden');
-                    header.setAttribute('aria-expanded', 'false');
-                } else {
-                    // Ouvrir
-                    accordion.classList.add('accordion-open');
-                    body.classList.remove('hidden');
-                    header.setAttribute('aria-expanded', 'true');
-                }
-            });
+    /**
+     * Lit les paramètres d'URL transmis par le catalogue / les sessions.
+     * Compatibilité : `?formation=` (ancien), `?trainingId=` / `?trainingSlug=` / `?sessionId=` (nouveaux).
+     * Sans paramètre, Canva Pro reste la valeur par défaut (ancien parcours conservé).
+     */
+    function initSelectedFormationFromUrl() {
+        const params = new URLSearchParams(window.location.search);
+        const requested = params.get('trainingId') || params.get('trainingSlug') || params.get('formation');
+        const requestedFormation = FORMATIONS.find(item => item.formId === requested || item.slug === requested);
+        const requestedSessionId = params.get('sessionId');
+        setSelectedFormation((requestedFormation || selectedFormation)?.formId || DEFAULT_FORMATION_ID, false, requestedSessionId);
+
+        document.addEventListener('click', event => {
+            const trigger = event.target.closest('[data-register-formation]');
+            if (!trigger) return;
+            setSelectedFormation(trigger.dataset.registerFormation || DEFAULT_FORMATION_ID, true, trigger.dataset.sessionId || null);
         });
+    }
+
+    function setSelectedFormation(formId, persist = true, sessionId = undefined) {
+        const formation = FORMATIONS.find(item => item.formId === formId || item.slug === formId) ||
+            FORMATIONS.find(item => item.formId === DEFAULT_FORMATION_ID);
+        if (!formation) return;
+
+        selectedFormation = formation;
+        const input = document.getElementById('formation');
+        if (input) input.value = formation.formId;
+
+        // Session : celle demandée si elle existe pour cette formation, sinon la prochaine session ouverte
+        const upcoming = SESSIONS.filter(item => item.formId === formation.formId && item.startDate &&
+            new Date(`${item.startDate}T23:59:59`) >= new Date());
+        if (sessionId !== undefined) {
+            selectedSession = upcoming.find(item => item.id === sessionId) || upcoming.find(item => item.registrationOpen) || null;
+        } else if (!selectedSession || selectedSession.formId !== formation.formId) {
+            selectedSession = upcoming.find(item => item.registrationOpen) || null;
+        }
+        const sessionInput = document.getElementById('session-id');
+        if (sessionInput) sessionInput.value = selectedSession ? selectedSession.id : '';
+
+        const title = document.getElementById('selected-training-title');
+        const meta = document.getElementById('selected-training-meta');
+        const sessionMeta = document.getElementById('selected-session-meta');
+        if (title) title.textContent = formation.title;
+        if (meta) meta.textContent = [formation.duration, formation.mode].filter(Boolean).join(' · ');
+        if (sessionMeta) {
+            sessionMeta.textContent = selectedSession
+                ? `Session du ${formatSessionDate(selectedSession.startDate)} · ${selectedSession.schedule} · ${selectedSession.location}`
+                : 'Prochaine session : dates à annoncer';
+        }
+        if (persist) saveData();
     }
 
     // ====== PLACES COUNTER ======
     function initPlacesCounter() {
         const countEl = document.getElementById('places-count');
         const barEl = document.getElementById('places-bar');
-        if (countEl) countEl.textContent = PLACES_RESTANTES;
+        const section = document.getElementById('places-counter-section');
+        const totalEl = document.getElementById('places-total');
+
+        // Aucune session ouverte connue : on n'affiche pas un compteur de places non vérifié
+        if (!selectedSession) {
+            if (section) section.hidden = true;
+            return;
+        }
+
+        if (section) section.hidden = false;
+        const restantes = typeof selectedSession.placesAvailable === 'number' ? selectedSession.placesAvailable : PLACES_RESTANTES;
+        const total = typeof selectedSession.placesTotal === 'number' ? selectedSession.placesTotal : PLACES_TOTAL;
+        if (countEl) countEl.textContent = restantes;
+        if (totalEl) totalEl.textContent = total;
         if (barEl) {
-            const taken = PLACES_TOTAL - PLACES_RESTANTES;
-            const pct = Math.round((taken / PLACES_TOTAL) * 100);
+            const taken = total - restantes;
+            const pct = Math.round((taken / total) * 100);
             setTimeout(() => { barEl.style.width = pct + '%'; }, 300);
         }
     }
 
     // ====== INIT ======
     function init() {
+        initSelectedFormationFromUrl();
+
         const btnCloseSuccess = document.getElementById('btn-close-success');
         if (btnCloseSuccess) {
             btnCloseSuccess.addEventListener('click', () => {
@@ -126,6 +187,7 @@
 
                 // Reset formulaire
                 form.reset();
+                setSelectedFormation(DEFAULT_FORMATION_ID, false);
 
                 // ✅ FIX 3 : Réafficher toutes les sections correctement
                 const sectionsToShow = [
@@ -180,7 +242,6 @@
         attachEvents();
         updateCharCounter();
         initPlacesCounter();
-        initAccordions();
     }
 
     // ====== EVENTS ======
@@ -678,6 +739,7 @@
     function buildSummary() {
         const data = getFormData();
         const items = [
+            { label: 'Formation', value: selectedFormation?.title || 'Canva Pro' },
             { label: 'Nom', value: data.nom },
             { label: 'Prénom', value: data.prenom },
             { label: 'Téléphone', value: '+253 ' + data.telephone },
@@ -715,6 +777,8 @@
         const objectifs = Array.from(objectifsInputs).map(cb => cb.value).join(', ');
 
         return {
+            formation: document.getElementById('formation')?.value || DEFAULT_FORMATION_ID,
+            sessionId: document.getElementById('session-id')?.value || '',
             nom: document.getElementById('nom').value.trim(),
             prenom: document.getElementById('prenom').value.trim(),
             telephone: document.getElementById('telephone').value.trim(),
@@ -767,6 +831,8 @@
 
         const payload = {
             horodateur: new Date().toLocaleString('fr-FR'),
+            formationId: data.formation,
+            sessionId: data.sessionId,
             nom: data.nom,
             prenom: data.prenom,
             telephone: data.telephone,
@@ -824,17 +890,20 @@
     function showSuccessScreen() {
         // Build dynamic WhatsApp URL
         const data = getFormData();
+        const formation = FORMATIONS.find(item => item.formId === data.formation) || selectedFormation;
+        const formationTitle = formation?.title || 'Canva Pro';
+        const formationPrice = formation?.price ? `${formation.price.toLocaleString('fr-FR')} FDJ` : 'Tarif à confirmer';
         const prenomNom = `${data.nom} ${data.prenom}`.trim();
         const message = `Bonjour M. Ali William,
 
-Je confirme mon inscription à la Formation Canva Pro.
+Je confirme mon inscription à la formation ${formationTitle}.
 
 📋 INFORMATIONS D'INSCRIPTION
 ━━━━━━━━━━━━━━━━━━━━━━━━━━
 👤 Participant : ${prenomNom}
 📱 Téléphone : +253 ${data.telephone}
-💳 Paiement : ${data.paiement} - 7 500 FDJ
-📅 Formation : 16 avril - 30 mai 2026
+💳 Paiement : ${data.paiement} - ${formationPrice}
+📅 Formation : ${formationTitle}${selectedSession ? ` — session du ${formatSessionDate(selectedSession.startDate)}` : ''}
 
 📎 Preuve de paiement ci-jointe
 
@@ -873,6 +942,8 @@ ${data.prenom}`;
 
             const data = JSON.parse(saved);
             if (!data) return;
+
+            if (data.formation) setSelectedFormation(data.formation, false, data.sessionId || undefined);
 
             const textFields = ['nom', 'prenom', 'telephone', 'email', 'age', 'motivation'];
             textFields.forEach(id => {

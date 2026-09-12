@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html class="dark" lang="fr">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formation sur mesure pour votre organisation | Formation Canva Pro</title>
+    <meta name="description"
+        content="Demandez une formation pratique sur mesure pour votre entreprise, association ou institution : design digital, contenus, photo, vidéo et réalisation.">
+    <link rel="canonical" href="https://canva-formation-formulaire.vercel.app/entreprises/">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/style.css">
+</head>
+
+<body class="page-secondary">
+    <a class="skip-link" href="#entreprise-form">Aller au formulaire</a>
+
+    <a class="session-banner hidden" id="session-banner" href="/formations/canva-pro/#inscription">
+        <span id="session-banner-text">PROCHAINE SESSION · INSCRIPTIONS OUVERTES</span>
+        <span class="material-symbols-outlined" aria-hidden="true">keyboard_double_arrow_right</span>
+    </a>
+    <header class="site-header" id="site-header">
+        <div class="site-header__inner">
+            <a class="brand" href="/" aria-label="Formation Canva Pro — Accueil">
+                <span class="brand__icon" aria-hidden="true"><span class="material-symbols-outlined">palette</span></span>
+                <span>Formation Canva Pro</span>
+            </a>
+            <nav class="desktop-nav" aria-label="Navigation principale">
+                <a href="/#accueil">Accueil</a>
+                <a href="/#formations">Formations</a>
+                <a href="/#a-propos">À propos</a>
+                <a class="is-active" href="/#entreprises">Entreprises</a>
+            </nav>
+            <div class="header-actions">
+                <a class="button button--primary button--compact" href="/formations/canva-pro/#inscription">
+                    S’inscrire<span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+                </a>
+                <button class="menu-toggle" id="menu-toggle" type="button" aria-expanded="false" aria-controls="mobile-menu" aria-label="Ouvrir le menu">
+                    <span class="material-symbols-outlined" aria-hidden="true">menu</span>
+                </button>
+            </div>
+        </div>
+        <nav class="mobile-menu" id="mobile-menu" aria-label="Navigation mobile" hidden>
+            <a href="/#accueil">Accueil</a>
+            <a href="/#formations">Formations</a>
+            <a href="/#a-propos">À propos</a>
+            <a href="/#entreprises">Entreprises</a>
+            <a href="/formations/canva-pro/#inscription">S’inscrire</a>
+        </nav>
+    </header>
+
+    <main class="secondary-page">
+        <div class="landing-shell secondary-page__layout">
+            <div class="secondary-page__copy">
+                <nav class="breadcrumb" aria-label="Fil d’Ariane">
+                    <a href="/">Accueil</a><span aria-hidden="true">/</span><span aria-current="page">Entreprises</span>
+                </nav>
+                <p class="eyebrow">POUR LES ORGANISATIONS</p>
+                <h1>Des formations adaptées aux besoins de <span>votre organisation</span></h1>
+                <p class="secondary-page__lead">Nous concevons des programmes pratiques pour les entreprises, associations et
+                    institutions : création de contenus, identité visuelle, photo, vidéo et réalisation. Décrivez votre besoin,
+                    nous revenons vers vous avec une proposition.</p>
+                <ul class="trainer__proofs">
+                    <li><span class="material-symbols-outlined" aria-hidden="true">groups</span><div><strong>Programme sur mesure</strong><span>Objectifs, durée et format définis avec vous.</span></div></li>
+                    <li><span class="material-symbols-outlined" aria-hidden="true">location_on</span><div><strong>Dans vos locaux ou en ligne</strong><span>Selon vos contraintes et votre équipe.</span></div></li>
+                    <li><span class="material-symbols-outlined" aria-hidden="true">folder_special</span><div><strong>Livrables concrets</strong><span>Vos supports réels servent d’exercices.</span></div></li>
+                </ul>
+            </div>
+
+            <form class="pro-form" id="entreprise-form" novalidate aria-labelledby="pro-form-title">
+                <h2 id="pro-form-title">Demander une formation sur mesure</h2>
+                <p class="pro-form__hint">Ce formulaire prépare un message que vous enverrez vous-même via WhatsApp. Aucune
+                    donnée n’est transmise sans votre action.</p>
+
+                <div class="field-group">
+                    <label for="pro-organisation" class="field-label">Organisation <span class="text-primary">*</span></label>
+                    <input class="field-input" id="pro-organisation" name="organisation" type="text" required autocomplete="organization" placeholder="Nom de l’entreprise, association ou institution" aria-describedby="pro-organisation-error">
+                    <span class="field-error" id="pro-organisation-error" role="alert"></span>
+                </div>
+                <div class="field-group">
+                    <label for="pro-contact" class="field-label">Personne à contacter <span class="text-primary">*</span></label>
+                    <input class="field-input" id="pro-contact" name="contact" type="text" required autocomplete="name" placeholder="Prénom et nom" aria-describedby="pro-contact-error">
+                    <span class="field-error" id="pro-contact-error" role="alert"></span>
+                </div>
+                <div class="field-group">
+                    <label for="pro-telephone" class="field-label">Téléphone <span class="text-primary">*</span></label>
+                    <input class="field-input" id="pro-telephone" name="telephone" type="tel" required autocomplete="tel" placeholder="+253 77 XX XX XX" aria-describedby="pro-telephone-error">
+                    <span class="field-error" id="pro-telephone-error" role="alert"></span>
+                </div>
+                <div class="field-group">
+                    <label for="pro-effectif" class="field-label">Nombre de participants</label>
+                    <input class="field-input" id="pro-effectif" name="effectif" type="number" min="1" max="500" inputmode="numeric" placeholder="Ex : 8">
+                </div>
+                <div class="field-group">
+                    <label for="pro-theme" class="field-label">Thématique souhaitée</label>
+                    <select class="field-input field-select" id="pro-theme" name="theme">
+                        <option value="">Choisir une thématique</option>
+                        <option>Canva Pro &amp; Création de contenu</option>
+                        <option>Community Management &amp; Stratégie digitale</option>
+                        <option>Graphisme &amp; Identité visuelle</option>
+                        <option>Photo &amp; Vidéo professionnelle</option>
+                        <option>Montage vidéo : CapCut Pro &amp; DaVinci Resolve</option>
+                        <option>Réalisation audiovisuelle &amp; Court-métrage</option>
+                        <option>Autre / plusieurs thématiques</option>
+                    </select>
+                </div>
+                <div class="field-group">
+                    <label for="pro-besoin" class="field-label">Votre besoin <span class="text-primary">*</span></label>
+                    <textarea class="field-input" id="pro-besoin" name="besoin" rows="4" required maxlength="600" placeholder="Objectifs, dates envisagées, contraintes…" aria-describedby="pro-besoin-error"></textarea>
+                    <span class="field-error" id="pro-besoin-error" role="alert"></span>
+                </div>
+                <label class="pro-form__consent">
+                    <input type="checkbox" id="pro-consent" name="consent" required>
+                    <span>J’accepte que ces informations soient transmises via WhatsApp au formateur pour traiter ma demande. <span class="text-primary">*</span></span>
+                </label>
+                <span class="field-error" id="pro-consent-error" role="alert"></span>
+
+                <button class="button button--primary pro-form__submit" type="submit">
+                    Envoyer ma demande via WhatsApp
+                    <span class="material-symbols-outlined" aria-hidden="true">send</span>
+                </button>
+                <p class="pro-form__alt">Vous préférez appeler ? <a href="tel:+25377145306">+253 77 14 53 06</a></p>
+            </form>
+        </div>
+    </main>
+
+    <footer class="site-footer" id="site-footer">
+        <div class="landing-shell site-footer__inner">
+            <div class="site-footer__brand">
+                <span class="font-headline font-bold text-[#FFFFFF] text-sm">Formation Canva Pro</span>
+                <span class="text-[11px] tracking-wide text-[#94A3B8]">&copy; 2026 Formation Canva Pro. Tous droits réservés.</span>
+            </div>
+            <nav class="site-footer__links" aria-label="Liens de bas de page">
+                <a target="_blank" rel="noopener noreferrer" href="https://wa.me/25377145306" data-whatsapp-message="Bonjour, je souhaite vous contacter au sujet de vos formations.">Contact</a>
+                <a href="/mentions-legales/">Mentions légales</a>
+                <a target="_blank" rel="noopener noreferrer" href="https://wa.me/25377145306" data-whatsapp-message="Bonjour, j’ai besoin d’aide concernant mon inscription.">Support</a>
+            </nav>
+        </div>
+    </footer>
+
+    <script src="/formations-data.js"></script>
+    <script src="/site-common.js"></script>
+    <script>
+        (function () {
+            const form = document.getElementById('entreprise-form');
+            if (!form) return;
+            const showError = (id, message) => {
+                const el = document.getElementById(id + '-error');
+                const field = document.getElementById(id);
+                if (el) { el.textContent = message; el.classList.toggle('visible', Boolean(message)); }
+                if (field) field.classList.toggle('invalid', Boolean(message));
+            };
+            form.addEventListener('submit', event => {
+                event.preventDefault();
+                const value = id => document.getElementById(id).value.trim();
+                let valid = true;
+                [['pro-organisation', 'Indiquez le nom de votre organisation'], ['pro-contact', 'Indiquez la personne à contacter'],
+                 ['pro-telephone', 'Indiquez un numéro de téléphone'], ['pro-besoin', 'Décrivez votre besoin en quelques lignes']]
+                    .forEach(([id, message]) => { const ok = value(id) !== ''; showError(id, ok ? '' : message); if (!ok) valid = false; });
+                const consent = document.getElementById('pro-consent').checked;
+                showError('pro-consent', consent ? '' : 'Votre accord est nécessaire pour transmettre la demande');
+                if (!consent) valid = false;
+                if (!valid) { form.querySelector('.invalid, #pro-consent')?.focus(); return; }
+
+                const message = ['Bonjour, je souhaite une formation sur mesure.', '',
+                    `🏢 Organisation : ${value('pro-organisation')}`, `👤 Contact : ${value('pro-contact')}`, `📱 Téléphone : ${value('pro-telephone')}`,
+                    value('pro-effectif') ? `👥 Participants : ${value('pro-effectif')}` : null,
+                    value('pro-theme') ? `🎯 Thématique : ${value('pro-theme')}` : null,
+                    '', `📝 Besoin : ${value('pro-besoin')}`].filter(line => line !== null).join('\n');
+                window.open(window.SiteCommon.whatsappUrl(message), '_blank', 'noopener');
+            });
+            form.querySelectorAll('input, textarea').forEach(field => field.addEventListener('input', () => showError(field.id, '')));
+        })();
+    </script>
+</body>
+
+</html>
