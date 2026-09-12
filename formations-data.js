@@ -13,6 +13,7 @@
  * @property {string} title              Nom commercial complet
  * @property {string} shortTitle         Nom court (menus, résumés)
  * @property {string} category
+ * @property {string} family             Famille pour les filtres du catalogue (Design, Communication, Photo & Vidéo)
  * @property {string} promise            Promesse courte (carte)
  * @property {string} shortDescription   Description courte (fiche)
  * @property {string} image              Visuel dédié (chemin absolu)
@@ -21,6 +22,9 @@
  * @property {string} level
  * @property {string} mode
  * @property {number|null} price         FDJ, null si non confirmé
+ * @property {number|null} modules       Nombre de modules du programme, null si non défini
+ * @property {string[]} learnings        2 à 3 acquis concrets tirés du programme (vide si programme non publié)
+ * @property {boolean} featured          Mise en avant dans la grille (programme publié et inscriptions ouvertes)
  * @property {string|null} nextSession   ISO (YYYY-MM-DD), null si non annoncée
  * @property {number|null} places        Places réellement disponibles, null si inconnu
  * @property {boolean} registrationOpen  Inscriptions ouvertes (formulaire accessible)
@@ -37,6 +41,7 @@ window.FORMATIONS = Object.freeze([
     title: 'Canva Pro & Création de contenu',
     shortTitle: 'Canva Pro',
     category: 'Design digital',
+    family: 'Design',
     promise: 'Créez des visuels professionnels prêts à publier.',
     shortDescription: 'Maîtrisez Canva Pro pour concevoir des contenus cohérents, une identité de marque et un portfolio de réalisations publiables.',
     image: '/assets/illustrations/canva-pro.svg',
@@ -45,6 +50,13 @@ window.FORMATIONS = Object.freeze([
     level: 'Tous niveaux',
     mode: 'Présentiel',
     price: 7500,
+    modules: 4,
+    learnings: [
+      'Créer un Brand Kit et maîtriser l’interface Canva Pro',
+      'Concevoir posts, carrousels et Reels qui captent l’attention',
+      'Vendre une offre de design et trouver ses premiers clients'
+    ],
+    featured: true,
     nextSession: null,
     places: null,
     registrationOpen: true,
@@ -58,6 +70,7 @@ window.FORMATIONS = Object.freeze([
     title: 'Community Management & Stratégie digitale',
     shortTitle: 'Community Management',
     category: 'Communication digitale',
+    family: 'Communication',
     promise: 'Passez de l’idée à un calendrier de contenus.',
     shortDescription: 'Structurez une présence sociale claire, planifiez vos publications et produisez des contenus adaptés à chaque canal.',
     image: '/assets/illustrations/community-management.svg',
@@ -66,6 +79,9 @@ window.FORMATIONS = Object.freeze([
     level: 'À confirmer',
     mode: 'À confirmer',
     price: null,
+    modules: null,
+    learnings: [],
+    featured: false,
     nextSession: null,
     places: null,
     registrationOpen: false,
@@ -79,6 +95,7 @@ window.FORMATIONS = Object.freeze([
     title: 'Graphisme & Identité visuelle',
     shortTitle: 'Identité visuelle',
     category: 'Direction artistique',
+    family: 'Design',
     promise: 'Construisez un langage visuel durable.',
     shortDescription: 'Posez les bases d’un univers graphique reconnaissable : charte, typographies, couleurs et déclinaisons sur vos supports.',
     image: '/assets/illustrations/identite-visuelle.svg',
@@ -87,6 +104,9 @@ window.FORMATIONS = Object.freeze([
     level: 'À confirmer',
     mode: 'À confirmer',
     price: null,
+    modules: null,
+    learnings: [],
+    featured: false,
     nextSession: null,
     places: null,
     registrationOpen: false,
@@ -100,6 +120,7 @@ window.FORMATIONS = Object.freeze([
     title: 'Photo & Vidéo professionnelle',
     shortTitle: 'Photo & Vidéo',
     category: 'Création visuelle',
+    family: 'Photo & Vidéo',
     promise: 'Cadrez, éclairez et racontez avec intention.',
     shortDescription: 'Découvrez les fondamentaux d’une image lisible et d’un tournage maîtrisé : cadrage, lumière, son et préparation.',
     image: '/assets/illustrations/photo-video.svg',
@@ -108,6 +129,9 @@ window.FORMATIONS = Object.freeze([
     level: 'À confirmer',
     mode: 'À confirmer',
     price: null,
+    modules: null,
+    learnings: [],
+    featured: false,
     nextSession: null,
     places: null,
     registrationOpen: false,
@@ -121,6 +145,7 @@ window.FORMATIONS = Object.freeze([
     title: 'Montage vidéo : CapCut Pro & DaVinci Resolve',
     shortTitle: 'Montage vidéo',
     category: 'Postproduction',
+    family: 'Photo & Vidéo',
     promise: 'Transformez vos rushes en récits fluides.',
     shortDescription: 'Organisez vos séquences, rythmez vos contenus et finalisez des vidéos pensées pour le numérique avec CapCut Pro et DaVinci Resolve.',
     image: '/assets/illustrations/montage-video.svg',
@@ -129,6 +154,9 @@ window.FORMATIONS = Object.freeze([
     level: 'À confirmer',
     mode: 'À confirmer',
     price: null,
+    modules: null,
+    learnings: [],
+    featured: false,
     nextSession: null,
     places: null,
     registrationOpen: false,
@@ -142,6 +170,7 @@ window.FORMATIONS = Object.freeze([
     title: 'Réalisation audiovisuelle & Court-métrage',
     shortTitle: 'Réalisation',
     category: 'Narration audiovisuelle',
+    family: 'Photo & Vidéo',
     promise: 'Préparez et dirigez un projet filmé avec méthode.',
     shortDescription: 'Explorez les choix de mise en scène, la préparation d’un tournage et la direction d’un court-métrage de bout en bout.',
     image: '/assets/illustrations/realisation.svg',
@@ -150,6 +179,9 @@ window.FORMATIONS = Object.freeze([
     level: 'À confirmer',
     mode: 'À confirmer',
     price: null,
+    modules: null,
+    learnings: [],
+    featured: false,
     nextSession: null,
     places: null,
     registrationOpen: false,

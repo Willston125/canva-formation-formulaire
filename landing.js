@@ -20,27 +20,106 @@
         return `${formation.href}?${params.toString()}#inscription`;
     }
 
-    // ---------- Cartes du catalogue ----------
-    function renderTrainingCard(formation, copyIndex) {
-        const isAccessibleCopy = copyIndex === 1;
-        return `<article class="training-card" data-training-slug="${escapeHtml(formation.slug)}">
-            <img src="${escapeHtml(formation.image)}" alt="" loading="lazy" decoding="async" width="800" height="480">
-            ${formation.registrationOpen ? '<span class="training-card__badge">Inscriptions ouvertes</span>' : ''}
-            <div class="training-card__content">
-                <span class="training-card__category">${escapeHtml(formation.category)}</span>
-                <h3>${escapeHtml(formation.title)}</h3>
-                <p class="training-card__promise">${escapeHtml(formation.promise)}</p>
-                <div class="training-card__meta">
-                    <span><span class="material-symbols-outlined" aria-hidden="true">signal_cellular_alt</span>${escapeHtml(formation.level)}</span>
-                    <span><span class="material-symbols-outlined" aria-hidden="true">schedule</span>${escapeHtml(formation.duration)}</span>
-                    <span><span class="material-symbols-outlined" aria-hidden="true">location_on</span>${escapeHtml(formation.mode)}</span>
-                </div>
-                <span class="training-card__link">Voir la formation <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></span>
+    // ---------- Composant « course-card » (variantes : default, featured, dark, compact) ----------
+    const UNCONFIRMED = /^à confirmer$/i;
+    const isKnown = value => typeof value === 'string' && value.trim() !== '' && !UNCONFIRMED.test(value.trim());
+
+    /** Badges uniquement à partir de données réelles (aucune mention marketing inventée). */
+    function cardBadges(formation) {
+        const badges = [];
+        const session = upcomingSessions().find(item => item.formId === formation.formId && item.registrationOpen);
+        if (formation.registrationOpen) badges.push({ label: 'Inscriptions ouvertes', tone: 'accent' });
+        else badges.push({ label: 'Programme en préparation', tone: 'muted' });
+        if (session && typeof session.placesAvailable === 'number' && session.placesAvailable > 0 && session.placesAvailable <= 5) {
+            badges.push({ label: 'Places limitées', tone: 'alert' });
+        }
+        return badges.map(badge => `<span class="badge badge--${badge.tone}">${escapeHtml(badge.label)}</span>`).join('');
+    }
+
+    /** Métadonnées confirmées uniquement ; repli sobre si rien n'est encore défini. */
+    function cardMeta(formation) {
+        const items = [];
+        if (isKnown(formation.duration)) items.push(['schedule', formation.duration]);
+        if (typeof formation.modules === 'number') items.push(['view_module', `${formation.modules} modules`]);
+        if (isKnown(formation.level)) items.push(['signal_cellular_alt', formation.level]);
+        if (isKnown(formation.mode)) items.push(['co_present', formation.mode]);
+        if (!items.length) items.push(['pending', 'Durée, niveau et format à annoncer']);
+        return `<ul class="course-card__meta" aria-label="Informations pratiques">${items.map(([icon, label]) =>
+            `<li><span class="material-symbols-outlined" aria-hidden="true">${icon}</span>${escapeHtml(label)}</li>`).join('')}</ul>`;
+    }
+
+    function cardLearnings(formation) {
+        const learnings = Array.isArray(formation.learnings) ? formation.learnings.slice(0, 3) : [];
+        if (!learnings.length) return '';
+        return `<div class="course-card__learn"><strong>Vous apprendrez</strong><ul>${learnings.map(item =>
+            `<li><span class="material-symbols-outlined" aria-hidden="true">check_circle</span>${escapeHtml(item)}</li>`).join('')}</ul></div>`;
+    }
+
+    /**
+     * @param {Formation} formation
+     * @param {{variant?: 'default'|'featured'|'dark'|'compact', accessible?: boolean, extraClass?: string}} options
+     */
+    function renderCourseCard(formation, options = {}) {
+        const variant = options.variant || 'default';
+        const accessible = options.accessible !== false;
+        const showLearnings = variant === 'default' || variant === 'featured';
+        const promise = isKnown(formation.promise) ? formation.promise
+            : (isKnown(formation.shortDescription) ? formation.shortDescription : `Une formation ${formation.category.toLowerCase()} orientée pratique.`);
+        const ctaLabel = formation.hasDetailPage ? 'Voir la formation' : 'Découvrir la formation';
+        const focusAttrs = accessible ? '' : 'tabindex="-1" aria-hidden="true"';
+        const link = formation.hasDetailPage
+            ? `<a class="course-card__link" href="${escapeHtml(formation.href)}" aria-label="${escapeHtml(ctaLabel)} ${escapeHtml(formation.title)}" ${focusAttrs}></a>`
+            : `<button class="course-card__link" type="button" data-open-training="${escapeHtml(formation.slug)}" aria-label="${escapeHtml(ctaLabel)} ${escapeHtml(formation.title)}" ${focusAttrs}></button>`;
+        const classes = ['course-card', `course-card--${variant}`, formation.featured && variant !== 'dark' ? 'course-card--featured' : '', options.extraClass || '']
+            .filter(Boolean).join(' ');
+
+        return `<article class="${classes}" data-training-slug="${escapeHtml(formation.slug)}" data-family="${escapeHtml(formation.family || '')}">
+            <div class="course-card__media">
+                <img src="${escapeHtml(formation.image)}" alt="${escapeHtml(formation.imageAlt || '')}" loading="lazy" decoding="async" width="800" height="450">
+                <div class="course-card__badges">${cardBadges(formation)}</div>
             </div>
-            ${formation.hasDetailPage
-                ? `<a class="training-card__button" href="${escapeHtml(formation.href)}" aria-label="Voir la formation ${escapeHtml(formation.title)}" ${isAccessibleCopy ? '' : 'tabindex="-1" aria-hidden="true"'}></a>`
-                : `<button class="training-card__button" type="button" data-open-training="${escapeHtml(formation.slug)}" aria-label="Voir la formation ${escapeHtml(formation.title)}" ${isAccessibleCopy ? '' : 'tabindex="-1" aria-hidden="true"'}></button>`}
+            <div class="course-card__body">
+                <span class="course-card__category">${escapeHtml(formation.category)}</span>
+                <h3 class="course-card__title">${escapeHtml(formation.title)}</h3>
+                <p class="course-card__promise">${escapeHtml(promise)}</p>
+                ${cardMeta(formation)}
+                ${showLearnings ? cardLearnings(formation) : ''}
+                <div class="course-card__footer">
+                    <span class="course-card__cta">${escapeHtml(ctaLabel)}<span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></span>
+                </div>
+            </div>
+            ${link}
         </article>`;
+    }
+
+    // ---------- Grille catalogue + filtres par domaine (générés depuis les données) ----------
+    function renderCatalogueGrid() {
+        const grid = document.getElementById('catalogue-grid');
+        const filters = document.getElementById('catalogue-filters');
+        const live = document.getElementById('catalogue-grid-live');
+        if (!grid || !FORMATIONS.length) return;
+
+        grid.innerHTML = FORMATIONS.map(formation =>
+            renderCourseCard(formation, { variant: formation.featured ? 'featured' : 'default', extraClass: 'reveal-on-scroll' })).join('');
+
+        if (!filters) return;
+        const families = ['Toutes', ...FORMATIONS.map(item => item.family).filter((value, index, all) => value && all.indexOf(value) === index)];
+        filters.innerHTML = families.map((family, index) =>
+            `<button class="filter-chip" type="button" data-family="${escapeHtml(family)}" aria-pressed="${index === 0}">${escapeHtml(family)}</button>`).join('');
+
+        filters.addEventListener('click', event => {
+            const chip = event.target.closest('.filter-chip');
+            if (!chip) return;
+            const family = chip.dataset.family;
+            filters.querySelectorAll('.filter-chip').forEach(item => item.setAttribute('aria-pressed', String(item === chip)));
+            let visible = 0;
+            grid.querySelectorAll('.course-card').forEach(card => {
+                const match = family === 'Toutes' || card.dataset.family === family;
+                card.classList.toggle('is-hidden', !match);
+                if (match) { visible += 1; card.classList.add('is-visible'); }
+            });
+            if (live) live.textContent = `${visible} formation${visible > 1 ? 's' : ''} affichée${visible > 1 ? 's' : ''}${family === 'Toutes' ? '' : ` dans ${family}`}`;
+        });
     }
 
     // ---------- Carrousel infini, accessible, sans dépendance ----------
@@ -52,7 +131,7 @@
         if (!carousel || !viewport || !track || !dots || !FORMATIONS.length) return;
 
         track.innerHTML = [0, 1, 2]
-            .map(copyIndex => FORMATIONS.map(formation => renderTrainingCard(formation, copyIndex)).join(''))
+            .map(copyIndex => FORMATIONS.map(formation => renderCourseCard(formation, { variant: 'dark', accessible: copyIndex === 1, extraClass: 'training-card' })).join(''))
             .join('');
         dots.innerHTML = FORMATIONS.map((formation, index) =>
             `<button class="carousel-dot${index === 0 ? ' is-active' : ''}" type="button" data-carousel-dot="${index}"
@@ -339,6 +418,7 @@
 
     document.addEventListener('DOMContentLoaded', () => {
         initTrainingCarousel();
+        renderCatalogueGrid();
         initTrainingDialog();
         renderSessions();
         renderPortfolio();

@@ -267,7 +267,7 @@
             </div>
 
             <div class="catalogue__cta reveal-on-scroll">
-                <a class="button button--primary" href="/formations/canva-pro/">
+                <a class="button button--primary" href="#catalogue">
                     Explorer le catalogue
                     <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
                 </a>
@@ -280,6 +280,29 @@
                 <li><span class="material-symbols-outlined" aria-hidden="true">folder_open</span><strong>Portfolio final</strong></li>
                 <li><span class="material-symbols-outlined" aria-hidden="true">devices</span><strong>Présentiel &amp; en ligne</strong></li>
             </ul>
+        </div>
+    </section>
+
+    <!-- ====== 5b. CATALOGUE DÉTAILLÉ (grille + filtres) ====== -->
+    <section class="catalogue-grid" id="catalogue" aria-labelledby="catalogue-grid-title">
+        <div class="landing-shell">
+            <div class="catalogue-grid__heading reveal-on-scroll">
+                <div>
+                    <p class="eyebrow eyebrow--dark">CATALOGUE DE FORMATIONS</p>
+                    <h2 id="catalogue-grid-title">Découvrez nos formations en détail</h2>
+                </div>
+                <div class="catalogue-grid__aside">
+                    <p>Des programmes concrets, animés par un professionnel en activité, pour acquérir des compétences
+                        directement applicables dans vos projets.</p>
+                    <a class="button button--outline-dark" href="/formations/canva-pro/">
+                        Voir la fiche Canva Pro
+                        <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+                    </a>
+                </div>
+            </div>
+            <div class="catalogue-filters reveal-on-scroll" id="catalogue-filters" role="group" aria-label="Filtrer les formations par domaine"></div>
+            <p class="visually-hidden" id="catalogue-grid-live" aria-live="polite"></p>
+            <div class="course-grid" id="catalogue-grid"></div>
         </div>
     </section>
 
@@ -486,7 +509,7 @@
 
     <!-- ====== CTA MOBILE FIXE ====== -->
     <div class="mobile-cta" id="mobile-cta">
-        <a class="button button--primary" href="#formations">
+        <a class="button button--primary" href="#catalogue">
             Voir les formations
             <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
         </a>
