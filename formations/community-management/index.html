@@ -108,7 +108,7 @@
                 <h1 id="fiche-title">Community Management</h1>
                 <p class="fiche-hero__lead">Structurez une présence sociale claire, planifiez vos publications et faites grandir une communauté réellement engagée.</p>
 
-                <dl class="fiche-facts" aria-label="Informations clés"><div data-session-fact hidden><dt><span class="material-symbols-outlined" aria-hidden="true">schedule</span>Horaires</dt><dd id="fiche-schedule"></dd></div><div data-session-fact hidden><dt><span class="material-symbols-outlined" aria-hidden="true">location_on</span>Lieu</dt><dd id="fiche-location"></dd></div><div><dt><span class="material-symbols-outlined" aria-hidden="true">payments</span>Participation</dt><dd id="fiche-price">À confirmer</dd></div><div><dt><span class="material-symbols-outlined" aria-hidden="true">event</span>Prochaine session</dt><dd id="fiche-next-session">Dates à annoncer</dd></div></dl>
+                <dl class="fiche-facts" aria-label="Informations clés"><div><dt><span class="material-symbols-outlined" aria-hidden="true">timelapse</span>Durée</dt><dd>12 séances</dd></div><div><dt><span class="material-symbols-outlined" aria-hidden="true">co_present</span>Mode</dt><dd>Présentiel</dd></div><div data-session-fact hidden><dt><span class="material-symbols-outlined" aria-hidden="true">schedule</span>Horaires</dt><dd id="fiche-schedule"></dd></div><div data-session-fact hidden><dt><span class="material-symbols-outlined" aria-hidden="true">location_on</span>Lieu</dt><dd id="fiche-location"></dd></div><div><dt><span class="material-symbols-outlined" aria-hidden="true">payments</span>Participation</dt><dd id="fiche-price">7 500 FDJ</dd></div><div><dt><span class="material-symbols-outlined" aria-hidden="true">event</span>Prochaine session</dt><dd id="fiche-next-session">Dates à annoncer</dd></div></dl>
 
                 <div class="fiche-hero__actions">
                     <a class="button button--primary" href="#inscription" data-register-formation="community-management">
@@ -141,12 +141,12 @@
                 <section class="fiche-places" id="places-counter-section" hidden>
                     <div class="flex items-center justify-between mb-3">
                         <div class="flex items-center gap-2">
-                            <span class="material-symbols-outlined text-red-500 text-xl"
+                            <span class="material-symbols-outlined text-red-500 text-xl" id="places-icon"
                                 style="font-variation-settings: 'FILL' 1;">local_fire_department</span>
-                            <span class="text-sm font-extrabold text-[#FFFFFF] font-headline" id="places-text">Il ne
-                                reste que <span class="text-red-500" id="places-count"></span> places sur <span id="places-total"></span></span>
+                            <!-- Texte et badge écrits par script.js : la rareté n'est annoncée que si elle est réelle -->
+                            <span class="text-sm font-extrabold text-[#FFFFFF] font-headline" id="places-text"></span>
                         </div>
-                        <span
+                        <span id="places-badge" hidden
                             class="bg-red-50 text-red-600 px-2.5 py-1 rounded-full text-[11px] font-bold border border-red-100">Places
                             limitées</span>
                     </div>
@@ -335,7 +335,7 @@
                     <div>
                         <span>Vous vous inscrivez à</span>
                         <strong id="selected-training-title">Community Management</strong>
-                        <small id="selected-training-meta">Informations pratiques à annoncer</small>
+                        <small id="selected-training-meta">12 séances · Présentiel</small>
                         <small id="selected-session-meta">Prochaine session : dates à annoncer</small>
                         <!-- Détails de la session (dates, horaires, lieu, mode, tarif) : remplis par script.js -->
                         <ul class="selected-training-summary__facts" id="selected-session-facts" hidden></ul>

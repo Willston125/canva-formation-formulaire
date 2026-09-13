@@ -93,10 +93,10 @@ window.FORMATIONS = Object.freeze([
     shortDescription: 'Structurez une présence sociale claire, planifiez vos publications et faites grandir une communauté réellement engagée.',
     image: '/assets/images/formations/community-management.webp',
     imageAlt: 'Le formateur à son bureau, smartphone affichant un tableau de bord d’audience entouré d’icônes de réseaux sociaux',
-    duration: 'À confirmer',
+    duration: '12 séances',
     level: 'À confirmer',
-    mode: 'À confirmer',
-    price: null,
+    mode: 'Présentiel',
+    price: 7500,
     modules: null,
     learnings: [
       'Bâtir une stratégie de présence sur les réseaux',
@@ -106,7 +106,7 @@ window.FORMATIONS = Object.freeze([
     featured: false,
     nextSession: null,
     places: null,
-    registrationOpen: false,
+    registrationOpen: true,
     active: true,
     allowRegistrationWithoutSession: false,
     href: '/formations/community-management/',
@@ -124,10 +124,10 @@ window.FORMATIONS = Object.freeze([
     shortDescription: 'Posez les bases d’un univers graphique reconnaissable : charte, typographies, couleurs et déclinaisons sur vos supports.',
     image: '/assets/images/formations/identite-visuelle.webp',
     imageAlt: 'Le formateur à son bureau avec des planches de charte graphique, un nuancier et des ouvrages de design',
-    duration: 'À confirmer',
+    duration: '12 séances',
     level: 'À confirmer',
-    mode: 'À confirmer',
-    price: null,
+    mode: 'Présentiel',
+    price: 7500,
     modules: null,
     learnings: [
       'Nourrir votre créativité et vos partis pris visuels',
@@ -137,7 +137,7 @@ window.FORMATIONS = Object.freeze([
     featured: false,
     nextSession: null,
     places: null,
-    registrationOpen: false,
+    registrationOpen: true,
     active: true,
     allowRegistrationWithoutSession: false,
     href: '/formations/identite-visuelle/',
@@ -155,10 +155,10 @@ window.FORMATIONS = Object.freeze([
     shortDescription: 'Cadrez, éclairez et montez des images nettes, du tournage jusqu’à la livraison d’une vidéo aboutie.',
     image: '/assets/images/formations/photo-video.webp',
     imageAlt: 'Le formateur debout en studio, appareil photo en main, optiques et clap posés sur le bureau',
-    duration: 'À confirmer',
+    duration: '12 séances',
     level: 'À confirmer',
-    mode: 'À confirmer',
-    price: null,
+    mode: 'Présentiel',
+    price: 7500,
     modules: null,
     learnings: [
       'Préparer et mener un tournage',
@@ -168,7 +168,7 @@ window.FORMATIONS = Object.freeze([
     featured: false,
     nextSession: null,
     places: null,
-    registrationOpen: false,
+    registrationOpen: true,
     active: true,
     allowRegistrationWithoutSession: false,
     href: '/formations/photo-video/',
@@ -186,10 +186,10 @@ window.FORMATIONS = Object.freeze([
     shortDescription: 'Construisez des campagnes qui attirent une audience, la convertissent en clients et font grandir votre activité.',
     image: '/assets/images/formations/marketing-digital.webp',
     imageAlt: 'Le formateur en costume à son bureau, ordinateur portable ouvert et courbe de croissance affichée derrière lui',
-    duration: 'À confirmer',
+    duration: '12 séances',
     level: 'À confirmer',
-    mode: 'À confirmer',
-    price: null,
+    mode: 'Présentiel',
+    price: 7500,
     modules: null,
     learnings: [
       'Définir une stratégie digitale claire',
@@ -199,7 +199,7 @@ window.FORMATIONS = Object.freeze([
     featured: false,
     nextSession: null,
     places: null,
-    registrationOpen: false,
+    registrationOpen: true,
     active: true,
     allowRegistrationWithoutSession: false,
     href: '/formations/marketing-digital/',
@@ -217,10 +217,10 @@ window.FORMATIONS = Object.freeze([
     shortDescription: 'Intégrez les outils d’intelligence artificielle à votre travail quotidien pour produire plus vite, sans perdre en qualité.',
     image: '/assets/images/formations/ia-appliquee.webp',
     imageAlt: 'Le formateur à son bureau devant un ordinateur portable, interfaces d’outils d’intelligence artificielle affichées',
-    duration: 'À confirmer',
+    duration: '12 séances',
     level: 'À confirmer',
-    mode: 'À confirmer',
-    price: null,
+    mode: 'Présentiel',
+    price: 7500,
     modules: null,
     learnings: [
       'Prendre en main les principaux outils d’IA',
@@ -230,7 +230,7 @@ window.FORMATIONS = Object.freeze([
     featured: false,
     nextSession: null,
     places: null,
-    registrationOpen: false,
+    registrationOpen: true,
     active: true,
     allowRegistrationWithoutSession: false,
     href: '/formations/ia-appliquee/',
@@ -275,8 +275,19 @@ window.FORMATIONS = Object.freeze([
  */
 
 /**
- * Sessions à venir. Liste volontairement vide : la session Canva Pro du
- * 16 avril 2026 est terminée et aucune nouvelle date n'a été confirmée.
+ * Sessions à venir.
+ *
+ * Emploi du temps construit pour une seule salle et un seul formateur sur le
+ * créneau 18h – 20h : chaque formation occupe deux jours qui n'appartiennent
+ * qu'à elle, donc aucune séance ne se chevauche. Sept créneaux hebdomadaires
+ * ne permettant pas de faire tourner six formations à deux séances par semaine,
+ * le calendrier se déroule en deux vagues de trois.
+ *
+ * Vague 1 — novembre / décembre 2026 : Canva Pro, Community Management, Marketing digital.
+ * Vague 2 — janvier / février 2027    : Photo & Vidéo, Identité visuelle, IA appliquée.
+ *
+ * `placesAvailable` doit être décrémenté à la main à mesure des inscriptions :
+ * le site n'affiche le compteur que si ce chiffre est réel.
  * Pour annoncer une session, ajoutez un objet conforme au typedef ci-dessus, par ex. :
  * {
  *   id: 'canva-pro-2026-11', formId: 'canva-pro', startDate: '2026-11-05', endDate: '2026-11-28',
@@ -288,7 +299,92 @@ window.FORMATIONS = Object.freeze([
  * la fiche affiche alors « aucune session annoncée » sans jamais inventer de date.
  * @type {ReadonlyArray<Readonly<Session>>}
  */
-window.SESSIONS = Object.freeze([]);
+window.SESSIONS = Object.freeze([
+  Object.freeze({
+    id: 'canva-pro-2026-11',
+    formId: 'canva-pro',
+    startDate: '2026-11-05',
+    endDate: '2026-12-14',
+    schedule: 'Lundi et jeudi · 18h – 20h',
+    duration: '12 séances · 24 heures',
+    location: 'Saalam Tower, 5ème étage, Djibouti',
+    mode: 'Présentiel',
+    price: 7500,
+    placesTotal: 20,
+    placesAvailable: 20,
+    registrationOpen: true
+  }),
+  Object.freeze({
+    id: 'community-management-2026-11',
+    formId: 'community-management',
+    startDate: '2026-11-06',
+    endDate: '2026-12-15',
+    schedule: 'Mardi et vendredi · 18h – 20h',
+    duration: '12 séances · 24 heures',
+    location: 'Saalam Tower, 5ème étage, Djibouti',
+    mode: 'Présentiel',
+    price: 7500,
+    placesTotal: 20,
+    placesAvailable: 20,
+    registrationOpen: true
+  }),
+  Object.freeze({
+    id: 'marketing-digital-2026-11',
+    formId: 'marketing-digital',
+    startDate: '2026-11-07',
+    endDate: '2026-12-16',
+    schedule: 'Mercredi et samedi · 18h – 20h',
+    duration: '12 séances · 24 heures',
+    location: 'Saalam Tower, 5ème étage, Djibouti',
+    mode: 'Présentiel',
+    price: 7500,
+    placesTotal: 20,
+    placesAvailable: 20,
+    registrationOpen: true
+  }),
+  Object.freeze({
+    id: 'photo-video-2027-01',
+    formId: 'photo-video',
+    startDate: '2027-01-07',
+    endDate: '2027-02-15',
+    schedule: 'Lundi et jeudi · 18h – 20h',
+    duration: '12 séances · 24 heures',
+    location: 'Saalam Tower, 5ème étage, Djibouti',
+    mode: 'Présentiel',
+    price: 7500,
+    placesTotal: 20,
+    placesAvailable: 20,
+    registrationOpen: true
+  }),
+  Object.freeze({
+    id: 'identite-visuelle-2027-01',
+    formId: 'identite-visuelle',
+    startDate: '2027-01-08',
+    endDate: '2027-02-16',
+    schedule: 'Mardi et vendredi · 18h – 20h',
+    duration: '12 séances · 24 heures',
+    location: 'Saalam Tower, 5ème étage, Djibouti',
+    mode: 'Présentiel',
+    price: 7500,
+    placesTotal: 20,
+    placesAvailable: 20,
+    registrationOpen: true
+  }),
+  Object.freeze({
+    id: 'ia-appliquee-2027-01',
+    formId: 'ia-appliquee',
+    startDate: '2027-01-09',
+    endDate: '2027-02-17',
+    schedule: 'Mercredi et samedi · 18h – 20h',
+    duration: '12 séances · 24 heures',
+    location: 'Saalam Tower, 5ème étage, Djibouti',
+    mode: 'Présentiel',
+    price: 7500,
+    placesTotal: 20,
+    placesAvailable: 20,
+    registrationOpen: true
+  })
+]);
 
 /**
  * @typedef {Object} PortfolioItem

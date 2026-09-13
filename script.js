@@ -393,10 +393,11 @@
 
     // ====== PLACES COUNTER ======
     function initPlacesCounter() {
-        const countEl = document.getElementById('places-count');
+        const texteEl = document.getElementById('places-text');
         const barEl = document.getElementById('places-bar');
         const section = document.getElementById('places-counter-section');
-        const totalEl = document.getElementById('places-total');
+        const badgeEl = document.getElementById('places-badge');
+        const iconeEl = document.getElementById('places-icon');
 
         // Compteur affiché uniquement avec des chiffres réels de session — jamais de valeur par défaut
         const restantes = selectedSession?.placesAvailable;
@@ -407,10 +408,20 @@
         }
 
         if (section) section.hidden = false;
-        if (countEl) countEl.textContent = restantes;
-        if (totalEl) totalEl.textContent = total;
+        /* La rareté n'est annoncée que lorsqu'elle est vraie : tant que le groupe
+           est complet à l'inverse (aucune place prise), on annonce simplement l'ouverture. */
+        const prises = total - restantes;
+        const tendue = restantes <= Math.max(3, Math.round(total * 0.25));
+        if (texteEl) {
+            texteEl.innerHTML = prises === 0
+                ? `<strong>${total}</strong> places disponibles pour cette session`
+                : `Il ne reste que <span class="text-red-500">${restantes}</span> place${restantes > 1 ? 's' : ''} sur ${total}`;
+        }
+        if (badgeEl) badgeEl.hidden = !tendue;
+        if (iconeEl) iconeEl.textContent = tendue ? 'local_fire_department' : 'group';
+        if (iconeEl) iconeEl.classList.toggle('text-red-500', tendue);
         if (barEl) {
-            const pct = Math.round(((total - restantes) / total) * 100);
+            const pct = Math.round((prises / total) * 100);
             setTimeout(() => { barEl.style.width = pct + '%'; }, 300);
         }
     }
