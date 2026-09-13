@@ -1,7 +1,9 @@
 /* =========================================
-   FORMATION CANVA PRO — Form Logic
-   Multi-step, validation, auto-save, Google Sheets
-   Chargé sur la fiche formation (après formations-data.js et site-common.js).
+   IMPACTALI — Moteur d'inscription commun à toutes les formations
+   Multi-étapes, validation, sauvegarde locale, Google Sheets.
+   Chargé sur chaque fiche formation (après formations-data.js et site-common.js).
+   La formation de la page est lue sur <main id="inscription" data-formation-id="…"> ;
+   l'URL (?trainingId= / ?trainingSlug= / ?formation= / ?sessionId=) peut la préciser.
    Les fonctions d'accueil (header, carrousel, sessions) vivent dans site-common.js / landing.js.
    ========================================= */
 
@@ -12,15 +14,53 @@
 
     // ====== CONFIG ======
     const GOOGLE_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbyJCl1lg58y090bkO0OwovV7o60Oc0eAXPeWFu4AGX2IARG58Mqes7mf7h8BubK5KTavA/exec';
-    const STORAGE_KEY = 'canvapro_form_data';
-    const REGISTERED_KEY = 'canvapro_registered_user';
     const TOTAL_STEPS = 4;
-    const PLACES_RESTANTES = 13;
-    const PLACES_TOTAL = 20;
     const FORMATIONS = Array.isArray(window.FORMATIONS) ? window.FORMATIONS : [];
-    const DEFAULT_FORMATION_ID = 'canva-pro';
+    const CONTACT = window.SITE_CONTACT || {};
+    const common = window.SiteCommon || null;
 
-    let selectedFormation = FORMATIONS.find(item => item.formId === DEFAULT_FORMATION_ID) || FORMATIONS[0] || null;
+    /** Formation portée par la page (jamais une valeur codée en dur). */
+    const PAGE_FORMATION_ID = document.getElementById('inscription')?.dataset.formationId || FORMATIONS[0]?.formId || '';
+
+    let selectedFormation = FORMATIONS.find(item => item.formId === PAGE_FORMATION_ID) || FORMATIONS[0] || null;
+
+    // ---- Clés de stockage local, isolées par formation (et par session pour l'inscription validée) ----
+    const storageScope = (formation, session) =>
+        `${formation?.formId || PAGE_FORMATION_ID}.${session?.id || 'undated'}`;
+    const draftKey = (formation, session) => `impactali.registration.v2.draft.${storageScope(formation, session)}`;
+    const registeredKey = (formation, session) =>
+        `impactali.registration.v2.submitted.${storageScope(formation, session)}`;
+
+    /** Reprise des anciennes clés Canva (avant le moteur commun) pour ne perdre ni brouillon ni statut « inscrit ». */
+    function migrateLegacyStorage() {
+        try {
+            const canva = FORMATIONS.find(item => item.formId === 'canva-pro');
+            if (!canva) return;
+            const draft = localStorage.getItem('canvapro_form_data');
+            if (draft && !localStorage.getItem(draftKey(canva, null))) localStorage.setItem(draftKey(canva, null), draft);
+            if (localStorage.getItem('canvapro_registered_user') === 'true') localStorage.setItem(registeredKey(canva, null), 'true');
+            localStorage.removeItem('canvapro_form_data');
+            localStorage.removeItem('canvapro_registered_user');
+        } catch (e) { /* silent */ }
+    }
+
+    // ---- Paramètres dépendant de la session (préparés, valeurs par défaut du contact) ----
+    const currentCurrency = () => selectedSession?.currency || CONTACT.currency || 'FDJ';
+    const currentCountryCode = () => selectedSession?.countryCode || CONTACT.countryCode || '+253';
+    const currentPrice = () => (typeof selectedSession?.price === 'number' ? selectedSession.price : selectedFormation?.price);
+    const currentPaymentMethods = () => (Array.isArray(selectedSession?.paymentMethods) && selectedSession.paymentMethods.length
+        ? selectedSession.paymentMethods
+        : (Array.isArray(CONTACT.paymentMethods) ? CONTACT.paymentMethods : []));
+    const formatPrice = price => (common ? common.formatPrice(price, currentCurrency())
+        : (typeof price === 'number' ? `${price.toLocaleString('fr-FR')} ${currentCurrency()}` : 'À confirmer'));
+
+    /** Format du numéro local : règle djiboutienne conservée pour +253, sinon 6 à 15 chiffres. */
+    function phonePattern() {
+        return currentCountryCode() === '+253' ? /^(77|67)\d{6}$/ : /^\d{6,15}$/;
+    }
+    function phoneFormatHint() {
+        return currentCountryCode() === '+253' ? 'Format invalide. Utilisez 77XXXXXX ou 67XXXXXX' : 'Format invalide : chiffres uniquement';
+    }
 
     /** Formate une date ISO (YYYY-MM-DD) en français, ex. "16 avril 2026". */
     function formatSessionDate(isoDate) {
@@ -72,38 +112,44 @@
     /**
      * Lit les paramètres d'URL transmis par le catalogue / les sessions.
      * Compatibilité : `?formation=` (ancien), `?trainingId=` / `?trainingSlug=` / `?sessionId=` (nouveaux).
-     * Sans paramètre, Canva Pro reste la valeur par défaut (ancien parcours conservé).
+     * Sans paramètre, la formation de la page est retenue.
      */
     function initSelectedFormationFromUrl() {
         const params = new URLSearchParams(window.location.search);
-        const requested = params.get('trainingId') || params.get('trainingSlug') || params.get('formation');
+        const requested = params.get('trainingId') || params.get('trainingSlug') || params.get('formationId') || params.get('formation');
         const requestedFormation = FORMATIONS.find(item => item.formId === requested || item.slug === requested);
-        const requestedSessionId = params.get('sessionId');
-        setSelectedFormation((requestedFormation || selectedFormation)?.formId || DEFAULT_FORMATION_ID, false, requestedSessionId);
+        // `params.get` renvoie null quand le paramètre est absent : on passe `undefined`
+        // pour que la prochaine session ouverte soit choisie automatiquement.
+        const requestedSessionId = params.get('sessionId') ?? undefined;
+        const pageFormation = FORMATIONS.find(item => item.formId === PAGE_FORMATION_ID || item.slug === PAGE_FORMATION_ID);
+        if (requestedFormation && pageFormation && requestedFormation.formId !== pageFormation.formId) {
+            console.warn('IMPACTALI : le paramètre de formation ne correspond pas à la fiche affichée. La fiche reste prioritaire.');
+        }
+        setSelectedFormation((pageFormation || requestedFormation || selectedFormation)?.formId || PAGE_FORMATION_ID, false, requestedSessionId);
 
         document.addEventListener('click', event => {
             const trigger = event.target.closest('[data-register-formation]');
             if (!trigger) return;
-            setSelectedFormation(trigger.dataset.registerFormation || DEFAULT_FORMATION_ID, true, trigger.dataset.sessionId || null);
+            setSelectedFormation(trigger.dataset.registerFormation || PAGE_FORMATION_ID, true, trigger.dataset.sessionId || null);
         });
     }
 
     function setSelectedFormation(formId, persist = true, sessionId = undefined) {
         const formation = FORMATIONS.find(item => item.formId === formId || item.slug === formId) ||
-            FORMATIONS.find(item => item.formId === DEFAULT_FORMATION_ID);
+            FORMATIONS.find(item => item.formId === PAGE_FORMATION_ID);
         if (!formation) return;
 
         selectedFormation = formation;
         const input = document.getElementById('formation');
         if (input) input.value = formation.formId;
 
-        // Session : celle demandée si elle existe pour cette formation, sinon la prochaine session ouverte
-        const upcoming = SESSIONS.filter(item => item.formId === formation.formId && item.startDate &&
-            new Date(`${item.startDate}T23:59:59`) >= new Date());
-        if (sessionId !== undefined) {
-            selectedSession = upcoming.find(item => item.id === sessionId) || upcoming.find(item => item.registrationOpen) || null;
-        } else if (!selectedSession || selectedSession.formId !== formation.formId) {
-            selectedSession = upcoming.find(item => item.registrationOpen) || null;
+        // Session : une session explicitement demandée n'est jamais remplacée silencieusement.
+        const upcoming = common?.upcomingSessions
+            ? common.upcomingSessions().filter(item => item.formId === formation.formId)
+            : SESSIONS.filter(item => item.formId === formation.formId && item.startDate && new Date(`${item.startDate}T23:59:59`) >= new Date());
+        if (sessionId !== undefined) selectedSession = upcoming.find(item => item.id === sessionId) || null;
+        else if (!selectedSession || selectedSession.formId !== formation.formId) {
+            selectedSession = upcoming.find(item => item.registrationOpen && item.placesAvailable !== 0) || null;
         }
         const sessionInput = document.getElementById('session-id');
         if (sessionInput) sessionInput.value = selectedSession ? selectedSession.id : '';
@@ -112,13 +158,154 @@
         const meta = document.getElementById('selected-training-meta');
         const sessionMeta = document.getElementById('selected-session-meta');
         if (title) title.textContent = formation.title;
-        if (meta) meta.textContent = [formation.duration, formation.mode].filter(Boolean).join(' · ');
+        if (meta) {
+            meta.textContent = [formation.duration, formation.mode].filter(v => v && !/^à confirmer$/i.test(v)).join(' · ')
+                || 'Informations pratiques à annoncer';
+        }
         if (sessionMeta) {
             sessionMeta.textContent = selectedSession
                 ? `Session du ${formatSessionDate(selectedSession.startDate)} · ${selectedSession.schedule} · ${selectedSession.location}`
                 : 'Prochaine session : dates à annoncer';
         }
+
+        renderSessionDetails();
+        renderRegistrationState();
+        renderPaymentDetails();
+        renderConditionsText();
         if (persist) saveData();
+    }
+
+    // ====== INFORMATIONS DE SESSION SUR LA FICHE ======
+    /** Renseigne, dans l'en-tête de la fiche, les lignes qui dépendent d'une session réelle. */
+    function renderSessionDetails() {
+        const set = (id, value) => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            const row = el.closest('[data-session-fact]') || el;
+            if (value) { el.textContent = value; row.hidden = false; }
+            else if (row !== el) row.hidden = true;
+            else el.textContent = 'Dates à annoncer';
+        };
+        const s = selectedSession;
+        set('fiche-next-session', s ? [formatSessionDate(s.startDate), s.schedule].filter(Boolean).join(' · ') : '');
+        set('fiche-schedule', s?.schedule || '');
+        set('fiche-location', s?.location || '');
+        const priceEl = document.getElementById('fiche-price');
+        if (priceEl) priceEl.textContent = formatPrice(currentPrice());
+    }
+
+    /**
+     * État d'inscription (formation ≠ session) : ouvert, complet, annoncé, aucune session.
+     * Le formulaire n'est présenté que lorsque l'inscription est possible.
+     */
+    function renderRegistrationState() {
+        const card = document.getElementById('registration-state');
+        const formContainer = document.getElementById('form-container');
+        if (!card || !formContainer || !common) return;
+        const requestedSessionId = new URLSearchParams(window.location.search).get('sessionId');
+        const { state, session } = common.sessionState(selectedFormation?.formId, requestedSessionId || selectedSession?.id || undefined);
+        const isOpen = state === 'open';
+        card.hidden = isOpen;
+        document.getElementById('sidebar')?.classList.toggle('is-unavailable', !isOpen);
+        document.getElementById('mobile-progress')?.classList.toggle('is-unavailable', !isOpen);
+        const title = selectedFormation?.title || '';
+        updateRegistrationCtas(isOpen, title);
+        if (isOpen) {
+            formContainer.classList.remove('is-unavailable');
+            return;
+        }
+        formContainer.classList.add('is-unavailable');
+
+        const messages = {
+            none: {
+                icon: 'event_busy', heading: 'Aucune session annoncée pour le moment',
+                text: `Les dates de la prochaine session de « ${title} » ne sont pas encore fixées. Laissez-nous vos coordonnées sur WhatsApp : vous serez prévenu(e) dès l’ouverture des inscriptions.`
+            },
+            closed: {
+                icon: 'event_upcoming', heading: 'Session annoncée · inscriptions bientôt ouvertes',
+                text: session ? `Prochaine session le ${formatSessionDate(session.startDate)}${session.schedule ? ` · ${session.schedule}` : ''}. Les inscriptions ne sont pas encore ouvertes : demandez à être prévenu(e).` : ''
+            },
+            full: {
+                icon: 'group_off', heading: 'Session complète',
+                text: session ? `La session du ${formatSessionDate(session.startDate)} est complète. Demandez à être prévenu(e) de la prochaine session.` : ''
+            },
+            invalid: {
+                icon: 'error', heading: 'Session introuvable',
+                text: 'La session demandée n’existe pas ou n’est plus disponible pour cette formation. Consultez les prochaines sessions ou contactez-nous.'
+            },
+            inactive: {
+                icon: 'block', heading: 'Formation indisponible',
+                text: 'Cette formation n’est pas ouverte aux inscriptions actuellement.'
+            }
+        };
+        const m = messages[state] || messages.none;
+        const askMessage = `Bonjour, je souhaite être informé(e) de la prochaine session de la formation « ${title} ».`;
+        card.innerHTML = `
+            <span class="registration-state__icon material-symbols-outlined" aria-hidden="true">${m.icon}</span>
+            <h3>${escapeHtml(m.heading)}</h3>
+            <p>${escapeHtml(m.text)}</p>
+            <div class="registration-state__actions">
+                <a class="button button--primary" href="${common.whatsappUrl(askMessage)}" target="_blank" rel="noopener noreferrer">Être informé(e) de l’ouverture<span class="material-symbols-outlined" aria-hidden="true">notifications</span></a>
+                <a class="button button--secondary" href="/#catalogue">Voir les autres formations</a>
+            </div>`;
+    }
+
+    /**
+     * Les boutons « S'inscrire » de la fiche ne doivent rien promettre qui ne soit possible :
+     * sans session ouverte, ils invitent à être prévenu(e) de l'ouverture (WhatsApp).
+     */
+    function updateRegistrationCtas(isOpen, title) {
+        const askMessage = `Bonjour, je souhaite être informé(e) de la prochaine session de la formation « ${title} ».`;
+        document.querySelectorAll('.fiche-hero__actions [data-register-formation], #mobile-cta [data-register-formation]')
+            .forEach(cta => {
+                const label = cta.childNodes[0];
+                if (!cta.dataset.openLabel) {
+                    cta.dataset.openLabel = label?.textContent || '';
+                    cta.dataset.openHref = cta.getAttribute('href') || '#inscription';
+                }
+                if (isOpen) {
+                    if (label) label.textContent = cta.dataset.openLabel;
+                    cta.setAttribute('href', cta.dataset.openHref);
+                    cta.removeAttribute('target');
+                    cta.removeAttribute('rel');
+                } else {
+                    if (label) label.textContent = 'Être informé(e) de l’ouverture ';
+                    cta.setAttribute('href', common.whatsappUrl(askMessage));
+                    cta.setAttribute('target', '_blank');
+                    cta.setAttribute('rel', 'noopener noreferrer');
+                }
+            });
+    }
+
+    /** Coordonnées de paiement et montant, depuis les données (jamais codés dans la page). */
+    function renderPaymentDetails() {
+        const price = formatPrice(currentPrice());
+        document.querySelectorAll('[data-amount]').forEach(el => { el.textContent = price; });
+        const cash = currentPaymentMethods().find(method => method.kind === 'cash');
+        const set = (id, value) => { const el = document.getElementById(id); if (el && value) el.textContent = value; };
+        set('cash-payment-name', cash?.recipient);
+        set('cash-payment-place', cash?.place);
+        set('cash-payment-phone', cash?.phone);
+        document.querySelectorAll('.country-code').forEach(el => { el.textContent = currentCountryCode(); });
+        const summaryPrice = document.getElementById('selected-training-price');
+        if (summaryPrice) summaryPrice.textContent = price;
+    }
+
+    /** Conditions acceptées à l'étape 4 : uniquement des faits connus. */
+    function renderConditionsText() {
+        const el = document.getElementById('conditions-text');
+        if (!el) return;
+        const s = selectedSession;
+        const parts = ['J’accepte les conditions de la formation :'];
+        if (s) {
+            const dates = s.endDate ? `du ${formatSessionDate(s.startDate)} au ${formatSessionDate(s.endDate)}` : `à partir du ${formatSessionDate(s.startDate)}`;
+            parts.push(`<strong class="text-primary">formation ${escapeHtml(dates)}</strong>${s.schedule ? `, <strong class="text-primary">${escapeHtml(s.schedule)}</strong>` : ''}.`);
+            if (typeof s.placesTotal === 'number') parts.push(`Places limitées à <strong class="text-primary">${s.placesTotal} participants</strong>.`);
+        } else {
+            parts.push('les dates et horaires de la session vous seront communiqués avant le début de la formation.');
+        }
+        parts.push('Inscription confirmée après validation du paiement.');
+        el.innerHTML = parts.join(' ');
     }
 
     // ====== PLACES COUNTER ======
@@ -128,26 +315,26 @@
         const section = document.getElementById('places-counter-section');
         const totalEl = document.getElementById('places-total');
 
-        // Aucune session ouverte connue : on n'affiche pas un compteur de places non vérifié
-        if (!selectedSession) {
+        // Compteur affiché uniquement avec des chiffres réels de session — jamais de valeur par défaut
+        const restantes = selectedSession?.placesAvailable;
+        const total = selectedSession?.placesTotal;
+        if (typeof restantes !== 'number' || typeof total !== 'number' || total <= 0) {
             if (section) section.hidden = true;
             return;
         }
 
         if (section) section.hidden = false;
-        const restantes = typeof selectedSession.placesAvailable === 'number' ? selectedSession.placesAvailable : PLACES_RESTANTES;
-        const total = typeof selectedSession.placesTotal === 'number' ? selectedSession.placesTotal : PLACES_TOTAL;
         if (countEl) countEl.textContent = restantes;
         if (totalEl) totalEl.textContent = total;
         if (barEl) {
-            const taken = total - restantes;
-            const pct = Math.round((taken / total) * 100);
+            const pct = Math.round(((total - restantes) / total) * 100);
             setTimeout(() => { barEl.style.width = pct + '%'; }, 300);
         }
     }
 
     // ====== INIT ======
     function init() {
+        migrateLegacyStorage();
         initSelectedFormationFromUrl();
 
         const btnCloseSuccess = document.getElementById('btn-close-success');
@@ -170,7 +357,7 @@
         const btnRegisterOther = document.getElementById('btn-register-other');
         if (btnRegisterOther) {
             btnRegisterOther.addEventListener('click', () => {
-                try { localStorage.removeItem(REGISTERED_KEY); } catch (e) { }
+                try { localStorage.removeItem(registeredKey(selectedFormation, selectedSession)); } catch (e) { }
                 clearSavedData();
 
                 // ✅ FIX 1 : Remettre currentStep à 1 
@@ -187,7 +374,7 @@
 
                 // Reset formulaire
                 form.reset();
-                setSelectedFormation(DEFAULT_FORMATION_ID, false);
+                setSelectedFormation(selectedFormation?.formId || PAGE_FORMATION_ID, false);
 
                 // ✅ FIX 3 : Réafficher toutes les sections correctement
                 const sectionsToShow = [
@@ -225,7 +412,7 @@
             });
         }
 
-        if (localStorage.getItem(REGISTERED_KEY) === 'true') {
+        if (isAlreadyRegistered()) {
             document.getElementById('form-container')?.classList.add('hidden');
             document.querySelector('#poster-section')?.classList.add('hidden');
             document.querySelector('#programme-section')?.classList.add('hidden');
@@ -242,6 +429,13 @@
         attachEvents();
         updateCharCounter();
         initPlacesCounter();
+    }
+
+    /** Inscrit pour cette formation : à la session choisie, ou sans session (dates à annoncer). */
+    function isAlreadyRegistered() {
+        try {
+            return localStorage.getItem(registeredKey(selectedFormation, selectedSession)) === 'true';
+        } catch (e) { return false; }
     }
 
     // ====== EVENTS ======
@@ -576,8 +770,8 @@
                 if (!telPaiement.value.trim()) {
                     showFieldError(telPaiement, 'Veuillez entrer votre numéro de paiement');
                     isValid = false;
-                } else if (!/^(77|67)\d{6}$/.test(telPaiement.value.trim())) {
-                    showFieldError(telPaiement, 'Format invalide (ex : 77XXXXXX)');
+                } else if (!phonePattern().test(telPaiement.value.trim())) {
+                    showFieldError(telPaiement, phoneFormatHint());
                     isValid = false;
                 }
             }
@@ -610,8 +804,8 @@
         switch (name) {
             case 'telephone':
             case 'tel-paiement':
-                if (!/^(77|67)\d{6}$/.test(value)) {
-                    showFieldError(field, 'Format invalide. Utilisez 77XXXXXX ou 67XXXXXX');
+                if (!phonePattern().test(value)) {
+                    showFieldError(field, phoneFormatHint());
                     return false;
                 }
                 break;
@@ -685,24 +879,20 @@
     // ====== PAYMENT CONDITIONAL ======
     function handlePaymentChange() {
         const value = paiementSelect.value;
-        const mobileMethods = ['Waafi Mobile Money', 'Cacpay'];
+        const method = currentPaymentMethods().find(item => item.value === value);
+        const isMobile = method ? method.kind === 'mobile' : ['Waafi Mobile Money', 'Cacpay'].includes(value);
 
-        if (mobileMethods.includes(value)) {
+        if (isMobile) {
             show(telPaiementGroup);
             show(paymentInfoMobile);
             hide(paymentInfoCash);
 
             const numLabel = document.getElementById('mobile-payment-label');
             const numText = document.getElementById('mobile-payment-number');
-            if (numLabel && numText) {
-                if (value === 'Cacpay') {
-                    numLabel.textContent = 'Numéro de compte';
-                    numText.textContent = '11000012127';
-                } else {
-                    numLabel.textContent = 'Numéro';
-                    numText.textContent = '+253 77 55 63 44';
-                }
-            }
+            const account = document.getElementById('mobile-payment-account');
+            if (numLabel && method?.numberLabel) numLabel.textContent = method.numberLabel;
+            if (numText && method?.number) numText.textContent = method.number;
+            if (account && method?.accountName) account.textContent = method.accountName;
         } else if (value === 'Espèces') {
             hide(telPaiementGroup);
             hide(paymentInfoMobile);
@@ -746,15 +936,17 @@
     function buildSummary() {
         const data = getFormData();
         const items = [
-            { label: 'Formation', value: selectedFormation?.title || 'Canva Pro' },
+            { label: 'Formation', value: selectedFormation?.title || data.formation },
+            { label: 'Session', value: selectedSession ? formatSessionDate(selectedSession.startDate) : 'Dates à annoncer' },
             { label: 'Nom', value: data.nom },
             { label: 'Prénom', value: data.prenom },
-            { label: 'Téléphone', value: '+253 ' + data.telephone },
+            { label: 'Téléphone', value: `${currentCountryCode()} ${data.telephone}` },
             { label: 'Email', value: data.email || '—' },
             { label: 'Âge', value: data.age + ' ans' },
             { label: 'Profession', value: data.profession },
-            { label: 'Niveau Canva', value: data.niveau },
+            { label: 'Niveau', value: data.niveau },
             { label: 'Mode de paiement', value: data.paiement },
+            { label: 'Montant', value: formatPrice(currentPrice()) },
         ];
 
         let html = '';
@@ -784,7 +976,7 @@
         const objectifs = Array.from(objectifsInputs).map(cb => cb.value).join(', ');
 
         return {
-            formation: document.getElementById('formation')?.value || DEFAULT_FORMATION_ID,
+            formation: document.getElementById('formation')?.value || selectedFormation?.formId || PAGE_FORMATION_ID,
             sessionId: document.getElementById('session-id')?.value || '',
             nom: document.getElementById('nom').value.trim(),
             prenom: document.getElementById('prenom').value.trim(),
@@ -836,8 +1028,11 @@
 
         const data = getFormData();
 
+        const formation = FORMATIONS.find(item => item.formId === data.formation) || selectedFormation;
+        const now = new Date();
+        // Clés historiques conservées telles quelles (la feuille Google les lit) ; les nouvelles sont additives.
         const payload = {
-            horodateur: new Date().toLocaleString('fr-FR'),
+            horodateur: now.toLocaleString('fr-FR'),
             formationId: data.formation,
             sessionId: data.sessionId,
             nom: data.nom,
@@ -852,7 +1047,20 @@
             modePaiement: data.paiement,
             telPaiement: data.telPaiement,
             statut: 'En attente',
-            source: data.source
+            source: data.source,
+            // ---- champs du moteur commun ----
+            formationTitle: formation?.title || '',
+            formationSlug: formation?.slug || '',
+            sessionLabel: selectedSession ? formatSessionDate(selectedSession.startDate) : '',
+            sessionStartDate: selectedSession?.startDate || '',
+            niveau: data.niveau,
+            professionDetail: data.professionDetail,
+            montant: typeof currentPrice() === 'number' ? currentPrice() : '',
+            currency: currentCurrency(),
+            countryCode: currentCountryCode(),
+            telephoneInternational: `${currentCountryCode()}${data.telephone}`,
+            dateInscription: now.toISOString(),
+            pageUrl: window.location.href.split('?')[0]
         };
 
         try {
@@ -898,19 +1106,20 @@
         // Build dynamic WhatsApp URL
         const data = getFormData();
         const formation = FORMATIONS.find(item => item.formId === data.formation) || selectedFormation;
-        const formationTitle = formation?.title || 'Canva Pro';
-        const formationPrice = formation?.price ? `${formation.price.toLocaleString('fr-FR')} FDJ` : 'Tarif à confirmer';
+        const formationTitle = formation?.title || data.formation;
+        const formationPrice = typeof currentPrice() === 'number' ? formatPrice(currentPrice()) : 'Tarif à confirmer';
         const prenomNom = `${data.nom} ${data.prenom}`.trim();
-        const message = `Bonjour M. Ali William,
+        const greeting = CONTACT.contactName ? `Bonjour ${CONTACT.contactName},` : 'Bonjour,';
+        const message = `${greeting}
 
 Je confirme mon inscription à la formation ${formationTitle}.
 
 📋 INFORMATIONS D'INSCRIPTION
 ━━━━━━━━━━━━━━━━━━━━━━━━━━
 👤 Participant : ${prenomNom}
-📱 Téléphone : +253 ${data.telephone}
+📱 Téléphone : ${currentCountryCode()} ${data.telephone}
 💳 Paiement : ${data.paiement} - ${formationPrice}
-📅 Formation : ${formationTitle}${selectedSession ? ` — session du ${formatSessionDate(selectedSession.startDate)}` : ''}
+📅 Formation : ${formationTitle}${selectedSession ? ` — session du ${formatSessionDate(selectedSession.startDate)}` : ' — session à annoncer'}
 
 📎 Preuve de paiement ci-jointe
 
@@ -921,15 +1130,20 @@ ${data.prenom}`;
 
         const btnWhatsapp = document.getElementById('btn-whatsapp');
         if (btnWhatsapp) {
-            btnWhatsapp.href = `https://wa.me/25377145306?text=${encodeURIComponent(message)}`;
+            btnWhatsapp.href = common ? common.whatsappUrl(message)
+                : `https://wa.me/${CONTACT.whatsappNumber || ''}?text=${encodeURIComponent(message)}`;
         }
+        const successTitle = document.getElementById('success-training-title');
+        if (successTitle) successTitle.textContent = formationTitle;
+        const registeredTitle = document.getElementById('registered-training-title');
+        if (registeredTitle) registeredTitle.textContent = formationTitle;
 
         document.getElementById('form-container')?.classList.add('hidden');
         document.querySelector('#mobile-progress').style.display = 'none';
         document.querySelector('#sidebar').style.display = 'none';
         successScreen.classList.remove('hidden');
 
-        try { localStorage.setItem(REGISTERED_KEY, 'true'); } catch (e) { /* silent */ }
+        try { localStorage.setItem(registeredKey(formation, selectedSession), 'true'); } catch (e) { /* silent */ }
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
@@ -938,19 +1152,24 @@ ${data.prenom}`;
         try {
             const data = getFormData();
             const conditionsChecked = document.getElementById('conditions').checked;
-            localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...data, conditions: conditionsChecked }));
+            const remboursementChecked = document.getElementById('remboursement')?.checked || false;
+            localStorage.setItem(draftKey(selectedFormation, selectedSession), JSON.stringify({ ...data, conditions: conditionsChecked, remboursement: remboursementChecked }));
         } catch (e) { /* silent */ }
     }
 
     function loadSavedData() {
         try {
-            const saved = localStorage.getItem(STORAGE_KEY);
+            const saved = localStorage.getItem(draftKey(selectedFormation, selectedSession));
             if (!saved) return;
 
             const data = JSON.parse(saved);
             if (!data) return;
 
-            if (data.formation) setSelectedFormation(data.formation, false, data.sessionId || undefined);
+            // Le brouillon est déjà propre à cette formation ; seule la session choisie est reprise
+            // (si l'URL n'en impose pas une autre).
+            if (data.sessionId && !new URLSearchParams(window.location.search).get('sessionId')) {
+                setSelectedFormation(selectedFormation?.formId || PAGE_FORMATION_ID, false, data.sessionId);
+            }
 
             const textFields = ['nom', 'prenom', 'telephone', 'email', 'age', 'motivation'];
             textFields.forEach(id => {
@@ -1014,11 +1233,14 @@ ${data.prenom}`;
             if (data.conditions) {
                 document.getElementById('conditions').checked = true;
             }
+            if (data.remboursement) {
+                document.getElementById('remboursement').checked = true;
+            }
         } catch (e) { /* silent */ }
     }
 
     function clearSavedData() {
-        try { localStorage.removeItem(STORAGE_KEY); } catch (e) { /* silent */ }
+        try { localStorage.removeItem(draftKey(selectedFormation, selectedSession)); } catch (e) { /* silent */ }
     }
 
     // ====== UTILITIES ======

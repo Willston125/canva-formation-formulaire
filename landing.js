@@ -13,7 +13,7 @@
 
     /** Lien d'inscription : page dédiée quand elle existe, sinon fiche rapide. */
     function registrationHref(formation, sessionId) {
-        if (!formation) return '/formations/canva-pro/#inscription';
+        if (!formation) return '/#catalogue';
         if (!formation.hasDetailPage) return formation.href;
         const params = new URLSearchParams({ trainingId: formation.formId, trainingSlug: formation.slug });
         if (sessionId) params.set('sessionId', sessionId);
@@ -27,8 +27,10 @@
     /** Badges uniquement à partir de données réelles (aucune mention marketing inventée). */
     function cardBadges(formation) {
         const badges = [];
-        const session = upcomingSessions().find(item => item.formId === formation.formId && item.registrationOpen);
-        if (formation.registrationOpen) badges.push({ label: 'Inscriptions ouvertes', tone: 'accent' });
+        const { state, session } = common.sessionState(formation.formId);
+        if (state === 'open') badges.push({ label: 'Inscriptions ouvertes', tone: 'accent' });
+        else if (state === 'full') badges.push({ label: 'Session complète', tone: 'alert' });
+        else if (state === 'closed') badges.push({ label: 'Inscriptions fermées', tone: 'muted' });
         else badges.push({ label: 'Programme en préparation', tone: 'muted' });
         if (session && typeof session.placesAvailable === 'number' && session.placesAvailable > 0 && session.placesAvailable <= 5) {
             badges.push({ label: 'Places limitées', tone: 'alert' });
@@ -361,7 +363,8 @@
         const image = document.getElementById('training-dialog-image');
         image.src = formation.image;
         image.alt = formation.imageAlt || '';
-        dialog.classList.toggle('is-open-registration', Boolean(formation.registrationOpen));
+        const registration = common.sessionState(formation.formId);
+        dialog.classList.toggle('is-open-registration', registration.state === 'open');
 
         const mediaCategory = document.getElementById('training-dialog-media-category');
         const mediaPromise = document.getElementById('training-dialog-media-promise');
@@ -399,13 +402,13 @@
         }
 
         const pending = document.getElementById('training-dialog-pending');
-        if (pending) pending.hidden = Boolean(formation.registrationOpen);
+        if (pending) pending.hidden = registration.state === 'open';
 
         const actions = document.getElementById('training-dialog-actions');
         const askMessage = `Bonjour, je souhaite être informé(e) de la prochaine session de la formation « ${formation.title} ».`;
         const questionMessage = `Bonjour, j’ai une question concernant la formation « ${formation.title} ».`;
-        actions.innerHTML = formation.registrationOpen
-            ? `<a class="button button--primary" href="${escapeHtml(registrationHref(formation))}">S’inscrire à cette formation<span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a>
+        actions.innerHTML = registration.state === 'open'
+            ? `<a class="button button--primary" href="${escapeHtml(registrationHref(formation, registration.session?.id))}">S’inscrire à cette formation<span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a>
                ${formation.hasDetailPage
                    ? `<a class="button button--secondary" href="${escapeHtml(formation.href)}">Voir la fiche formation</a>`
                    : `<a class="button button--secondary" href="${escapeHtml(common.whatsappUrl(questionMessage))}" target="_blank" rel="noopener noreferrer">Poser une question<span class="material-symbols-outlined" aria-hidden="true">chat</span></a>`}`
@@ -438,10 +441,12 @@
             if (outside) dialog.close();
         });
 
-        // Lien profond : /?fiche=slug ouvre directement la fiche rapide
+        // Lien profond : /?fiche=slug ouvre l'aperçu rapide.
+        // Toutes les formations ont désormais une page dédiée, mais les anciens liens
+        // partagés utilisent encore ce paramètre : ils doivent continuer à fonctionner.
         const requested = new URLSearchParams(window.location.search).get('fiche');
         const formation = findFormation(requested);
-        if (formation && !formation.hasDetailPage) openTrainingDialog(formation.slug);
+        if (formation) openTrainingDialog(formation.slug);
     }
 
     // ---------- Prochaines sessions (données centralisées, jamais inventées) ----------
@@ -465,8 +470,9 @@
             const places = session.placesAvailable === null || session.placesAvailable === undefined
                 ? 'Places : à confirmer'
                 : `${session.placesAvailable} place${session.placesAvailable > 1 ? 's' : ''} disponible${session.placesAvailable > 1 ? 's' : ''}${session.placesTotal ? ` sur ${session.placesTotal}` : ''}`;
-            const status = session.registrationOpen ? 'Inscriptions ouvertes' : 'Inscriptions fermées';
-            const cta = session.registrationOpen && formation
+            const sessionStatus = formation ? common.sessionState(formation.formId, session.id).state : 'invalid';
+            const status = sessionStatus === 'open' ? 'Inscriptions ouvertes' : sessionStatus === 'full' ? 'Session complète' : 'Inscriptions fermées';
+            const cta = sessionStatus === 'open' && formation
                 ? `<a class="button button--primary" href="${escapeHtml(registrationHref(formation, session.id))}">Choisir cette session<span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a>`
                 : `<span class="session-card__closed">Session complète ou fermée</span>`;
             return `<article class="session-card">
@@ -475,7 +481,7 @@
                     <span class="session-card__month">${escapeHtml(new Date(`${session.startDate}T12:00:00`).toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' }))}</span>
                 </div>
                 <div class="session-card__body">
-                    <span class="session-card__status${session.registrationOpen ? ' is-open' : ''}">${status}</span>
+                    <span class="session-card__status${sessionStatus === 'open' ? ' is-open' : ''}">${status}</span>
                     <h3>${escapeHtml(title)}</h3>
                     <ul class="session-card__meta">
                         <li><span class="material-symbols-outlined" aria-hidden="true">event</span>Début le ${escapeHtml(formatSessionDate(session.startDate))}${session.endDate ? ` · fin le ${escapeHtml(formatSessionDate(session.endDate))}` : ''}</li>

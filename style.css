@@ -2049,6 +2049,55 @@ a:focus-visible {
   top: 66px;
 }
 
+/* État métier affiché à la place du formulaire lorsqu'une inscription est indisponible. */
+.registration-state {
+  margin-bottom: 2rem;
+  padding: clamp(1.5rem, 4vw, 2.5rem);
+  text-align: center;
+  border: 1px solid rgba(203, 253, 0, 0.22);
+  border-radius: 1.5rem;
+}
+
+.registration-state[hidden],
+#form-container.is-unavailable,
+#sidebar.is-unavailable,
+#mobile-progress.is-unavailable {
+  display: none !important;
+}
+
+.registration-state__icon {
+  display: inline-grid;
+  place-items: center;
+  width: 4rem;
+  height: 4rem;
+  margin-bottom: 1rem;
+  color: var(--color-primary);
+  background: rgba(203, 253, 0, 0.1);
+  border-radius: 999px;
+  font-size: 2rem;
+}
+
+.registration-state h3 {
+  margin: 0 0 0.75rem;
+  color: var(--color-white);
+  font: 800 clamp(1.35rem, 3vw, 1.8rem)/1.15 'Plus Jakarta Sans', sans-serif;
+}
+
+.registration-state p {
+  max-width: 42rem;
+  margin: 0 auto;
+  color: var(--color-muted);
+  line-height: 1.7;
+}
+
+.registration-state__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
 .selected-training-summary {
   display: grid;
   grid-template-columns: auto 1fr auto;

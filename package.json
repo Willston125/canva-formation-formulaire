@@ -6,6 +6,7 @@
   "scripts": {
     "build:css": "tailwindcss -c tailwind.config.js -i tailwind.src.css -o tailwind.css --minify",
     "build:fonts": "node scripts/fetch-fonts.js",
+    "build:fiches": "node scripts/build-fiches.js",
     "watch:css": "tailwindcss -c tailwind.config.js -i tailwind.src.css -o tailwind.css --watch",
     "serve": "serve -l 5173 ."
   },

@@ -2,6 +2,7 @@
 node_modules
 module de william
 scripts
+formations/_template
 tailwind.src.css
 tailwind.config.js
 update_html_script.py

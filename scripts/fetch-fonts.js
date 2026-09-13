@@ -6,7 +6,42 @@ const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML,
 const OUT_DIR = path.join(process.cwd(), 'assets', 'fonts');
 const KEEP_SUBSETS = ['latin', 'latin-ext'];
 
-const ICONS = fs.readFileSync('/tmp/icons.txt', 'utf8').trim();
+/**
+ * Liste des icônes : relevée dans les sources (HTML générés + scripts), jamais figée
+ * dans un fichier temporaire — toute icône ajoutée est ainsi embarquée à la régénération.
+ */
+function collectIcons() {
+  const fichiers = [
+    'index.html', 'entreprises/index.html', 'mentions-legales/index.html',
+    'formations/_template/fiche.html', 'script.js', 'site-common.js', 'landing.js',
+    'scripts/build-fiches.js'
+  ];
+  for (const dossier of fs.readdirSync('formations')) {
+    const page = path.join('formations', dossier, 'index.html');
+    if (fs.existsSync(page)) fichiers.push(page);
+  }
+
+  const noms = new Set();
+  // <span class="material-symbols-outlined">nom</span> et textContent = 'nom'
+  const balise = /material-symbols-outlined[^>]*>\s*([a-z0-9_]+)\s*</g;
+  const chaine = /(?:textContent|icon)\s*[:=]\s*['"]([a-z][a-z0-9_]{2,})['"]/g;
+  for (const fichier of fichiers) {
+    if (!fs.existsSync(fichier)) continue;
+    const contenu = fs.readFileSync(fichier, 'utf8');
+    for (const re of [balise, chaine]) {
+      re.lastIndex = 0;
+      let m;
+      while ((m = re.exec(contenu))) noms.add(m[1]);
+    }
+  }
+  // Icônes basculées en JS (menu ouvert/fermé, flèches d'accordéon)
+  ['menu', 'close', 'expand_more', 'arrow_forward', 'arrow_back'].forEach(n => noms.add(n));
+  return [...noms].sort();
+}
+
+const ICONES = collectIcons();
+const ICONS = ICONES.join(',');
+console.log(`  ${ICONES.length} icônes relevées dans les sources`);
 
 const SOURCES = [
   {

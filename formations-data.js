@@ -28,9 +28,15 @@
  * @property {string|null} nextSession   ISO (YYYY-MM-DD), null si non annoncée
  * @property {number|null} places        Places réellement disponibles, null si inconnu
  * @property {boolean} registrationOpen  Inscriptions ouvertes (formulaire accessible)
+ * @property {boolean} [active]          Formation publiée et visible (true par défaut)
+ * @property {boolean} [allowRegistrationWithoutSession] Autorise explicitement une inscription sans session datée
  * @property {string} href               Lien vers la fiche (page dédiée ou fiche rapide)
  * @property {boolean} hasDetailPage     true si une page dédiée existe
  * @property {string} formId             Identifiant transmis au formulaire (champ caché `formation`)
+ * @property {string} [poster]           Affiche dédiée (par défaut : `image`)
+ * @property {string} [lead]             Accroche de la fiche, HTML léger autorisé (par défaut : `shortDescription`)
+ * @property {string} [levelSubject]     Sujet de la question « Où en es-tu avec … ? » (par défaut : formulation générique)
+ * @property {{icon: string, label: string, value: string}[]} [objectives]  Objectifs proposés à l'étape 2 (par défaut : liste commune)
  */
 
 /** @type {ReadonlyArray<Readonly<Formation>>} */
@@ -60,9 +66,21 @@ window.FORMATIONS = Object.freeze([
     nextSession: null,
     places: null,
     registrationOpen: true,
+    active: true,
+    allowRegistrationWithoutSession: true,
     href: '/formations/canva-pro/',
     hasDetailPage: true,
-    formId: 'canva-pro'
+    formId: 'canva-pro',
+    poster: '/assets/images/formation canva (2).jpg',
+    lead: 'Devenez graphiste, community manager ou créateur de contenu grâce à <strong>12 jours de pratique 100 % concrète</strong>. Un programme intensif en 4 modules pour maîtriser Canva Pro et repartir avec un portfolio validé.',
+    levelSubject: 'Canva',
+    objectives: [
+      { icon: 'forum', label: 'Devenir Community Manager', value: 'Devenir Community Manager' },
+      { icon: 'brush', label: 'Graphiste freelance', value: 'Travailler comme Graphiste freelance' },
+      { icon: 'business_center', label: 'Contenu pour mon entreprise', value: 'Créer du contenu pour mon entreprise' },
+      { icon: 'swap_horiz', label: 'Changer de carrière', value: 'Changer de carrière' },
+      { icon: 'trending_up', label: 'Améliorer mes compétences actuelles', value: 'Améliorer mes compétences actuelles' }
+    ]
   }),
   Object.freeze({
     id: 'formation-community-management',
@@ -89,8 +107,10 @@ window.FORMATIONS = Object.freeze([
     nextSession: null,
     places: null,
     registrationOpen: false,
-    href: '/?fiche=community-management#formations',
-    hasDetailPage: false,
+    active: true,
+    allowRegistrationWithoutSession: false,
+    href: '/formations/community-management/',
+    hasDetailPage: true,
     formId: 'community-management'
   }),
   Object.freeze({
@@ -118,8 +138,10 @@ window.FORMATIONS = Object.freeze([
     nextSession: null,
     places: null,
     registrationOpen: false,
-    href: '/?fiche=identite-visuelle#formations',
-    hasDetailPage: false,
+    active: true,
+    allowRegistrationWithoutSession: false,
+    href: '/formations/identite-visuelle/',
+    hasDetailPage: true,
     formId: 'identite-visuelle'
   }),
   Object.freeze({
@@ -147,8 +169,10 @@ window.FORMATIONS = Object.freeze([
     nextSession: null,
     places: null,
     registrationOpen: false,
-    href: '/?fiche=photo-video#formations',
-    hasDetailPage: false,
+    active: true,
+    allowRegistrationWithoutSession: false,
+    href: '/formations/photo-video/',
+    hasDetailPage: true,
     formId: 'photo-video'
   }),
   Object.freeze({
@@ -176,8 +200,10 @@ window.FORMATIONS = Object.freeze([
     nextSession: null,
     places: null,
     registrationOpen: false,
-    href: '/?fiche=marketing-digital#formations',
-    hasDetailPage: false,
+    active: true,
+    allowRegistrationWithoutSession: false,
+    href: '/formations/marketing-digital/',
+    hasDetailPage: true,
     formId: 'marketing-digital'
   }),
   Object.freeze({
@@ -205,8 +231,10 @@ window.FORMATIONS = Object.freeze([
     nextSession: null,
     places: null,
     registrationOpen: false,
-    href: '/?fiche=ia-appliquee#formations',
-    hasDetailPage: false,
+    active: true,
+    allowRegistrationWithoutSession: false,
+    href: '/formations/ia-appliquee/',
+    hasDetailPage: true,
     formId: 'ia-appliquee'
   })
 ]);
@@ -225,6 +253,23 @@ window.FORMATIONS = Object.freeze([
  * @property {number|null} placesTotal
  * @property {number|null} placesAvailable  Places réellement disponibles (null = inconnu)
  * @property {boolean} registrationOpen
+ * @property {string} [currency]        Devise (par défaut : SITE_CONTACT.currency)
+ * @property {string} [countryCode]     Indicatif téléphonique (par défaut : SITE_CONTACT.countryCode)
+ * @property {PaymentMethod[]} [paymentMethods]  Moyens de paiement propres à la session (par défaut : SITE_CONTACT.paymentMethods)
+ */
+
+/**
+ * @typedef {Object} PaymentMethod
+ * @property {'Waafi Mobile Money'|'Cacpay'|'Espèces'} value  Valeur enregistrée (inchangée : la feuille Google la lit)
+ * @property {string} label
+ * @property {'mobile'|'cash'} kind
+ * @property {string} [image]          Logo (moyens mobiles)
+ * @property {string} [numberLabel]    « Numéro » ou « Numéro de compte »
+ * @property {string} [number]         Numéro à créditer
+ * @property {string} [accountName]
+ * @property {string} [recipient]      Espèces : à remettre à
+ * @property {string} [place]          Espèces : lieu
+ * @property {string} [phone]          Espèces : sur rendez-vous
  */
 
 /**
@@ -331,5 +376,14 @@ window.PORTFOLIO = Object.freeze([
 /** Contact officiel utilisé par les liens WhatsApp du site (numéro déjà en usage). */
 window.SITE_CONTACT = Object.freeze({
   whatsappNumber: '25377145306',
-  whatsappDisplay: '+253 77 14 53 06'
+  whatsappDisplay: '+253 77 14 53 06',
+  contactName: 'Ali William',
+  countryCode: '+253',
+  currency: 'FDJ',
+  /** Moyens de paiement par défaut (une session peut les surcharger via `paymentMethods`). */
+  paymentMethods: Object.freeze([
+    Object.freeze({ value: 'Waafi Mobile Money', label: 'Waafi', kind: 'mobile', image: '/assets/images/waafi.png', numberLabel: 'Numéro', number: '+253 77 55 63 44', accountName: 'Ali William' }),
+    Object.freeze({ value: 'Cacpay', label: 'Cacpay', kind: 'mobile', image: '/assets/images/cacpay.png', numberLabel: 'Numéro de compte', number: '11000012127', accountName: 'Ali William' }),
+    Object.freeze({ value: 'Espèces', label: 'Espèces', kind: 'cash', recipient: 'Ali William', place: 'Saalam Tower, 5ème étage', phone: '+253 77 14 53 06' })
+  ])
 });

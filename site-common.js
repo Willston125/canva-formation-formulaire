@@ -10,7 +10,7 @@
 
     const FORMATIONS = Array.isArray(window.FORMATIONS) ? window.FORMATIONS : [];
     const SESSIONS = Array.isArray(window.SESSIONS) ? window.SESSIONS : [];
-    const CONTACT = window.SITE_CONTACT || { whatsappNumber: '25377145306', whatsappDisplay: '+253 77 14 53 06' };
+    const CONTACT = window.SITE_CONTACT || { whatsappNumber: '25377145306', whatsappDisplay: '+253 77 14 53 06', countryCode: '+253', currency: 'FDJ' };
 
     /** Formate une date ISO (YYYY-MM-DD) en français, ex. « 16 avril 2026 ». */
     function formatSessionDate(isoDate) {
@@ -42,15 +42,46 @@
     }
 
     function nextOpenSession(formId) {
-        return upcomingSessions().find(session => session.registrationOpen && (!formId || session.formId === formId)) || null;
+        return upcomingSessions().find(session => session.registrationOpen && session.placesAvailable !== 0 && (!formId || session.formId === formId)) || null;
     }
 
     function whatsappUrl(message) {
         return `https://wa.me/${CONTACT.whatsappNumber}?text=${encodeURIComponent(message)}`;
     }
 
-    function formatPrice(price) {
-        return typeof price === 'number' ? `${price.toLocaleString('fr-FR')} FDJ` : 'À confirmer';
+    function formatPrice(price, currency) {
+        return typeof price === 'number' ? `${price.toLocaleString('fr-FR')} ${currency || CONTACT.currency || 'FDJ'}` : 'À confirmer';
+    }
+
+    /**
+     * État d'inscription d'une formation, FORMATION ≠ SESSION :
+     *  - 'open'      : une session ouverte existe (ou la formation accepte les inscriptions, dates à annoncer)
+     *  - 'full'      : la prochaine session est ouverte mais n'a plus de place
+     *  - 'closed'    : une session est annoncée mais les inscriptions ne sont pas ouvertes
+     *  - 'none'      : aucune session annoncée
+     *  - 'inactive'  : la formation n'est pas publiée
+     *  - 'invalid'   : la session demandée n'existe pas pour cette formation
+     * @returns {{state: 'open'|'full'|'closed'|'none'|'inactive'|'invalid', session: Session|null}}
+     */
+    function sessionState(formId, requestedSessionId) {
+        const formation = findFormation(formId);
+        if (!formation || formation.active === false) return { state: 'inactive', session: null };
+        const sessions = upcomingSessions().filter(session => session.formId === (formation?.formId || formId));
+
+        if (requestedSessionId) {
+            const requested = sessions.find(session => session.id === requestedSessionId);
+            if (!requested) return { state: 'invalid', session: null };
+            if (requested.placesAvailable === 0) return { state: 'full', session: requested };
+            return { state: requested.registrationOpen ? 'open' : 'closed', session: requested };
+        }
+
+        const open = sessions.find(session => session.registrationOpen && session.placesAvailable !== 0);
+        if (open) return { state: 'open', session: open };
+        const full = sessions.find(session => session.placesAvailable === 0);
+        if (full) return { state: 'full', session: full };
+        if (sessions.length) return { state: 'closed', session: sessions[0] };
+        if (formation.registrationOpen && formation.allowRegistrationWithoutSession) return { state: 'open', session: null };
+        return { state: 'none', session: null };
     }
 
     // ---------- Header ----------
@@ -178,6 +209,7 @@
         nextOpenSession,
         whatsappUrl,
         formatPrice,
+        sessionState,
         contact: CONTACT
     });
 
