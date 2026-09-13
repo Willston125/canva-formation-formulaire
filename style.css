@@ -4291,3 +4291,9 @@ body:has(#already-registered-card:not(.hidden)) #mobile-progress {
   font: 700 0.78rem/1 'Inter', sans-serif;
   color: var(--color-white);
 }
+
+/* 20. Entre 768 et 1023 px l'en-tête fait 74 px : la barre de progression collante
+   était masquée de 8 px derrière lui. */
+@media (min-width: 768px) {
+  #mobile-progress { top: 74px; }
+}

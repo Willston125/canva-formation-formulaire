@@ -442,6 +442,7 @@
             updateProgress();
 
             // Show/hide poster & places counter (step 1 only)
+            const prerequisSection = document.getElementById('prerequis-section');
             const posterSection = document.getElementById('poster-section');
             const placesSection = document.getElementById('places-counter-section');
             const formateurSection = document.getElementById('formateur-section');
@@ -450,6 +451,8 @@
             if (placesSection) placesSection.style.display = (currentStep === 1) ? '' : 'none';
             if (formateurSection) formateurSection.style.display = (currentStep === 1) ? '' : 'none';
             if (faqSection) faqSection.style.display = (currentStep === 1) ? '' : 'none';
+            // Sans cela, « Prérequis » restait seul à l'écran aux étapes 2 à 4
+            if (prerequisSection) prerequisSection.style.display = (currentStep === 1) ? '' : 'none';
 
             // Show/hide programme (steps 1 and 4 only)
             const programmeSection = document.getElementById('programme-section');
