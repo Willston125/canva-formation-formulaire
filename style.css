@@ -4297,3 +4297,27 @@ body:has(#already-registered-card:not(.hidden)) #mobile-progress {
 @media (min-width: 768px) {
   #mobile-progress { top: 74px; }
 }
+
+/* 21. La classe utilitaire .badge des cartes écrasait la pastille de la carte
+   formateur 3D, qui a son propre style. On la restreint aux cartes de formation. */
+#formateur-section .badge {
+  min-height: 0;
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 10px;
+  font: 700 11px/1.6 'Inter', sans-serif;
+  text-transform: none;
+}
+
+/* 22. Fiche rapide : sur deux lignes, le second avantage gardait un trait
+   de séparation orphelin à sa gauche. */
+@media (max-width: 767px) {
+  .training-dialog__perks { flex-direction: column; gap: 10px; }
+  .training-dialog__perks li { padding-right: 0; }
+  .training-dialog__perks li + li { padding-left: 0; border-left: 0; }
+}
+
+/* 23. Les pages sans CTA mobile fixe n'ont pas à réserver 110 px sous le pied de page */
+@media (max-width: 767px) {
+  .page-secondary .site-footer { padding-bottom: 40px; }
+}
