@@ -92,6 +92,63 @@
         </article>`;
     }
 
+    // ---------- Domaines : familles réelles du catalogue, avec le nombre de formations ----------
+    const ICONES_DOMAINE = {
+        'Design & Contenu': 'palette',
+        'Communication': 'campaign',
+        'Photo & Vidéo': 'photo_camera',
+        'Marketing': 'trending_up',
+        'Intelligence artificielle': 'smart_toy'
+    };
+
+    function familles() {
+        const compte = new Map();
+        for (const formation of FORMATIONS) {
+            if (!formation.family) continue;
+            compte.set(formation.family, (compte.get(formation.family) || 0) + 1);
+        }
+        return [...compte.entries()].map(([nom, total]) => ({ nom, total }));
+    }
+
+    /** Applique le filtre du catalogue correspondant au domaine, puis y amène. */
+    function ouvrirDomaine(nom, defiler) {
+        const chip = document.querySelector(`.filter-chip[data-family="${CSS.escape(nom)}"]`);
+        if (chip) chip.click();
+        if (defiler) document.getElementById('catalogue')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function renderDomains() {
+        const grille = document.getElementById('domains-grid');
+        const pied = document.getElementById('pied-domaines-liens');
+        const liste = familles();
+        if (!liste.length) return;
+
+        if (grille) {
+            grille.innerHTML = liste.map(({ nom, total }) => `<li class="domain-card">
+                <span class="domain-card__icon material-symbols-outlined" aria-hidden="true">${ICONES_DOMAINE[nom] || 'school'}</span>
+                <h3>${escapeHtml(nom)}</h3>
+                <p>${total} formation${total > 1 ? 's' : ''}</p>
+                <button class="domain-card__link" type="button" data-domain="${escapeHtml(nom)}">
+                    <span class="visually-hidden">Voir les formations du domaine ${escapeHtml(nom)}</span>
+                </button>
+            </li>`).join('');
+
+            grille.addEventListener('click', event => {
+                const bouton = event.target.closest('[data-domain]');
+                if (bouton) ouvrirDomaine(bouton.dataset.domain, true);
+            });
+        }
+
+        if (pied) {
+            pied.innerHTML = liste.map(({ nom }) =>
+                `<a href="#catalogue" data-domain-link="${escapeHtml(nom)}">${escapeHtml(nom)}</a>`).join('');
+            pied.addEventListener('click', event => {
+                const lien = event.target.closest('[data-domain-link]');
+                if (lien) ouvrirDomaine(lien.dataset.domainLink, false);
+            });
+        }
+    }
+
     // ---------- Grille catalogue + filtres par domaine (générés depuis les données) ----------
     function renderCatalogueGrid() {
         const grid = document.getElementById('catalogue-grid');
@@ -458,6 +515,7 @@
     document.addEventListener('DOMContentLoaded', () => {
         initTrainingCarousel();
         renderCatalogueGrid();
+        renderDomains();
         initTrainingDialog();
         renderSessions();
         renderPortfolio();

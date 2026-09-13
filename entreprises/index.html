@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Formation sur mesure pour votre organisation | Formation Canva Pro</title>
+    <title>Former mon équipe — Formation sur mesure | IMPACTALI</title>
     <meta name="description"
         content="Demandez une formation pratique sur mesure pour votre entreprise, association ou institution : design digital, contenus, photo, vidéo et réalisation.">
     <!-- Polices auto-hébergées (régénérer avec : npm run build:fonts) -->
@@ -26,16 +26,16 @@
     </a>
     <header class="site-header" id="site-header">
         <div class="site-header__inner">
-            <a class="brand" href="/" aria-label="Formation Canva Pro — Accueil">
-                <span class="brand__icon" aria-hidden="true"><span class="material-symbols-outlined">palette</span></span>
-                <span>Formation Canva Pro</span>
+            <a class="brand" href="/" aria-label="IMPACTALI — Accueil">
+                <img src="/assets/brand/impactali-logo.webp" alt="IMPACTALI" width="720" height="400" decoding="async">
             </a>
             <nav class="desktop-nav" aria-label="Navigation principale">
-                <a href="/#accueil">Accueil</a>
-                <a href="/#formations">Formations</a>
-                <a href="/#a-propos">À propos</a>
-                <a class="is-active" href="/#entreprises">Entreprises</a>
-            </nav>
+            <a href="/#accueil">Accueil</a>
+            <a href="/#catalogue">Formations</a>
+            <a href="/#domaines">Domaines</a>
+            <a class="is-active" href="/entreprises/">Entreprises</a>
+            <a href="/#a-propos">À propos</a>
+        </nav>
             <div class="header-actions">
                 <a class="button button--primary button--compact" href="/formations/canva-pro/#inscription">
                     S’inscrire<span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
@@ -47,9 +47,10 @@
         </div>
         <nav class="mobile-menu" id="mobile-menu" aria-label="Navigation mobile" hidden>
             <a href="/#accueil">Accueil</a>
-            <a href="/#formations">Formations</a>
+            <a href="/#catalogue">Formations</a>
+            <a href="/#domaines">Domaines</a>
+            <a href="/entreprises/">Entreprises</a>
             <a href="/#a-propos">À propos</a>
-            <a href="/#entreprises">Entreprises</a>
             <a href="/formations/canva-pro/#inscription">S’inscrire</a>
         </nav>
     </header>
@@ -132,13 +133,28 @@
     <footer class="site-footer" id="site-footer">
         <div class="landing-shell site-footer__inner">
             <div class="site-footer__brand">
-                <span class="font-headline font-bold text-[#FFFFFF] text-sm">Formation Canva Pro</span>
-                <span class="text-[11px] tracking-wide text-[#94A3B8]">&copy; 2026 Formation Canva Pro. Tous droits réservés.</span>
+                <a class="site-footer__logo" href="/" aria-label="IMPACTALI — Accueil">
+                    <img src="/assets/brand/impactali-logo.webp" alt="IMPACTALI" width="720" height="400" loading="lazy" decoding="async">
+                </a>
+                <span class="site-footer__baseline">Plateforme de formation &amp; de développement des compétences</span>
+                <span class="site-footer__legal">&copy; 2026 IMPACTALI. Tous droits réservés.</span>
             </div>
-            <nav class="site-footer__links" aria-label="Liens de bas de page">
-                <a target="_blank" rel="noopener noreferrer" href="https://wa.me/25377145306" data-whatsapp-message="Bonjour, je souhaite vous contacter au sujet de vos formations.">Contact</a>
+                        <nav class="site-footer__col" aria-labelledby="pied-formations">
+                <h2 id="pied-formations">Formations</h2>
+                <a href="/#catalogue">Tout le catalogue</a>
+                <a href="/formations/canva-pro/">Canva Pro &amp; Création de contenu</a>
+                <a href="/#sessions">Prochaines sessions</a>
+            </nav>
+            <nav class="site-footer__col" aria-labelledby="pied-domaines">
+                <h2 id="pied-domaines">Domaines</h2>
+                <div id="pied-domaines-liens"></div>
+            </nav>
+            <nav class="site-footer__col" aria-labelledby="pied-infos">
+                <h2 id="pied-infos">Informations</h2>
+                <a href="/entreprises/">Former mon équipe</a>
                 <a href="/mentions-legales/">Mentions légales</a>
-                <a target="_blank" rel="noopener noreferrer" href="https://wa.me/25377145306" data-whatsapp-message="Bonjour, j’ai besoin d’aide concernant mon inscription.">Support</a>
+                <a target="_blank" rel="noopener noreferrer" href="https://wa.me/25377145306"
+                    data-whatsapp-message="Bonjour, je souhaite vous contacter au sujet de vos formations.">Nous contacter</a>
             </nav>
         </div>
     </footer>
