@@ -13,7 +13,9 @@
     document.documentElement.classList.add('has-js');
 
     // ====== CONFIG ======
-    const GOOGLE_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbyJCl1lg58y090bkO0OwovV7o60Oc0eAXPeWFu4AGX2IARG58Mqes7mf7h8BubK5KTavA/exec';
+    // Adresse du script Google, centralisée dans formations-data.js (repli : valeur historique)
+    const GOOGLE_SHEETS_URL = (window.SITE_ENDPOINTS && window.SITE_ENDPOINTS.registration) ||
+        'https://script.google.com/macros/s/AKfycbyJCl1lg58y090bkO0OwovV7o60Oc0eAXPeWFu4AGX2IARG58Mqes7mf7h8BubK5KTavA/exec';
     const TOTAL_STEPS = 4;
     const FORMATIONS = Array.isArray(window.FORMATIONS) ? window.FORMATIONS : [];
     const CONTACT = window.SITE_CONTACT || {};
@@ -523,6 +525,15 @@
         attachEvents();
         updateCharCounter();
         initPlacesCounter();
+
+        /* Le relevé des inscrits arrive après l'affichage : on recalcule alors la session
+           retenue, le compteur de places et l'état d'inscription (une session peut être
+           devenue complète depuis le dernier déploiement). */
+        document.addEventListener('impactali:places', () => {
+            setSelectedFormation(selectedFormation?.formId || PAGE_FORMATION_ID, false,
+                selectedSession?.id || undefined);
+            initPlacesCounter();
+        });
     }
 
     /** Inscrit pour cette formation : à la session choisie, ou sans session (dates à annoncer). */
@@ -1238,6 +1249,8 @@ ${data.prenom}`;
         successScreen.classList.remove('hidden');
 
         try { localStorage.setItem(registeredKey(formation, selectedSession), 'true'); } catch (e) { /* silent */ }
+        // Cette inscription vient d'occuper une place : on redemande le relevé sans passer par le cache
+        common?.refreshPlaces?.(true);
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 

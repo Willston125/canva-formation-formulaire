@@ -522,6 +522,14 @@
         initTrainingCarousel();
         renderCatalogueGrid();
         renderDomains();
+        // Places réelles : les badges des cartes et la liste des sessions se recalculent
+        // dès que le relevé de la feuille est arrivé. Le contenu recréé doit être
+        // ré-observé, sinon il reste invisible (apparition au scroll).
+        document.addEventListener('impactali:places', () => {
+            renderCatalogueGrid();
+            renderSessions();
+            common.observeReveals?.();
+        });
         initTrainingDialog();
         renderSessions();
         renderPortfolio();

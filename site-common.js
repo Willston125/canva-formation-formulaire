@@ -31,14 +31,97 @@
         return FORMATIONS.find(item => item.formId === key || item.slug === key || item.id === key) || null;
     }
 
+    /* ---------- Places réellement disponibles ----------
+       Le site est statique : il ne peut pas se réécrire. Le nombre d'inscrits
+       vit dans la feuille Google, seule source qui le connaisse. On l'interroge
+       au chargement et on en déduit les places restantes. Tant que la réponse
+       n'est pas là (ou si l'appel échoue), les valeurs de formations-data.js
+       servent de repli : aucune page ne dépend de cet appel pour s'afficher. */
+    const ENDPOINTS = window.SITE_ENDPOINTS || {};
+    const CACHE_PLACES = 'impactali_places';
+    const DUREE_CACHE = 60000; // 1 minute : assez pour éviter un appel par page, assez court pour rester juste
+    const placesEnDirect = new Map();
+
+    /** Applique les places restantes connues à une session (sans toucher à l'objet d'origine, figé). */
+    function avecPlacesEnDirect(session) {
+        if (!placesEnDirect.has(session.id)) return session;
+        return Object.assign({}, session, { placesAvailable: placesEnDirect.get(session.id) });
+    }
+
     /** Sessions à venir (date de début non dépassée), triées par date. */
     function upcomingSessions() {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         return SESSIONS
             .filter(session => session.startDate && new Date(`${session.startDate}T23:59:59`) >= today)
-            .slice()
+            .map(avecPlacesEnDirect)
             .sort((a, b) => a.startDate.localeCompare(b.startDate));
+    }
+
+    /**
+     * Traduit un relevé { sessionId: nombre d'inscrits } en places restantes.
+     * Une valeur absurde (négative, non numérique) est ignorée plutôt que d'afficher un faux chiffre.
+     */
+    function appliquerReleve(releve) {
+        const table = releve && typeof releve === 'object' ? (releve.sessions || releve) : null;
+        if (!table) return false;
+        let change = false;
+        for (const session of SESSIONS) {
+            if (typeof session.placesTotal !== 'number') continue;
+            const inscrits = Number(table[session.id]);
+            if (!Number.isFinite(inscrits) || inscrits < 0) continue;
+            const restantes = Math.max(0, session.placesTotal - inscrits);
+            if (placesEnDirect.get(session.id) !== restantes) {
+                placesEnDirect.set(session.id, restantes);
+                change = true;
+            }
+        }
+        if (change) document.dispatchEvent(new CustomEvent('impactali:places'));
+        return change;
+    }
+
+    /** Repli quand la lecture directe est bloquée par la politique d'origine du navigateur. */
+    function releveParScript(cible) {
+        return new Promise((resolve, reject) => {
+            const nom = 'impactaliPlaces' + Math.random().toString(36).slice(2);
+            const balise = document.createElement('script');
+            const nettoyer = () => { delete window[nom]; balise.remove(); window.clearTimeout(minuteur); };
+            const minuteur = window.setTimeout(() => { nettoyer(); reject(new Error('délai dépassé')); }, 8000);
+            window[nom] = donnees => { nettoyer(); resolve(donnees); };
+            balise.onerror = () => { nettoyer(); reject(new Error('script inaccessible')); };
+            balise.src = `${cible}&callback=${nom}`;
+            document.head.appendChild(balise);
+        });
+    }
+
+    /**
+     * Interroge la feuille et met à jour les places restantes.
+     * @param {boolean} force ignore le cache (après une inscription, par exemple)
+     */
+    function refreshPlaces(force) {
+        const url = ENDPOINTS.registration;
+        if (!url) return Promise.resolve(false);
+
+        if (!force) {
+            try {
+                const cache = JSON.parse(sessionStorage.getItem(CACHE_PLACES) || 'null');
+                if (cache && Date.now() - cache.horodatage < DUREE_CACHE) {
+                    return Promise.resolve(appliquerReleve(cache.releve));
+                }
+            } catch (e) { /* cache illisible : on interroge */ }
+        }
+
+        const cible = `${url}${url.includes('?') ? '&' : '?'}action=places`;
+        return fetch(cible, { method: 'GET' })
+            .then(reponse => (reponse.ok ? reponse.json() : Promise.reject(new Error('HTTP ' + reponse.status))))
+            .catch(() => releveParScript(cible))
+            .then(releve => {
+                try {
+                    sessionStorage.setItem(CACHE_PLACES, JSON.stringify({ horodatage: Date.now(), releve }));
+                } catch (e) { /* stockage indisponible : sans conséquence */ }
+                return appliquerReleve(releve);
+            })
+            .catch(() => false); // endpoint absent ou non déployé : on garde les valeurs du fichier
     }
 
     function nextOpenSession(formId) {
@@ -210,7 +293,9 @@
         whatsappUrl,
         formatPrice,
         sessionState,
-        contact: CONTACT
+        refreshPlaces,
+        contact: CONTACT,
+        endpoints: ENDPOINTS
     });
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -219,5 +304,15 @@
         initAccordions();
         initScrollReveals();
         initWhatsappLinks();
+        // Les pages s'affichent avec les valeurs du fichier ; le relevé réel arrive ensuite
+        // et déclenche « impactali:places », que chaque page écoute pour se corriger.
+        refreshPlaces();
+    });
+
+    // La bannière annonce une session ouverte : elle doit disparaître si celle-ci se remplit
+    document.addEventListener('impactali:places', () => {
+        const banner = document.getElementById('session-banner');
+        if (!banner || banner.classList.contains('hidden')) return;
+        if (!nextOpenSession()) banner.classList.add('hidden');
     });
 })();

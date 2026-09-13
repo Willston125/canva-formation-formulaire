@@ -473,6 +473,16 @@ window.PORTFOLIO = Object.freeze([
   })
 ]);
 
+/**
+ * Point d'entrée du script Google Apps Script.
+ * Il reçoit les inscriptions (POST) et, depuis l'ajout de `doGet`, renvoie le
+ * nombre d'inscrits par session (GET `?action=places`). Le site s'en sert pour
+ * décompter les places réellement prises : voir scripts/apps-script/places.gs.
+ */
+window.SITE_ENDPOINTS = Object.freeze({
+  registration: 'https://script.google.com/macros/s/AKfycbyJCl1lg58y090bkO0OwovV7o60Oc0eAXPeWFu4AGX2IARG58Mqes7mf7h8BubK5KTavA/exec'
+});
+
 /** Contact officiel utilisé par les liens WhatsApp du site (numéro déjà en usage). */
 window.SITE_CONTACT = Object.freeze({
   whatsappNumber: '25377145306',
