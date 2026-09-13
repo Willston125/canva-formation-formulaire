@@ -1,8 +1,8 @@
 {
-  "name": "canva-formation-formulaire",
+  "name": "impactali-site",
   "private": true,
   "version": "1.0.0",
-  "description": "Site statique Formation Canva Pro — CSS Tailwind compilé",
+  "description": "IMPACTALI — site statique : fiches formation générées et moteur d'inscription commun",
   "scripts": {
     "build:css": "tailwindcss -c tailwind.config.js -i tailwind.src.css -o tailwind.css --minify",
     "build:fonts": "node scripts/fetch-fonts.js",

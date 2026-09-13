@@ -137,13 +137,14 @@ function render(template, f) {
     html = html
       .replace(/Canva Pro &amp; Création de contenu/g, esc(f.title))
       .replace(/Canva Pro & Création de contenu/g, esc(f.title));
-    html = html.replaceAll('/formations/canva-pro/', `/formations/${f.slug}/`)
-      .replace(/nextOpenSession\('canva-pro'\)/g, `nextOpenSession('${f.formId}')`)
-      .replace(/Ali William \/ formation sur canva/gi, 'Ali William / IMPACTALI')
-      .replace(/alt="Formation Canva Pro — Programme"/g, `alt="${esc(`Formation ${f.title} — Programme`)}"`)
-      .replace(/Bonjour%2C%20je%20suis%20en%20train%20de%20m%27inscrire%20%C3%A0%20la%20formation%20Canva%20mais%20j%27ai%20une%20question%20concernant\.\.\./g,
-        encodeURIComponent(`Bonjour, je suis en train de m’inscrire à la formation ${f.title} mais j’ai une question.`));
+    html = html.replaceAll('/formations/canva-pro/', `/formations/${f.slug}/`);
   }
+  // Bouton WhatsApp flottant : message propre à la formation, pour toutes les fiches.
+  html = replace(html, /(<a href="https:\/\/wa\.me\/[^"]*") data-whatsapp-float/,
+    `$1 data-whatsapp-message="${esc(`Bonjour, je suis en train de m’inscrire à la formation ${f.title} mais j’ai une question.`)}"`,
+    'bouton WhatsApp flottant');
+  html = replace(html, /(<img src="[^"]*" alt=")Affiche de la formation(" id="poster-validation")/,
+    `$1${esc(`Affiche de la formation ${f.title}`)}$2`, 'affiche de l’étape 4');
   return html;
 }
 

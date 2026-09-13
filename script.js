@@ -156,9 +156,10 @@
         const params = new URLSearchParams(window.location.search);
         const requested = params.get('trainingId') || params.get('trainingSlug') || params.get('formationId') || params.get('formation');
         const requestedFormation = FORMATIONS.find(item => item.formId === requested || item.slug === requested);
-        // `params.get` renvoie null quand le paramètre est absent : on passe `undefined`
-        // pour que la prochaine session ouverte soit choisie automatiquement.
-        const requestedSessionId = params.get('sessionId') ?? undefined;
+        /* Un paramètre absent (null) ou vide ('?sessionId=') vaut « non précisé » :
+           on passe `undefined` pour que la prochaine session ouverte soit retenue.
+           Sans cela, une URL tronquée inscrirait le candidat sans session. */
+        const requestedSessionId = params.get('sessionId') || undefined;
         const pageFormation = FORMATIONS.find(item => item.formId === PAGE_FORMATION_ID || item.slug === PAGE_FORMATION_ID);
         if (requestedFormation && pageFormation && requestedFormation.formId !== pageFormation.formId) {
             console.warn('IMPACTALI : le paramètre de formation ne correspond pas à la fiche affichée. La fiche reste prioritaire.');
@@ -168,7 +169,10 @@
         document.addEventListener('click', event => {
             const trigger = event.target.closest('[data-register-formation]');
             if (!trigger) return;
-            setSelectedFormation(trigger.dataset.registerFormation || PAGE_FORMATION_ID, true, trigger.dataset.sessionId || null);
+            // `undefined` et non `null` : sans session explicite sur le déclencheur,
+            // la prochaine session ouverte doit être retenue, pas effacée.
+            setSelectedFormation(trigger.dataset.registerFormation || PAGE_FORMATION_ID, true,
+                trigger.dataset.sessionId || undefined);
         });
     }
 
