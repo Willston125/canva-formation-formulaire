@@ -333,10 +333,12 @@
                 <div class="selected-training-summary" id="selected-training-summary" aria-live="polite">
                     <span class="selected-training-summary__icon material-symbols-outlined" aria-hidden="true">school</span>
                     <div>
-                        <span>Formation choisie</span>
+                        <span>Vous vous inscrivez à</span>
                         <strong id="selected-training-title">Photo &amp; Vidéo</strong>
                         <small id="selected-training-meta">Informations pratiques à annoncer</small>
                         <small id="selected-session-meta">Prochaine session : dates à annoncer</small>
+                        <!-- Détails de la session (dates, horaires, lieu, mode, tarif) : remplis par script.js -->
+                        <ul class="selected-training-summary__facts" id="selected-session-facts" hidden></ul>
                     </div>
                     <a href="#fiche">Voir la fiche</a>
                 </div>

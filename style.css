@@ -4584,3 +4584,36 @@ body:has(#already-registered-card:not(.hidden)) #mobile-progress {
   border-color: rgba(5, 7, 9, 0.3);
   border-top-color: var(--on-brand);
 }
+
+/* =========================================
+   Détails de la session au-dessus du formulaire
+   (dates, horaires, lieu, mode, tarif — uniquement des valeurs connues)
+   ========================================= */
+.selected-training-summary__facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.selected-training-summary__facts li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-muted);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.selected-training-summary__facts .material-symbols-outlined {
+  font-size: 15px;
+  color: var(--color-primary);
+}
+
+@media (max-width: 640px) {
+  .selected-training-summary__facts {
+    gap: 4px 12px;
+  }
+}

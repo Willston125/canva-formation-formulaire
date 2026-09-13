@@ -249,12 +249,14 @@ window.FORMATIONS = Object.freeze([
  * @property {string} duration       Ex. « 12 jours · 24 heures »
  * @property {string} location       Ex. « Saalam Tower, 5ème étage, Djibouti »
  * @property {string} mode           Présentiel / En ligne / Hybride
- * @property {number|null} price     FDJ
+ * @property {number|null} price     Tarif dans la devise de la session (voir `currency`)
  * @property {number|null} placesTotal
  * @property {number|null} placesAvailable  Places réellement disponibles (null = inconnu)
  * @property {boolean} registrationOpen
  * @property {string} [currency]        Devise (par défaut : SITE_CONTACT.currency)
  * @property {string} [countryCode]     Indicatif téléphonique (par défaut : SITE_CONTACT.countryCode)
+ * @property {string} [phoneLocalPattern]  Règle de saisie du numéro local (par défaut : SITE_CONTACT.phoneLocalPattern)
+ * @property {string} [phoneFormatHint]    Message affiché si le numéro ne respecte pas la règle
  * @property {PaymentMethod[]} [paymentMethods]  Moyens de paiement propres à la session (par défaut : SITE_CONTACT.paymentMethods)
  */
 
@@ -282,6 +284,8 @@ window.FORMATIONS = Object.freeze([
  *   location: 'Saalam Tower, 5ème étage, Djibouti', mode: 'Présentiel', price: 7500,
  *   placesTotal: 20, placesAvailable: 20, registrationOpen: true
  * }
+ * Une formation reste au catalogue même sans session, ou avec des sessions passées :
+ * la fiche affiche alors « aucune session annoncée » sans jamais inventer de date.
  * @type {ReadonlyArray<Readonly<Session>>}
  */
 window.SESSIONS = Object.freeze([]);
@@ -380,6 +384,9 @@ window.SITE_CONTACT = Object.freeze({
   contactName: 'Ali William',
   countryCode: '+253',
   currency: 'FDJ',
+  /** Règle de saisie du numéro local pour ce marché (Djibouti). Une session peut la surcharger. */
+  phoneLocalPattern: '^(77|67)\\d{6}$',
+  phoneFormatHint: 'Format invalide. Utilisez 77XXXXXX ou 67XXXXXX',
   /** Moyens de paiement par défaut (une session peut les surcharger via `paymentMethods`). */
   paymentMethods: Object.freeze([
     Object.freeze({ value: 'Waafi Mobile Money', label: 'Waafi', kind: 'mobile', image: '/assets/images/waafi.png', numberLabel: 'Numéro', number: '+253 77 55 63 44', accountName: 'Ali William' }),

@@ -24,42 +24,77 @@
 
     let selectedFormation = FORMATIONS.find(item => item.formId === PAGE_FORMATION_ID) || FORMATIONS[0] || null;
 
-    // ---- Clés de stockage local, isolées par formation (et par session pour l'inscription validée) ----
-    const storageScope = (formation, session) =>
-        `${formation?.formId || PAGE_FORMATION_ID}.${session?.id || 'undated'}`;
-    const draftKey = (formation, session) => `impactali.registration.v2.draft.${storageScope(formation, session)}`;
+    /* ---- Stockage local ----
+       Brouillon : une seule reprise en cours par formation.
+       Inscription validée : par formation ET par session, pour qu'une inscription
+       à une formation n'en bloque jamais une autre, ni une autre session. */
+    const formIdOf = formation => formation?.formId || PAGE_FORMATION_ID;
+    const draftKey = formation => `impactali_registration_draft_${formIdOf(formation)}`;
     const registeredKey = (formation, session) =>
-        `impactali.registration.v2.submitted.${storageScope(formation, session)}`;
+        `impactali_registered_${formIdOf(formation)}${session?.id ? `_${session.id}` : ''}`;
 
-    /** Reprise des anciennes clés Canva (avant le moteur commun) pour ne perdre ni brouillon ni statut « inscrit ». */
+    /**
+     * Reprise des clés antérieures au moteur commun (formulaire Canva, puis nommage
+     * intermédiaire) : ni brouillon ni statut « déjà inscrit » ne doit être perdu.
+     */
     function migrateLegacyStorage() {
         try {
             const canva = FORMATIONS.find(item => item.formId === 'canva-pro');
-            if (!canva) return;
-            const draft = localStorage.getItem('canvapro_form_data');
-            if (draft && !localStorage.getItem(draftKey(canva, null))) localStorage.setItem(draftKey(canva, null), draft);
-            if (localStorage.getItem('canvapro_registered_user') === 'true') localStorage.setItem(registeredKey(canva, null), 'true');
-            localStorage.removeItem('canvapro_form_data');
-            localStorage.removeItem('canvapro_registered_user');
+            if (canva) {
+                const draft = localStorage.getItem('canvapro_form_data');
+                if (draft && !localStorage.getItem(draftKey(canva))) localStorage.setItem(draftKey(canva), draft);
+                if (localStorage.getItem('canvapro_registered_user') === 'true') {
+                    localStorage.setItem(registeredKey(canva, null), 'true');
+                }
+                localStorage.removeItem('canvapro_form_data');
+                localStorage.removeItem('canvapro_registered_user');
+            }
+            // Nommage intermédiaire : impactali.registration.v2.draft|submitted.<formId>.<sessionId|undated>
+            for (const cle of Object.keys(localStorage)) {
+                const m = cle.match(/^impactali\.registration\.v2\.(draft|submitted)\.([^.]+)\.(.+)$/);
+                if (!m) continue;
+                const [, type, formId, sessionId] = m;
+                const formation = FORMATIONS.find(item => item.formId === formId);
+                if (formation) {
+                    const cible = type === 'draft'
+                        ? draftKey(formation)
+                        : registeredKey(formation, sessionId === 'undated' ? null : { id: sessionId });
+                    if (!localStorage.getItem(cible)) localStorage.setItem(cible, localStorage.getItem(cle));
+                }
+                localStorage.removeItem(cle);
+            }
         } catch (e) { /* silent */ }
     }
 
-    // ---- Paramètres dépendant de la session (préparés, valeurs par défaut du contact) ----
-    const currentCurrency = () => selectedSession?.currency || CONTACT.currency || 'FDJ';
-    const currentCountryCode = () => selectedSession?.countryCode || CONTACT.countryCode || '+253';
-    const currentPrice = () => (typeof selectedSession?.price === 'number' ? selectedSession.price : selectedFormation?.price);
-    const currentPaymentMethods = () => (Array.isArray(selectedSession?.paymentMethods) && selectedSession.paymentMethods.length
-        ? selectedSession.paymentMethods
-        : (Array.isArray(CONTACT.paymentMethods) ? CONTACT.paymentMethods : []));
+    /* ---- Paramètres dépendant de la session ----
+       Devise, indicatif, tarif et moyens de paiement viennent de la session quand elle
+       les précise, sinon du contact du site : aucune valeur de marché n'est écrite ici. */
+    const activeSession = () => displaySession || selectedSession;
+    const currentCurrency = () => activeSession()?.currency || CONTACT.currency;
+    const currentCountryCode = () => activeSession()?.countryCode || CONTACT.countryCode || '';
+    const currentPrice = () => {
+        const session = activeSession();
+        return typeof session?.price === 'number' ? session.price : selectedFormation?.price;
+    };
+    const currentPaymentMethods = () => {
+        const session = activeSession();
+        return Array.isArray(session?.paymentMethods) && session.paymentMethods.length
+            ? session.paymentMethods
+            : (Array.isArray(CONTACT.paymentMethods) ? CONTACT.paymentMethods : []);
+    };
     const formatPrice = price => (common ? common.formatPrice(price, currentCurrency())
-        : (typeof price === 'number' ? `${price.toLocaleString('fr-FR')} ${currentCurrency()}` : 'À confirmer'));
+        : (typeof price === 'number' ? `${price.toLocaleString('fr-FR')} ${currentCurrency() || ''}`.trim() : 'À confirmer'));
 
-    /** Format du numéro local : règle djiboutienne conservée pour +253, sinon 6 à 15 chiffres. */
+    /**
+     * Format du numéro local : la règle du marché est déclarée dans les données
+     * (SITE_CONTACT.phoneLocalPattern). Sans règle, on n'exige que des chiffres.
+     */
     function phonePattern() {
-        return currentCountryCode() === '+253' ? /^(77|67)\d{6}$/ : /^\d{6,15}$/;
+        const source = activeSession()?.phoneLocalPattern || CONTACT.phoneLocalPattern;
+        try { return source ? new RegExp(source) : /^\d{6,15}$/; } catch (e) { return /^\d{6,15}$/; }
     }
     function phoneFormatHint() {
-        return currentCountryCode() === '+253' ? 'Format invalide. Utilisez 77XXXXXX ou 67XXXXXX' : 'Format invalide : chiffres uniquement';
+        return activeSession()?.phoneFormatHint || CONTACT.phoneFormatHint || 'Format invalide : chiffres uniquement';
     }
 
     /** Formate une date ISO (YYYY-MM-DD) en français, ex. "16 avril 2026". */
@@ -107,7 +142,10 @@
 
     // ====== FORMATION & SESSION SÉLECTIONNÉES (page fiche) ======
     const SESSIONS = Array.isArray(window.SESSIONS) ? window.SESSIONS : [];
+    /** Session ouverte à l'inscription (alimente le champ caché `sessionId`). */
     let selectedSession = null;
+    /** Session à afficher : peut être annoncée ou complète, donc sans inscription possible. */
+    let displaySession = null;
 
     /**
      * Lit les paramètres d'URL transmis par le catalogue / les sessions.
@@ -154,6 +192,14 @@
         const sessionInput = document.getElementById('session-id');
         if (sessionInput) sessionInput.value = selectedSession ? selectedSession.id : '';
 
+        /* Session AFFICHÉE : une session annoncée ou complète doit rester visible même
+           quand on ne peut pas s'y inscrire (cas 3 et 4). Elle ne vaut jamais inscription :
+           seule `selectedSession` alimente le champ caché `sessionId`. */
+        const etat = common?.sessionState
+            ? common.sessionState(formation.formId, sessionId || selectedSession?.id || undefined)
+            : { state: selectedSession ? 'open' : 'none', session: selectedSession };
+        displaySession = selectedSession || etat.session || null;
+
         const title = document.getElementById('selected-training-title');
         const meta = document.getElementById('selected-training-meta');
         const sessionMeta = document.getElementById('selected-session-meta');
@@ -163,16 +209,45 @@
                 || 'Informations pratiques à annoncer';
         }
         if (sessionMeta) {
-            sessionMeta.textContent = selectedSession
-                ? `Session du ${formatSessionDate(selectedSession.startDate)} · ${selectedSession.schedule} · ${selectedSession.location}`
+            sessionMeta.textContent = displaySession
+                ? `Session du ${formatSessionDate(displaySession.startDate)}`
                 : 'Prochaine session : dates à annoncer';
         }
+        renderSelectedSessionFacts();
 
         renderSessionDetails();
         renderRegistrationState();
         renderPaymentDetails();
         renderConditionsText();
         if (persist) saveData();
+    }
+
+    /**
+     * Détails de la session directement au-dessus du formulaire : dates, horaires,
+     * lieu, mode, tarif. Seules les valeurs réellement connues sont listées.
+     */
+    function renderSelectedSessionFacts() {
+        const liste = document.getElementById('selected-session-facts');
+        if (!liste) return;
+        const s = displaySession;
+        const lignes = [];
+        if (s) {
+            const dates = s.endDate
+                ? `Du ${formatSessionDate(s.startDate)} au ${formatSessionDate(s.endDate)}`
+                : `À partir du ${formatSessionDate(s.startDate)}`;
+            lignes.push(['event', dates]);
+            if (s.schedule) lignes.push(['schedule', s.schedule]);
+            if (s.location) lignes.push(['location_on', s.location]);
+            if (s.mode) lignes.push(['co_present', s.mode]);
+        } else if (selectedFormation?.mode && !/^à confirmer$/i.test(selectedFormation.mode)) {
+            lignes.push(['co_present', selectedFormation.mode]);
+        }
+        const prix = currentPrice();
+        if (typeof prix === 'number') lignes.push(['payments', formatPrice(prix)]);
+
+        liste.hidden = !lignes.length;
+        liste.innerHTML = lignes.map(([icone, texte]) =>
+            `<li><span class="material-symbols-outlined" aria-hidden="true">${icone}</span>${escapeHtml(texte)}</li>`).join('');
     }
 
     // ====== INFORMATIONS DE SESSION SUR LA FICHE ======
@@ -186,7 +261,8 @@
             else if (row !== el) row.hidden = true;
             else el.textContent = 'Dates à annoncer';
         };
-        const s = selectedSession;
+        // Une session annoncée ou complète reste affichée : seule l'inscription est fermée.
+        const s = displaySession;
         set('fiche-next-session', s ? [formatSessionDate(s.startDate), s.schedule].filter(Boolean).join(' · ') : '');
         set('fiche-schedule', s?.schedule || '');
         set('fiche-location', s?.location || '');
@@ -287,6 +363,9 @@
         set('cash-payment-place', cash?.place);
         set('cash-payment-phone', cash?.phone);
         document.querySelectorAll('.country-code').forEach(el => { el.textContent = currentCountryCode(); });
+        // La règle de saisie du numéro suit les données du marché, pas un motif figé dans la page
+        const motif = phonePattern().source;
+        document.querySelectorAll('#telephone, #tel-paiement').forEach(champ => { champ.pattern = motif; });
         const summaryPrice = document.getElementById('selected-training-price');
         if (summaryPrice) summaryPrice.textContent = price;
     }
@@ -1153,13 +1232,13 @@ ${data.prenom}`;
             const data = getFormData();
             const conditionsChecked = document.getElementById('conditions').checked;
             const remboursementChecked = document.getElementById('remboursement')?.checked || false;
-            localStorage.setItem(draftKey(selectedFormation, selectedSession), JSON.stringify({ ...data, conditions: conditionsChecked, remboursement: remboursementChecked }));
+            localStorage.setItem(draftKey(selectedFormation), JSON.stringify({ ...data, conditions: conditionsChecked, remboursement: remboursementChecked }));
         } catch (e) { /* silent */ }
     }
 
     function loadSavedData() {
         try {
-            const saved = localStorage.getItem(draftKey(selectedFormation, selectedSession));
+            const saved = localStorage.getItem(draftKey(selectedFormation));
             if (!saved) return;
 
             const data = JSON.parse(saved);
@@ -1240,7 +1319,7 @@ ${data.prenom}`;
     }
 
     function clearSavedData() {
-        try { localStorage.removeItem(draftKey(selectedFormation, selectedSession)); } catch (e) { /* silent */ }
+        try { localStorage.removeItem(draftKey(selectedFormation)); } catch (e) { /* silent */ }
     }
 
     // ====== UTILITIES ======
