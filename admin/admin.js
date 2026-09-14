@@ -138,13 +138,37 @@
     });
   }
 
+  /**
+   * Vérifie que le script Google déployé connaît bien l'API d'administration.
+   * Sans ce contrôle, une version antérieure du script prendrait la commande de
+   * connexion pour une inscription : elle écrirait une ligne vide dans la feuille
+   * et enverrait un email parasite. On préfère refuser et le dire clairement.
+   * En cas d'injoignabilité, on laisse passer : l'envoi rapportera lui-même l'échec.
+   */
+  function verifierApi() {
+    if (!API) return Promise.resolve(true);
+    var cible = API + (API.indexOf('?') >= 0 ? '&' : '?') + 'action=catalogue';
+    return fetch(cible, { method: 'GET' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (d) { return !(d && d.erreur && !d.formations); })
+      .catch(function () { return true; });
+  }
+
   function connecter(silencieux) {
     var bouton = $('#btn-connexion');
     var erreur = $('#erreur-connexion');
     erreur.hidden = true;
     attente(bouton, true);
 
-    appeler('admin.login', {}).then(function () {
+    verifierApi().then(function (apiPrete) {
+      if (!apiPrete) {
+        var e = new Error('Le script Google n’est pas encore à jour : il ne connaît pas l’administration. '
+          + 'Installez la nouvelle version du script, puis déployez une nouvelle version.');
+        e.apiObsolete = true;
+        return Promise.reject(e);
+      }
+      return appeler('admin.login', {});
+    }).then(function () {
       try {
         var durable = $('#rester-connecte') && $('#rester-connecte').checked;
         (durable ? localStorage : sessionStorage).setItem(CLE_MDP, etat.motDePasse);
@@ -163,7 +187,8 @@
           etat.motDePasse = $('#mot-de-passe').value;
           connecter(false);
         });
-        return;
+        // Un script obsolète n'est pas un mot de passe erroné : il faut le dire
+        if (!err || !err.apiObsolete) return;
       }
       erreur.textContent = messageLisible(err);
       erreur.hidden = false;
