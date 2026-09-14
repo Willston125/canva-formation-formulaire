@@ -1170,42 +1170,98 @@
         };
 
         try {
-            // Garantir que l'animation du hamster tourne pendant au moins 2 secondes (plus fluide)
-            const minTimePromise = new Promise(resolve => setTimeout(resolve, 2000));
-            // Timeout de sécurité pour ne jamais dépasser 4 secondes de chargement
-            const timeoutPromise = new Promise(resolve => setTimeout(resolve, 4000));
-
-            let fetchPromise = Promise.resolve();
-
-            if (GOOGLE_SHEETS_URL) {
-                fetchPromise = fetch(GOOGLE_SHEETS_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload),
-                });
-            }
-
-            // On attend soit que l'envoi ET le délai minimum soient finis,
-            // soit que le timeout de 4 secondes soit atteint.
-            await Promise.race([
-                Promise.all([fetchPromise, minTimePromise]),
-                timeoutPromise
-            ]);
+            // L'animation tourne au moins 2 secondes, même si la réponse arrive plus tôt
+            const dureeMinimale = new Promise(resolve => setTimeout(resolve, 2000));
+            await Promise.all([envoyerInscription(payload), dureeMinimale]);
 
             if (hamsterOverlay) hamsterOverlay.classList.add('hidden');
+            masquerEchecEnvoi();
             showSuccessScreen();
             clearSavedData();
         } catch (error) {
             console.error('Erreur soumission:', error);
-            alert("❌ Erreur lors de l'envoi. Veuillez vérifier votre connexion ou réessayer.");
-
-            // Réafficher le formulaire en cas d'erreur
             if (hamsterOverlay) hamsterOverlay.classList.add('hidden');
             if (formContainer) formContainer.classList.remove('hidden');
             if (mobileProgress) mobileProgress.classList.remove('hidden');
             btnSubmit.disabled = false;
+            // Le brouillon est volontairement conservé : la personne ne doit rien resaisir
+            afficherEchecEnvoi(error);
         }
+    }
+
+    /**
+     * Envoie l'inscription et attend la confirmation du serveur.
+     * Le corps part en `text/plain` : c'est une requête simple, donc sans requête
+     * préalable — Google Apps Script ne sait pas traiter celle-ci, et c'est
+     * précisément ce qui imposait autrefois `no-cors`, mode où la réponse est
+     * illisible. Ici la réponse est lue : un échec est un échec, jamais un succès.
+     * @returns {Promise<Object>} la réponse du serveur si, et seulement si, elle confirme.
+     */
+    function envoyerInscription(payload) {
+        if (!GOOGLE_SHEETS_URL) {
+            return Promise.reject(new Error('Aucune adresse d’envoi n’est configurée.'));
+        }
+
+        const expiration = new Promise((_, rejeter) =>
+            setTimeout(() => rejeter(new Error('Le serveur met trop de temps à répondre.')), 25000));
+
+        const envoi = fetch(GOOGLE_SHEETS_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify(payload)
+        }).then(reponse => {
+            if (!reponse.ok) throw new Error(`Le serveur a répondu ${reponse.status}.`);
+            return reponse.text();
+        }).then(texte => {
+            let donnees;
+            try { donnees = JSON.parse(texte); }
+            catch (e) { throw new Error('Réponse inattendue du serveur.'); }
+            if (!donnees || donnees.ok !== true) {
+                throw new Error(donnees && donnees.erreur ? String(donnees.erreur) : 'Le serveur a refusé l’inscription.');
+            }
+            return donnees;
+        });
+
+        return Promise.race([envoi, expiration]);
+    }
+
+    /** Traduit les échecs techniques du navigateur en une phrase compréhensible. */
+    function messageLisible(error) {
+        const brut = error && error.message ? String(error.message) : '';
+        if (!brut) return 'Erreur inconnue.';
+        if (/failed to fetch|networkerror|load failed/i.test(brut)) {
+            return 'La connexion au serveur n’a pas abouti.';
+        }
+        return brut.endsWith('.') ? brut : brut + '.';
+    }
+
+    /** Dit clairement que l'envoi a échoué, plutôt que d'annoncer une réussite fausse. */
+    function afficherEchecEnvoi(error) {
+        const bloc = document.getElementById('submit-error');
+        if (!bloc) return;
+        const formation = selectedFormation?.title || '';
+        const message = `Bonjour, je viens de remplir le formulaire d’inscription à la formation ${formation} `
+            + `mais l’envoi a échoué. Voici mes informations : ${document.getElementById('prenom')?.value || ''} `
+            + `${document.getElementById('nom')?.value || ''}.`;
+        const lienWhatsapp = common ? common.whatsappUrl(message) : '#';
+
+        bloc.innerHTML = `
+            <span class="material-symbols-outlined" aria-hidden="true">error</span>
+            <div>
+                <strong>Votre inscription n’a pas pu être envoyée.</strong>
+                <p>${escapeHtml(messageLisible(error))}
+                   Vos réponses sont conservées sur cet appareil : vérifiez votre connexion et réessayez.
+                   Si le problème persiste, envoyez-nous directement un message.</p>
+                <a class="button button--secondary" href="${escapeHtml(lienWhatsapp)}" target="_blank" rel="noopener noreferrer">
+                    Nous écrire sur WhatsApp<span class="material-symbols-outlined" aria-hidden="true">chat</span></a>
+            </div>`;
+        bloc.hidden = false;
+        bloc.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function masquerEchecEnvoi() {
+        const bloc = document.getElementById('submit-error');
+        if (bloc) bloc.hidden = true;
     }
 
     function showSuccessScreen() {

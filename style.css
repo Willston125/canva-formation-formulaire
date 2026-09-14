@@ -4617,3 +4617,50 @@ body:has(#already-registered-card:not(.hidden)) #mobile-progress {
     gap: 4px 12px;
   }
 }
+
+/* =========================================
+   Échec d'envoi du formulaire
+   Le site ne doit jamais annoncer une réussite qu'il n'a pas vérifiée.
+   ========================================= */
+.submit-error {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 14px;
+  margin: 0 0 24px;
+  padding: 18px 20px;
+  border: 1px solid rgba(248, 113, 113, 0.45);
+  border-radius: 16px;
+  background: rgba(127, 29, 29, 0.22);
+}
+
+.submit-error > .material-symbols-outlined {
+  color: #FCA5A5;
+  font-size: 26px;
+}
+
+.submit-error strong {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--color-white);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.submit-error p {
+  margin: 0 0 14px;
+  color: #FECACA;
+  font-size: 0.88rem;
+  line-height: 1.65;
+}
+
+.submit-error .button {
+  font-size: 0.85rem;
+}
+
+@media (max-width: 640px) {
+  .submit-error {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+}
