@@ -480,7 +480,7 @@ window.PORTFOLIO = Object.freeze([
  * décompter les places réellement prises : voir scripts/apps-script/places.gs.
  */
 window.SITE_ENDPOINTS = Object.freeze({
-  registration: 'https://script.google.com/macros/s/AKfycbyJCl1lg58y090bkO0OwovV7o60Oc0eAXPeWFu4AGX2IARG58Mqes7mf7h8BubK5KTavA/exec'
+  registration: 'https://script.google.com/macros/s/AKfycbzqmEd66FzKKpjbpP2BiypQvNl8m5SCQ8YR-Thc1cS6idD6wBbA0WPsU-1B4saKr8w/exec'
 });
 
 /** Contact officiel utilisé par les liens WhatsApp du site (numéro déjà en usage). */

@@ -13,9 +13,10 @@
     document.documentElement.classList.add('has-js');
 
     // ====== CONFIG ======
-    // Adresse du script Google, centralisée dans formations-data.js (repli : valeur historique)
-    const GOOGLE_SHEETS_URL = (window.SITE_ENDPOINTS && window.SITE_ENDPOINTS.registration) ||
-        'https://script.google.com/macros/s/AKfycbyJCl1lg58y090bkO0OwovV7o60Oc0eAXPeWFu4AGX2IARG58Mqes7mf7h8BubK5KTavA/exec';
+    /* Adresse du script Google : une seule source, formations-data.js.
+       Aucune valeur de repli — une adresse erronée enverrait les inscriptions
+       vers un autre script, ce qui est pire que ne pas les envoyer du tout. */
+    const GOOGLE_SHEETS_URL = (window.SITE_ENDPOINTS && window.SITE_ENDPOINTS.registration) || '';
     const TOTAL_STEPS = 4;
     const FORMATIONS = Array.isArray(window.FORMATIONS) ? window.FORMATIONS : [];
     const CONTACT = window.SITE_CONTACT || {};
@@ -1176,7 +1177,7 @@
 
             let fetchPromise = Promise.resolve();
 
-            if (GOOGLE_SHEETS_URL !== 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL') {
+            if (GOOGLE_SHEETS_URL) {
                 fetchPromise = fetch(GOOGLE_SHEETS_URL, {
                     method: 'POST',
                     mode: 'no-cors',
