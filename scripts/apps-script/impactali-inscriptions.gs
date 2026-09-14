@@ -10,10 +10,12 @@
    ---------------------------------------------------------------------------
    INSTALLATION
 
-   1. Aller sur https://script.google.com → Nouveau projet
+   1. Créer un classeur neuf : taper sheets.new dans la barre d'adresse.
       Le nommer par exemple « IMPACTALI — Inscriptions ».
-   2. Coller tout ce fichier à la place du contenu existant.
-   3. Renseigner les trois constantes ci-dessous (classeur, onglet, email).
+   2. Dans ce classeur : menu Extensions > Apps Script.
+      Le projet créé est rattaché au classeur : ID_CLASSEUR reste vide.
+   3. Coller tout ce fichier à la place du contenu existant,
+      puis renseigner EMAIL_PRO ci-dessous. Enregistrer (icône disquette).
    4. Déployer → Nouveau déploiement → type « Application Web » :
          Exécuter en tant que  : Moi (votre adresse)
          Qui a accès           : Tout le monde
@@ -34,12 +36,14 @@
 // ----------------------------- CONFIGURATION -----------------------------
 
 /**
- * Identifiant du classeur qui reçoit les inscriptions.
- * Il se lit dans l'URL du classeur, entre /d/ et /edit.
- * Laisser vide uniquement si ce script est créé depuis le classeur lui-même
- * (Extensions > Apps Script).
+ * Classeur qui reçoit les inscriptions.
+ * LAISSER VIDE si ce script a été créé depuis le classeur lui-même
+ * (Extensions > Apps Script) : c'est le cas recommandé, il n'y a alors
+ * aucun identifiant à copier et aucune erreur possible.
+ * Ne remplir que si le script vit dans un projet séparé : l'identifiant
+ * se lit alors dans l'URL du classeur, entre /d/ et /edit.
  */
-var ID_CLASSEUR = '1zRlfDyfrolH9QEhYoBFzQFYur50cY9r7Raqz4m8r4Wk';
+var ID_CLASSEUR = '';
 
 /** Onglet des inscriptions. Il est créé automatiquement s'il n'existe pas. */
 var NOM_FEUILLE = 'Inscriptions';
