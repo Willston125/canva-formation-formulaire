@@ -121,6 +121,60 @@
     }
 
     /**
+     * Applique les textes modifiés depuis le tableau de bord.
+     * Chaque élément porteur de `data-texte` est repérable par sa clé ; si aucune
+     * valeur n'a été enregistrée, le texte écrit dans le HTML reste affiché.
+     * C'est ce qui permet d'annuler une modification en vidant simplement le champ.
+     */
+    function appliquerTextes(textes) {
+        if (!textes || typeof textes !== 'object') return false;
+        let change = false;
+
+        document.querySelectorAll('[data-texte]').forEach(el => {
+            const valeur = textes[el.dataset.texte];
+            if (typeof valeur !== 'string' || !valeur.trim()) return;
+            if (el.textContent === valeur) return;
+            el.textContent = valeur;
+            change = true;
+        });
+
+        document.querySelectorAll('[data-texte-html]').forEach(el => {
+            const valeur = textes[el.dataset.texteHtml];
+            if (typeof valeur !== 'string' || !valeur.trim()) return;
+            const propre = assainir(valeur);
+            if (el.innerHTML === propre) return;
+            el.innerHTML = propre;
+            change = true;
+        });
+
+        return change;
+    }
+
+    /**
+     * Ces textes-ci acceptent une mise en valeur, d'où l'insertion en HTML.
+     * On n'y tolère qu'une poignée de balises et aucun attribut : même écrit
+     * depuis l'administration, un contenu ne doit pas pouvoir exécuter de script.
+     */
+    function assainir(html) {
+        const BALISES = ['SPAN', 'STRONG', 'EM', 'B', 'I', 'BR', 'SMALL'];
+        const SUPPRIMER = ['SCRIPT', 'STYLE', 'IFRAME', 'OBJECT', 'EMBED', 'LINK', 'META'];
+
+        /* DOMParser produit un document INERTE. Passer par innerHTML sur un
+           élément détaché ne suffirait pas : le navigateur y charge quand même
+           les images, donc un « onerror » s'exécuterait avant tout nettoyage. */
+        const doc = new DOMParser().parseFromString('<div id="racine"></div>', 'text/html');
+        const racine = doc.getElementById('racine');
+        racine.innerHTML = html;
+
+        racine.querySelectorAll('*').forEach(el => {
+            if (SUPPRIMER.includes(el.tagName)) { el.remove(); return; }
+            if (!BALISES.includes(el.tagName)) { el.replaceWith(...el.childNodes); return; }
+            Array.from(el.attributes).forEach(attr => el.removeAttribute(attr.name));
+        });
+        return racine.innerHTML;
+    }
+
+    /**
      * Interroge l'API : catalogue à jour et nombre d'inscrits par session.
      * Un seul appel sert les deux, pour ne pas doubler l'attente au chargement.
      * @param {boolean} force ignore le cache (après une inscription, par exemple)
@@ -130,9 +184,12 @@
         if (!url) return Promise.resolve(false);
 
         const appliquer = donnees => {
+            // Les textes sont indépendants du catalogue : ils s'appliquent même
+            // si aucune formation n'a encore été importée.
+            const textesChanges = appliquerTextes(donnees && donnees.textes);
             const catalogueChange = appliquerCatalogue(donnees);
             const placesChangees = appliquerReleve(donnees && donnees.places ? donnees.places : donnees);
-            return catalogueChange || placesChangees;
+            return textesChanges || catalogueChange || placesChangees;
         };
 
         if (!force) {

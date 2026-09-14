@@ -66,6 +66,8 @@
                 <button class="onglet" type="button" data-vue="inscriptions">
                     <span class="material-symbols-outlined" aria-hidden="true">group</span>Inscriptions
                     <span class="pastille" id="compte-inscriptions"></span></button>
+                <button class="onglet" type="button" data-vue="textes">
+                    <span class="material-symbols-outlined" aria-hidden="true">edit_note</span>Textes du site</button>
                 <button class="onglet" type="button" data-vue="reglages">
                     <span class="material-symbols-outlined" aria-hidden="true">settings</span>Réglages</button>
             </nav>
@@ -124,6 +126,11 @@
             <section class="vue" id="vue-inscriptions">
                 <div class="filtres" id="filtres-inscriptions"></div>
                 <div id="liste-inscriptions"></div>
+            </section>
+
+            <!-- Textes du site -->
+            <section class="vue" id="vue-textes">
+                <div id="formulaire-textes"></div>
             </section>
 
             <!-- Réglages -->

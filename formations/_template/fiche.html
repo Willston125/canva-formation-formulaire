@@ -373,13 +373,13 @@
                 <div class="glass-card rounded-2xl sm:rounded-3xl p-6 sm:p-8">
                     <div class="flex items-center gap-3 mb-5">
                         <span class="material-symbols-outlined text-[#CBFD00] text-2xl" aria-hidden="true">checklist</span>
-                        <h2 class="text-lg sm:text-xl font-extrabold text-[#FFFFFF] font-headline" id="prerequis-title">Prérequis</h2>
+                        <h2 class="text-lg sm:text-xl font-extrabold text-[#FFFFFF] font-headline" id="prerequis-title" data-texte="fiche.prerequis.titre" data-texte-groupe="Fiche formation" data-texte-libelle="Titre « Prérequis »">Prérequis</h2>
                     </div>
                     <ul class="prerequis-list">
-                        <li><span class="material-symbols-outlined" aria-hidden="true">laptop_mac</span>Un ordinateur portable est fortement recommandé ; une tablette performante ou un grand smartphone permet de suivre.</li>
-                        <li><span class="material-symbols-outlined" aria-hidden="true">account_circle</span>Un compte Canva gratuit suffit : les fonctionnalités Pro sont montrées pendant les sessions.</li>
-                        <li><span class="material-symbols-outlined" aria-hidden="true">school</span>Aucun niveau requis : la première semaine reprend les fondations du design pas à pas.</li>
-                        <li><span class="material-symbols-outlined" aria-hidden="true">event_available</span>Être disponible les jeudis, vendredis et samedis de 18h à 20h pendant la durée de la session.</li>
+                        <li data-texte-html="fiche.prerequis.1" data-texte-groupe="Fiche formation" data-texte-libelle="Prérequis 1"><span class="material-symbols-outlined" aria-hidden="true">laptop_mac</span>Un ordinateur portable est fortement recommandé ; une tablette performante ou un grand smartphone permet de suivre.</li>
+                        <li data-texte-html="fiche.prerequis.2" data-texte-groupe="Fiche formation" data-texte-libelle="Prérequis 2"><span class="material-symbols-outlined" aria-hidden="true">account_circle</span>Un compte Canva gratuit suffit : les fonctionnalités Pro sont montrées pendant les sessions.</li>
+                        <li data-texte-html="fiche.prerequis.3" data-texte-groupe="Fiche formation" data-texte-libelle="Prérequis 3"><span class="material-symbols-outlined" aria-hidden="true">school</span>Aucun niveau requis : la première semaine reprend les fondations du design pas à pas.</li>
+                        <li data-texte-html="fiche.prerequis.4" data-texte-groupe="Fiche formation" data-texte-libelle="Prérequis 4"><span class="material-symbols-outlined" aria-hidden="true">event_available</span>Être disponible les jeudis, vendredis et samedis de 18h à 20h pendant la durée de la session.</li>
                     </ul>
                 </div>
             </section>
@@ -425,7 +425,7 @@
                         <div class="flex items-center justify-center md:justify-start gap-2 mb-3">
                             <span class="material-symbols-outlined text-[#CBFD00] text-2xl"
                                 style="font-variation-settings: 'FILL' 1;">verified</span>
-                            <h2 class="text-xl sm:text-2xl font-extrabold text-[#FFFFFF] font-headline" id="formateur-title">Votre Formateur
+                            <h2 class="text-xl sm:text-2xl font-extrabold text-[#FFFFFF] font-headline" id="formateur-title" data-texte="fiche.formateur.titre" data-texte-groupe="Fiche formation" data-texte-libelle="Titre « Votre formateur »">Votre Formateur
                             </h2>
                         </div>
                         <p class="text-sm sm:text-base text-[#E5E5E5] leading-relaxed mb-5">
@@ -618,14 +618,14 @@
 
             <!-- Registration heading -->
             <section class="mb-8 text-center lg:text-left animate-fade-up">
-                <p class="eyebrow">VOTRE INSCRIPTION</p>
+                <p class="eyebrow" data-texte="form.surtitre" data-texte-groupe="Formulaire d’inscription" data-texte-libelle="Surtitre">VOTRE INSCRIPTION</p>
                 <h2
-                    class="text-3xl sm:text-4xl lg:text-5xl font-extrabold font-headline tracking-tight text-[#FFFFFF] font-bold mb-3 leading-tight">
+                    class="text-3xl sm:text-4xl lg:text-5xl font-extrabold font-headline tracking-tight text-[#FFFFFF] font-bold mb-3 leading-tight" data-texte-html="form.titre" data-texte-groupe="Formulaire d’inscription" data-texte-libelle="Titre">
                     Prêt à passer de l’idée<br class="hidden sm:block" />
                     <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#CBFD00] to-[#A5CF00]">
                         à la pratique&nbsp;?</span>
                 </h2>
-                <p class="text-[#94A3B8] font-medium text-base sm:text-lg max-w-2xl leading-relaxed">
+                <p class="text-[#94A3B8] font-medium text-base sm:text-lg max-w-2xl leading-relaxed" data-texte="form.texte" data-texte-groupe="Formulaire d’inscription" data-texte-libelle="Phrase d’accroche">
                     Complétez les quatre étapes ci-dessous. Votre progression est enregistrée sur cet appareil.
                 </p>
             </section>
@@ -698,7 +698,7 @@
                             <span
                                 class="w-10 h-10 rounded-full bg-primary-fixed flex items-center justify-center text-primary font-bold font-headline text-sm shadow-sm">1</span>
                             <legend class="text-xl sm:text-2xl font-bold font-headline text-on-secondary-container"
-                                id="section-1-title">Informations personnelles</legend>
+                                id="section-1-title" data-texte="form.etape1" data-texte-groupe="Formulaire d’inscription" data-texte-libelle="Étape 1 — titre">Informations personnelles</legend>
                         </div>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
@@ -939,7 +939,7 @@
                             <span
                                 class="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center text-secondary font-bold font-headline text-sm">2</span>
                             <legend class="text-xl sm:text-2xl font-bold font-headline text-on-secondary-container"
-                                id="section-2-title">Niveau & Objectifs</legend>
+                                id="section-2-title" data-texte="form.etape2" data-texte-groupe="Formulaire d’inscription" data-texte-libelle="Étape 2 — titre">Niveau & Objectifs</legend>
                         </div>
 
                         <div class="space-y-6">
@@ -1064,7 +1064,7 @@
                             <span
                                 class="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center text-secondary font-bold font-headline text-sm">3</span>
                             <legend class="text-xl sm:text-2xl font-bold font-headline text-on-secondary-container"
-                                id="section-3-title">Paiement</legend>
+                                id="section-3-title" data-texte="form.etape3" data-texte-groupe="Formulaire d’inscription" data-texte-libelle="Étape 3 — titre">Paiement</legend>
                         </div>
 
                         <div class="space-y-6">
@@ -1073,7 +1073,7 @@
                             <div class="rounded-2xl border border-amber-500/40 bg-amber-500/10 p-5 flex items-start gap-4" role="alert" aria-label="Politique de remboursement">
                                 <span class="material-symbols-outlined text-amber-400 text-2xl flex-shrink-0 mt-0.5" style="font-variation-settings: 'FILL' 1;">warning</span>
                                 <div class="space-y-2">
-                                    <p class="text-sm font-extrabold text-amber-300 font-headline tracking-wide uppercase">⚠️ Politique de remboursement — À lire avant de payer</p>
+                                    <p class="text-sm font-extrabold text-amber-300 font-headline tracking-wide uppercase" data-texte="form.remboursement.titre" data-texte-groupe="Formulaire d’inscription" data-texte-libelle="Remboursement — titre">⚠️ Politique de remboursement — À lire avant de payer</p>
                                     <p class="text-[13px] leading-relaxed text-[#E5E5E5]">
                                         Nous vous recommandons de <strong class="text-white">vérifier attentivement les informations relatives à cette formation</strong> avant tout engagement. Assurez-vous que le programme, les dates et le lieu vous conviennent.
                                     </p>
@@ -1215,7 +1215,7 @@
                             <span
                                 class="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center text-secondary font-bold font-headline text-sm">4</span>
                             <legend class="text-xl sm:text-2xl font-bold font-headline text-on-secondary-container"
-                                id="section-4-title">Validation</legend>
+                                id="section-4-title" data-texte="form.etape4" data-texte-groupe="Formulaire d’inscription" data-texte-libelle="Étape 4 — titre">Validation</legend>
                         </div>
 
                         <!-- Affiche de la formation -->

@@ -34,6 +34,7 @@ var F_INSCRIPTIONS = 'Inscriptions';
 var F_FORMATIONS = 'Formations';
 var F_SESSIONS = 'Sessions';
 var F_REGLAGES = 'Reglages';
+var F_TEXTES = 'Textes';
 
 /** Adresse professionnelle qui reçoit l'alerte à chaque inscription. */
 var EMAIL_PRO = 'infos@impactali.site';
@@ -189,6 +190,7 @@ function commandeAdmin(d) {
       case 'admin.session.save':     return repondre(enregistrerSession(d.donnees), null);
       case 'admin.session.delete':   return repondre(supprimerSession(d.id), null);
       case 'admin.reglages.save':    return repondre(enregistrerReglages(d.donnees), null);
+      case 'admin.textes.save':      return repondre(enregistrerTextes(d.donnees), null);
       case 'admin.inscriptions':     return repondre({ ok: true, inscriptions: lireInscriptions(d.formationId) }, null);
       case 'admin.inscription.statut': return repondre(changerStatut(d.ligne, d.statut), null);
       case 'admin.importer':         return repondre(importerDepuisSite(d.donnees), null);
@@ -230,6 +232,7 @@ function lireCatalogue() {
     }),
     sessions: lireTable(F_SESSIONS, CHAMPS_SESSION),
     reglages: lireReglages(),
+    textes: lireTextes(),
     places: compterInscrits(),
     maj: new Date().toISOString()
   };
@@ -380,8 +383,14 @@ function supprimerSession(id) {
 // ------------------------------- RÉGLAGES --------------------------------
 
 /** Réglages du site : paires clé / valeur, valeur JSON autorisée. */
-function lireReglages() {
-  var feuille = onglet(F_REGLAGES);
+function lireReglages() { return lirePaires(F_REGLAGES); }
+
+/** Textes de l'accueil modifiés depuis le tableau de bord. */
+function lireTextes() { return lirePaires(F_TEXTES); }
+
+/** Lecture générique d'un onglet « clé / valeur ». */
+function lirePaires(nom) {
+  var feuille = onglet(nom);
   var valeurs = feuille.getDataRange().getValues();
   var o = {};
   for (var i = 1; i < valeurs.length; i++) {
@@ -411,22 +420,44 @@ function valeurReglage(brut) {
 }
 
 function enregistrerReglages(donnees) {
-  if (!donnees || typeof donnees !== 'object') throw new Error('Réglages invalides.');
-  var feuille = onglet(F_REGLAGES);
+  ecrirePaires(F_REGLAGES, donnees, 'Réglages invalides.');
+  return { ok: true, catalogue: lireCatalogue() };
+}
+
+/**
+ * Textes de l'accueil. Une valeur vide REMET le texte d'origine : la ligne est
+ * effacée, et la page réaffiche ce qui est écrit dans son HTML. C'est le moyen
+ * d'annuler une modification sans avoir à retrouver le texte initial.
+ */
+function enregistrerTextes(donnees) {
+  ecrirePaires(F_TEXTES, donnees, 'Textes invalides.');
+  return { ok: true, catalogue: lireCatalogue() };
+}
+
+/** Écriture générique dans un onglet « clé / valeur ». */
+function ecrirePaires(nom, donnees, messageErreur) {
+  if (!donnees || typeof donnees !== 'object') throw new Error(messageErreur);
+  var feuille = onglet(nom);
   if (feuille.getLastRow() === 0) {
     feuille.appendRow(['cle', 'valeur']);
     feuille.setFrozenRows(1);
   }
-  var valeurs = feuille.getDataRange().getValues();
   Object.keys(donnees).forEach(function (cle) {
-    var valeur = typeof donnees[cle] === 'string' ? donnees[cle] : JSON.stringify(donnees[cle]);
+    var brut = donnees[cle];
+    var vide = brut === null || brut === undefined || String(brut).trim() === '';
+    var valeur = typeof brut === 'string' ? brut : JSON.stringify(brut);
+    // On relit à chaque tour : une suppression de ligne décale les suivantes
+    var valeurs = feuille.getDataRange().getValues();
     var trouve = false;
     for (var i = 1; i < valeurs.length; i++) {
-      if (String(valeurs[i][0]).trim() === cle) { feuille.getRange(i + 1, 2).setValue(valeur); trouve = true; }
+      if (String(valeurs[i][0]).trim() !== cle) continue;
+      trouve = true;
+      if (vide) feuille.deleteRow(i + 1);
+      else feuille.getRange(i + 1, 2).setValue(valeur);
+      break;
     }
-    if (!trouve) feuille.appendRow([cle, valeur]);
+    if (!trouve && !vide) feuille.appendRow([cle, valeur]);
   });
-  return { ok: true, catalogue: lireCatalogue() };
 }
 
 // ----------------------------- INSCRIPTIONS ------------------------------

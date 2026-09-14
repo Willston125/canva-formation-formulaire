@@ -240,6 +240,7 @@
       formations: ['Formations', 'Le catalogue publié sur le site'],
       sessions: ['Sessions', 'Les dates ouvertes à l’inscription'],
       inscriptions: ['Inscriptions', 'Les candidats et leur suivi'],
+      textes: ['Textes du site', 'Les mots affichés sur la page d’accueil'],
       reglages: ['Réglages', 'Contact, paiements et devise']
     };
     $('#titre-vue').textContent = titres[vue][0];
@@ -257,7 +258,7 @@
     $('#compte-inscriptions').textContent = etat.inscriptions.length || '';
     $('#bloc-amorcage').hidden = f.length > 0;
 
-    var actions = { apercu: '', formations: '', sessions: '', inscriptions: '', reglages: '' };
+    var actions = { apercu: '', formations: '', sessions: '', inscriptions: '', textes: '', reglages: '' };
     actions.formations = '<button class="bouton bouton--primaire" type="button" id="btn-nouvelle-formation">'
       + '<span class="material-symbols-outlined" aria-hidden="true">add</span>Nouvelle formation</button>';
     actions.sessions = '<button class="bouton bouton--primaire" type="button" id="btn-nouvelle-session">'
@@ -282,6 +283,7 @@
     if (etat.vue === 'formations') rendreFormations();
     if (etat.vue === 'sessions') rendreSessions();
     if (etat.vue === 'inscriptions') rendreInscriptions();
+    if (etat.vue === 'textes') rendreTextes();
     if (etat.vue === 'reglages') rendreReglages();
   }
 
@@ -699,6 +701,122 @@
     lien.click();
     document.body.removeChild(lien);
     URL.revokeObjectURL(lien.href);
+  }
+
+  // ---------------------------- TEXTES DU SITE ---------------------------
+
+  /**
+   * La liste des textes modifiables n'est écrite nulle part : elle est relevée
+   * dans l'accueil lui-même, sur les éléments porteurs de `data-texte`. Ajouter
+   * un texte modifiable au site suffit donc à le faire apparaître ici.
+   */
+  function chargerTextesDuSite() {
+    if (etat.textesDeclares) return Promise.resolve(etat.textesDeclares);
+
+    /* Les pages parcourues. La fiche formation sert d'exemple pour tout le
+       gabarit : ses textes partagés valent pour les six fiches. */
+    var pages = ['/', '/entreprises/'];
+    var premiere = (etat.catalogue.formations || []).filter(function (f) { return f.hasDetailPage !== false; })[0];
+    pages.push(premiere ? premiere.href : '/formations/canva-pro/');
+
+    var vues = {};
+    var liste = [];
+
+    return Promise.all(pages.map(function (url) {
+      return fetch(url, { cache: 'no-store' })
+        .then(function (r) { return r.ok ? r.text() : ''; })
+        .catch(function () { return ''; });
+    })).then(function (contenus) {
+      contenus.forEach(function (html) {
+        if (!html) return;
+        var page = new DOMParser().parseFromString(html, 'text/html');
+        page.querySelectorAll('[data-texte], [data-texte-html]').forEach(function (el) {
+          var estHtml = el.hasAttribute('data-texte-html');
+          var cle = el.getAttribute(estHtml ? 'data-texte-html' : 'data-texte');
+          if (!cle || vues[cle]) return; // une clé peut apparaître sur plusieurs pages
+          vues[cle] = true;
+          liste.push({
+            cle: cle,
+            groupe: el.getAttribute('data-texte-groupe') || 'Autres',
+            libelle: el.getAttribute('data-texte-libelle') || cle,
+            defaut: (estHtml ? el.innerHTML : el.textContent).replace(/\s+/g, ' ').trim(),
+            html: estHtml
+          });
+        });
+      });
+      if (!liste.length) throw new Error('Aucun texte modifiable trouvé sur le site.');
+      etat.textesDeclares = liste;
+      return liste;
+    });
+  }
+
+  function rendreTextes() {
+    var boite = $('#formulaire-textes');
+    if (!etat.textesDeclares) {
+      boite.innerHTML = '<div class="bloc"><p class="aide">Lecture des textes de l’accueil…</p></div>';
+      chargerTextesDuSite().then(rendreTextes).catch(function (err) {
+        boite.innerHTML = '<div class="message message--erreur">Impossible de lire l’accueil : '
+          + echapper(messageLisible(err)) + '</div>';
+      });
+      return;
+    }
+
+    var enregistres = etat.catalogue.textes || {};
+    var groupes = [];
+    etat.textesDeclares.forEach(function (t) {
+      var g = groupes.filter(function (x) { return x.nom === t.groupe; })[0];
+      if (!g) { g = { nom: t.groupe, items: [] }; groupes.push(g); }
+      g.items.push(t);
+    });
+
+    boite.innerHTML = '<div class="bloc"><h2>Textes de la page d’accueil</h2>'
+      + '<p class="aide">Modifiez ce que vous voulez et laissez le reste vide : un champ vide affiche le '
+      + 'texte d’origine du site. C’est ainsi qu’on annule une modification.</p></div>'
+      + '<form id="form-textes">'
+      + groupes.map(function (g) {
+        return '<div class="bloc"><h2>' + echapper(g.nom) + '</h2>'
+          + g.items.map(function (t) {
+            var valeur = typeof enregistres[t.cle] === 'string' ? enregistres[t.cle] : '';
+            var modifie = valeur.trim() !== '';
+            var long = t.defaut.length > 90 || t.html;
+            return '<label class="champ"><span class="champ__label">' + echapper(t.libelle)
+              + (modifie ? ' <span class="etiquette etiquette--ouvert">modifié</span>' : '') + '</span>'
+              + (long
+                ? '<textarea id="texte-' + echapper(t.cle) + '" placeholder="' + echapper(t.defaut) + '">' + echapper(valeur) + '</textarea>'
+                : '<input type="text" id="texte-' + echapper(t.cle) + '" placeholder="' + echapper(t.defaut)
+                  + '" value="' + echapper(valeur) + '">')
+              + '<span class="champ__aide">Texte actuel du site : ' + echapper(t.defaut)
+              + (t.html ? ' — la mise en valeur <span>…</span> est acceptée.' : '') + '</span></label>';
+          }).join('')
+          + '</div>';
+      }).join('')
+      + '<div class="bloc"><div class="panneau__boutons" style="justify-content:flex-start">'
+      + '<button class="bouton bouton--primaire" type="submit" id="btn-textes">'
+      + '<span class="btn-texte">Enregistrer les textes</span>'
+      + '<span class="btn-attente" hidden><span class="rondelle"></span>Enregistrement…</span></button></div>'
+      + '<p class="message message--erreur" id="erreur-textes" role="alert" hidden></p></div></form>';
+
+    $('#form-textes').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var bouton = $('#btn-textes');
+      var erreur = $('#erreur-textes');
+      erreur.hidden = true;
+      attente(bouton, true);
+      var donnees = {};
+      etat.textesDeclares.forEach(function (t) {
+        var el = document.getElementById('texte-' + t.cle);
+        if (el) donnees[t.cle] = el.value.trim();
+      });
+      appeler('admin.textes.save', { donnees: donnees }).then(function () {
+        attente(bouton, false);
+        afficherMessage('#succes-globale', 'Textes enregistrés. Ils apparaissent sur le site dans la minute.', 6000);
+        rendreTextes();
+      }).catch(function (err) {
+        attente(bouton, false);
+        erreur.textContent = messageLisible(err);
+        erreur.hidden = false;
+      });
+    });
   }
 
   // ------------------------------ RÉGLAGES -------------------------------
