@@ -5,7 +5,9 @@
 (function () {
     'use strict';
 
-    const FORMATIONS = Array.isArray(window.FORMATIONS) ? window.FORMATIONS : [];
+    /* Réassignable : le catalogue peut être rechargé depuis l'API après une
+       modification faite dans le tableau de bord. */
+    let FORMATIONS = Array.isArray(window.FORMATIONS) ? window.FORMATIONS : [];
     const PORTFOLIO = Array.isArray(window.PORTFOLIO) ? window.PORTFOLIO : [];
     const common = window.SiteCommon;
     if (!common) return;
@@ -182,12 +184,22 @@
     }
 
     // ---------- Carrousel infini, accessible, sans dépendance ----------
+    /** Carrousel en cours d'exécution, pour pouvoir l'arrêter avant reconstruction. */
+    let carrouselActif = null;
+
     function initTrainingCarousel() {
+        // Un carrousel déjà en marche est arrêté net : sinon ses minuteurs et ses
+        // écouteurs continueraient de piloter des cartes remplacées.
+        if (carrouselActif) { carrouselActif.detruire(); carrouselActif = null; }
+
         const carousel = document.getElementById('training-carousel');
         const viewport = carousel?.querySelector('.carousel-viewport');
         const track = document.getElementById('carousel-track');
         const dots = document.getElementById('carousel-dots');
         if (!carousel || !viewport || !track || !dots || !FORMATIONS.length) return;
+
+        const controleur = new AbortController();
+        const signal = controleur.signal;
 
         track.innerHTML = [0, 1, 2]
             .map(copyIndex => FORMATIONS.map(formation => renderCourseCard(formation, { variant: 'dark', accessible: copyIndex === 1, extraClass: 'training-card' })).join(''))
@@ -293,37 +305,37 @@
         track.addEventListener('transitionend', event => {
             if (event.propertyName !== 'transform' || event.target !== track) return;
             settle();
-        });
+        }, { signal });
 
-        carousel.querySelector('[data-carousel-prev]').addEventListener('click', () => goTo(state.index - 1));
-        carousel.querySelector('[data-carousel-next]').addEventListener('click', () => goTo(state.index + 1));
-        dotButtons.forEach(dot => dot.addEventListener('click', () => goTo(FORMATIONS.length + Number(dot.dataset.carouselDot))));
+        carousel.querySelector('[data-carousel-prev]').addEventListener('click', () => goTo(state.index - 1), { signal });
+        carousel.querySelector('[data-carousel-next]').addEventListener('click', () => goTo(state.index + 1), { signal });
+        dotButtons.forEach(dot => dot.addEventListener('click', () => goTo(FORMATIONS.length + Number(dot.dataset.carouselDot)), { signal }));
 
         carousel.addEventListener('keydown', event => {
             if (event.key === 'ArrowLeft') { event.preventDefault(); goTo(state.index - 1); }
             else if (event.key === 'ArrowRight') { event.preventDefault(); goTo(state.index + 1); }
             else if (event.key === 'Home') { event.preventDefault(); goTo(FORMATIONS.length); }
             else if (event.key === 'End') { event.preventDefault(); goTo(FORMATIONS.length * 2 - 1); }
-        });
+        }, { signal });
 
-        carousel.addEventListener('mouseenter', () => setPaused('hover', true));
-        carousel.addEventListener('mouseleave', () => setPaused('hover', false, true));
-        carousel.addEventListener('focusin', () => setPaused('focus', true));
+        carousel.addEventListener('mouseenter', () => setPaused('hover', true), { signal });
+        carousel.addEventListener('mouseleave', () => setPaused('hover', false, true), { signal });
+        carousel.addEventListener('focusin', () => setPaused('focus', true), { signal });
         carousel.addEventListener('focusout', event => {
             if (!carousel.contains(event.relatedTarget)) setPaused('focus', false, true);
-        });
+        }, { signal });
 
         viewport.addEventListener('pointerdown', event => {
             state.pointerStartX = event.clientX;
             state.pointerMoved = false;
             setPaused('pointer', true);
-        });
+        }, { signal });
         viewport.addEventListener('pointermove', event => {
             if (state.pointerStartX === null) return;
             const delta = event.clientX - state.pointerStartX;
             if (Math.abs(delta) > 6) state.pointerMoved = true;
             if (state.pointerMoved) positionTrack(false, delta);
-        });
+        }, { signal });
         const finishPointer = event => {
             if (state.pointerStartX === null) return;
             const delta = event.clientX - state.pointerStartX;
@@ -332,21 +344,30 @@
             else positionTrack(true);
             setPaused('pointer', false, true);
         };
-        viewport.addEventListener('pointerup', finishPointer);
-        viewport.addEventListener('pointerleave', finishPointer);
+        viewport.addEventListener('pointerup', finishPointer, { signal });
+        viewport.addEventListener('pointerleave', finishPointer, { signal });
         viewport.addEventListener('pointercancel', () => {
             state.pointerStartX = null;
             positionTrack(true);
             setPaused('pointer', false, true);
-        });
+        }, { signal });
         // Un glissement ne doit pas déclencher l'ouverture de la carte
         track.addEventListener('click', event => {
             if (state.pointerMoved) { event.preventDefault(); event.stopPropagation(); state.pointerMoved = false; }
-        }, true);
+        }, { signal, capture: true });
 
-        document.addEventListener('visibilitychange', () => setPaused('hidden', document.hidden));
-        reducedMotion.addEventListener?.('change', startAuto);
-        window.addEventListener('resize', () => window.requestAnimationFrame(() => positionTrack(false)), { passive: true });
+        document.addEventListener('visibilitychange', () => setPaused('hidden', document.hidden), { signal });
+        reducedMotion.addEventListener?.('change', startAuto, { signal });
+        window.addEventListener('resize', () => window.requestAnimationFrame(() => positionTrack(false)), { signal, passive: true });
+
+        carrouselActif = {
+            detruire() {
+                controleur.abort();
+                stopAuto();
+                window.clearTimeout(state.restartTimer);
+                window.clearTimeout(state.settleTimer);
+            }
+        };
 
         const boot = () => { positionTrack(false); startAuto(); };
         window.requestAnimationFrame(boot);
@@ -528,6 +549,19 @@
         document.addEventListener('impactali:places', () => {
             renderCatalogueGrid();
             renderSessions();
+            common.observeReveals?.();
+        });
+
+        /* Catalogue modifié depuis le tableau de bord : on reconstruit tout ce qui
+           en dépend. Le carrousel n'est reconstruit que si la liste des formations
+           a réellement changé, pour ne pas interrompre sa rotation sans raison. */
+        document.addEventListener('impactali:catalogue', event => {
+            const avant = FORMATIONS.map(f => f.slug).join('|');
+            FORMATIONS = Array.isArray(window.FORMATIONS) ? window.FORMATIONS : [];
+            renderCatalogueGrid();
+            renderDomains();
+            renderSessions();
+            if (avant !== FORMATIONS.map(f => f.slug).join('|')) initTrainingCarousel();
             common.observeReveals?.();
         });
         initTrainingDialog();

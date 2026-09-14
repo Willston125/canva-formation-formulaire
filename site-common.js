@@ -8,9 +8,12 @@
 
     document.documentElement.classList.add('has-js');
 
-    const FORMATIONS = Array.isArray(window.FORMATIONS) ? window.FORMATIONS : [];
-    const SESSIONS = Array.isArray(window.SESSIONS) ? window.SESSIONS : [];
-    const CONTACT = window.SITE_CONTACT || { whatsappNumber: '25377145306', whatsappDisplay: '+253 77 14 53 06', countryCode: '+253', currency: 'FDJ' };
+    /* Réassignables : formations-data.js fournit les valeurs de départ, affichées
+       immédiatement ; le catalogue tenu à jour depuis le tableau de bord les
+       remplace dès que la réponse de l'API arrive. */
+    let FORMATIONS = Array.isArray(window.FORMATIONS) ? window.FORMATIONS : [];
+    let SESSIONS = Array.isArray(window.SESSIONS) ? window.SESSIONS : [];
+    let CONTACT = window.SITE_CONTACT || { whatsappNumber: '25377145306', whatsappDisplay: '+253 77 14 53 06', countryCode: '+253', currency: 'FDJ' };
 
     /** Formate une date ISO (YYYY-MM-DD) en français, ex. « 16 avril 2026 ». */
     function formatSessionDate(isoDate) {
@@ -95,31 +98,72 @@
     }
 
     /**
-     * Interroge la feuille et met à jour les places restantes.
+     * Remplace le catalogue affiché par celui tenu à jour dans le tableau de bord.
+     * Un catalogue vide est IGNORÉ : tant que rien n'a été importé côté
+     * administration, le site continue d'afficher les données de son fichier.
+     * Sans cette garde, une base encore vide effacerait tout le catalogue publié.
+     */
+    function appliquerCatalogue(donnees) {
+        if (!donnees || !Array.isArray(donnees.formations) || !donnees.formations.length) return false;
+
+        FORMATIONS = donnees.formations;
+        SESSIONS = Array.isArray(donnees.sessions) ? donnees.sessions : [];
+        window.FORMATIONS = FORMATIONS;
+        window.SESSIONS = SESSIONS;
+        if (donnees.reglages && Object.keys(donnees.reglages).length) {
+            // Les moyens de paiement ne transitent pas par l'API : on garde ceux du fichier
+            CONTACT = Object.assign({}, CONTACT, donnees.reglages, { paymentMethods: CONTACT.paymentMethods });
+            window.SITE_CONTACT = CONTACT;
+        }
+        placesEnDirect.clear();
+        document.dispatchEvent(new CustomEvent('impactali:catalogue'));
+        return true;
+    }
+
+    /**
+     * Interroge l'API : catalogue à jour et nombre d'inscrits par session.
+     * Un seul appel sert les deux, pour ne pas doubler l'attente au chargement.
      * @param {boolean} force ignore le cache (après une inscription, par exemple)
      */
     function refreshPlaces(force) {
         const url = ENDPOINTS.registration;
         if (!url) return Promise.resolve(false);
 
+        const appliquer = donnees => {
+            const catalogueChange = appliquerCatalogue(donnees);
+            const placesChangees = appliquerReleve(donnees && donnees.places ? donnees.places : donnees);
+            return catalogueChange || placesChangees;
+        };
+
         if (!force) {
             try {
                 const cache = JSON.parse(sessionStorage.getItem(CACHE_PLACES) || 'null');
                 if (cache && Date.now() - cache.horodatage < DUREE_CACHE) {
-                    return Promise.resolve(appliquerReleve(cache.releve));
+                    return Promise.resolve(appliquer(cache.releve));
                 }
             } catch (e) { /* cache illisible : on interroge */ }
         }
 
-        const cible = `${url}${url.includes('?') ? '&' : '?'}action=places`;
-        return fetch(cible, { method: 'GET' })
-            .then(reponse => (reponse.ok ? reponse.json() : Promise.reject(new Error('HTTP ' + reponse.status))))
-            .catch(() => releveParScript(cible))
-            .then(releve => {
+        const interroger = action => {
+            const cible = `${url}${url.includes('?') ? '&' : '?'}action=${action}`;
+            return fetch(cible, { method: 'GET' })
+                .then(reponse => (reponse.ok ? reponse.json() : Promise.reject(new Error('HTTP ' + reponse.status))))
+                .catch(() => releveParScript(cible));
+        };
+
+        return interroger('catalogue')
+            .then(donnees => {
+                /* Un script Google encore dans sa version précédente ne connaît que
+                   `places` : on y revient plutôt que de perdre le compteur pendant
+                   l'intervalle entre la publication du site et sa mise à jour. */
+                if (donnees && donnees.erreur && !donnees.formations) return interroger('places');
+                return donnees;
+            })
+            .then(donnees => {
                 try {
-                    sessionStorage.setItem(CACHE_PLACES, JSON.stringify({ horodatage: Date.now(), releve }));
+                    sessionStorage.setItem(CACHE_PLACES, JSON.stringify({ horodatage: Date.now(), releve: donnees }));
                 } catch (e) { /* stockage indisponible : sans conséquence */ }
-                return appliquerReleve(releve);
+                return appliquer(donnees);
             })
             .catch(() => false); // endpoint absent ou non déployé : on garde les valeurs du fichier
     }

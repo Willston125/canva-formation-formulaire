@@ -1,0 +1,1069 @@
+<!DOCTYPE html>
+<html class="dark" lang="fr">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inscription — Fiche formation &amp; inscription | IMPACTALI</title>
+    <meta name="title" content="Inscription — Fiche formation &amp; inscription">
+    <meta name="description"
+        content="Choisissez votre formation et complétez votre inscription en quatre étapes.">
+
+    <!-- Open Graph / Facebook / WhatsApp -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://canva-formation-formulaire.vercel.app/formations/inscription/">
+    <meta property="og:title" content="Inscription — Fiche formation &amp; inscription">
+    <meta property="og:description" content="Choisissez votre formation et complétez votre inscription en quatre étapes.">
+    <meta property="og:image"
+        content="https://canva-formation-formulaire.vercel.app/assets/images/formations/canva-pro.webp">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://canva-formation-formulaire.vercel.app/formations/inscription/">
+    <meta property="twitter:title" content="Inscription — Fiche formation &amp; inscription">
+    <meta property="twitter:description" content="Choisissez votre formation et complétez votre inscription en quatre étapes.">
+    <meta property="twitter:image"
+        content="https://canva-formation-formulaire.vercel.app/assets/images/formations/canva-pro.webp">
+
+
+
+    <!-- Tailwind CSS compilé (npm run build:css) -->
+    <!-- Polices auto-hébergées (régénérer avec : npm run build:fonts) -->
+    <link rel="preload" href="/assets/fonts/plus-jakarta-sans-latin.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/assets/fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/assets/fonts/material-symbols-outlined.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="/fonts.css">
+    <link rel="stylesheet" href="/tailwind.css">
+
+    <link rel="canonical" href="https://canva-formation-formulaire.vercel.app/formations/inscription/">
+    <link rel="stylesheet" href="/style.css">
+    <meta name="robots" content="noindex, follow">
+</head>
+
+
+<body data-fiche-generique class="bg-[#050709] font-body text-[#E5E5E5] selection:bg-[#CBFD00] selection:text-[#050709] overflow-x-hidden page-fiche">
+
+    <!-- ====== AURA SOFT GRADIENT BACKGROUND ====== -->
+    <div class="fixed inset-0 -z-10 overflow-hidden aura-bg">
+        <div class="aura-orange"></div>
+        <div class="aura-blue"></div>
+        <div class="aura-amber"></div>
+    </div>
+
+    <a class="skip-link" href="#inscription">Aller au formulaire d’inscription</a>
+
+    <!-- ====== BARRE D'ANNONCE (conditionnelle) + HEADER ====== -->
+    <a class="session-banner hidden" id="session-banner" href="#inscription" data-register-formation="">
+        <span id="session-banner-text">PROCHAINE SESSION · INSCRIPTIONS OUVERTES</span>
+        <span class="material-symbols-outlined" aria-hidden="true">keyboard_double_arrow_right</span>
+    </a>
+    <header class="site-header" id="site-header">
+        <div class="site-header__inner">
+            <a class="brand" href="/" aria-label="IMPACTALI — Accueil">
+                <img src="/assets/brand/impactali-logo.webp" alt="IMPACTALI" width="720" height="400" decoding="async">
+            </a>
+
+            <nav class="desktop-nav" aria-label="Navigation principale">
+            <a href="/#accueil">Accueil</a>
+            <a class="is-active" href="/#catalogue">Formations</a>
+            <a href="/#domaines">Domaines</a>
+            <a href="/entreprises/">Entreprises</a>
+            <a href="/#a-propos">À propos</a>
+        </nav>
+
+            <div class="header-actions">
+                <a class="button button--primary button--compact" href="#inscription" data-register-formation="">
+                    S’inscrire
+                    <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+                </a>
+                <button class="menu-toggle" id="menu-toggle" type="button" aria-expanded="false"
+                    aria-controls="mobile-menu" aria-label="Ouvrir le menu">
+                    <span class="material-symbols-outlined" aria-hidden="true">menu</span>
+                </button>
+            </div>
+        </div>
+        <nav class="mobile-menu" id="mobile-menu" aria-label="Navigation mobile" hidden>
+            <a href="/#accueil">Accueil</a>
+            <a href="/#catalogue">Formations</a>
+            <a href="/#domaines">Domaines</a>
+            <a href="/entreprises/">Entreprises</a>
+            <a href="/#a-propos">À propos</a>
+            <a href="/formations/inscription/#inscription">S’inscrire</a>
+        </nav>
+    </header>
+
+    <!-- ====== FICHE : EN-TÊTE DEUX COLONNES ====== -->
+    <section class="fiche-hero" id="fiche" aria-labelledby="fiche-title">
+        <div class="landing-shell fiche-hero__layout">
+            <div class="fiche-hero__copy">
+                <nav class="breadcrumb" aria-label="Fil d’Ariane">
+                    <a href="/">Accueil</a>
+                    <span aria-hidden="true">/</span>
+                    <a href="/#formations">Formations</a>
+                    <span aria-hidden="true">/</span>
+                    <span aria-current="page">Inscription</span>
+                </nav>
+                <p class="eyebrow">FICHE FORMATION · INSCRIPTION</p>
+                <h1 id="fiche-title">Inscription</h1>
+                <p class="fiche-hero__lead">Choisissez votre formation et complétez votre inscription en quatre étapes.</p>
+
+                <dl class="fiche-facts" aria-label="Informations clés"><div data-session-fact hidden><dt><span class="material-symbols-outlined" aria-hidden="true">schedule</span>Horaires</dt><dd id="fiche-schedule"></dd></div><div data-session-fact hidden><dt><span class="material-symbols-outlined" aria-hidden="true">location_on</span>Lieu</dt><dd id="fiche-location"></dd></div><div><dt><span class="material-symbols-outlined" aria-hidden="true">payments</span>Participation</dt><dd id="fiche-price">À confirmer</dd></div><div><dt><span class="material-symbols-outlined" aria-hidden="true">event</span>Prochaine session</dt><dd id="fiche-next-session">Dates à annoncer</dd></div></dl>
+
+                <div class="fiche-hero__actions">
+                    <a class="button button--primary" href="#inscription" data-register-formation="">
+                        S’inscrire à cette formation
+                        <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+                    </a>
+                    <a class="button button--secondary" target="_blank" rel="noopener noreferrer"
+                        data-whatsapp-message="Bonjour, j’ai une question concernant la formation Inscription."
+                        href="https://wa.me/25377145306">
+                        Poser une question
+                        <span class="material-symbols-outlined" aria-hidden="true">chat</span>
+                    </a>
+                </div>
+
+                <ul class="hero-benefits" aria-label="Points forts">
+                    <li><span class="material-symbols-outlined" aria-hidden="true">bolt</span>100 % pratique</li>
+                    <li><span class="material-symbols-outlined" aria-hidden="true">folder_special</span>Portfolio validé</li>
+                    <li><span class="material-symbols-outlined" aria-hidden="true">workspace_premium</span>Certificat de formation</li>
+                </ul>
+            </div>
+
+            <div class="fiche-hero__aside">
+                <!-- ====== AFFICHE (élément complémentaire, plus en pleine largeur) ====== -->
+                <section class="fiche-poster" id="poster-section" aria-label="Affiche de la formation">
+                    <img src="/assets/images/formations/canva-pro.webp" alt="Affiche de la formation Inscription"
+                        width="1587" height="2245" fetchpriority="high" decoding="async">
+                </section>
+
+                <!-- ====== PLACES (affiché uniquement avec une session réelle) ====== -->
+                <section class="fiche-places" id="places-counter-section" hidden>
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center gap-2">
+                            <span class="material-symbols-outlined text-red-500 text-xl" id="places-icon"
+                                style="font-variation-settings: 'FILL' 1;">local_fire_department</span>
+                            <!-- Texte et badge écrits par script.js : la rareté n'est annoncée que si elle est réelle -->
+                            <span class="text-sm font-extrabold text-[#FFFFFF] font-headline" id="places-text"></span>
+                        </div>
+                        <span id="places-badge" hidden
+                            class="bg-red-50 text-red-600 px-2.5 py-1 rounded-full text-[11px] font-bold border border-red-100">Places
+                            limitées</span>
+                    </div>
+                    <div class="w-full h-3 bg-white/10 rounded-full overflow-hidden">
+                        <div class="h-full bg-gradient-to-r from-red-400 to-orange-500 rounded-full transition-all duration-1000"
+                            id="places-bar" style="width: 0%"></div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </section>
+
+    <!-- ====== FICHE : PROGRAMME, PRÉREQUIS, FORMATEUR, FAQ ====== -->
+    <div class="fiche-content">
+        <div class="landing-shell fiche-content__inner">
+            <!-- ====== PROGRAMME SECTION ====== -->
+             <!-- Fin programme-section -->
+
+
+            <!-- ====== PRÉREQUIS ====== -->
+            
+
+            <!-- ====== FORMATEUR SECTION ====== -->
+            <section class="fiche-block reveal-on-scroll" id="formateur-section" aria-labelledby="formateur-title"><div class="glass-card rounded-2xl sm:rounded-3xl shadow-xl shadow-black/20 border border-white/40 p-6 sm:p-8"><p class="eyebrow">VOTRE FORMATEUR</p><h2 id="formateur-title" class="text-xl sm:text-2xl font-extrabold text-white font-headline">Ali William</h2><p class="text-[#E5E5E5] mt-3 leading-relaxed">Expert en communication multimédia, réalisateur et stratège digital, Ali William transmet pour la formation « Inscription » une méthode pratique issue de son expérience de terrain.</p></div></section>
+
+
+            <!-- ====== FAQ SECTION ====== -->
+            
+
+
+        </div>
+    </div>
+
+    <!-- ====== INSCRIPTION (formulaire existant, 4 étapes) ====== -->
+    <main id="inscription" data-formation-id="" class="registration-layout max-w-7xl mx-auto px-4 sm:px-6 py-12 lg:py-20 flex flex-col lg:flex-row gap-8 min-h-screen">
+
+        <!-- ====== SIDEBAR (Desktop) ====== -->
+        <aside class="hidden lg:flex flex-col w-72 flex-shrink-0 sticky top-24 h-fit" id="sidebar">
+            <div
+                class="bg-[#0D1723]/40 backdrop-blur-md rounded-2xl p-6 shadow-xl shadow-black/20 border border-[#CBFD00]/20">
+                <div class="mb-8">
+                    <h2 class="text-lg font-bold text-[#FFFFFF] font-headline">Inscription</h2>
+                    <p class="text-[#CBFD00] text-sm font-bold" id="sidebar-step-label">Étape 1 sur 4</p>
+                </div>
+
+                <!-- Sidebar Step Progress -->
+                <div class="w-full h-1 bg-[#0D1723] rounded-full mb-6 overflow-hidden">
+                    <div class="h-full bg-gradient-to-r from-[#CBFD00] to-[#A5CF00] rounded-full transition-all duration-500"
+                        id="sidebar-progress-bar" style="width: 0%"></div>
+                </div>
+
+                <nav class="space-y-1.5" id="sidebar-nav" role="navigation" aria-label="Étapes du formulaire">
+                    <button type="button"
+                        class="sidebar-step active w-full flex items-center gap-3 rounded-xl px-4 py-3 transition-all font-medium text-sm text-left"
+                        data-step="1" aria-current="step">
+                        <span class="material-symbols-outlined text-xl">person</span>
+                        <span>Infos personnelles</span>
+                    </button>
+                    <button type="button"
+                        class="sidebar-step w-full flex items-center gap-3 rounded-xl px-4 py-3 transition-all font-medium text-sm text-left"
+                        data-step="2">
+                        <span class="material-symbols-outlined text-xl">trending_up</span>
+                        <span>Niveau & Objectifs</span>
+                    </button>
+                    <button type="button"
+                        class="sidebar-step w-full flex items-center gap-3 rounded-xl px-4 py-3 transition-all font-medium text-sm text-left"
+                        data-step="3">
+                        <span class="material-symbols-outlined text-xl">payments</span>
+                        <span>Paiement</span>
+                    </button>
+                    <button type="button"
+                        class="sidebar-step w-full flex items-center gap-3 rounded-xl px-4 py-3 transition-all font-medium text-sm text-left"
+                        data-step="4">
+                        <span class="material-symbols-outlined text-xl">verified_user</span>
+                        <span>Validation</span>
+                    </button>
+                </nav>
+
+                <!-- Completion Indicator -->
+                <div class="mt-8 pt-6 border-t border-[#CBFD00]/20">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-semibold text-[#E5E5E5]">Progression</span>
+                        <span class="text-xs font-bold text-[#CBFD00]" id="sidebar-percent">0%</span>
+                    </div>
+                    <div class="w-full h-2 bg-[#0D1723] rounded-full overflow-hidden">
+                        <div class="h-full bg-gradient-to-r from-[#CBFD00] to-[#A5CF00] rounded-full transition-all duration-500"
+                            id="sidebar-completion-bar" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+
+        <!-- ====== MOBILE PROGRESS BAR ====== -->
+        <div class="lg:hidden sticky top-[57px] z-40 -mx-4 sm:-mx-6 px-4 sm:px-6 py-3 bg-[#050709]/90 backdrop-blur-xl border-b border-[#CBFD00]/20"
+            id="mobile-progress">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-semibold text-[#E5E5E5]" id="mobile-step-label">Étape 1 sur 4</span>
+                <span class="text-xs font-bold text-[#CBFD00]" id="mobile-percent">0%</span>
+            </div>
+            <div class="w-full h-1.5 bg-[#0D1723] rounded-full overflow-hidden">
+                <div class="h-full bg-gradient-to-r from-[#CBFD00] to-[#A5CF00] rounded-full transition-all duration-500 relative overflow-hidden"
+                    id="mobile-progress-bar" style="width: 0%">
+                    <div
+                        class="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer">
+                    </div>
+                </div>
+            </div>
+            <div class="flex justify-between mt-2.5 gap-1">
+                <button type="button"
+                    class="mobile-step active flex-1 text-center py-1.5 rounded-lg text-[10px] font-bold transition-all"
+                    data-step="1">Infos</button>
+                <button type="button"
+                    class="mobile-step flex-1 text-center py-1.5 rounded-lg text-[10px] font-bold transition-all"
+                    data-step="2">Objectifs</button>
+                <button type="button"
+                    class="mobile-step flex-1 text-center py-1.5 rounded-lg text-[10px] font-bold transition-all"
+                    data-step="3">Paiement</button>
+                <button type="button"
+                    class="mobile-step flex-1 text-center py-1.5 rounded-lg text-[10px] font-bold transition-all"
+                    data-step="4">Valider</button>
+            </div>
+        </div>
+
+
+        <!-- ====== FORM CONTENT ====== -->
+        <div class="flex-1 max-w-3xl">
+
+            <!-- Registration heading -->
+            <section class="mb-8 text-center lg:text-left animate-fade-up">
+                <p class="eyebrow">VOTRE INSCRIPTION</p>
+                <h2
+                    class="text-3xl sm:text-4xl lg:text-5xl font-extrabold font-headline tracking-tight text-[#FFFFFF] font-bold mb-3 leading-tight">
+                    Prêt à passer de l’idée<br class="hidden sm:block" />
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#CBFD00] to-[#A5CF00]">
+                        à la pratique&nbsp;?</span>
+                </h2>
+                <p class="text-[#94A3B8] font-medium text-base sm:text-lg max-w-2xl leading-relaxed">
+                    Complétez les quatre étapes ci-dessous. Votre progression est enregistrée sur cet appareil.
+                </p>
+            </section>
+
+            <!-- ====== ALREADY REGISTERED CARD ====== -->
+            <div id="already-registered-card"
+                class="glass-card rounded-2xl sm:rounded-3xl shadow-xl shadow-black/20 p-6 sm:p-12 text-center relative overflow-hidden border border-white/40 hidden mb-12 animate-pop-in">
+                <div
+                    class="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <span class="material-symbols-outlined text-4xl"
+                        style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                </div>
+                <h2 class="text-2xl font-bold text-[#FFFFFF] mb-4 font-headline">Vous êtes déjà inscrit !</h2>
+                <p class="text-[#E5E5E5] mb-8 leading-relaxed">Nous avons bien enregistré votre inscription pour la
+                    <strong class="text-primary tracking-wide" id="registered-training-title">Inscription</strong>. Merci de votre confiance,
+                    nous reviendrons vers vous très vite !
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center items-center mt-8">
+                    <a href="https://wa.me/25377145306" target="_blank" rel="noopener noreferrer"
+                        class="inline-flex items-center justify-center gap-3 px-6 py-3.5 bg-[#25D366] text-[#FFFFFF] font-bold rounded-xl hover:bg-[#1ebe5d] transition-colors w-full sm:w-auto">
+                        <span class="material-symbols-outlined text-lg">chat</span>
+                        Contacter le formateur
+                    </a>
+                    <button type="button" id="btn-register-other"
+                        class="inline-flex items-center justify-center gap-3 px-6 py-3.5 bg-white/10 text-[#FFFFFF] font-bold font-bold rounded-xl hover:bg-[#0D1723]/70 transition-colors w-full sm:w-auto">
+                        <span class="material-symbols-outlined text-lg">person_add</span>
+                        Inscrire une autre personne
+                    </button>
+                </div>
+            </div>
+
+
+            <section id="registration-state" class="registration-state glass-card" hidden aria-live="polite"></section>
+
+            <!-- ====== FORM CARD ====== -->
+            <div id="form-container"
+                class="glass-card rounded-2xl sm:rounded-3xl shadow-xl shadow-black/20 p-6 sm:p-8 md:p-10 lg:p-12 relative overflow-hidden border border-white/40 animate-fade-up"
+                style="animation-delay: 0.1s;">
+
+                <!-- Top Progress Bar -->
+                <div class="absolute top-0 left-0 w-full h-1 bg-white/10 flex">
+                    <div class="h-full bg-gradient-to-r from-[#CBFD00] to-[#A5CF00] transition-all duration-500"
+                        id="form-top-bar" style="width: 25%"></div>
+                </div>
+
+                <div class="selected-training-summary" id="selected-training-summary" aria-live="polite">
+                    <span class="selected-training-summary__icon material-symbols-outlined" aria-hidden="true">school</span>
+                    <div>
+                        <span>Vous vous inscrivez à</span>
+                        <strong id="selected-training-title">Inscription</strong>
+                        <small id="selected-training-meta">Informations pratiques à annoncer</small>
+                        <small id="selected-session-meta">Prochaine session : dates à annoncer</small>
+                        <!-- Détails de la session (dates, horaires, lieu, mode, tarif) : remplis par script.js -->
+                        <ul class="selected-training-summary__facts" id="selected-session-facts" hidden></ul>
+                    </div>
+                    <a href="#fiche">Voir la fiche</a>
+                </div>
+
+                <!-- Échec d'envoi : rempli par script.js, jamais affiché sans raison -->
+                <div class="submit-error" id="submit-error" role="alert" aria-live="assertive" hidden></div>
+
+                <form id="inscription-form" novalidate autocomplete="on">
+                    <input type="hidden" id="source-tracking" name="source" value="Direct">
+                    <input type="hidden" id="formation" name="formation" value="">
+                    <input type="hidden" id="session-id" name="sessionId" value="">
+
+                    <!-- ===== SECTION 1: Informations personnelles ===== -->
+                    <fieldset class="form-section active" id="section-1" aria-labelledby="section-1-title">
+                        <div class="flex items-center gap-3 mb-8">
+                            <span
+                                class="w-10 h-10 rounded-full bg-primary-fixed flex items-center justify-center text-primary font-bold font-headline text-sm shadow-sm">1</span>
+                            <legend class="text-xl sm:text-2xl font-bold font-headline text-on-secondary-container"
+                                id="section-1-title">Informations personnelles</legend>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
+                            <div class="field-group" id="field-nom">
+                                <label for="nom" class="field-label">Nom <span class="text-primary">*</span></label>
+                                <input type="text" id="nom" name="nom" required autocomplete="family-name"
+                                    class="field-input" placeholder="Ex : Ali" aria-describedby="nom-error">
+                                <span class="field-error" id="nom-error" role="alert" aria-live="polite"></span>
+                            </div>
+
+                            <div class="field-group" id="field-prenom">
+                                <label for="prenom" class="field-label">Prénom <span
+                                        class="text-primary">*</span></label>
+                                <input type="text" id="prenom" name="prenom" required autocomplete="given-name"
+                                    class="field-input" placeholder="Ex : William" aria-describedby="prenom-error">
+                                <span class="field-error" id="prenom-error" role="alert" aria-live="polite"></span>
+                            </div>
+
+                            <div class="field-group" id="field-telephone">
+                                <label for="telephone" class="field-label">Téléphone <span
+                                        class="text-primary">*</span></label>
+                                <div class="flex items-stretch">
+                                    <span
+                                        class="country-code flex items-center px-3.5 bg-primary-fixed/40 border-0 border-b-2 border-outline-variant rounded-tl-lg text-primary text-sm font-semibold select-none">+253</span>
+                                    <input type="tel" id="telephone" name="telephone" required
+                                        class="field-input !rounded-tl-none !border-l-0" placeholder="77XXXXXX"
+                                        pattern="^(77|67)\d{6}$" maxlength="8"
+                                        aria-describedby="telephone-help telephone-error" autocomplete="tel-local">
+                                </div>
+                                <span class="text-[11px] text-[#E5E5E5] mt-0.5 ml-1" id="telephone-help">Format :
+                                    77XXXXXX ou 67XXXXXX</span>
+                                <span class="field-error" id="telephone-error" role="alert" aria-live="polite"></span>
+                            </div>
+
+                            <div class="field-group" id="field-email">
+                                <label for="email" class="field-label">Email <span
+                                        class="text-[#E5E5E5] font-normal text-[11px]">(optionnel)</span></label>
+                                <input type="email" id="email" name="email" autocomplete="email" class="field-input"
+                                    placeholder="exemple@email.com" aria-describedby="email-error">
+                                <span class="field-error" id="email-error" role="alert" aria-live="polite"></span>
+                            </div>
+
+                            <div class="field-group" id="field-age">
+                                <label for="age" class="field-label">Âge <span class="text-primary">*</span></label>
+                                <input type="number" id="age" name="age" required min="16" max="80" class="field-input"
+                                    placeholder="Ex : 25" aria-describedby="age-help age-error">
+                                <span class="text-[11px] text-[#E5E5E5] mt-0.5 ml-1" id="age-help">Entre 16 et 80
+                                    ans</span>
+                                <span class="field-error" id="age-error" role="alert" aria-live="polite"></span>
+                            </div>
+
+                            <div class="field-group" id="field-profession">
+                                <label class="field-label">Profession <span class="text-primary">*</span></label>
+                                <input type="hidden" id="profession" name="profession" required>
+                                <div class="grid grid-cols-2 gap-2.5 sm:gap-3" id="profession-cards" role="radiogroup"
+                                    aria-label="Votre profession">
+                                    <button type="button"
+                                        class="profession-card flex items-center gap-3 px-3 py-3.5 sm:px-4 sm:py-4 rounded-xl sm:rounded-2xl border-2 border-[#CBFD00]/20 bg-[#0D1723]/40 hover:border-[#CBFD00]/40 hover:bg-primary/20 hover:shadow-sm transition-all duration-200 cursor-pointer group"
+                                        data-value="Étudiant">
+                                        <span
+                                            class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-100 transition-colors">
+                                            <span
+                                                class="material-symbols-outlined text-blue-600 text-lg sm:text-xl">school</span>
+                                        </span>
+                                        <span
+                                            class="text-xs sm:text-sm font-semibold text-[#FFFFFF] font-bold group-hover:text-primary truncate">Étudiant</span>
+                                    </button>
+                                    <button type="button"
+                                        class="profession-card flex items-center gap-3 px-3 py-3.5 sm:px-4 sm:py-4 rounded-xl sm:rounded-2xl border-2 border-[#CBFD00]/20 bg-[#0D1723]/40 hover:border-[#CBFD00]/40 hover:bg-primary/20 hover:shadow-sm transition-all duration-200 cursor-pointer group"
+                                        data-value="Employé">
+                                        <span
+                                            class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-purple-50 flex items-center justify-center flex-shrink-0 group-hover:bg-purple-100 transition-colors">
+                                            <span
+                                                class="material-symbols-outlined text-purple-600 text-lg sm:text-xl">business_center</span>
+                                        </span>
+                                        <span
+                                            class="text-xs sm:text-sm font-semibold text-[#FFFFFF] font-bold group-hover:text-primary truncate">Employé</span>
+                                    </button>
+                                    <button type="button"
+                                        class="profession-card flex items-center gap-3 px-3 py-3.5 sm:px-4 sm:py-4 rounded-xl sm:rounded-2xl border-2 border-[#CBFD00]/20 bg-[#0D1723]/40 hover:border-[#CBFD00]/40 hover:bg-primary/20 hover:shadow-sm transition-all duration-200 cursor-pointer group"
+                                        data-value="Entrepreneur">
+                                        <span
+                                            class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-amber-50 flex items-center justify-center flex-shrink-0 group-hover:bg-amber-100 transition-colors">
+                                            <span
+                                                class="material-symbols-outlined text-amber-600 text-lg sm:text-xl">rocket_launch</span>
+                                        </span>
+                                        <span
+                                            class="text-xs sm:text-sm font-semibold text-[#FFFFFF] font-bold group-hover:text-primary truncate">Entrepreneur</span>
+                                    </button>
+                                    <button type="button"
+                                        class="profession-card flex items-center gap-3 px-3 py-3.5 sm:px-4 sm:py-4 rounded-xl sm:rounded-2xl border-2 border-[#CBFD00]/20 bg-[#0D1723]/40 hover:border-[#CBFD00]/40 hover:bg-primary/20 hover:shadow-sm transition-all duration-200 cursor-pointer group"
+                                        data-value="En recherche d'emploi">
+                                        <span
+                                            class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-emerald-50 flex items-center justify-center flex-shrink-0 group-hover:bg-emerald-100 transition-colors">
+                                            <span
+                                                class="material-symbols-outlined text-emerald-600 text-lg sm:text-xl">person_search</span>
+                                        </span>
+                                        <span
+                                            class="text-xs sm:text-sm font-semibold text-[#FFFFFF] font-bold group-hover:text-primary truncate">En
+                                            recherche</span>
+                                    </button>
+                                </div>
+                                <span class="field-error" id="profession-error" role="alert" aria-live="polite"></span>
+                            </div>
+
+                            <!-- Conditional sub-questions based on profession -->
+                            <div id="profession-sub-questions" class="hidden">
+                                <!-- Étudiant -->
+                                <div class="profession-sub hidden" data-for="Étudiant">
+                                    <label class="field-label">Que veux-tu ajouter à ton CV ? <span
+                                            class="text-[#E5E5E5] font-normal text-[11px]">(optionnel)</span></label>
+                                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                        <button type="button"
+                                            class="sub-card flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-[#CBFD00]/20 bg-[#0D1723]/40 hover:border-[#CBFD00]/40 hover:bg-primary-fixed/10 transition-all text-[13px] font-medium text-[#E5E5E5]"
+                                            data-subvalue="Design freelance">
+                                            <span class="material-symbols-outlined text-primary text-lg">brush</span>
+                                            Design freelance
+                                        </button>
+                                        <button type="button"
+                                            class="sub-card flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-[#CBFD00]/20 bg-[#0D1723]/40 hover:border-[#CBFD00]/40 hover:bg-primary-fixed/10 transition-all text-[13px] font-medium text-[#E5E5E5]"
+                                            data-subvalue="Community Manager">
+                                            <span class="material-symbols-outlined text-primary text-lg">forum</span>
+                                            Community Manager
+                                        </button>
+                                        <button type="button"
+                                            class="sub-card flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-[#CBFD00]/20 bg-[#0D1723]/40 hover:border-[#CBFD00]/40 hover:bg-primary-fixed/10 transition-all text-[13px] font-medium text-[#E5E5E5]"
+                                            data-subvalue="Portfolio pro">
+                                            <span
+                                                class="material-symbols-outlined text-primary text-lg">folder_open</span>
+                                            Portfolio pro
+                                        </button>
+                                    </div>
+                                </div>
+                                <!-- Employé -->
+                                <div class="profession-sub hidden" data-for="Employé">
+                                    <label class="field-label">Quel est ton objectif ? <span
+                                            class="text-[#E5E5E5] font-normal text-[11px]">(optionnel)</span></label>
+                                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                        <button type="button"
+                                            class="sub-card flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-[#CBFD00]/20 bg-[#0D1723]/40 hover:border-[#CBFD00]/40 hover:bg-primary-fixed/10 transition-all text-[13px] font-medium text-[#E5E5E5]"
+                                            data-subvalue="Évoluer en poste">
+                                            <span
+                                                class="material-symbols-outlined text-primary text-lg">trending_up</span>
+                                            Évoluer en poste
+                                        </button>
+                                        <button type="button"
+                                            class="sub-card flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-[#CBFD00]/20 bg-[#0D1723]/40 hover:border-[#CBFD00]/40 hover:bg-primary-fixed/10 transition-all text-[13px] font-medium text-[#E5E5E5]"
+                                            data-subvalue="Lancer un side-business">
+                                            <span
+                                                class="material-symbols-outlined text-primary text-lg">lightbulb</span>
+                                            Side-business
+                                        </button>
+                                        <button type="button"
+                                            class="sub-card flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-[#CBFD00]/20 bg-[#0D1723]/40 hover:border-[#CBFD00]/40 hover:bg-primary-fixed/10 transition-all text-[13px] font-medium text-[#E5E5E5]"
+                                            data-subvalue="Changer de carrière">
+                                            <span
+                                                class="material-symbols-outlined text-primary text-lg">swap_horiz</span>
+                                            Changer de métier
+                                        </button>
+                                    </div>
+                                </div>
+                                <!-- Entrepreneur -->
+                                <div class="profession-sub hidden" data-for="Entrepreneur">
+                                    <label class="field-label">Ton secteur ? <span
+                                            class="text-[#E5E5E5] font-normal text-[11px]">(optionnel)</span></label>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <button type="button"
+                                            class="sub-card flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-[#CBFD00]/20 bg-[#0D1723]/40 hover:border-[#CBFD00]/40 hover:bg-primary-fixed/10 transition-all text-[13px] font-medium text-[#E5E5E5]"
+                                            data-subvalue="E-commerce">
+                                            <span
+                                                class="material-symbols-outlined text-primary text-lg">shopping_cart</span>
+                                            E-commerce
+                                        </button>
+                                        <button type="button"
+                                            class="sub-card flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-[#CBFD00]/20 bg-[#0D1723]/40 hover:border-[#CBFD00]/40 hover:bg-primary-fixed/10 transition-all text-[13px] font-medium text-[#E5E5E5]"
+                                            data-subvalue="Services">
+                                            <span
+                                                class="material-symbols-outlined text-primary text-lg">handshake</span>
+                                            Services
+                                        </button>
+                                        <button type="button"
+                                            class="sub-card flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-[#CBFD00]/20 bg-[#0D1723]/40 hover:border-[#CBFD00]/40 hover:bg-primary-fixed/10 transition-all text-[13px] font-medium text-[#E5E5E5]"
+                                            data-subvalue="Restauration">
+                                            <span
+                                                class="material-symbols-outlined text-primary text-lg">restaurant</span>
+                                            Restauration
+                                        </button>
+                                        <button type="button"
+                                            class="sub-card flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-[#CBFD00]/20 bg-[#0D1723]/40 hover:border-[#CBFD00]/40 hover:bg-primary-fixed/10 transition-all text-[13px] font-medium text-[#E5E5E5]"
+                                            data-subvalue="Autre">
+                                            <span
+                                                class="material-symbols-outlined text-primary text-lg">more_horiz</span>
+                                            Autre
+                                        </button>
+                                    </div>
+                                </div>
+                                <!-- En recherche -->
+                                <div class="profession-sub hidden" data-for="En recherche d'emploi">
+                                    <label class="field-label">Ton projet ? <span
+                                            class="text-[#E5E5E5] font-normal text-[11px]">(optionnel)</span></label>
+                                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                        <button type="button"
+                                            class="sub-card flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-[#CBFD00]/20 bg-[#0D1723]/40 hover:border-[#CBFD00]/40 hover:bg-primary-fixed/10 transition-all text-[13px] font-medium text-[#E5E5E5]"
+                                            data-subvalue="Trouver un emploi">
+                                            <span class="material-symbols-outlined text-primary text-lg">work</span>
+                                            Trouver un emploi
+                                        </button>
+                                        <button type="button"
+                                            class="sub-card flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-[#CBFD00]/20 bg-[#0D1723]/40 hover:border-[#CBFD00]/40 hover:bg-primary-fixed/10 transition-all text-[13px] font-medium text-[#E5E5E5]"
+                                            data-subvalue="Devenir freelance">
+                                            <span
+                                                class="material-symbols-outlined text-primary text-lg">laptop_mac</span>
+                                            Freelance
+                                        </button>
+                                        <button type="button"
+                                            class="sub-card flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-[#CBFD00]/20 bg-[#0D1723]/40 hover:border-[#CBFD00]/40 hover:bg-primary-fixed/10 transition-all text-[13px] font-medium text-[#E5E5E5]"
+                                            data-subvalue="Créer mon entreprise">
+                                            <span class="material-symbols-outlined text-primary text-lg">store</span>
+                                            Créer mon business
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <input type="hidden" id="profession-detail" name="profession-detail">
+                        </div>
+
+                        <!-- Navigation -->
+                        <div class="flex flex-col sm:flex-row justify-end mt-10 pt-6 border-t border-[#CBFD00]/20">
+                            <button type="button" class="btn-flip btn-next w-full sm:w-auto" data-next="2">
+                                <span class="btn-text">Je sécurise ma place</span>
+                            </button>
+                        </div>
+                    </fieldset>
+
+                    <!-- ===== SECTION 2: Niveau & Objectifs ===== -->
+                    <fieldset class="form-section" id="section-2" aria-labelledby="section-2-title">
+                        <div class="flex items-center gap-3 mb-8">
+                            <span
+                                class="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center text-secondary font-bold font-headline text-sm">2</span>
+                            <legend class="text-xl sm:text-2xl font-bold font-headline text-on-secondary-container"
+                                id="section-2-title">Niveau & Objectifs</legend>
+                        </div>
+
+                        <div class="space-y-6">
+                            <div class="field-group" id="field-niveau">
+                                <label class="field-label">Où en es-tu dans ce domaine ? <span
+                                        class="text-primary">*</span></label>
+                                <input type="hidden" id="niveau" name="niveau" required>
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3" id="niveau-cards" role="radiogroup"
+                                    aria-label="Votre niveau">
+                                    <button type="button"
+                                        class="niveau-card flex flex-col items-center gap-1.5 p-5 rounded-2xl border-2 border-[#CBFD00]/20 bg-[#0D1723]/40 hover:border-green-400 hover:bg-green-50/50 transition-all duration-200 cursor-pointer group"
+                                        data-value="Jamais utilisé">
+                                        <span class="text-3xl group-hover:scale-110 transition-transform">🌱</span>
+                                        <span
+                                            class="text-sm font-bold text-[#FFFFFF] font-bold group-hover:text-green-700">Débutant
+                                            total</span>
+                                        <span class="text-[11px] text-[#E5E5E5] text-center leading-tight">Je débute complètement</span>
+                                    </button>
+                                    <button type="button"
+                                        class="niveau-card flex flex-col items-center gap-1.5 p-5 rounded-2xl border-2 border-[#CBFD00]/20 bg-[#0D1723]/40 hover:border-amber-400 hover:bg-amber-50/50 transition-all duration-200 cursor-pointer group"
+                                        data-value="Intermédiaire">
+                                        <span class="text-3xl group-hover:scale-110 transition-transform">⚡</span>
+                                        <span
+                                            class="text-sm font-bold text-[#FFFFFF] font-bold group-hover:text-amber-700">Intermédiaire</span>
+                                        <span class="text-[11px] text-[#E5E5E5] text-center leading-tight">J’ai déjà quelques bases</span>
+                                    </button>
+                                    <button type="button"
+                                        class="niveau-card flex flex-col items-center gap-1.5 p-5 rounded-2xl border-2 border-[#CBFD00]/20 bg-[#0D1723]/40 hover:border-red-400 hover:bg-red-50/50 transition-all duration-200 cursor-pointer group"
+                                        data-value="Avancé">
+                                        <span class="text-3xl group-hover:scale-110 transition-transform">🔥</span>
+                                        <span
+                                            class="text-sm font-bold text-[#FFFFFF] font-bold group-hover:text-red-700">Avancé</span>
+                                        <span class="text-[11px] text-[#E5E5E5] text-center leading-tight">Je pratique régulièrement</span>
+                                    </button>
+                                </div>
+                                <span class="field-error" id="niveau-error" role="alert" aria-live="polite"></span>
+                            </div>
+
+                            <!-- Motivation -->
+                            <div class="field-group" id="field-motivation">
+                                <div class="flex justify-between items-end mb-1">
+                                    <label for="motivation" class="field-label !mb-0">Motivation <span
+                                            class="text-primary">*</span></label>
+                                    <span class="text-[10px] text-[#E5E5E5] font-medium" id="motivation-counter">0 /
+                                        500</span>
+                                </div>
+                                <textarea id="motivation" name="motivation" required rows="4" maxlength="500"
+                                    class="field-input resize-none"
+                                    placeholder="Pourquoi voulez-vous suivre cette formation ?"
+                                    aria-describedby="motivation-counter motivation-error"></textarea>
+                                <span class="field-error" id="motivation-error" role="alert" aria-live="polite"></span>
+                            </div>
+
+                            <!-- Objectifs -->
+                            <div class="field-group" id="field-objectifs">
+                                <label class="field-label">Objectifs professionnels <span
+                                        class="text-primary">*</span></label>
+                                <p class="text-[11px] text-[#E5E5E5] -mt-0.5 mb-2 ml-1">Sélectionnez au moins un
+                                    objectif</p>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5" id="objectifs-grid" role="group"
+                                    aria-describedby="objectifs-error" aria-label="Objectifs professionnels"><label class="checkbox-card"><input type="checkbox" name="objectifs" value="Lancer une activité freelance" class="checkbox-input"><span class="material-symbols-outlined text-lg text-primary/60 group-hover:text-primary">laptop_mac</span><span class="text-sm text-white font-bold">Lancer une activité freelance</span></label><label class="checkbox-card"><input type="checkbox" name="objectifs" value="Développer mon entreprise" class="checkbox-input"><span class="material-symbols-outlined text-lg text-primary/60 group-hover:text-primary">business_center</span><span class="text-sm text-white font-bold">Développer mon entreprise</span></label><label class="checkbox-card"><input type="checkbox" name="objectifs" value="Trouver un emploi dans ce domaine" class="checkbox-input"><span class="material-symbols-outlined text-lg text-primary/60 group-hover:text-primary">work</span><span class="text-sm text-white font-bold">Trouver un emploi dans ce domaine</span></label><label class="checkbox-card"><input type="checkbox" name="objectifs" value="Changer de carrière" class="checkbox-input"><span class="material-symbols-outlined text-lg text-primary/60 group-hover:text-primary">swap_horiz</span><span class="text-sm text-white font-bold">Changer de carrière</span></label><label class="checkbox-card md:col-span-2"><input type="checkbox" name="objectifs" value="Améliorer mes compétences actuelles" class="checkbox-input"><span class="material-symbols-outlined text-lg text-primary/60 group-hover:text-primary">trending_up</span><span class="text-sm text-white font-bold">Améliorer mes compétences actuelles</span></label></div>
+                                <span class="field-error" id="objectifs-error" role="alert" aria-live="polite"></span>
+                            </div>
+                        </div>
+
+                        <!-- Navigation -->
+                        <div class="flex flex-col sm:flex-row justify-between items-center gap-4 mt-10 pt-6 border-t border-[#CBFD00]/20">
+                            <button type="button" class="btn-prev order-2 sm:order-1 w-full sm:w-auto" data-prev="1">
+                                <span class="material-symbols-outlined text-lg">arrow_back</span>
+                                Précédent
+                            </button>
+                            <button type="button" class="btn-flip btn-next order-1 sm:order-2 w-full sm:w-auto" data-next="3">
+                                <span class="btn-text">Je sécurise ma place</span>
+                            </button>
+                        </div>
+                    </fieldset>
+
+                    <!-- ===== SECTION 3: Paiement ===== -->
+                    <fieldset class="form-section" id="section-3" aria-labelledby="section-3-title">
+                        <div class="flex items-center gap-3 mb-8">
+                            <span
+                                class="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center text-secondary font-bold font-headline text-sm">3</span>
+                            <legend class="text-xl sm:text-2xl font-bold font-headline text-on-secondary-container"
+                                id="section-3-title">Paiement</legend>
+                        </div>
+
+                        <div class="space-y-6">
+
+                            <!-- ⚠️ CLAUSE JURIDIQUE — Politique de remboursement -->
+                            <div class="rounded-2xl border border-amber-500/40 bg-amber-500/10 p-5 flex items-start gap-4" role="alert" aria-label="Politique de remboursement">
+                                <span class="material-symbols-outlined text-amber-400 text-2xl flex-shrink-0 mt-0.5" style="font-variation-settings: 'FILL' 1;">warning</span>
+                                <div class="space-y-2">
+                                    <p class="text-sm font-extrabold text-amber-300 font-headline tracking-wide uppercase">⚠️ Politique de remboursement — À lire avant de payer</p>
+                                    <p class="text-[13px] leading-relaxed text-[#E5E5E5]">
+                                        Nous vous recommandons de <strong class="text-white">vérifier attentivement les informations relatives à cette formation</strong> avant tout engagement. Assurez-vous que le programme, les dates et le lieu vous conviennent.
+                                    </p>
+                                    <div class="mt-3 pt-3 border-t border-amber-500/30">
+                                        <p class="text-[13px] leading-relaxed text-[#E5E5E5]">
+                                            Tout paiement effectué est soumis à la politique suivante :
+                                            <strong class="text-amber-300"> un remboursement peut être accordé dans un délai strict de 3 jours calendaires</strong>
+                                            à compter de la date du paiement, sous réserve d'une demande explicite adressée à l'organisateur.
+                                            <strong class="text-red-400"> Passé ce délai de 3 jours, aucun remboursement ne sera accordé</strong>, quelle que soit la raison invoquée.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Mode de paiement -->
+                            <div class="field-group" id="field-paiement">
+                                <label class="field-label">Mode de paiement <span class="text-primary">*</span></label>
+                                <input type="hidden" id="paiement" name="paiement" required>
+                                <div class="grid grid-cols-2 md:grid-cols-3 gap-3 lg:gap-4" id="paiement-cards"
+                                    role="radiogroup" aria-label="Votre mode de paiement">
+                                    <button type="button"
+                                        class="paiement-card flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border-2 border-[#CBFD00]/20 bg-[#0D1723]/40 hover:border-[#CBFD00]/40 hover:bg-primary/20 transition-all duration-200 cursor-pointer group"
+                                        data-value="Waafi Mobile Money">
+                                        <img src="/assets/images/waafi.png" alt="Waafi"
+                                            class="h-10 sm:h-12 w-auto object-contain group-hover:scale-110 transition-transform">
+                                        <span
+                                            class="text-xs sm:text-sm font-bold text-[#FFFFFF] font-bold group-hover:text-primary">Waafi</span>
+                                    </button>
+                                    <button type="button"
+                                        class="paiement-card flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border-2 border-[#CBFD00]/20 bg-[#0D1723]/40 hover:border-[#CBFD00]/40 hover:bg-primary/20 transition-all duration-200 cursor-pointer group"
+                                        data-value="Cacpay">
+                                        <img src="/assets/images/cacpay.png" alt="Cacpay"
+                                            class="h-10 sm:h-12 w-auto object-contain group-hover:scale-110 transition-transform">
+                                        <span
+                                            class="text-xs sm:text-sm font-bold text-[#FFFFFF] font-bold group-hover:text-primary">Cacpay</span>
+                                    </button>
+                                    <button type="button"
+                                        class="paiement-card flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border-2 border-[#CBFD00]/20 bg-[#0D1723]/40 hover:border-[#CBFD00]/40 hover:bg-primary/20 transition-all duration-200 cursor-pointer group"
+                                        data-value="Espèces">
+                                        <span
+                                            class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-100 transition-colors group-hover:scale-110">
+                                            <span class="material-symbols-outlined text-blue-600 text-xl sm:text-2xl"
+                                                style="font-variation-settings: 'FILL' 1;">payments</span>
+                                        </span>
+                                        <span
+                                            class="text-xs sm:text-sm font-bold text-[#FFFFFF] font-bold group-hover:text-primary text-center">Espèces</span>
+                                    </button>
+                                </div>
+                                <span class="field-error" id="paiement-error" role="alert" aria-live="polite"></span>
+                            </div>
+
+                            <!-- Conditional: Phone for mobile payment -->
+                            <div class="field-group conditional-field" id="field-tel-paiement" style="display:none;"
+                                aria-hidden="true">
+                                <label for="tel-paiement" class="field-label">Numéro pour le paiement mobile <span
+                                        class="text-primary">*</span></label>
+                                <div class="flex items-stretch">
+                                    <span
+                                        class="country-code flex items-center px-3.5 bg-primary-fixed/40 border-0 border-b-2 border-outline-variant rounded-tl-lg text-primary text-sm font-semibold select-none">+253</span>
+                                    <input type="tel" id="tel-paiement" name="tel-paiement"
+                                        class="field-input !rounded-tl-none !border-l-0" placeholder="77XXXXXX"
+                                        pattern="^(77|67)\d{6}$" maxlength="8" aria-describedby="tel-paiement-error">
+                                </div>
+                                <span class="field-error" id="tel-paiement-error" role="alert"
+                                    aria-live="polite"></span>
+                            </div>
+
+                            <!-- Payment Info: Mobile Money -->
+                            <div id="payment-info-mobile" style="display:none;" aria-hidden="true"
+                                class="p-5 sm:p-6 bg-[#050709]/40 border border-[#CBFD00]/20 rounded-2xl space-y-4 animate-fade-up">
+                                <div class="flex items-start gap-3">
+                                    <span class="material-symbols-outlined text-[#CBFD00] mt-0.5">info</span>
+                                    <div class="space-y-3 flex-1">
+                                        <p class="text-sm font-bold text-[#FFFFFF]">Instructions de paiement mobile</p>
+                                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm text-[#E5E5E5]">
+                                            <div>
+                                                <p class="opacity-60 text-xs" id="mobile-payment-label">Numéro</p>
+                                                <p class="font-bold" id="mobile-payment-number">+253 77 55 63 44</p>
+                                            </div>
+                                            <div>
+                                                <p class="opacity-60 text-xs">Nom du compte</p>
+                                                <p class="font-bold" id="mobile-payment-account">—</p>
+                                            </div>
+                                            <div>
+                                                <p class="opacity-60 text-xs">Montant</p>
+                                                <p class="font-extrabold text-[#CBFD00] text-lg font-headline" data-amount>7 500 FDJ
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Payment Info: Cash -->
+                            <div id="payment-info-cash" style="display:none;" aria-hidden="true"
+                                class="p-5 sm:p-6 bg-[#050709]/40 border border-[#CBFD00]/20 rounded-2xl space-y-4 animate-fade-up">
+                                <div class="flex items-start gap-3">
+                                    <span class="material-symbols-outlined text-[#CBFD00] mt-0.5">location_on</span>
+                                    <div class="space-y-3 flex-1">
+                                        <p class="text-sm font-bold text-[#FFFFFF]">Paiement en espèces</p>
+                                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm text-[#E5E5E5]">
+                                            <div>
+                                                <p class="opacity-60 text-xs">À remettre à</p>
+                                                <p class="font-bold" id="cash-payment-name">Ali William</p>
+                                            </div>
+                                            <div>
+                                                <p class="opacity-60 text-xs">Lieu</p>
+                                                <p class="font-bold" id="cash-payment-place">Saalam Tower, 5ème étage</p>
+                                            </div>
+                                            <div>
+                                                <p class="opacity-60 text-xs">Sur rendez-vous</p>
+                                                <p class="font-bold" id="cash-payment-phone">+253 77 14 53 06</p>
+                                            </div>
+                                        </div>
+                                        <div class="pt-2 border-t border-[#CBFD00]/20">
+                                            <p class="text-xs text-[#E5E5E5]/70">Montant</p>
+                                            <p class="font-extrabold text-[#CBFD00] text-lg font-headline" data-amount>7 500 FDJ</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Navigation -->
+                        <div class="flex flex-col sm:flex-row justify-between items-center gap-4 mt-10 pt-6 border-t border-[#CBFD00]/20">
+                            <button type="button" class="btn-prev order-2 sm:order-1 w-full sm:w-auto" data-prev="2">
+                                <span class="material-symbols-outlined text-lg">arrow_back</span>
+                                Précédent
+                            </button>
+                            <button type="button" class="btn-flip btn-next order-1 sm:order-2 w-full sm:w-auto" data-next="4">
+                                <span class="btn-text">Je sécurise ma place</span>
+                            </button>
+                        </div>
+                    </fieldset>
+
+                    <!-- ===== SECTION 4: Validation ===== -->
+                    <fieldset class="form-section" id="section-4" aria-labelledby="section-4-title">
+                        <div class="flex items-center gap-3 mb-8">
+                            <span
+                                class="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center text-secondary font-bold font-headline text-sm">4</span>
+                            <legend class="text-xl sm:text-2xl font-bold font-headline text-on-secondary-container"
+                                id="section-4-title">Validation</legend>
+                        </div>
+
+                        <!-- Affiche de la formation -->
+                        <div class="mb-6 rounded-2xl overflow-hidden border border-[#CBFD00]/20 shadow-sm">
+                            <img src="/assets/images/formations/canva-pro.webp" alt="Affiche de la formation Inscription" id="poster-validation"
+                                class="w-full h-auto object-cover" loading="lazy">
+                        </div>
+
+                        <!-- Summary Card -->
+                        <div class="bg-[#0D1723]/40 border border-[#CBFD00]/20 rounded-2xl overflow-hidden mb-6">
+                            <div
+                                class="flex items-center gap-2.5 px-5 py-3.5 bg-gradient-to-r from-primary-fixed/30 to-transparent border-b border-[#CBFD00]/20">
+                                <span class="material-symbols-outlined text-primary text-lg">description</span>
+                                <h3 class="text-sm font-bold text-[#FFFFFF] font-headline">Récapitulatif de votre
+                                    inscription</h3>
+                            </div>
+                            <div class="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4" id="summary-content">
+                                <!-- Populated by JS -->
+                            </div>
+                        </div>
+
+                        <!-- Conditions checkbox -->
+                        <div class="field-group" id="field-conditions">
+                            <label
+                                class="flex items-start gap-4 p-5 bg-[#0D1723]/40 border border-[#CBFD00]/20 rounded-2xl cursor-pointer select-none group hover:border-[#CBFD00]/20 transition-colors">
+                                <input type="checkbox" id="conditions" name="conditions" required
+                                    class="mt-0.5 w-5 h-5 rounded-lg text-primary focus:ring-primary-container border-white/20"
+                                    aria-describedby="conditions-error">
+                                <span class="text-sm leading-relaxed text-[#E5E5E5]" id="conditions-text">
+                                    J'accepte les conditions de la formation : Formation du <strong
+                                        class="text-primary">16
+                                        avril au 10 mai 2026</strong>, les <strong class="text-primary">jeudis,
+                                        vendredis et
+                                        samedis de 18h à 20h</strong>. Places
+                                    limitées à <strong class="text-primary">20 participants</strong>. Inscription
+                                    confirmée après validation du paiement.
+                                </span>
+                            </label>
+                            <span class="field-error" id="conditions-error" role="alert" aria-live="polite"></span>
+                        </div>
+
+                        <!-- ⚖️ CLAUSE JURIDIQUE — Checkbox remboursement obligatoire -->
+                        <div class="field-group" id="field-remboursement">
+                            <label
+                                class="flex items-start gap-4 p-5 bg-red-950/30 border border-red-500/30 rounded-2xl cursor-pointer select-none group hover:border-red-500/50 transition-colors">
+                                <input type="checkbox" id="remboursement" name="remboursement" required
+                                    class="mt-0.5 w-5 h-5 rounded-lg accent-red-500 focus:ring-red-500 border-white/20 flex-shrink-0"
+                                    aria-describedby="remboursement-error">
+                                <span class="text-sm leading-relaxed text-[#E5E5E5]">
+                                    <span class="flex items-center gap-1.5 mb-1.5">
+                                        <span class="material-symbols-outlined text-red-400 text-base" style="font-variation-settings: 'FILL' 1;">gavel</span>
+                                        <strong class="text-red-300 font-bold text-[13px] uppercase tracking-wide">Politique de remboursement — Mention légale</strong>
+                                    </span>
+                                    Je reconnais avoir pris connaissance de la politique de remboursement et l'accepte sans réserve :
+                                    <strong class="text-white"> tout paiement versé à cette formation ne peut être remboursé que dans un délai de 3 jours calendaires</strong>
+                                    suivant la date du paiement, sous réserve d'une demande explicite auprès de l'organisateur.
+                                    <strong class="text-red-400"> Au-delà de ce délai de 3 jours, aucun remboursement ne sera accordé</strong>, quelle que soit la raison invoquée.
+                                </span>
+                            </label>
+                            <span class="field-error" id="remboursement-error" role="alert" aria-live="polite"></span>
+                        </div>
+
+                        <!-- Final Actions -->
+                        <div
+                            class="flex flex-col sm:flex-row items-center justify-between gap-4 mt-10 pt-6 border-t border-[#CBFD00]/20">
+                            <button type="button" class="btn-prev order-2 sm:order-1" data-prev="3">
+                                <span class="material-symbols-outlined text-lg">arrow_back</span>
+                                Précédent
+                            </button>
+                            <button type="submit" class="btn-submit order-1 sm:order-2 w-full sm:w-auto"
+                                id="btn-submit">
+                                <span class="btn-submit-text flex items-center justify-center gap-2.5">
+                                    <span class="material-symbols-outlined text-lg">edit_note</span>
+                                    Valider mon inscription
+                                </span>
+                                <span class="btn-loader hidden items-center justify-center gap-2.5">
+                                    <span class="spinner"></span>
+                                    Envoi en cours...
+                                </span>
+                            </button>
+                        </div>
+                    </fieldset>
+                </form>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- ====== HAMSTER LOADING OVERLAY ====== -->
+    <div class="fixed inset-0 z-[110] flex flex-col items-center justify-center bg-[#050608]/95 backdrop-blur-sm hidden"
+        id="hamster-overlay" role="status" aria-live="polite">
+        <div aria-label="Orange and tan hamster running in a metal wheel" role="img" class="wheel-and-hamster">
+            <div class="wheel"></div>
+            <div class="hamster">
+                <div class="hamster__body">
+                    <div class="hamster__head">
+                        <div class="hamster__ear"></div>
+                        <div class="hamster__eye"></div>
+                        <div class="hamster__nose"></div>
+                    </div>
+                    <div class="hamster__limb hamster__limb--fr"></div>
+                    <div class="hamster__limb hamster__limb--fl"></div>
+                    <div class="hamster__limb hamster__limb--br"></div>
+                    <div class="hamster__limb hamster__limb--bl"></div>
+                    <div class="hamster__tail"></div>
+                </div>
+            </div>
+            <div class="spoke"></div>
+        </div>
+        <p class="mt-8 text-lg font-bold text-[#FFFFFF] font-headline animate-pulse">Envoi en cours...</p>
+        <p class="mt-2 text-sm text-[#E5E5E5]">Ton inscription est en cours de traitement</p>
+    </div>
+
+    <!-- ====== SUCCESS MODAL ====== -->
+    <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-[#0D1723]/40 backdrop-blur-md hidden"
+        id="success-screen" aria-live="polite">
+        <div
+            class="bg-[#0D1723]/40 rounded-3xl p-8 sm:p-10 max-w-lg w-full text-center shadow-2xl relative overflow-hidden animate-pop-in">
+            <!-- Top gradient bar -->
+            <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-green-400 to-emerald-600"></div>
+
+            <!-- Close Button -->
+            <button type="button" id="btn-close-success" aria-label="Fermer"
+                class="absolute top-4 right-4 w-10 h-10 flex items-center justify-center rounded-full bg-[#0D1723]/40 text-[#E5E5E5] hover:bg-[#0D1723]/70 hover:text-[#FFFFFF] font-bold transition-colors">
+                <span class="material-symbols-outlined text-xl">close</span>
+            </button>
+
+            <!-- Success icon -->
+            <div
+                class="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6 animate-check-pop">
+                <span class="material-symbols-outlined text-4xl"
+                    style="font-variation-settings: 'FILL' 1;">check_circle</span>
+            </div>
+
+            <h2 class="text-2xl font-bold text-[#FFFFFF] mb-2 font-headline">Inscription reçue avec succès !</h2>
+            <p class="text-[#E5E5E5] mb-8 leading-relaxed">
+                Merci pour votre inscription à la formation <strong class="text-primary" id="success-training-title">Inscription</strong> !
+            </p>
+
+            <!-- WhatsApp CTA (prominent) -->
+            <div class="mb-6">
+                <p class="text-xs text-[#E5E5E5] text-center mb-3 font-medium uppercase tracking-wider">Étape suivante
+                    obligatoire</p>
+                <a id="btn-whatsapp" href="https://wa.me/25377145306" target="_blank" rel="noopener noreferrer"
+                    class="flex items-center justify-center gap-3 w-full py-4 px-6 bg-[#25D366] hover:bg-[#1ebe5d] active:bg-[#18a852] text-[#FFFFFF] font-extrabold text-base rounded-2xl shadow-lg shadow-green-200 transition-all duration-200 font-headline">
+                    <!-- WhatsApp SVG icon -->
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-6 h-6 flex-shrink-0"
+                        fill="currentColor">
+                        <path
+                            d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.940 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.890-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+                    </svg>
+                    <span>Envoyer ma preuve de paiement</span>
+                </a>
+                <p class="text-center text-xs text-[#E5E5E5] mt-2">Appuyez pour ouvrir WhatsApp · +253 77 14 53 06</p>
+            </div>
+
+            <!-- Footer -->
+            <div class="pt-6 border-t border-[#CBFD00]/20 space-y-2 mb-6">
+                <p class="text-[#E5E5E5] text-sm">À très bientôt !</p>
+                <p class="font-bold text-[#FFFFFF] font-bold text-sm">Ali William — Formateur</p>
+                <p class="text-primary font-headline font-bold text-sm">IMPACTALI</p>
+            </div>
+
+            <button type="button"
+                class="w-full py-3.5 bg-[#0D1723] text-[#FFFFFF] font-bold rounded-xl hover:bg-slate-800 transition-colors flex items-center justify-center gap-2 text-sm"
+                id="btn-print" onclick="window.print()">
+                <span class="material-symbols-outlined text-lg">print</span>
+                Imprimer le récapitulatif
+            </button>
+        </div>
+    </div>
+
+
+
+    <!-- ====== FOOTER ====== -->
+    <footer class="site-footer" id="site-footer">
+        <div class="landing-shell site-footer__inner">
+            <div class="site-footer__brand">
+                <a class="site-footer__logo" href="/" aria-label="IMPACTALI — Accueil">
+                    <img src="/assets/brand/impactali-logo.webp" alt="IMPACTALI" width="720" height="400" loading="lazy" decoding="async">
+                </a>
+                <span class="site-footer__baseline">Plateforme de formation &amp; de développement des compétences</span>
+                <span class="site-footer__legal">&copy; 2026 IMPACTALI. Tous droits réservés.</span>
+            </div>
+                        <nav class="site-footer__col" aria-labelledby="pied-formations">
+                <h2 id="pied-formations">Formations</h2>
+                <a href="/#catalogue">Tout le catalogue</a>
+                <a href="/formations/inscription/">Inscription</a>
+                <a href="/#sessions">Prochaines sessions</a>
+            </nav>
+            <nav class="site-footer__col" aria-labelledby="pied-domaines">
+                <h2 id="pied-domaines">Domaines</h2>
+                <div id="pied-domaines-liens"></div>
+            </nav>
+            <nav class="site-footer__col" aria-labelledby="pied-infos">
+                <h2 id="pied-infos">Informations</h2>
+                <a href="/entreprises/">Former mon équipe</a>
+                <a href="/mentions-legales/">Mentions légales</a>
+                <a target="_blank" rel="noopener noreferrer" href="https://wa.me/25377145306"
+                    data-whatsapp-message="Bonjour, je souhaite vous contacter au sujet de vos formations.">Nous contacter</a>
+            </nav>
+        </div>
+    </footer>
+
+    <!-- ====== CTA MOBILE FIXE ====== -->
+    <div class="mobile-cta" id="mobile-cta">
+        <a class="button button--primary" href="#inscription" data-register-formation="">
+            S’inscrire à cette formation
+            <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+        </a>
+    </div>
+
+    <!-- ====== WHATSAPP FLOATING BUTTON ====== -->
+    <a href="https://wa.me/25377145306" data-whatsapp-message="Bonjour, je suis en train de m’inscrire à la formation Inscription mais j’ai une question."
+        target="_blank" rel="noopener noreferrer" id="whatsapp-float"
+        class="fixed bottom-6 right-6 z-50 w-14 h-14 bg-[#25D366] rounded-full flex items-center justify-center shadow-lg shadow-green-300/40 hover:scale-110 hover:shadow-xl hover:shadow-green-300/50 transition-all duration-300 group"
+        aria-label="Besoin d'aide ? Contactez-nous sur WhatsApp">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-7 h-7 text-[#FFFFFF]" fill="currentColor" aria-hidden="true">
+            <path
+                d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.940 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.890-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+        </svg>
+        <span class="absolute inset-0 rounded-full bg-[#25D366] animate-ping opacity-20" aria-hidden="true"></span>
+    </a>
+
+    <script src="/formations-data.js"></script>
+    <script src="/site-common.js"></script>
+    <script src="/script.js"></script>
+    <!-- Aucun script en ligne : l'en-tête de la fiche est renseigné par script.js
+         (renderSessionDetails), source unique pour la session affichée. -->
+</body>
+
+</html>

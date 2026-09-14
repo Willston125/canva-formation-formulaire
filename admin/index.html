@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html class="dark" lang="fr">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tableau de bord — IMPACTALI</title>
+    <!-- Espace d'administration : jamais indexé, jamais suivi -->
+    <meta name="robots" content="noindex, nofollow, noarchive">
+    <meta name="referrer" content="no-referrer">
+
+    <link rel="preload" href="/assets/fonts/plus-jakarta-sans-latin.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/assets/fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/assets/fonts/material-symbols-outlined.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="/fonts.css">
+    <link rel="stylesheet" href="/admin/admin.css">
+</head>
+
+<body class="admin">
+
+    <!-- ====== CONNEXION ====== -->
+    <div class="connexion" id="connexion">
+        <form class="connexion__carte" id="form-connexion" autocomplete="on">
+            <img src="/assets/brand/impactali-logo.webp" alt="IMPACTALI" width="720" height="400" class="connexion__logo">
+            <h1>Tableau de bord</h1>
+            <p class="connexion__aide">Espace réservé à l’administration du site.</p>
+
+            <label class="champ">
+                <span class="champ__label">Mot de passe</span>
+                <input type="password" id="mot-de-passe" name="password" autocomplete="current-password" required
+                    placeholder="Votre mot de passe d’administration">
+            </label>
+
+            <label class="case">
+                <input type="checkbox" id="rester-connecte">
+                <span>Rester connecté sur cet appareil</span>
+            </label>
+
+            <button class="bouton bouton--primaire" type="submit" id="btn-connexion">
+                <span class="btn-texte">Se connecter</span>
+                <span class="btn-attente" hidden><span class="rondelle"></span>Vérification…</span>
+            </button>
+
+            <p class="message message--erreur" id="erreur-connexion" role="alert" hidden></p>
+            <a class="connexion__retour" href="/">← Retour au site</a>
+        </form>
+    </div>
+
+    <!-- ====== APPLICATION ====== -->
+    <div class="app" id="app" hidden>
+
+        <aside class="barre" id="barre">
+            <div class="barre__marque">
+                <img src="/assets/brand/impactali-logo.webp" alt="IMPACTALI" width="720" height="400">
+            </div>
+
+            <nav class="barre__nav" aria-label="Sections">
+                <button class="onglet is-actif" type="button" data-vue="apercu">
+                    <span class="material-symbols-outlined" aria-hidden="true">dashboard</span>Vue d’ensemble</button>
+                <button class="onglet" type="button" data-vue="formations">
+                    <span class="material-symbols-outlined" aria-hidden="true">school</span>Formations
+                    <span class="pastille" id="compte-formations"></span></button>
+                <button class="onglet" type="button" data-vue="sessions">
+                    <span class="material-symbols-outlined" aria-hidden="true">event</span>Sessions
+                    <span class="pastille" id="compte-sessions"></span></button>
+                <button class="onglet" type="button" data-vue="inscriptions">
+                    <span class="material-symbols-outlined" aria-hidden="true">group</span>Inscriptions
+                    <span class="pastille" id="compte-inscriptions"></span></button>
+                <button class="onglet" type="button" data-vue="reglages">
+                    <span class="material-symbols-outlined" aria-hidden="true">settings</span>Réglages</button>
+            </nav>
+
+            <div class="barre__pied">
+                <a class="barre__lien" href="/" target="_blank" rel="noopener">
+                    <span class="material-symbols-outlined" aria-hidden="true">open_in_new</span>Voir le site</a>
+                <button class="barre__lien" type="button" id="btn-deconnexion">
+                    <span class="material-symbols-outlined" aria-hidden="true">logout</span>Se déconnecter</button>
+            </div>
+        </aside>
+
+        <main class="contenu">
+            <header class="entete">
+                <button class="entete__menu" type="button" id="btn-menu" aria-label="Ouvrir le menu">
+                    <span class="material-symbols-outlined" aria-hidden="true">menu</span>
+                </button>
+                <div>
+                    <h1 id="titre-vue">Vue d’ensemble</h1>
+                    <p id="sous-titre-vue">État du site et raccourcis</p>
+                </div>
+                <div class="entete__actions" id="actions-vue"></div>
+            </header>
+
+            <div class="message message--erreur" id="erreur-globale" role="alert" hidden></div>
+            <div class="message message--succes" id="succes-globale" role="status" hidden></div>
+
+            <!-- Vue d'ensemble -->
+            <section class="vue is-actif" id="vue-apercu">
+                <div class="cartes" id="cartes-apercu"></div>
+                <div class="bloc">
+                    <h2>Dernières inscriptions</h2>
+                    <div id="apercu-inscriptions"></div>
+                </div>
+                <div class="bloc" id="bloc-amorcage" hidden>
+                    <h2>Première mise en route</h2>
+                    <p class="aide">La base est vide. Importez le catalogue actuellement publié sur le site pour
+                        commencer à le gérer depuis ici. Cette opération ne modifie rien sur le site.</p>
+                    <button class="bouton bouton--primaire" type="button" id="btn-importer">
+                        <span class="material-symbols-outlined" aria-hidden="true">download</span>
+                        Importer le catalogue du site</button>
+                </div>
+            </section>
+
+            <!-- Formations -->
+            <section class="vue" id="vue-formations">
+                <div id="liste-formations"></div>
+            </section>
+
+            <!-- Sessions -->
+            <section class="vue" id="vue-sessions">
+                <div id="liste-sessions"></div>
+            </section>
+
+            <!-- Inscriptions -->
+            <section class="vue" id="vue-inscriptions">
+                <div class="filtres" id="filtres-inscriptions"></div>
+                <div id="liste-inscriptions"></div>
+            </section>
+
+            <!-- Réglages -->
+            <section class="vue" id="vue-reglages">
+                <div id="formulaire-reglages"></div>
+            </section>
+        </main>
+    </div>
+
+    <!-- ====== PANNEAU D'ÉDITION ====== -->
+    <div class="panneau" id="panneau" hidden>
+        <div class="panneau__fond" data-fermer-panneau></div>
+        <div class="panneau__boite" role="dialog" aria-modal="true" aria-labelledby="panneau-titre">
+            <header class="panneau__entete">
+                <h2 id="panneau-titre">Modifier</h2>
+                <button class="panneau__fermer" type="button" data-fermer-panneau aria-label="Fermer">
+                    <span class="material-symbols-outlined" aria-hidden="true">close</span>
+                </button>
+            </header>
+            <form class="panneau__corps" id="panneau-form" novalidate></form>
+            <footer class="panneau__pied">
+                <p class="message message--erreur" id="panneau-erreur" role="alert" hidden></p>
+                <div class="panneau__boutons">
+                    <button class="bouton bouton--discret" type="button" data-fermer-panneau>Annuler</button>
+                    <button class="bouton bouton--primaire" type="submit" form="panneau-form" id="panneau-valider">
+                        <span class="btn-texte">Enregistrer</span>
+                        <span class="btn-attente" hidden><span class="rondelle"></span>Enregistrement…</span>
+                    </button>
+                </div>
+            </footer>
+        </div>
+    </div>
+
+    <!-- ====== CONFIRMATION ====== -->
+    <div class="panneau panneau--court" id="confirmation" hidden>
+        <div class="panneau__fond" data-fermer-confirmation></div>
+        <div class="panneau__boite" role="alertdialog" aria-modal="true" aria-labelledby="confirmation-titre">
+            <header class="panneau__entete">
+                <h2 id="confirmation-titre">Confirmer</h2>
+            </header>
+            <div class="panneau__corps">
+                <p id="confirmation-texte"></p>
+            </div>
+            <footer class="panneau__pied">
+                <div class="panneau__boutons">
+                    <button class="bouton bouton--discret" type="button" data-fermer-confirmation>Annuler</button>
+                    <button class="bouton bouton--danger" type="button" id="confirmation-valider">Supprimer</button>
+                </div>
+            </footer>
+        </div>
+    </div>
+
+    <script src="/formations-data.js"></script>
+    <script src="/admin/admin.js"></script>
+</body>
+
+</html>

@@ -18,12 +18,20 @@
        vers un autre script, ce qui est pire que ne pas les envoyer du tout. */
     const GOOGLE_SHEETS_URL = (window.SITE_ENDPOINTS && window.SITE_ENDPOINTS.registration) || '';
     const TOTAL_STEPS = 4;
-    const FORMATIONS = Array.isArray(window.FORMATIONS) ? window.FORMATIONS : [];
+    // Réassignable : le catalogue peut être mis à jour depuis le tableau de bord
+    let FORMATIONS = Array.isArray(window.FORMATIONS) ? window.FORMATIONS : [];
     const CONTACT = window.SITE_CONTACT || {};
     const common = window.SiteCommon || null;
 
-    /** Formation portée par la page (jamais une valeur codée en dur). */
-    const PAGE_FORMATION_ID = document.getElementById('inscription')?.dataset.formationId || FORMATIONS[0]?.formId || '';
+    /**
+     * Formation portée par la page (jamais une valeur codée en dur).
+     * Un attribut présent mais VIDE signifie « page générique » : la formation
+     * vient alors de l'URL. Le distinguer d'un attribut absent est indispensable,
+     * sinon /inscription/ afficherait toujours la première formation du catalogue.
+     */
+    const DECLARATION_PAGE = document.getElementById('inscription')
+        ? document.getElementById('inscription').getAttribute('data-formation-id') : null;
+    const PAGE_FORMATION_ID = DECLARATION_PAGE !== null ? DECLARATION_PAGE : (FORMATIONS[0]?.formId || '');
 
     let selectedFormation = FORMATIONS.find(item => item.formId === PAGE_FORMATION_ID) || FORMATIONS[0] || null;
 
@@ -144,7 +152,7 @@
     let currentStep = 1;
 
     // ====== FORMATION & SESSION SÉLECTIONNÉES (page fiche) ======
-    const SESSIONS = Array.isArray(window.SESSIONS) ? window.SESSIONS : [];
+    let SESSIONS = Array.isArray(window.SESSIONS) ? window.SESSIONS : [];
     /** Session ouverte à l'inscription (alimente le champ caché `sessionId`). */
     let selectedSession = null;
     /** Session à afficher : peut être annoncée ou complète, donc sans inscription possible. */
@@ -222,6 +230,7 @@
         }
         renderSelectedSessionFacts();
 
+        renderEnteteGenerique(formation);
         renderSessionDetails();
         renderRegistrationState();
         renderPaymentDetails();
@@ -255,6 +264,46 @@
         liste.hidden = !lignes.length;
         liste.innerHTML = lignes.map(([icone, texte]) =>
             `<li><span class="material-symbols-outlined" aria-hidden="true">${icone}</span>${escapeHtml(texte)}</li>`).join('');
+    }
+
+    /**
+     * Page d'inscription générique (/inscription/?trainingId=…) : elle sert toutes
+     * les formations, y compris celles créées depuis le tableau de bord qui n'ont
+     * pas encore de page générée. Son en-tête est écrit ici, à partir des données.
+     */
+    function renderEnteteGenerique(formation) {
+        if (document.body.dataset.ficheGenerique === undefined || !formation) return;
+
+        const titre = document.getElementById('fiche-title');
+        if (titre) titre.textContent = formation.title;
+
+        const accroche = document.querySelector('.fiche-hero__lead');
+        if (accroche) accroche.textContent = formation.shortDescription || '';
+
+        const fil = document.querySelector('.breadcrumb [aria-current="page"]');
+        if (fil) fil.textContent = formation.shortTitle || formation.title;
+
+        const surtitre = document.querySelector('.fiche-hero .eyebrow');
+        if (surtitre && formation.category) surtitre.textContent = 'INSCRIPTION · ' + formation.category.toUpperCase();
+
+        const affiche = document.querySelector('#poster-section img');
+        if (affiche && (formation.poster || formation.image)) {
+            affiche.src = formation.poster || formation.image;
+            affiche.alt = `Affiche de la formation ${formation.title}`;
+        }
+        document.querySelectorAll('#poster-validation').forEach(img => {
+            if (formation.poster || formation.image) {
+                img.src = formation.poster || formation.image;
+                img.alt = `Affiche de la formation ${formation.title}`;
+            }
+        });
+        document.title = `${formation.title} — Inscription | IMPACTALI`;
+
+        document.querySelectorAll('[data-whatsapp-float], .fiche-hero__actions [data-whatsapp-message]').forEach(lien => {
+            const message = `Bonjour, je souhaite m’inscrire à la formation ${formation.title} et j’ai une question.`;
+            lien.dataset.whatsappMessage = message;
+            if (common) lien.href = common.whatsappUrl(message);
+        });
     }
 
     // ====== INFORMATIONS DE SESSION SUR LA FICHE ======
@@ -533,6 +582,26 @@
         document.addEventListener('impactali:places', () => {
             setSelectedFormation(selectedFormation?.formId || PAGE_FORMATION_ID, false,
                 selectedSession?.id || undefined);
+            initPlacesCounter();
+        });
+
+        /* Catalogue modifié depuis le tableau de bord : la fiche reprend le tarif,
+           les intitulés et l'état d'inscription sans qu'il faille republier le site. */
+        document.addEventListener('impactali:catalogue', () => {
+            FORMATIONS = Array.isArray(window.FORMATIONS) ? window.FORMATIONS : FORMATIONS;
+            SESSIONS = Array.isArray(window.SESSIONS) ? window.SESSIONS : SESSIONS;
+            /* L'URL est relue : sur la page générique, la formation demandée peut
+               n'exister que dans le catalogue qui vient d'arriver, donc être restée
+               introuvable au premier rendu. */
+            const params = new URLSearchParams(window.location.search);
+            const demande = params.get('trainingId') || params.get('trainingSlug')
+                || params.get('formationId') || params.get('formation');
+            const parUrl = FORMATIONS.find(item => item.formId === demande || item.slug === demande);
+            const deLaPage = PAGE_FORMATION_ID
+                && FORMATIONS.find(item => item.formId === PAGE_FORMATION_ID || item.slug === PAGE_FORMATION_ID);
+            const cible = deLaPage || parUrl || selectedFormation;
+            setSelectedFormation(cible?.formId || PAGE_FORMATION_ID, false,
+                params.get('sessionId') || undefined);
             initPlacesCounter();
         });
     }

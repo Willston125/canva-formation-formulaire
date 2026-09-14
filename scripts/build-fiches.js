@@ -155,3 +155,42 @@ for (const formation of FORMATIONS.filter(item => item.active !== false)) {
   fs.writeFileSync(path.join(dir, 'index.html'), render(template, formation));
   console.log(`formations/${formation.slug}/index.html`);
 }
+
+/* ---------------------------------------------------------------------------
+   Page d'inscription générique : /inscription/?trainingId=<formation>
+
+   Une formation créée depuis le tableau de bord n'a pas de page générée tant
+   que le site n'a pas été republié. Sans cette page, son lien tomberait sur
+   l'accueil à cause de la réécriture Vercel. Ici, le titre, le tarif et la
+   session sont écrits par script.js à partir de la formation demandée.
+--------------------------------------------------------------------------- */
+const GENERIQUE = {
+  id: 'inscription-generique',
+  slug: 'inscription',
+  title: 'Inscription',
+  shortTitle: 'Inscription',
+  category: 'Inscription',
+  shortDescription: 'Choisissez votre formation et complétez votre inscription en quatre étapes.',
+  image: '/assets/images/formations/canva-pro.webp',
+  imageAlt: 'Formations IMPACTALI',
+  duration: 'À confirmer', level: 'À confirmer', mode: 'À confirmer',
+  price: null, modules: null, learnings: [], objectives: null,
+  formId: '', href: '/inscription/', hasDetailPage: true
+};
+
+let generique = render(template, GENERIQUE);
+// La page ne porte aucune formation : celle-ci vient du paramètre d'URL
+generique = generique.replace(/(<main id="inscription" data-formation-id=")[^"]*/, '$1');
+generique = generique.replace(/(<input type="hidden" id="formation" name="formation" value=")[^"]*/, '$1');
+// Signale à script.js qu'il doit écrire lui-même l'en-tête de la page
+generique = generique.replace('<body ', '<body data-fiche-generique ');
+// Aucun contenu éditorial à afficher pour une page qui sert toutes les formations
+generique = generique.replace(/<section[^>]*id="programme-section"[\s\S]*?<\/section>/i, '');
+generique = generique.replace(/<section[^>]*id="prerequis-section"[\s\S]*?<\/section>/i, '');
+generique = generique.replace(/<section[^>]*id="faq-section"[\s\S]*?<\/section>/i, '');
+generique = generique.replace(/<meta name="robots"[^>]*>/i, '');
+generique = generique.replace('</head>', '    <meta name="robots" content="noindex, follow">\n</head>');
+
+fs.mkdirSync(path.join(ROOT, 'inscription'), { recursive: true });
+fs.writeFileSync(path.join(ROOT, 'inscription', 'index.html'), generique);
+console.log('inscription/index.html (page générique)');

@@ -1,68 +1,61 @@
 /* =========================================================================
-   IMPACTALI — Réception des inscriptions
-   Script complet : enregistrement dans la feuille, alerte email avec lien
-   WhatsApp de relance, et comptage des places pour le site.
+   IMPACTALI — API du site et du tableau de bord
+   Un seul script pour : recevoir les inscriptions, alerter par email,
+   compter les places, et servir de base de données au tableau de bord /admin.
 
-   ⚠ À METTRE DANS UN PROJET APPS SCRIPT NEUF.
-   Un projet ne peut avoir qu'un seul doPost : ne collez pas ce code dans le
-   projet qui traite déjà les QCM étudiants, vous le casseriez.
+   ⚠ UN PROJET APPS SCRIPT NE PEUT AVOIR QU'UN SEUL doPost ET UN SEUL doGet.
+   Ce fichier remplace intégralement le précédent. Ne le collez pas dans le
+   projet qui traite les QCM étudiants.
 
    ---------------------------------------------------------------------------
-   INSTALLATION
+   INSTALLATION / MISE À JOUR
 
-   1. Créer un classeur neuf : taper sheets.new dans la barre d'adresse.
-      Le nommer par exemple « IMPACTALI — Inscriptions ».
-   2. Dans ce classeur : menu Extensions > Apps Script.
-      Le projet créé est rattaché au classeur : ID_CLASSEUR reste vide.
-   3. Coller tout ce fichier à la place du contenu existant, puis enregistrer
-      (icône disquette). Les constantes sont déjà renseignées.
-   4. Déployer → Nouveau déploiement → type « Application Web » :
-         Exécuter en tant que  : Moi (votre adresse)
-         Qui a accès           : Tout le monde
-      Ces deux valeurs sont indispensables : la première donne au script le
-      droit d'écrire dans le classeur, la seconde permet au site de l'appeler
-      sans connexion Google. Autoriser l'accès à votre compte à la demande.
-   5. Copier l'URL de l'application Web (elle finit par /exec) et la
-      transmettre : elle doit remplacer celle de formations-data.js.
-   6. Vérifier dans une fenêtre de navigation privée :
-         https://VOTRE_URL/exec?action=places
-      Réponse attendue : {"sessions":{}} tant qu'aucune inscription n'existe.
+   1. Ouvrir le projet Apps Script rattaché au classeur des inscriptions.
+   2. Remplacer tout le contenu par ce fichier.
+   3. Renseigner MOT_DE_PASSE_ADMIN ci-dessous (c'est le mot de passe du
+      tableau de bord). Enregistrer.
+   4. Déployer → Gérer les déploiements → crayon → Nouvelle version → Déployer.
+      Sans nouvelle version, Google continue de servir l'ancienne.
+      Conserver : Exécuter en tant que « Moi », Qui a accès « Tout le monde ».
+   5. Vérifier : https://VOTRE_URL/exec?action=catalogue doit répondre du JSON.
 
-   À chaque modification du code : Déployer → Gérer les déploiements →
-   crayon → Nouvelle version → Déployer. Sans nouvelle version, Google
-   continue de servir l'ancienne.
+   Les onglets Formations, Sessions, Reglages et Inscriptions sont créés
+   automatiquement au premier usage. Vous n'avez jamais à les ouvrir : tout
+   se pilote depuis le tableau de bord du site.
    ========================================================================= */
 
 // ----------------------------- CONFIGURATION -----------------------------
 
-/**
- * Classeur qui reçoit les inscriptions.
- * LAISSER VIDE si ce script a été créé depuis le classeur lui-même
- * (Extensions > Apps Script) : c'est le cas recommandé, il n'y a alors
- * aucun identifiant à copier et aucune erreur possible.
- * Ne remplir que si le script vit dans un projet séparé : l'identifiant
- * se lit alors dans l'URL du classeur, entre /d/ et /edit.
- */
+/** Classeur. Vide = le classeur auquel ce script est rattaché (cas normal). */
 var ID_CLASSEUR = '';
 
-/** Onglet des inscriptions. Il est créé automatiquement s'il n'existe pas. */
-var NOM_FEUILLE = 'Inscriptions';
+/** Onglets. Créés automatiquement s'ils n'existent pas. */
+var F_INSCRIPTIONS = 'Inscriptions';
+var F_FORMATIONS = 'Formations';
+var F_SESSIONS = 'Sessions';
+var F_REGLAGES = 'Reglages';
 
-/** Adresse professionnelle qui reçoit l'alerte. Plusieurs adresses : séparer par des virgules. */
+/** Adresse professionnelle qui reçoit l'alerte à chaque inscription. */
 var EMAIL_PRO = 'infos@impactali.site';
 
 /** Nom affiché comme expéditeur de l'alerte. */
 var NOM_EXPEDITEUR = 'Inscriptions IMPACTALI';
 
 /**
- * Statuts qui occupent une place dans le décompte du site.
- * null = toutes les inscriptions comptent, y compris celles en attente de paiement.
- * Pour ne compter que les inscriptions réglées : ['Confirmé', 'Payé']
+ * MOT DE PASSE DU TABLEAU DE BORD.
+ * À changer impérativement. Il protège l'accès à /admin : modification du
+ * catalogue, des tarifs, et consultation des coordonnées des candidats.
+ * Choisissez une phrase longue, propre à ce site, jamais réutilisée ailleurs.
+ */
+var MOT_DE_PASSE_ADMIN = 'CHANGEZ-MOI-avant-de-deployer';
+
+/**
+ * Statuts qui occupent une place dans le décompte affiché sur le site.
+ * null = toutes les inscriptions comptent, y compris celles en attente.
  */
 var STATUTS_COMPTES = null;
 
-/* Colonnes de la feuille, dans l'ordre : [en-tête, clé envoyée par le site].
-   L'en-tête « sessionId » sert au comptage des places : ne pas le renommer. */
+/* Colonnes de l'onglet Inscriptions : [en-tête, clé envoyée par le site]. */
 var COLONNES = [
   ['Horodatage réception', null],
   ['dateInscription', 'dateInscription'],
@@ -92,9 +85,49 @@ var COLONNES = [
   ['JSON complet', null]
 ];
 
-// ------------------------------ RÉCEPTION --------------------------------
+/* Champs d'une formation. `json` marque les champs stockés en JSON dans la
+   cellule (listes et objets), `bool` et `num` les types à reconvertir. */
+var CHAMPS_FORMATION = [
+  ['id', 'texte'], ['slug', 'texte'], ['title', 'texte'], ['shortTitle', 'texte'],
+  ['category', 'texte'], ['family', 'texte'], ['promise', 'texte'], ['shortDescription', 'texte'],
+  ['image', 'texte'], ['imageAlt', 'texte'], ['duration', 'texte'], ['level', 'texte'],
+  ['mode', 'texte'], ['price', 'num'], ['modules', 'num'], ['learnings', 'json'],
+  ['featured', 'bool'], ['registrationOpen', 'bool'], ['active', 'bool'],
+  ['allowRegistrationWithoutSession', 'bool'], ['hasDetailPage', 'bool'],
+  ['href', 'texte'], ['formId', 'texte'], ['poster', 'texte'], ['lead', 'texte'],
+  ['levelSubject', 'texte'], ['objectives', 'json'], ['ordre', 'num']
+];
 
-/** Reçoit une inscription envoyée par le formulaire du site. */
+var CHAMPS_SESSION = [
+  ['id', 'texte'], ['formId', 'texte'], ['startDate', 'texte'], ['endDate', 'texte'],
+  ['schedule', 'texte'], ['duration', 'texte'], ['location', 'texte'], ['mode', 'texte'],
+  ['price', 'num'], ['placesTotal', 'num'], ['placesAvailable', 'num'],
+  ['registrationOpen', 'bool'], ['currency', 'texte']
+];
+
+// ------------------------------ ROUTAGE ----------------------------------
+
+/**
+ * Lectures. `action=places` et `action=catalogue` sont publiques : elles ne
+ * renvoient aucune donnée personnelle. Tout le reste passe par doPost.
+ */
+function doGet(e) {
+  var p = (e && e.parameter) || {};
+  try {
+    if (p.action === 'places') return repondre({ sessions: compterInscrits() }, p.callback);
+    if (p.action === 'catalogue') return repondre(lireCatalogue(), p.callback);
+    return repondre({ erreur: 'action inconnue' }, p.callback);
+  } catch (err) {
+    return repondre({ erreur: String(err) }, p.callback);
+  }
+}
+
+/**
+ * Écritures. Sans champ `action`, le corps est une inscription envoyée par le
+ * formulaire public — c'est le comportement historique, préservé tel quel.
+ * Avec un champ `action`, c'est une commande du tableau de bord, qui exige le
+ * mot de passe.
+ */
 function doPost(e) {
   try {
     if (!e || !e.postData || !e.postData.contents) {
@@ -102,99 +135,402 @@ function doPost(e) {
     }
     var d = JSON.parse(e.postData.contents);
 
-    enregistrer(d);
-
-    // Une alerte email qui échoue ne doit jamais faire perdre l'inscription
-    try { envoyerAlerte(d); } catch (err) { Logger.log('Alerte email : ' + err); }
-
-    return repondre({ ok: true }, null);
+    if (!d.action) return recevoirInscription(d);
+    return commandeAdmin(d);
   } catch (err) {
     Logger.log('doPost : ' + err);
     return repondre({ ok: false, erreur: String(err) }, null);
   }
 }
 
-/** Ajoute une ligne à la feuille, en créant l'onglet et les en-têtes au besoin. */
+// --------------------------- FORMULAIRE PUBLIC ---------------------------
+
+function recevoirInscription(d) {
+  enregistrer(d);
+  // Une alerte email qui échoue ne doit jamais faire perdre l'inscription
+  try { envoyerAlerte(d); } catch (err) { Logger.log('Alerte email : ' + err); }
+  return repondre({ ok: true }, null);
+}
+
 function enregistrer(d) {
-  var feuille = feuilleInscriptions();
+  var feuille = onglet(F_INSCRIPTIONS);
   if (feuille.getLastRow() === 0) {
     feuille.appendRow(COLONNES.map(function (c) { return c[0]; }));
     feuille.setFrozenRows(1);
   }
-  var ligne = COLONNES.map(function (c) {
+  feuille.appendRow(COLONNES.map(function (c) {
     if (c[0] === 'Horodatage réception') return new Date();
     if (c[0] === 'JSON complet') return JSON.stringify(d);
-    var valeur = d[c[1]];
-    return valeur === undefined || valeur === null ? '' : valeur;
-  });
-  feuille.appendRow(ligne);
+    var v = d[c[1]];
+    return v === undefined || v === null ? '' : v;
+  }));
 }
 
-function feuilleInscriptions() {
-  var classeur = ID_CLASSEUR ? SpreadsheetApp.openById(ID_CLASSEUR) : SpreadsheetApp.getActiveSpreadsheet();
-  if (!classeur) throw new Error('classeur introuvable : vérifiez ID_CLASSEUR');
-  return classeur.getSheetByName(NOM_FEUILLE) || classeur.insertSheet(NOM_FEUILLE);
-}
+// ------------------------- TABLEAU DE BORD (ADMIN) -----------------------
 
-// --------------------------- COMPTAGE DES PLACES -------------------------
-
-/** Le site demande ici combien de personnes sont inscrites à chaque session. */
-function doGet(e) {
-  var params = (e && e.parameter) || {};
-  if (params.action !== 'places') {
-    return repondre({ erreur: 'action inconnue' }, params.callback);
+/** Toutes les commandes du tableau de bord passent ici. */
+function commandeAdmin(d) {
+  if (!verifierMotDePasse(d.motDePasse)) {
+    Utilities.sleep(1200); // ralentit les tentatives répétées
+    return repondre({ ok: false, erreur: 'Mot de passe incorrect.', authentification: false }, null);
   }
+
+  // Une seule écriture à la fois : deux onglets ouverts ne doivent pas se marcher dessus
+  var verrou = LockService.getScriptLock();
+  try { verrou.waitLock(20000); }
+  catch (err) { return repondre({ ok: false, erreur: 'Une autre modification est en cours, réessayez.' }, null); }
+
   try {
-    return repondre({ sessions: compterInscrits() }, params.callback);
+    switch (d.action) {
+      case 'admin.login':        return repondre({ ok: true, catalogue: lireCatalogue() }, null);
+      case 'admin.catalogue':    return repondre({ ok: true, catalogue: lireCatalogue() }, null);
+      case 'admin.formation.save':   return repondre(enregistrerFormation(d.donnees), null);
+      case 'admin.formation.delete': return repondre(supprimerFormation(d.id), null);
+      case 'admin.session.save':     return repondre(enregistrerSession(d.donnees), null);
+      case 'admin.session.delete':   return repondre(supprimerSession(d.id), null);
+      case 'admin.reglages.save':    return repondre(enregistrerReglages(d.donnees), null);
+      case 'admin.inscriptions':     return repondre({ ok: true, inscriptions: lireInscriptions(d.formationId) }, null);
+      case 'admin.inscription.statut': return repondre(changerStatut(d.ligne, d.statut), null);
+      case 'admin.importer':         return repondre(importerDepuisSite(d.donnees), null);
+      default: return repondre({ ok: false, erreur: 'Commande inconnue : ' + d.action }, null);
+    }
   } catch (err) {
-    return repondre({ erreur: String(err) }, params.callback);
+    Logger.log('commandeAdmin ' + d.action + ' : ' + err);
+    return repondre({ ok: false, erreur: String(err) }, null);
+  } finally {
+    verrou.releaseLock();
   }
 }
 
-/** Compte les lignes par identifiant de session. Aucune donnée personnelle n'est renvoyée. */
+/** Comparaison à durée constante, pour ne rien révéler par le temps de réponse. */
+function verifierMotDePasse(saisi) {
+  var attendu = String(MOT_DE_PASSE_ADMIN || '');
+  saisi = String(saisi || '');
+  if (!attendu || attendu === 'CHANGEZ-MOI-avant-de-deployer') {
+    // Mot de passe non configuré : on refuse plutôt que d'ouvrir l'administration
+    return false;
+  }
+  if (saisi.length !== attendu.length) return false;
+  var diff = 0;
+  for (var i = 0; i < attendu.length; i++) diff |= saisi.charCodeAt(i) ^ attendu.charCodeAt(i);
+  return diff === 0;
+}
+
+// ------------------------------ CATALOGUE --------------------------------
+
+/**
+ * Lecture publique : formations, sessions, réglages et nombre d'inscrits par
+ * session. Aucune donnée personnelle : seulement des compteurs.
+ * Le site n'a ainsi qu'un seul appel à faire au chargement.
+ */
+function lireCatalogue() {
+  return {
+    formations: lireTable(F_FORMATIONS, CHAMPS_FORMATION).sort(function (a, b) {
+      return (typeof a.ordre === 'number' ? a.ordre : 999) - (typeof b.ordre === 'number' ? b.ordre : 999);
+    }),
+    sessions: lireTable(F_SESSIONS, CHAMPS_SESSION),
+    reglages: lireReglages(),
+    places: compterInscrits(),
+    maj: new Date().toISOString()
+  };
+}
+
+function lireTable(nom, champs) {
+  var feuille = onglet(nom);
+  var valeurs = feuille.getDataRange().getValues();
+  if (valeurs.length < 2) return [];
+  var entetes = valeurs[0].map(function (v) { return String(v).trim(); });
+  var lignes = [];
+  for (var i = 1; i < valeurs.length; i++) {
+    if (String(valeurs[i][0] || '').trim() === '') continue; // ligne sans identifiant : ignorée
+    var o = {};
+    for (var j = 0; j < champs.length; j++) {
+      var col = entetes.indexOf(champs[j][0]);
+      o[champs[j][0]] = col < 0 ? null : depuisCellule(valeurs[i][col], champs[j][1]);
+    }
+    lignes.push(o);
+  }
+  return lignes;
+}
+
+function depuisCellule(valeur, type) {
+  if (valeur === '' || valeur === null || valeur === undefined) return type === 'json' ? [] : null;
+  if (type === 'bool') return valeur === true || String(valeur).toLowerCase() === 'true' || String(valeur) === '1';
+  if (type === 'num') { var n = Number(valeur); return isNaN(n) ? null : n; }
+  if (type === 'json') { try { return JSON.parse(valeur); } catch (e) { return []; } }
+  if (valeur instanceof Date) return Utilities.formatDate(valeur, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+  return String(valeur);
+}
+
+function versCellule(valeur, type) {
+  if (valeur === undefined || valeur === null) return '';
+  if (type === 'json') return JSON.stringify(valeur);
+  if (type === 'bool') return valeur === true || valeur === 'true';
+  return valeur;
+}
+
+/** Écrit ou remplace une ligne identifiée par sa première colonne. */
+function ecrireLigne(nom, champs, donnees) {
+  var feuille = onglet(nom);
+  var entetes = champs.map(function (c) { return c[0]; });
+  if (feuille.getLastRow() === 0) {
+    feuille.appendRow(entetes);
+    feuille.setFrozenRows(1);
+  }
+  var ligne = champs.map(function (c) { return versCellule(donnees[c[0]], c[1]); });
+  var valeurs = feuille.getDataRange().getValues();
+  for (var i = 1; i < valeurs.length; i++) {
+    if (String(valeurs[i][0]).trim() === String(donnees.id).trim()) {
+      feuille.getRange(i + 1, 1, 1, ligne.length).setValues([ligne]);
+      return { ok: true, cree: false };
+    }
+  }
+  feuille.appendRow(ligne);
+  return { ok: true, cree: true };
+}
+
+function supprimerLigne(nom, id) {
+  var feuille = onglet(nom);
+  var valeurs = feuille.getDataRange().getValues();
+  for (var i = 1; i < valeurs.length; i++) {
+    if (String(valeurs[i][0]).trim() === String(id).trim()) {
+      feuille.deleteRow(i + 1);
+      return true;
+    }
+  }
+  return false;
+}
+
+// ------------------------------ FORMATIONS -------------------------------
+
+function enregistrerFormation(f) {
+  if (!f || !f.id) throw new Error('Identifiant de formation manquant.');
+  if (!f.slug) throw new Error('Le lien (slug) est obligatoire.');
+  if (!f.title) throw new Error('Le titre est obligatoire.');
+  if (!/^[a-z0-9-]+$/.test(f.slug)) {
+    throw new Error('Le lien ne peut contenir que des minuscules, des chiffres et des tirets.');
+  }
+  // Le slug doit rester unique : deux formations ne peuvent pas partager une URL
+  var existantes = lireTable(F_FORMATIONS, CHAMPS_FORMATION);
+  for (var i = 0; i < existantes.length; i++) {
+    if (existantes[i].slug === f.slug && existantes[i].id !== f.id) {
+      throw new Error('Le lien « ' + f.slug + ' » est déjà utilisé par une autre formation.');
+    }
+  }
+  if (!f.formId) f.formId = f.slug;
+  if (!f.href) f.href = '/formations/' + f.slug + '/';
+  var r = ecrireLigne(F_FORMATIONS, CHAMPS_FORMATION, f);
+  return { ok: true, cree: r.cree, catalogue: lireCatalogue() };
+}
+
+/** Une formation ayant des inscrits n'est jamais supprimée sans avertissement. */
+function supprimerFormation(id) {
+  if (!id) throw new Error('Identifiant manquant.');
+  var formations = lireTable(F_FORMATIONS, CHAMPS_FORMATION);
+  var cible = null;
+  for (var i = 0; i < formations.length; i++) if (formations[i].id === id) cible = formations[i];
+  if (!cible) throw new Error('Formation introuvable.');
+
+  var inscrits = compterInscritsFormation(cible.formId);
+  if (inscrits > 0) {
+    throw new Error('Cette formation compte ' + inscrits + ' inscription(s). '
+      + 'Désactivez-la plutôt que de la supprimer, pour ne pas perdre le lien avec ces candidats.');
+  }
+  var sessions = lireTable(F_SESSIONS, CHAMPS_SESSION).filter(function (s) { return s.formId === cible.formId; });
+  for (var j = 0; j < sessions.length; j++) supprimerLigne(F_SESSIONS, sessions[j].id);
+
+  supprimerLigne(F_FORMATIONS, id);
+  return { ok: true, sessionsSupprimees: sessions.length, catalogue: lireCatalogue() };
+}
+
+// ------------------------------- SESSIONS --------------------------------
+
+function enregistrerSession(s) {
+  if (!s || !s.id) throw new Error('Identifiant de session manquant.');
+  if (!s.formId) throw new Error('La session doit être rattachée à une formation.');
+  if (!s.startDate) throw new Error('La date de début est obligatoire.');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s.startDate)) throw new Error('Date de début invalide.');
+  if (s.endDate && !/^\d{4}-\d{2}-\d{2}$/.test(s.endDate)) throw new Error('Date de fin invalide.');
+  if (s.endDate && s.endDate < s.startDate) throw new Error('La date de fin précède la date de début.');
+
+  var formations = lireTable(F_FORMATIONS, CHAMPS_FORMATION);
+  var connue = false;
+  for (var i = 0; i < formations.length; i++) if (formations[i].formId === s.formId) connue = true;
+  if (!connue) throw new Error('Formation « ' + s.formId + ' » inconnue.');
+
+  if (typeof s.placesTotal === 'number' && typeof s.placesAvailable === 'number'
+      && s.placesAvailable > s.placesTotal) {
+    throw new Error('Les places disponibles dépassent le total.');
+  }
+  var r = ecrireLigne(F_SESSIONS, CHAMPS_SESSION, s);
+  return { ok: true, cree: r.cree, catalogue: lireCatalogue() };
+}
+
+function supprimerSession(id) {
+  if (!id) throw new Error('Identifiant manquant.');
+  var inscrits = (compterInscrits()[id] || 0);
+  if (inscrits > 0) {
+    throw new Error('Cette session compte ' + inscrits + ' inscrit(s). '
+      + 'Fermez les inscriptions plutôt que de la supprimer.');
+  }
+  if (!supprimerLigne(F_SESSIONS, id)) throw new Error('Session introuvable.');
+  return { ok: true, catalogue: lireCatalogue() };
+}
+
+// ------------------------------- RÉGLAGES --------------------------------
+
+/** Réglages du site : paires clé / valeur, valeur JSON autorisée. */
+function lireReglages() {
+  var feuille = onglet(F_REGLAGES);
+  var valeurs = feuille.getDataRange().getValues();
+  var o = {};
+  for (var i = 1; i < valeurs.length; i++) {
+    var cle = String(valeurs[i][0] || '').trim();
+    if (!cle) continue;
+    o[cle] = valeurReglage(valeurs[i][1]);
+  }
+  return o;
+}
+
+/**
+ * Interprète une valeur de réglage sans la dénaturer.
+ * Un numéro comme « 25377145306 » ou « 077... » doit rester une chaîne :
+ * le convertir en nombre perdrait un zéro initial et casserait les liens WhatsApp.
+ * Seules les vraies structures JSON (objet, liste, chaîne entre guillemets) sont décodées.
+ */
+function valeurReglage(brut) {
+  if (brut === '' || brut === null || brut === undefined) return null;
+  if (typeof brut !== 'string') return brut;
+  var t = brut.trim();
+  if (t === 'true') return true;
+  if (t === 'false') return false;
+  if (t.charAt(0) === '{' || t.charAt(0) === '[' || t.charAt(0) === '"') {
+    try { return JSON.parse(t); } catch (e) { return brut; }
+  }
+  return brut;
+}
+
+function enregistrerReglages(donnees) {
+  if (!donnees || typeof donnees !== 'object') throw new Error('Réglages invalides.');
+  var feuille = onglet(F_REGLAGES);
+  if (feuille.getLastRow() === 0) {
+    feuille.appendRow(['cle', 'valeur']);
+    feuille.setFrozenRows(1);
+  }
+  var valeurs = feuille.getDataRange().getValues();
+  Object.keys(donnees).forEach(function (cle) {
+    var valeur = typeof donnees[cle] === 'string' ? donnees[cle] : JSON.stringify(donnees[cle]);
+    var trouve = false;
+    for (var i = 1; i < valeurs.length; i++) {
+      if (String(valeurs[i][0]).trim() === cle) { feuille.getRange(i + 1, 2).setValue(valeur); trouve = true; }
+    }
+    if (!trouve) feuille.appendRow([cle, valeur]);
+  });
+  return { ok: true, catalogue: lireCatalogue() };
+}
+
+// ----------------------------- INSCRIPTIONS ------------------------------
+
+/** Réservé au tableau de bord : contient des données personnelles. */
+function lireInscriptions(formationId) {
+  var feuille = onglet(F_INSCRIPTIONS);
+  var valeurs = feuille.getDataRange().getValues();
+  if (valeurs.length < 2) return [];
+  var entetes = valeurs[0].map(function (v) { return String(v).trim(); });
+  var lignes = [];
+  for (var i = valeurs.length - 1; i >= 1; i--) { // les plus récentes d'abord
+    var o = { ligne: i + 1 };
+    for (var j = 0; j < entetes.length; j++) {
+      if (entetes[j] === 'JSON complet') continue;
+      var v = valeurs[i][j];
+      o[entetes[j]] = v instanceof Date ? v.toISOString() : v;
+    }
+    if (formationId && o.formationId !== formationId) continue;
+    lignes.push(o);
+    if (lignes.length >= 500) break; // garde-fou : on ne renvoie jamais un tableau illimité
+  }
+  return lignes;
+}
+
+function changerStatut(ligne, statut) {
+  if (!ligne || ligne < 2) throw new Error('Ligne invalide.');
+  var feuille = onglet(F_INSCRIPTIONS);
+  var entetes = feuille.getRange(1, 1, 1, feuille.getLastColumn()).getValues()[0]
+    .map(function (v) { return String(v).trim(); });
+  var col = entetes.indexOf('statut');
+  if (col < 0) throw new Error('Colonne statut introuvable.');
+  feuille.getRange(ligne, col + 1).setValue(statut);
+  return { ok: true };
+}
+
 function compterInscrits() {
-  var feuille = feuilleInscriptions();
+  var feuille = onglet(F_INSCRIPTIONS);
   var valeurs = feuille.getDataRange().getValues();
   if (valeurs.length < 2) return {};
-
   var entetes = valeurs[0].map(function (v) { return String(v).trim().toLowerCase(); });
   var colSession = entetes.indexOf('sessionid');
   var colStatut = entetes.indexOf('statut');
-  if (colSession < 0) throw new Error('colonne sessionId introuvable');
-
+  if (colSession < 0) return {};
   var compte = {};
   for (var i = 1; i < valeurs.length; i++) {
-    var identifiant = String(valeurs[i][colSession] || '').trim();
-    if (!identifiant) continue; // inscription sans session datée : n'occupe aucune place
+    var id = String(valeurs[i][colSession] || '').trim();
+    if (!id) continue;
     if (STATUTS_COMPTES && colStatut >= 0 &&
         STATUTS_COMPTES.indexOf(String(valeurs[i][colStatut] || '').trim()) === -1) continue;
-    compte[identifiant] = (compte[identifiant] || 0) + 1;
+    compte[id] = (compte[id] || 0) + 1;
   }
   return compte;
 }
 
+function compterInscritsFormation(formId) {
+  var feuille = onglet(F_INSCRIPTIONS);
+  var valeurs = feuille.getDataRange().getValues();
+  if (valeurs.length < 2) return 0;
+  var entetes = valeurs[0].map(function (v) { return String(v).trim().toLowerCase(); });
+  var col = entetes.indexOf('formationid');
+  if (col < 0) return 0;
+  var n = 0;
+  for (var i = 1; i < valeurs.length; i++) {
+    if (String(valeurs[i][col] || '').trim() === String(formId).trim()) n++;
+  }
+  return n;
+}
+
+// ------------------------------- IMPORT ----------------------------------
+
+/**
+ * Reprise initiale : le tableau de bord envoie le catalogue actuel du site
+ * pour amorcer la base. N'écrase que ce qui est envoyé.
+ */
+function importerDepuisSite(donnees) {
+  if (!donnees) throw new Error('Rien à importer.');
+  var nbF = 0, nbS = 0;
+  (donnees.formations || []).forEach(function (f, i) {
+    if (typeof f.ordre !== 'number') f.ordre = i;
+    ecrireLigne(F_FORMATIONS, CHAMPS_FORMATION, f);
+    nbF++;
+  });
+  (donnees.sessions || []).forEach(function (s) {
+    ecrireLigne(F_SESSIONS, CHAMPS_SESSION, s);
+    nbS++;
+  });
+  if (donnees.reglages) enregistrerReglages(donnees.reglages);
+  return { ok: true, formations: nbF, sessions: nbS, catalogue: lireCatalogue() };
+}
+
 // ------------------------------ ALERTE EMAIL -----------------------------
 
-/** Prévient l'adresse professionnelle, avec un lien WhatsApp prêt à envoyer. */
 function envoyerAlerte(d) {
   if (!EMAIL_PRO || EMAIL_PRO.indexOf('À REMPLIR') === 0) return;
-
   var nomComplet = [d.nom, d.prenom].filter(Boolean).join(' ');
   var formation = d.formationTitle || d.formationId || 'Formation non précisée';
   var session = d.sessionLabel || (d.sessionId || 'Session non datée');
-
   var options = { name: NOM_EXPEDITEUR, htmlBody: corpsHtml(d, nomComplet, formation, session) };
   if (d.email && String(d.email).indexOf('@') > 0) options.replyTo = d.email;
-
-  MailApp.sendEmail(
-    EMAIL_PRO,
-    'Nouvelle inscription · ' + formation + ' · ' + nomComplet,
-    texteBrut(d, nomComplet, formation, session),
-    options
-  );
+  MailApp.sendEmail(EMAIL_PRO, 'Nouvelle inscription · ' + formation + ' · ' + nomComplet,
+    texteBrut(d, nomComplet, formation, session), options);
 }
 
-/** Numéro au format WhatsApp : chiffres uniquement, indicatif compris. */
 function numeroWhatsapp(d) {
   return String(d.telephoneInternational || ((d.countryCode || '') + (d.telephone || ''))).replace(/\D/g, '');
 }
@@ -207,21 +543,15 @@ function messageRelance(d, formation, session) {
 
 function lignesRecap(d, nomComplet, formation, session) {
   return [
-    ['Formation', formation],
-    ['Session', session],
-    ['Nom et prénom', nomComplet],
-    ['Téléphone', (d.countryCode || '') + ' ' + (d.telephone || '')],
-    ['Email', d.email || '—'],
+    ['Formation', formation], ['Session', session], ['Nom et prénom', nomComplet],
+    ['Téléphone', (d.countryCode || '') + ' ' + (d.telephone || '')], ['Email', d.email || '—'],
     ['Âge', d.age ? d.age + ' ans' : '—'],
     ['Profession', [d.profession, d.professionDetail].filter(Boolean).join(' · ') || '—'],
-    ['Niveau', d.niveau || d.niveauCanva || '—'],
-    ['Objectifs', d.objectifs || '—'],
-    ['Motivation', d.motivation || '—'],
-    ['Mode de paiement', d.modePaiement || '—'],
+    ['Niveau', d.niveau || d.niveauCanva || '—'], ['Objectifs', d.objectifs || '—'],
+    ['Motivation', d.motivation || '—'], ['Mode de paiement', d.modePaiement || '—'],
     ['Numéro de paiement', d.telPaiement || '—'],
     ['Montant', d.montant ? d.montant + ' ' + (d.currency || '') : '—'],
-    ['Statut', d.statut || '—'],
-    ['Origine', d.source || '—']
+    ['Statut', d.statut || '—'], ['Origine', d.source || '—']
   ];
 }
 
@@ -235,13 +565,11 @@ function texteBrut(d, nomComplet, formation, session) {
 function corpsHtml(d, nomComplet, formation, session) {
   var lien = 'https://wa.me/' + numeroWhatsapp(d) + '?text='
     + encodeURIComponent(messageRelance(d, formation, session));
-
   var rangs = lignesRecap(d, nomComplet, formation, session).map(function (l) {
     return '<tr><td style="padding:8px 14px;border-bottom:1px solid #e6e6e6;color:#5f6368;white-space:nowrap;vertical-align:top">'
       + echapper(l[0]) + '</td><td style="padding:8px 14px;border-bottom:1px solid #e6e6e6;color:#111;font-weight:600">'
       + echapper(l[1]) + '</td></tr>';
   }).join('');
-
   return '<div style="font-family:Arial,Helvetica,sans-serif;max-width:640px;margin:0 auto">'
     + '<div style="background:#050709;padding:20px 24px;border-radius:12px 12px 0 0">'
     + '<p style="margin:0;color:#CBFD00;font-size:12px;letter-spacing:1px;font-weight:700">IMPACTALI</p>'
@@ -259,6 +587,17 @@ function corpsHtml(d, nomComplet, formation, session) {
 
 // -------------------------------- OUTILS ---------------------------------
 
+function classeur() {
+  var c = ID_CLASSEUR ? SpreadsheetApp.openById(ID_CLASSEUR) : SpreadsheetApp.getActiveSpreadsheet();
+  if (!c) throw new Error('Classeur introuvable : vérifiez ID_CLASSEUR.');
+  return c;
+}
+
+function onglet(nom) {
+  var c = classeur();
+  return c.getSheetByName(nom) || c.insertSheet(nom);
+}
+
 /** JSON, ou JavaScript si le site a dû passer par un script (origine croisée bloquée). */
 function repondre(donnees, callback) {
   var corps = JSON.stringify(donnees);
@@ -269,15 +608,15 @@ function repondre(donnees, callback) {
   return ContentService.createTextOutput(corps).setMimeType(ContentService.MimeType.JSON);
 }
 
-function echapper(valeur) {
-  return String(valeur === null || valeur === undefined ? '' : valeur)
+function echapper(v) {
+  return String(v === null || v === undefined ? '' : v)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 /**
  * À exécuter une fois depuis l'éditeur (menu ▶) pour vérifier l'installation :
- * écrit une inscription de test, envoie l'alerte, puis affiche le comptage.
- * Pensez à supprimer la ligne de test dans la feuille ensuite.
+ * crée les onglets, écrit une inscription de test, envoie l'alerte, affiche le
+ * comptage. Pensez à supprimer la ligne de test ensuite depuis le tableau de bord.
  */
 function testerInstallation() {
   var essai = {
@@ -293,5 +632,6 @@ function testerInstallation() {
   enregistrer(essai);
   try { envoyerAlerte(essai); Logger.log('Alerte email envoyée à ' + EMAIL_PRO); }
   catch (err) { Logger.log('Alerte email NON envoyée : ' + err); }
-  Logger.log('Comptage des places : ' + JSON.stringify(compterInscrits()));
+  Logger.log('Comptage : ' + JSON.stringify(compterInscrits()));
+  Logger.log('Mot de passe configuré : ' + (verifierMotDePasse(MOT_DE_PASSE_ADMIN) ? 'oui' : 'NON — changez MOT_DE_PASSE_ADMIN'));
 }
