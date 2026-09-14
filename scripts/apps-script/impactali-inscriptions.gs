@@ -14,8 +14,8 @@
       Le nommer par exemple « IMPACTALI — Inscriptions ».
    2. Dans ce classeur : menu Extensions > Apps Script.
       Le projet créé est rattaché au classeur : ID_CLASSEUR reste vide.
-   3. Coller tout ce fichier à la place du contenu existant,
-      puis renseigner EMAIL_PRO ci-dessous. Enregistrer (icône disquette).
+   3. Coller tout ce fichier à la place du contenu existant, puis enregistrer
+      (icône disquette). Les constantes sont déjà renseignées.
    4. Déployer → Nouveau déploiement → type « Application Web » :
          Exécuter en tant que  : Moi (votre adresse)
          Qui a accès           : Tout le monde
@@ -49,7 +49,7 @@ var ID_CLASSEUR = '';
 var NOM_FEUILLE = 'Inscriptions';
 
 /** Adresse professionnelle qui reçoit l'alerte. Plusieurs adresses : séparer par des virgules. */
-var EMAIL_PRO = 'À REMPLIR@exemple.com';
+var EMAIL_PRO = 'infos@impactali.site';
 
 /** Nom affiché comme expéditeur de l'alerte. */
 var NOM_EXPEDITEUR = 'Inscriptions IMPACTALI';
