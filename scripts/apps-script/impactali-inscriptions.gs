@@ -193,6 +193,8 @@ function commandeAdmin(d) {
       case 'admin.textes.save':      return repondre(enregistrerTextes(d.donnees), null);
       case 'admin.inscriptions':     return repondre({ ok: true, inscriptions: lireInscriptions(d.formationId) }, null);
       case 'admin.inscription.statut': return repondre(changerStatut(d.ligne, d.statut), null);
+      case 'admin.image.upload':     return repondre(televerserImage(d.donnees), null);
+      case 'admin.image.delete':     return repondre(supprimerImage(d.url), null);
       case 'admin.importer':         return repondre(importerDepuisSite(d.donnees), null);
       default: return repondre({ ok: false, erreur: 'Commande inconnue : ' + d.action }, null);
     }
@@ -525,6 +527,75 @@ function compterInscritsFormation(formId) {
     if (String(valeurs[i][col] || '').trim() === String(formId).trim()) n++;
   }
   return n;
+}
+
+// ------------------------------- IMAGES ----------------------------------
+
+/**
+ * Le site est statique : il ne peut pas recevoir de fichier. Les visuels
+ * téléversés depuis le tableau de bord sont donc déposés dans un dossier Drive
+ * et partagés en lecture, puis référencés par leur adresse.
+ *
+ * Le navigateur redimensionne et compresse AVANT d'envoyer : ce qui arrive ici
+ * pèse quelques centaines de kilooctets, jamais la photo brute d'un téléphone.
+ */
+var NOM_DOSSIER_IMAGES = 'IMPACTALI — Images du site';
+var TYPES_IMAGE = ['image/webp', 'image/jpeg', 'image/png'];
+var POIDS_MAX = 6 * 1024 * 1024;
+
+function dossierImages() {
+  var it = DriveApp.getFoldersByName(NOM_DOSSIER_IMAGES);
+  return it.hasNext() ? it.next() : DriveApp.createFolder(NOM_DOSSIER_IMAGES);
+}
+
+function televerserImage(d) {
+  if (!d || !d.base64) throw new Error('Aucune image reçue.');
+  var type = d.type || 'image/webp';
+  if (TYPES_IMAGE.indexOf(type) < 0) throw new Error('Format d’image non accepté.');
+
+  var octets = Utilities.base64Decode(d.base64);
+  if (octets.length > POIDS_MAX) {
+    throw new Error('Image trop lourde (' + Math.round(octets.length / 1024) + ' Ko). Choisissez-en une plus légère.');
+  }
+
+  var extension = type === 'image/jpeg' ? '.jpg' : (type === 'image/png' ? '.png' : '.webp');
+  var nom = (d.nom || 'image').replace(/[^a-zA-Z0-9-]/g, '-').slice(0, 40)
+    + '-' + new Date().getTime() + extension;
+
+  var fichier = dossierImages().createFile(Utilities.newBlob(octets, type, nom));
+  fichier.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+
+  /* Chaque téléversement crée un NOUVEAU fichier, donc une nouvelle adresse :
+     un visuel remplacé s'affiche immédiatement, sans que le cache du navigateur
+     ou de Google ne serve encore l'ancien. */
+  return {
+    ok: true,
+    url: 'https://lh3.googleusercontent.com/d/' + fichier.getId(),
+    secours: 'https://drive.google.com/thumbnail?id=' + fichier.getId() + '&sz=w1200',
+    id: fichier.getId(),
+    poids: octets.length
+  };
+}
+
+/** Retire un visuel remplacé, pour ne pas accumuler de fichiers orphelins. */
+function supprimerImage(url) {
+  var id = identifiantDrive(url);
+  if (!id) return { ok: true, supprime: false };
+  try {
+    DriveApp.getFileById(id).setTrashed(true);
+    return { ok: true, supprime: true };
+  } catch (err) {
+    // Fichier déjà absent ou hors de notre portée : sans conséquence
+    return { ok: true, supprime: false };
+  }
+}
+
+function identifiantDrive(url) {
+  var t = String(url || '');
+  var m = t.match(/googleusercontent\.com\/d\/([A-Za-z0-9_-]{20,})/)
+    || t.match(/[?&]id=([A-Za-z0-9_-]{20,})/)
+    || t.match(/\/d\/([A-Za-z0-9_-]{20,})/);
+  return m ? m[1] : null;
 }
 
 // ------------------------------- IMPORT ----------------------------------

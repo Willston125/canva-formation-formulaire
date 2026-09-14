@@ -412,9 +412,11 @@
       aide: 'Ex. « Canva » donne « Où en es-tu avec Canva ? ». Vide = formulation générique.' },
 
     { section: 'Visuels' },
-    { cle: 'image', libelle: 'Image de la carte', type: 'text', large: true, aide: 'Chemin depuis la racine, ex. /assets/images/formations/mon-image.webp' },
+    { cle: 'image', libelle: 'Image de la carte', type: 'image', format: 'image', large: true,
+      aide: 'Format portrait. L’image est recadrée au centre et compressée automatiquement.' },
     { cle: 'imageAlt', libelle: 'Description de l’image', type: 'text', large: true, aide: 'Lue par les personnes malvoyantes et par Google.' },
-    { cle: 'poster', libelle: 'Affiche de la fiche', type: 'text', large: true, aide: 'Facultative. Par défaut, l’image de la carte est utilisée.' },
+    { cle: 'poster', libelle: 'Affiche de la formation', type: 'image', format: 'poster', large: true,
+      aide: 'Facultative. Sans affiche, l’image de la carte est utilisée sur la fiche.' },
 
     { section: 'Publication' },
     { cle: 'active', libelle: 'Visible sur le site', type: 'bool', defaut: true },
@@ -703,6 +705,142 @@
     URL.revokeObjectURL(lien.href);
   }
 
+  // -------------------------------- IMAGES --------------------------------
+
+  /* Formats attendus par le site. Le navigateur redimensionne à ces mesures
+     avant l'envoi : ce qui part pèse quelques centaines de kilooctets, jamais
+     les huit mégaoctets d'une photo de téléphone. */
+  var FORMATS_IMAGE = {
+    image: { largeur: 760, hauteur: 950, libelle: 'portrait 760 × 950' },
+    poster: { largeur: 1000, hauteur: null, libelle: 'largeur 1000 px, hauteur libre' }
+  };
+
+  /**
+   * Prépare un fichier choisi par l'utilisateur : orientation redressée,
+   * redimensionnement, compression, puis encodage base64.
+   * `imageOrientation: 'from-image'` est indispensable : sans lui, les photos
+   * prises au téléphone arrivent couchées.
+   */
+  function preparerImage(fichier, format) {
+    if (!/^image\//.test(fichier.type)) {
+      return Promise.reject(new Error('Ce fichier n’est pas une image.'));
+    }
+    if (fichier.size > 25 * 1024 * 1024) {
+      return Promise.reject(new Error('Fichier trop lourd (plus de 25 Mo).'));
+    }
+
+    return createImageBitmap(fichier, { imageOrientation: 'from-image' })
+      .catch(function () { return createImageBitmap(fichier); })
+      .catch(function () { throw new Error('Image illisible. Essayez un JPEG ou un PNG.'); })
+      .then(function (bitmap) {
+        var cible = calculerTaille(bitmap.width, bitmap.height, format);
+        var toile = document.createElement('canvas');
+        toile.width = cible.largeur;
+        toile.height = cible.hauteur;
+        var ctx = toile.getContext('2d');
+        ctx.imageSmoothingQuality = 'high';
+        // Recadrage centré : on remplit le cadre sans déformer le sujet
+        ctx.drawImage(bitmap, cible.sx, cible.sy, cible.sw, cible.sh, 0, 0, cible.largeur, cible.hauteur);
+        bitmap.close && bitmap.close();
+
+        return encoder(toile, 'image/webp', 0.82)
+          .catch(function () { return encoder(toile, 'image/jpeg', 0.85); });
+      });
+  }
+
+  function calculerTaille(largeur, hauteur, format) {
+    var f = FORMATS_IMAGE[format] || FORMATS_IMAGE.poster;
+    if (!f.hauteur) {
+      // Hauteur libre : on borne seulement la largeur, sans recadrer
+      var ratio = Math.min(1, f.largeur / largeur);
+      return { largeur: Math.round(largeur * ratio), hauteur: Math.round(hauteur * ratio),
+        sx: 0, sy: 0, sw: largeur, sh: hauteur };
+    }
+    // Cadre imposé : on prend la plus grande zone du bon rapport, centrée
+    var vise = f.largeur / f.hauteur;
+    var actuel = largeur / hauteur;
+    var sw = largeur, sh = hauteur, sx = 0, sy = 0;
+    if (actuel > vise) { sw = Math.round(hauteur * vise); sx = Math.round((largeur - sw) / 2); }
+    else { sh = Math.round(largeur / vise); sy = Math.round((hauteur - sh) / 2); }
+    return { largeur: f.largeur, hauteur: f.hauteur, sx: sx, sy: sy, sw: sw, sh: sh };
+  }
+
+  function encoder(toile, type, qualite) {
+    return new Promise(function (resoudre, rejeter) {
+      toile.toBlob(function (blob) {
+        if (!blob || blob.type !== type) return rejeter(new Error('format non pris en charge'));
+        var lecteur = new FileReader();
+        lecteur.onload = function () {
+          resoudre({ type: type, base64: String(lecteur.result).split(',')[1], poids: blob.size });
+        };
+        lecteur.onerror = function () { rejeter(new Error('lecture impossible')); };
+        lecteur.readAsDataURL(blob);
+      }, type, qualite);
+    });
+  }
+
+  /** Câble un champ image : choix du fichier, aperçu, envoi, retrait. */
+  function activerChampImage(cle, format) {
+    var zone = document.getElementById('image-' + cle);
+    if (!zone) return;
+    var champ = document.getElementById('champ-' + cle);
+    var entree = zone.querySelector('input[type="file"]');
+    var etatEl = zone.querySelector('.image__etat');
+    var apercu = zone.querySelector('.image__apercu');
+    var retirer = zone.querySelector('[data-retirer]');
+
+    var rafraichir = function () {
+      var url = champ.value.trim();
+      apercu.innerHTML = url
+        ? '<img src="' + echapper(url) + '" alt="Aperçu" loading="lazy">'
+        : '<span class="material-symbols-outlined" aria-hidden="true">add_photo_alternate</span>';
+      retirer.hidden = !url;
+    };
+    rafraichir();
+
+    retirer.addEventListener('click', function () {
+      var ancienne = champ.value.trim();
+      champ.value = '';
+      rafraichir();
+      etatEl.textContent = 'Visuel retiré. Enregistrez pour valider.';
+      if (/googleusercontent|drive\.google/.test(ancienne)) {
+        appeler('admin.image.delete', { url: ancienne }).catch(function () { });
+      }
+    });
+
+    entree.addEventListener('change', function () {
+      var fichier = entree.files && entree.files[0];
+      if (!fichier) return;
+      var ancienne = champ.value.trim();
+      etatEl.textContent = 'Préparation de l’image…';
+      entree.disabled = true;
+
+      preparerImage(fichier, format)
+        .then(function (prete) {
+          etatEl.textContent = 'Envoi (' + Math.round(prete.poids / 1024) + ' Ko)…';
+          return appeler('admin.image.upload', {
+            donnees: { base64: prete.base64, type: prete.type, nom: fichier.name.replace(/\.[^.]+$/, '') }
+          });
+        })
+        .then(function (reponse) {
+          champ.value = reponse.url;
+          rafraichir();
+          etatEl.textContent = 'Image envoyée. Enregistrez pour l’appliquer.';
+          entree.disabled = false;
+          entree.value = '';
+          // Le visuel remplacé n'a plus d'usage : on ne laisse pas de fichiers orphelins
+          if (ancienne && ancienne !== reponse.url && /googleusercontent|drive\.google/.test(ancienne)) {
+            appeler('admin.image.delete', { url: ancienne }).catch(function () { });
+          }
+        })
+        .catch(function (err) {
+          etatEl.textContent = messageLisible(err);
+          entree.disabled = false;
+          entree.value = '';
+        });
+    });
+  }
+
   // ---------------------------- TEXTES DU SITE ---------------------------
 
   /**
@@ -900,7 +1038,8 @@
       });
     };
     $('#panneau-form').addEventListener('submit', validerCourant);
-    var premier = $('#panneau-form input, #panneau-form select, #panneau-form textarea');
+    champs.forEach(function (c) { if (c.type === 'image') activerChampImage(c.cle, c.format); });
+    var premier = $('#panneau-form input:not([type=hidden]), #panneau-form select, #panneau-form textarea');
     if (premier) premier.focus();
   }
 
@@ -923,6 +1062,22 @@
       if (v === undefined || v === null) v = c.defaut !== undefined ? c.defaut : '';
       var id = 'champ-' + c.cle;
       var classe = 'champ' + (c.large || c.type === 'textarea' || c.type === 'lignes' || c.type === 'objectifs' ? ' pleine-largeur' : '');
+
+      if (c.type === 'image') {
+        html += '<div class="champ pleine-largeur"><span class="champ__label">' + echapper(c.libelle) + '</span>'
+          + '<div class="image" id="image-' + c.cle + '">'
+          + '<div class="image__apercu"></div>'
+          + '<div class="image__actions">'
+          + '<label class="bouton bouton--discret bouton--petit">'
+          + '<span class="material-symbols-outlined" aria-hidden="true">upload</span>Choisir une image'
+          + '<input type="file" accept="image/*" hidden></label>'
+          + '<button type="button" class="bouton bouton--discret bouton--petit" data-retirer hidden>Retirer</button>'
+          + '</div><p class="image__etat" role="status"></p></div>'
+          + '<input type="hidden" id="' + id + '" value="' + echapper(v) + '">'
+          + (c.aide ? '<span class="champ__aide">' + echapper(c.aide) + '</span>' : '')
+          + '</div>';
+        return;
+      }
 
       if (c.type === 'bool') {
         html += '<label class="case pleine-largeur"><input type="checkbox" id="' + id + '"'
