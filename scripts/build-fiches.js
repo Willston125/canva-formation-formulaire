@@ -12,6 +12,9 @@ const sandbox = { window: {} };
 vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'formations-data.js'), 'utf8'), sandbox);
 const FORMATIONS = sandbox.window.FORMATIONS || [];
 
+/** Adresse absolue pour les aperçus de partage : une image déjà absolue (Drive) est laissée telle quelle. */
+const absolue = u => (/^https?:/i.test(String(u || '')) ? String(u) : SITE_URL + String(u || ''));
+
 const esc = value => String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;')
   .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const known = value => typeof value === 'string' && value.trim() && !/^à confirmer$/i.test(value.trim());
@@ -99,11 +102,11 @@ function render(template, f) {
   html = setMeta(html, 'property="og:url"', url);
   html = setMeta(html, 'property="og:title"', `${f.title} — Fiche formation & inscription`);
   html = setMeta(html, 'property="og:description"', f.shortDescription);
-  html = setMeta(html, 'property="og:image"', `${SITE_URL}${f.image}`);
+  html = setMeta(html, 'property="og:image"', absolue(f.image));
   html = setMeta(html, 'property="twitter:url"', url);
   html = setMeta(html, 'property="twitter:title"', `${f.title} — Fiche formation & inscription`);
   html = setMeta(html, 'property="twitter:description"', f.shortDescription);
-  html = setMeta(html, 'property="twitter:image"', `${SITE_URL}${f.image}`);
+  html = setMeta(html, 'property="twitter:image"', absolue(f.image));
   html = html.replace(/<link rel="canonical" href="[^"]+">/i, `<link rel="canonical" href="${url}">`);
   html = html.replaceAll('data-register-formation="canva-pro"', `data-register-formation="${esc(f.formId)}"`);
   html = html.replaceAll('/formations/canva-pro/#inscription', `/formations/${f.slug}/#inscription`);

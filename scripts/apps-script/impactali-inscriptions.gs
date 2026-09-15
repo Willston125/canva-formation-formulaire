@@ -26,6 +26,14 @@
 
 // ----------------------------- CONFIGURATION -----------------------------
 
+/**
+ * Version de ce script. Le tableau de bord l'affiche : si le numéro qui y
+ * apparaît ne correspond pas à celui-ci, c'est qu'une NOUVELLE VERSION du
+ * déploiement n'a pas été publiée, et Google sert encore l'ancien code.
+ * C'est l'erreur la plus fréquente, et la plus difficile à diagnostiquer.
+ */
+var VERSION = '2026-09-15-images';
+
 /** Classeur. Vide = le classeur auquel ce script est rattaché (cas normal). */
 var ID_CLASSEUR = '';
 
@@ -183,7 +191,7 @@ function commandeAdmin(d) {
 
   try {
     switch (d.action) {
-      case 'admin.login':        return repondre({ ok: true, catalogue: lireCatalogue() }, null);
+      case 'admin.login':        return repondre({ ok: true, version: VERSION, catalogue: lireCatalogue() }, null);
       case 'admin.catalogue':    return repondre({ ok: true, catalogue: lireCatalogue() }, null);
       case 'admin.formation.save':   return repondre(enregistrerFormation(d.donnees), null);
       case 'admin.formation.delete': return repondre(supprimerFormation(d.id), null);
@@ -343,6 +351,9 @@ function supprimerFormation(id) {
   }
   var sessions = lireTable(F_SESSIONS, CHAMPS_SESSION).filter(function (s) { return s.formId === cible.formId; });
   for (var j = 0; j < sessions.length; j++) supprimerLigne(F_SESSIONS, sessions[j].id);
+
+  // Les visuels de cette formation n'ont plus d'usage : ne pas les laisser dans Drive
+  try { supprimerImage(cible.image); supprimerImage(cible.poster); } catch (err) { }
 
   supprimerLigne(F_FORMATIONS, id);
   return { ok: true, sessionsSupprimees: sessions.length, catalogue: lireCatalogue() };
@@ -541,11 +552,37 @@ function compterInscritsFormation(formId) {
  */
 var NOM_DOSSIER_IMAGES = 'IMPACTALI — Images du site';
 var TYPES_IMAGE = ['image/webp', 'image/jpeg', 'image/png'];
-var POIDS_MAX = 6 * 1024 * 1024;
+/* Le navigateur redimensionne et compresse avant d'envoyer : au-delà de ce
+   poids, quelque chose ne s'est pas passé comme prévu. */
+var POIDS_MAX = 1.5 * 1024 * 1024;
 
+/**
+ * Dossier de dépôt. L'identifiant est mémorisé : chercher par nom retrouverait
+ * aussi un dossier MIS À LA CORBEILLE, et les images y seraient déposées pour
+ * être définitivement effacées trente jours plus tard, sans le moindre message.
+ */
 function dossierImages() {
+  var proprietes = PropertiesService.getScriptProperties();
+  var id = proprietes.getProperty('dossierImages');
+
+  if (id) {
+    try {
+      var connu = DriveApp.getFolderById(id);
+      if (!connu.isTrashed()) return connu;
+    } catch (err) { /* dossier disparu : on en refait un */ }
+  }
+
   var it = DriveApp.getFoldersByName(NOM_DOSSIER_IMAGES);
-  return it.hasNext() ? it.next() : DriveApp.createFolder(NOM_DOSSIER_IMAGES);
+  while (it.hasNext()) {
+    var trouve = it.next();
+    if (trouve.isTrashed()) continue;
+    proprietes.setProperty('dossierImages', trouve.getId());
+    return trouve;
+  }
+
+  var neuf = DriveApp.createFolder(NOM_DOSSIER_IMAGES);
+  proprietes.setProperty('dossierImages', neuf.getId());
+  return neuf;
 }
 
 function televerserImage(d) {
@@ -553,11 +590,15 @@ function televerserImage(d) {
   var type = d.type || 'image/webp';
   if (TYPES_IMAGE.indexOf(type) < 0) throw new Error('Format d’image non accepté.');
 
-  var octets = Utilities.base64Decode(d.base64);
-  if (octets.length > POIDS_MAX) {
-    throw new Error('Image trop lourde (' + Math.round(octets.length / 1024) + ' Ko). Choisissez-en une plus légère.');
+  /* Le poids est contrôlé AVANT le décodage : vérifier après aurait déjà
+     consommé la mémoire que le garde-fou est censé protéger. */
+  var poidsEstime = Math.floor(String(d.base64).length * 3 / 4);
+  if (poidsEstime > POIDS_MAX) {
+    throw new Error('Image trop lourde (' + Math.round(poidsEstime / 1024) + ' Ko pour '
+      + Math.round(POIDS_MAX / 1024) + ' Ko autorisés).');
   }
 
+  var octets = Utilities.base64Decode(d.base64);
   var extension = type === 'image/jpeg' ? '.jpg' : (type === 'image/png' ? '.png' : '.webp');
   var nom = (d.nom || 'image').replace(/[^a-zA-Z0-9-]/g, '-').slice(0, 40)
     + '-' + new Date().getTime() + extension;
@@ -567,14 +608,29 @@ function televerserImage(d) {
 
   /* Chaque téléversement crée un NOUVEAU fichier, donc une nouvelle adresse :
      un visuel remplacé s'affiche immédiatement, sans que le cache du navigateur
-     ou de Google ne serve encore l'ancien. */
+     ou de Google ne serve encore l'ancien.
+
+     Le suffixe demande à Google la largeur utile et une sortie WebP : l'image
+     servie pèse environ moitié moins que l'originale. */
+  var largeur = d.format === 'image' ? 760 : 1200;
   return {
     ok: true,
-    url: 'https://lh3.googleusercontent.com/d/' + fichier.getId(),
-    secours: 'https://drive.google.com/thumbnail?id=' + fichier.getId() + '&sz=w1200',
+    url: urlImageDrive(fichier.getId(), largeur),
+    secours: 'https://drive.google.com/thumbnail?id=' + fichier.getId() + '&sz=w' + largeur,
     id: fichier.getId(),
     poids: octets.length
   };
+}
+
+/**
+ * Seule forme d'adresse qui s'affiche dans une balise <img> d'un autre domaine.
+ * Les anciennes formes « uc?export=view » sont refusées par Google depuis 2024
+ * dès que la requête vient d'un autre site — alors qu'elles s'ouvrent
+ * normalement dans la barre d'adresse, ce qui rend la panne invisible à qui
+ * la vérifie ainsi.
+ */
+function urlImageDrive(id, largeur) {
+  return 'https://lh3.googleusercontent.com/d/' + id + '=w' + (largeur || 1200) + '-rw';
 }
 
 /** Retire un visuel remplacé, pour ne pas accumuler de fichiers orphelins. */
@@ -736,4 +792,16 @@ function testerInstallation() {
   catch (err) { Logger.log('Alerte email NON envoyée : ' + err); }
   Logger.log('Comptage : ' + JSON.stringify(compterInscrits()));
   Logger.log('Mot de passe configuré : ' + (verifierMotDePasse(MOT_DE_PASSE_ADMIN) ? 'oui' : 'NON — changez MOT_DE_PASSE_ADMIN'));
+
+  /* Touche Drive volontairement : c'est ce qui déclenche l'écran d'autorisation.
+     Sans cette exécution préalable, le premier téléversement depuis le tableau
+     de bord échouerait, Google n'ayant jamais demandé le consentement. */
+  try {
+    var dossier = dossierImages();
+    Logger.log('Dossier des images : ' + dossier.getName() + ' (' + dossier.getId() + ')');
+    Logger.log('Autorisation Drive : accordée.');
+  } catch (err) {
+    Logger.log('Autorisation Drive NON accordée : ' + err);
+  }
+  Logger.log('Version du script : ' + VERSION);
 }

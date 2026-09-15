@@ -106,7 +106,10 @@
     function appliquerCatalogue(donnees) {
         if (!donnees || !Array.isArray(donnees.formations) || !donnees.formations.length) return false;
 
-        FORMATIONS = donnees.formations;
+        FORMATIONS = donnees.formations.map(formation => Object.assign({}, formation, {
+            image: normaliserImage(formation.image, 760),
+            poster: normaliserImage(formation.poster, 1200)
+        }));
         SESSIONS = Array.isArray(donnees.sessions) ? donnees.sessions : [];
         window.FORMATIONS = FORMATIONS;
         window.SESSIONS = SESSIONS;
@@ -118,6 +121,57 @@
         placesEnDirect.clear();
         document.dispatchEvent(new CustomEvent('impactali:catalogue'));
         return true;
+    }
+
+    /* ---------- Visuels hébergés sur Google Drive ----------
+       Une seule forme d'adresse s'affiche dans une balise <img> venant d'un
+       autre domaine. Les anciennes formes « uc?export=view » sont refusées par
+       Google depuis 2024 dès que la requête provient d'un autre site — alors
+       qu'elles s'ouvrent normalement dans la barre d'adresse, ce qui rend la
+       panne invisible à qui les vérifie ainsi.
+
+       Toute adresse Drive est donc ramenée ici à la forme qui fonctionne, avec
+       la largeur utile : si Google change encore de règle, une seule fonction
+       est à reprendre. */
+    function normaliserImage(url, largeur) {
+        const texte = String(url || '').trim();
+        if (!texte || !/drive\.google|googleusercontent/.test(texte)) return url;
+        const id = identifiantDrive(texte);
+        if (!id) return url;
+        return `https://lh3.googleusercontent.com/d/${id}=w${largeur || 1200}-rw`;
+    }
+
+    function identifiantDrive(url) {
+        const t = String(url || '');
+        const m = t.match(/googleusercontent\.com\/d\/([A-Za-z0-9_-]{20,})/)
+            || t.match(/[?&]id=([A-Za-z0-9_-]{20,})/)
+            || t.match(/\/d\/([A-Za-z0-9_-]{20,})/);
+        return m ? m[1] : null;
+    }
+
+    /**
+     * Repli d'affichage. L'événement `error` d'une image ne remonte pas :
+     * on l'écoute donc en phase de capture, une fois pour tout le document,
+     * ce qui couvre aussi les cartes créées en JavaScript.
+     */
+    function initReplisImages() {
+        document.addEventListener('error', event => {
+            const img = event.target;
+            if (!img || img.tagName !== 'IMG' || img.dataset.repli === 'fini') return;
+            const id = identifiantDrive(img.src);
+            if (!id) return;
+
+            if (!img.dataset.repli) {
+                // Passe par le redirecteur de Drive, plus lent mais parfois plus tolérant
+                img.dataset.repli = 'thumbnail';
+                img.src = `https://drive.google.com/thumbnail?id=${id}&sz=w1200`;
+                return;
+            }
+            // Toujours rien : on cesse d'essayer plutôt que de boucler
+            img.dataset.repli = 'fini';
+            img.removeAttribute('src');
+            img.alt = img.alt || 'Visuel indisponible';
+        }, true);
     }
 
     /**
@@ -405,6 +459,7 @@
         initAccordions();
         initScrollReveals();
         initWhatsappLinks();
+        initReplisImages();
         // Les pages s'affichent avec les valeurs du fichier ; le relevé réel arrive ensuite
         // et déclenche « impactali:places », que chaque page écoute pour se corriger.
         refreshPlaces();

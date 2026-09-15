@@ -16,7 +16,9 @@
     catalogue: { formations: [], sessions: [], reglages: {} },
     inscriptions: [],
     vue: 'apercu',
-    filtreInscriptions: ''
+    filtreInscriptions: '',
+    /** Visuels remplacés, mis à la corbeille seulement après enregistrement. */
+    imagesARetirer: []
   };
 
   // ------------------------------- OUTILS --------------------------------
@@ -450,6 +452,7 @@
         valeurs.href = '/inscription/?trainingId=' + encodeURIComponent(valeurs.formId);
       }
       appeler('admin.formation.save', { donnees: valeurs }).then(function (d) {
+        viderCorbeilleImages();
         fermerPanneau();
         afficherMessage('#succes-globale', d.cree
           ? 'Formation créée. Elle apparaît sur le site dans la minute.'
@@ -722,6 +725,13 @@
    * prises au téléphone arrivent couchées.
    */
   function preparerImage(fichier, format) {
+    // Les photos d'iPhone sont souvent en HEIC : le navigateur ne sait pas les lire
+    if (/\.hei[cf]$/i.test(fichier.name) || /image\/hei[cf]/i.test(fichier.type)) {
+      return Promise.reject(new Error(
+        'Photo au format iPhone (HEIC), que le navigateur ne sait pas ouvrir. '
+        + 'Dans Réglages → Appareil photo → Formats, choisissez « Le plus compatible », '
+        + 'ou envoyez-vous la photo par email, ce qui la convertit en JPEG.'));
+    }
     if (!/^image\//.test(fichier.type)) {
       return Promise.reject(new Error('Ce fichier n’est pas une image.'));
     }
@@ -729,8 +739,22 @@
       return Promise.reject(new Error('Fichier trop lourd (plus de 25 Mo).'));
     }
 
-    return createImageBitmap(fichier, { imageOrientation: 'from-image' })
-      .catch(function () { return createImageBitmap(fichier); })
+    /* `imageOrientation` est indispensable : sans lui, les photos arrivent couchées.
+       Aucun repli sans cette option : un résultat faux en silence — image tournée,
+       recadrée au mauvais endroit — est pire qu'une erreur affichée.
+
+       Pour un fichier lourd, on ajoute `resizeWidth` : le sous-échantillonnage a
+       alors lieu PENDANT le décodage, et le bitmap en pleine résolution n'existe
+       jamais. Sans cela, une photo de 48 mégapixels réserve près de 200 Mo et fait
+       tomber l'onglet. On ne l'applique pas aux petits fichiers, car cette option
+       redimensionne à la valeur demandée — y compris vers le haut. */
+    var options = { imageOrientation: 'from-image' };
+    if (fichier.size > 3 * 1024 * 1024) {
+      options.resizeWidth = 2000;
+      options.resizeQuality = 'high';
+    }
+
+    return createImageBitmap(fichier, options)
       .catch(function () { throw new Error('Image illisible. Essayez un JPEG ou un PNG.'); })
       .then(function (bitmap) {
         var cible = calculerTaille(bitmap.width, bitmap.height, format);
@@ -779,6 +803,26 @@
     });
   }
 
+  /**
+   * Visuels remplacés en cours d'édition. Ils ne partent à la corbeille
+   * qu'APRÈS l'enregistrement : si la personne renonce, la fiche doit retrouver
+   * son image d'origine intacte.
+   */
+  function aRetirer(url) {
+    url = String(url || '').trim();
+    if (!url || !/googleusercontent|drive\.google/.test(url)) return;
+    if (etat.imagesARetirer.indexOf(url) < 0) etat.imagesARetirer.push(url);
+  }
+
+  /** Après un enregistrement réussi : on nettoie réellement. */
+  function viderCorbeilleImages() {
+    var liste = etat.imagesARetirer.slice();
+    etat.imagesARetirer = [];
+    liste.forEach(function (url) {
+      appeler('admin.image.delete', { url: url }).catch(function () { });
+    });
+  }
+
   /** Câble un champ image : choix du fichier, aperçu, envoi, retrait. */
   function activerChampImage(cle, format) {
     var zone = document.getElementById('image-' + cle);
@@ -799,13 +843,10 @@
     rafraichir();
 
     retirer.addEventListener('click', function () {
-      var ancienne = champ.value.trim();
+      aRetirer(champ.value.trim());
       champ.value = '';
       rafraichir();
       etatEl.textContent = 'Visuel retiré. Enregistrez pour valider.';
-      if (/googleusercontent|drive\.google/.test(ancienne)) {
-        appeler('admin.image.delete', { url: ancienne }).catch(function () { });
-      }
     });
 
     entree.addEventListener('change', function () {
@@ -819,7 +860,10 @@
         .then(function (prete) {
           etatEl.textContent = 'Envoi (' + Math.round(prete.poids / 1024) + ' Ko)…';
           return appeler('admin.image.upload', {
-            donnees: { base64: prete.base64, type: prete.type, nom: fichier.name.replace(/\.[^.]+$/, '') }
+            donnees: {
+              base64: prete.base64, type: prete.type, format: format,
+              nom: fichier.name.replace(/\.[^.]+$/, '')
+            }
           });
         })
         .then(function (reponse) {
@@ -828,10 +872,7 @@
           etatEl.textContent = 'Image envoyée. Enregistrez pour l’appliquer.';
           entree.disabled = false;
           entree.value = '';
-          // Le visuel remplacé n'a plus d'usage : on ne laisse pas de fichiers orphelins
-          if (ancienne && ancienne !== reponse.url && /googleusercontent|drive\.google/.test(ancienne)) {
-            appeler('admin.image.delete', { url: ancienne }).catch(function () { });
-          }
+          if (ancienne !== reponse.url) aRetirer(ancienne);
         })
         .catch(function (err) {
           etatEl.textContent = messageLisible(err);
@@ -1044,6 +1085,8 @@
   }
 
   function fermerPanneau() {
+    // Édition abandonnée : les visuels remplacés restent en place
+    etat.imagesARetirer = [];
     if (validerCourant) $('#panneau-form').removeEventListener('submit', validerCourant);
     validerCourant = null;
     $('#panneau').hidden = true;
@@ -1070,7 +1113,7 @@
           + '<div class="image__actions">'
           + '<label class="bouton bouton--discret bouton--petit">'
           + '<span class="material-symbols-outlined" aria-hidden="true">upload</span>Choisir une image'
-          + '<input type="file" accept="image/*" hidden></label>'
+          + '<input type="file" accept="image/jpeg,image/png,image/webp" hidden></label>'
           + '<button type="button" class="bouton bouton--discret bouton--petit" data-retirer hidden>Retirer</button>'
           + '</div><p class="image__etat" role="status"></p></div>'
           + '<input type="hidden" id="' + id + '" value="' + echapper(v) + '">'
