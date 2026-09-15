@@ -14,10 +14,21 @@
    2. Remplacer tout le contenu par ce fichier.
    3. Renseigner MOT_DE_PASSE_ADMIN ci-dessous (c'est le mot de passe du
       tableau de bord). Enregistrer.
-   4. Déployer → Gérer les déploiements → crayon → Nouvelle version → Déployer.
+   4. DÉCLARER LES PERMISSIONS — étape indispensable dès qu'on ajoute un
+      service Google à un projet déjà autorisé : Apps Script conserve sinon les
+      anciennes permissions et n'en redemande jamais, ce qui produit une erreur
+      « You do not have permission to call DriveApp… ».
+      Aller dans ⚙ Paramètres du projet, cocher « Afficher le fichier manifeste
+      appsscript.json dans l'éditeur », ouvrir ce fichier et y recopier le
+      contenu de scripts/apps-script/appsscript.json. Enregistrer.
+   5. Lancer testerInstallation (menu déroulant du haut, puis ▶). Google demande
+      alors l'autorisation, Drive compris. Le journal doit afficher
+      « Autorisation Drive : accordée. »
+   6. Déployer → Gérer les déploiements → crayon → Nouvelle version → Déployer.
       Sans nouvelle version, Google continue de servir l'ancienne.
       Conserver : Exécuter en tant que « Moi », Qui a accès « Tout le monde ».
-   5. Vérifier : https://VOTRE_URL/exec?action=catalogue doit répondre du JSON.
+   7. Vérifier : https://VOTRE_URL/exec?action=version doit répondre
+      « drive: true ».
 
    Les onglets Formations, Sessions, Reglages et Inscriptions sont créés
    automatiquement au premier usage. Vous n'avez jamais à les ouvrir : tout
@@ -576,13 +587,19 @@ function dossierImages() {
     } catch (err) { /* dossier disparu : on en refait un */ }
   }
 
-  var it = DriveApp.getFoldersByName(NOM_DOSSIER_IMAGES);
-  while (it.hasNext()) {
-    var trouve = it.next();
-    if (trouve.isTrashed()) continue;
-    proprietes.setProperty('dossierImages', trouve.getId());
-    return trouve;
-  }
+  /* Recherche par nom : elle explore tout le Drive, ce que la permission
+     restreinte « fichiers créés par l'application » n'autorise pas. On l'essaie
+     sans en dépendre — un dossier oublié est ainsi retrouvé quand c'est
+     possible, sans exiger un accès à l'ensemble des documents de l'utilisateur. */
+  try {
+    var it = DriveApp.getFoldersByName(NOM_DOSSIER_IMAGES);
+    while (it.hasNext()) {
+      var trouve = it.next();
+      if (trouve.isTrashed()) continue;
+      proprietes.setProperty('dossierImages', trouve.getId());
+      return trouve;
+    }
+  } catch (err) { /* permission restreinte : on crée notre propre dossier */ }
 
   var neuf = DriveApp.createFolder(NOM_DOSSIER_IMAGES);
   proprietes.setProperty('dossierImages', neuf.getId());
