@@ -220,7 +220,37 @@
     var importer = $('#btn-importer');
     if (importer) importer.addEventListener('click', importerCatalogueDuSite);
 
+    afficherEtatDuScript();
     rafraichirTout();
+  }
+
+  /**
+   * Affiche, en pied de menu, la version du script réellement servie par Google
+   * et l'état de l'autorisation Drive. Sans cela, « j'ai collé le code mais rien
+   * ne change » est indiscernable d'un défaut du tableau de bord.
+   */
+  function afficherEtatDuScript() {
+    var pied = $('#etat-script');
+    if (!pied || !API) return;
+    fetch(API + (API.indexOf('?') >= 0 ? '&' : '?') + 'action=version', { method: 'GET' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (d) {
+        if (!d || !d.version) {
+          pied.innerHTML = '<span class="etiquette etiquette--alerte">Script à mettre à jour</span>';
+          return;
+        }
+        var drive = d.drive
+          ? '<span class="etiquette etiquette--ouvert">Drive autorisé</span>'
+          : '<span class="etiquette etiquette--alerte">Drive non autorisé</span>';
+        pied.innerHTML = drive + '<span class="etat-script__version">script ' + echapper(d.version) + '</span>';
+        if (!d.drive) {
+          afficherMessage('#erreur-globale',
+            'L’envoi d’images ne fonctionnera pas : l’autorisation Google Drive n’a pas été accordée. '
+            + 'Dans l’éditeur Apps Script, lancez la fonction testerInstallation, acceptez l’autorisation, '
+            + 'puis republiez une nouvelle version du déploiement.');
+        }
+      })
+      .catch(function () { /* diagnostic indisponible : sans conséquence */ });
   }
 
   function rafraichirTout() {

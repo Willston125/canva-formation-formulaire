@@ -568,3 +568,14 @@ select.statut:focus { outline: none; border-color: var(--brand); }
   .image { grid-template-columns: 1fr; justify-items: start; }
   .image__etat { grid-column: 1; }
 }
+
+/* Diagnostic du script Google, en pied de menu */
+.etat-script {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 13px 4px;
+  font-size: 0.72rem;
+}
+.etat-script__version { color: var(--texte-faible); }

@@ -125,6 +125,10 @@ function doGet(e) {
   try {
     if (p.action === 'places') return repondre({ sessions: compterInscrits() }, p.callback);
     if (p.action === 'catalogue') return repondre(lireCatalogue(), p.callback);
+    /* Diagnostic : dit quelle version du script est réellement servie, et si
+       l'autorisation Drive a été accordée. Ne révèle rien de sensible, et évite
+       d'avoir à deviner pourquoi une nouveauté « ne marche pas ». */
+    if (p.action === 'version') return repondre(etatDuScript(), p.callback);
     return repondre({ erreur: 'action inconnue' }, p.callback);
   } catch (err) {
     return repondre({ erreur: String(err) }, p.callback);
@@ -619,6 +623,28 @@ function televerserImage(d) {
     secours: 'https://drive.google.com/thumbnail?id=' + fichier.getId() + '&sz=w' + largeur,
     id: fichier.getId(),
     poids: octets.length
+  };
+}
+
+/**
+ * État du script tel qu'il est RÉELLEMENT déployé.
+ * `drive` vaut false tant que l'autorisation n'a pas été accordée : c'est le
+ * seul moyen fiable de le savoir sans tenter un vrai téléversement.
+ */
+function etatDuScript() {
+  var drive = false, detail = '';
+  try {
+    dossierImages();
+    drive = true;
+  } catch (err) {
+    detail = String(err).slice(0, 120);
+  }
+  return {
+    version: VERSION,
+    drive: drive,
+    driveDetail: detail,
+    motDePasseConfigure: MOT_DE_PASSE_ADMIN !== 'CHANGEZ-MOI-avant-de-deployer' && !!MOT_DE_PASSE_ADMIN,
+    email: EMAIL_PRO
   };
 }
 
