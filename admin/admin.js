@@ -421,8 +421,18 @@
   function rendrePays() {
     var p = listePays();
     if (!p.length) {
-      $('#liste-pays').innerHTML = vide('public',
-        'Aucun pays. Importez le catalogue du site depuis la vue d’ensemble, ou créez-en un.');
+      /* Base créée avant les pays : les formations sont déjà là, donc l'import
+         général de la vue d'ensemble est masqué. On propose ici un amorçage qui
+         n'écrit QUE les pays — le catalogue tenu à jour ici n'est pas touché. */
+      $('#liste-pays').innerHTML = '<div class="bloc"><h2>Aucun pays enregistré</h2>'
+        + '<p class="aide">Les pays portent la devise, l’indicatif, le format des numéros et les moyens '
+        + 'de paiement. Reprenez ceux du site pour démarrer — vos formations et sessions ne sont pas '
+        + 'modifiées — puis ajustez les tarifs formation par formation.</p>'
+        + '<button class="bouton bouton--primaire" type="button" id="btn-importer-pays">'
+        + '<span class="material-symbols-outlined" aria-hidden="true">download</span>'
+        + 'Reprendre les pays du site</button></div>';
+      var b = $('#btn-importer-pays');
+      if (b) b.addEventListener('click', function () { importerPaysDuSite(b); });
       return;
     }
     $('#liste-pays').innerHTML = tableau(
@@ -453,6 +463,29 @@
     });
     $$('[data-supprimer-pays]').forEach(function (b) {
       b.addEventListener('click', function () { demanderSuppressionPays(b.dataset.supprimerPays); });
+    });
+  }
+
+  /** Reprend les pays déclarés dans le fichier du site, sans toucher au reste. */
+  function importerPaysDuSite(bouton) {
+    var pays = (window.PAYS || []).map(function (p, i) {
+      var copie = Object.assign({}, p);
+      copie.paymentMethods = (p.paymentMethods || []).map(function (m) { return Object.assign({}, m); });
+      if (typeof copie.ordre !== 'number') copie.ordre = i;
+      return copie;
+    });
+    if (!pays.length) {
+      afficherMessage('#erreur-globale', 'Le fichier du site ne déclare aucun pays.', 6000);
+      return;
+    }
+    bouton.disabled = true;
+    appeler('admin.importer', { donnees: { pays: pays } }).then(function (d) {
+      afficherMessage('#succes-globale', (d.pays || 0) + ' pays repris. '
+        + 'Saisissez maintenant les tarifs de chaque formation.', 7000);
+      rendre();
+    }).catch(function (err) {
+      bouton.disabled = false;
+      afficherMessage('#erreur-globale', messageLisible(err), 9000);
     });
   }
 
