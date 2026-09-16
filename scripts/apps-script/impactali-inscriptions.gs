@@ -8,6 +8,25 @@
    projet qui traite les QCM étudiants.
 
    ---------------------------------------------------------------------------
+   PREMIÈRE INSTALLATION (nouveau compte Google, nouveau classeur)
+
+   A. Depuis le compte qui hébergera le site, créer un classeur Google Sheets
+      vide, nommé par exemple « IMPACTALI — Base du site ». N'y créer aucun
+      onglet : le script les crée lui-même au premier usage.
+   B. Dans ce classeur : Extensions → Apps Script. Un projet vide s'ouvre,
+      déjà rattaché au classeur — c'est ce rattachement qui permet de laisser
+      ID_CLASSEUR vide ci-dessous.
+   C. Poursuivre à l'étape 2 ci-dessous.
+   D. Une fois déployé, reporter l'adresse /exec obtenue dans
+      `window.SITE_ENDPOINTS.registration` (fichier formations-data.js), puis
+      publier le site. Enfin, ouvrir /admin et, dans la vue d'ensemble,
+      « Importer le catalogue du site » : la base est amorcée.
+
+   Compte : préférer un compte Google personnel. Un compte Workspace peut
+   interdire par politique la publication « accessible à tout le monde », ce
+   qui empêcherait le site d'écrire les inscriptions.
+
+   ---------------------------------------------------------------------------
    INSTALLATION / MISE À JOUR
 
    1. Ouvrir le projet Apps Script rattaché au classeur des inscriptions.
@@ -24,11 +43,17 @@
    5. Lancer testerInstallation (menu déroulant du haut, puis ▶). Google demande
       alors l'autorisation, Drive compris. Le journal doit afficher
       « Autorisation Drive : accordée. »
-   6. Déployer → Gérer les déploiements → crayon → Nouvelle version → Déployer.
-      Sans nouvelle version, Google continue de servir l'ancienne.
-      Conserver : Exécuter en tant que « Moi », Qui a accès « Tout le monde ».
-   7. Vérifier : https://VOTRE_URL/exec?action=version doit répondre
-      « drive: true ».
+   6. Déployer.
+      • Première fois : Déployer → Nouveau déploiement → type « Application web ».
+        Exécuter en tant que « Moi », Qui a accès « Tout le monde ». Copier
+        l'adresse /exec obtenue : c'est elle que le site appellera.
+      • Par la suite : Déployer → Gérer les déploiements → crayon →
+        Version : NOUVELLE VERSION → Déployer. Sans nouvelle version, Google
+        continue de servir l'ancien code, sans le moindre avertissement.
+        N'utilisez pas « Nouveau déploiement » pour une mise à jour : il crée
+        une AUTRE adresse, et le site continuerait d'appeler la précédente.
+   7. Vérifier : https://VOTRE_URL/exec?action=version doit répondre avec le
+      numéro de VERSION ci-dessous et « drive: true ».
 
    Les onglets Formations, Sessions, Pays, Reglages et Inscriptions sont créés
    automatiquement au premier usage, et les colonnes ajoutées par une mise à
@@ -44,7 +69,7 @@
  * déploiement n'a pas été publiée, et Google sert encore l'ancien code.
  * C'est l'erreur la plus fréquente, et la plus difficile à diagnostiquer.
  */
-var VERSION = '2026-09-16-pays';
+var VERSION = '2026-09-16-formules';
 
 /** Classeur. Vide = le classeur auquel ce script est rattaché (cas normal). */
 var ID_CLASSEUR = '';
@@ -203,7 +228,7 @@ function enregistrer(d) {
     for (var j = 0; j < COLONNES.length; j++) {
       if (COLONNES[j][0] !== entete) continue;
       var v = d[COLONNES[j][1]];
-      return v === undefined || v === null ? '' : v;
+      return v === undefined || v === null ? '' : protegerFormule(v);
     }
     return '';
   }));
@@ -318,7 +343,22 @@ function versCellule(valeur, type) {
   if (valeur === undefined || valeur === null) return '';
   if (type === 'json') return JSON.stringify(valeur);
   if (type === 'bool') return valeur === true || valeur === 'true';
-  return valeur;
+  return protegerFormule(valeur);
+}
+
+/**
+ * Google Sheets traite une valeur écrite dans une cellule comme si elle avait
+ * été SAISIE : une chaîne commençant par « = », « + » ou « - » devient donc une
+ * FORMULE. C'est ainsi que l'indicatif « +253 » s'était transformé en nombre 253
+ * et « +253 77 14 53 06 » en #ERROR! — sans le moindre message, et avec des
+ * conséquences invisibles jusqu'à ce qu'on relise la valeur.
+ *
+ * L'apostrophe initiale force le texte. Sheets ne la restitue pas à la lecture :
+ * la valeur relue est exactement celle qu'on a écrite.
+ */
+function protegerFormule(valeur) {
+  if (typeof valeur !== 'string' || valeur === '') return valeur;
+  return /^[=+\-@]/.test(valeur) ? "'" + valeur : valeur;
 }
 
 /**
@@ -604,10 +644,10 @@ function ecrirePaires(nom, donnees, messageErreur) {
       if (String(valeurs[i][0]).trim() !== cle) continue;
       trouve = true;
       if (vide) feuille.deleteRow(i + 1);
-      else feuille.getRange(i + 1, 2).setValue(valeur);
+      else feuille.getRange(i + 1, 2).setValue(protegerFormule(valeur));
       break;
     }
-    if (!trouve && !vide) feuille.appendRow([cle, valeur]);
+    if (!trouve && !vide) feuille.appendRow([cle, protegerFormule(valeur)]);
   });
 }
 
@@ -641,7 +681,7 @@ function changerStatut(ligne, statut) {
     .map(function (v) { return String(v).trim(); });
   var col = entetes.indexOf('statut');
   if (col < 0) throw new Error('Colonne statut introuvable.');
-  feuille.getRange(ligne, col + 1).setValue(statut);
+  feuille.getRange(ligne, col + 1).setValue(protegerFormule(statut));
   return { ok: true };
 }
 
