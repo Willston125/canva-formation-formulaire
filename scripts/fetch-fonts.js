@@ -14,7 +14,11 @@ function collectIcons() {
   const fichiers = [
     'index.html', 'entreprises/index.html', 'mentions-legales/index.html',
     'formations/_template/fiche.html', 'script.js', 'site-common.js', 'landing.js',
-    'scripts/build-fiches.js'
+    'scripts/build-fiches.js',
+    /* Le tableau de bord utilise ses propres icônes (dashboard, settings, upload,
+       public…). Sans ces deux fichiers, elles étaient absentes du sous-ensemble
+       et s'affichaient en toutes lettres : « UPLOAD » au lieu du pictogramme. */
+    'admin/index.html', 'admin/admin.js'
   ];
   for (const dossier of fs.readdirSync('formations')) {
     const page = path.join('formations', dossier, 'index.html');

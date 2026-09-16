@@ -66,6 +66,9 @@
                 <button class="onglet" type="button" data-vue="inscriptions">
                     <span class="material-symbols-outlined" aria-hidden="true">group</span>Inscriptions
                     <span class="pastille" id="compte-inscriptions"></span></button>
+                <button class="onglet" type="button" data-vue="pays">
+                    <span class="material-symbols-outlined" aria-hidden="true">public</span>Pays
+                    <span class="pastille" id="compte-pays"></span></button>
                 <button class="onglet" type="button" data-vue="textes">
                     <span class="material-symbols-outlined" aria-hidden="true">edit_note</span>Textes du site</button>
                 <button class="onglet" type="button" data-vue="reglages">
@@ -128,6 +131,11 @@
             <section class="vue" id="vue-inscriptions">
                 <div class="filtres" id="filtres-inscriptions"></div>
                 <div id="liste-inscriptions"></div>
+            </section>
+
+            <!-- Pays : devise, indicatif, format des numéros et moyens de paiement -->
+            <section class="vue" id="vue-pays">
+                <div id="liste-pays"></div>
             </section>
 
             <!-- Textes du site -->

@@ -13,7 +13,7 @@
   /** État courant, rechargé à chaque écriture depuis la réponse de l'API. */
   var etat = {
     motDePasse: '',
-    catalogue: { formations: [], sessions: [], reglages: {} },
+    catalogue: { formations: [], sessions: [], pays: [], reglages: {} },
     inscriptions: [],
     vue: 'apercu',
     filtreInscriptions: '',
@@ -272,8 +272,9 @@
       formations: ['Formations', 'Le catalogue publié sur le site'],
       sessions: ['Sessions', 'Les dates ouvertes à l’inscription'],
       inscriptions: ['Inscriptions', 'Les candidats et leur suivi'],
+      pays: ['Pays', 'Devise, indicatif et moyens de paiement de chaque marché'],
       textes: ['Textes du site', 'Les mots affichés sur la page d’accueil'],
-      reglages: ['Réglages', 'Contact, paiements et devise']
+      reglages: ['Réglages', 'Contact et lieu habituel']
     };
     $('#titre-vue').textContent = titres[vue][0];
     $('#sous-titre-vue').textContent = titres[vue][1];
@@ -288,13 +289,16 @@
     $('#compte-formations').textContent = f.length || '';
     $('#compte-sessions').textContent = s.length || '';
     $('#compte-inscriptions').textContent = etat.inscriptions.length || '';
+    $('#compte-pays').textContent = (etat.catalogue.pays || []).length || '';
     $('#bloc-amorcage').hidden = f.length > 0;
 
-    var actions = { apercu: '', formations: '', sessions: '', inscriptions: '', textes: '', reglages: '' };
+    var actions = { apercu: '', formations: '', sessions: '', inscriptions: '', pays: '', textes: '', reglages: '' };
     actions.formations = '<button class="bouton bouton--primaire" type="button" id="btn-nouvelle-formation">'
       + '<span class="material-symbols-outlined" aria-hidden="true">add</span>Nouvelle formation</button>';
     actions.sessions = '<button class="bouton bouton--primaire" type="button" id="btn-nouvelle-session">'
       + '<span class="material-symbols-outlined" aria-hidden="true">add</span>Nouvelle session</button>';
+    actions.pays = '<button class="bouton bouton--primaire" type="button" id="btn-nouveau-pays">'
+      + '<span class="material-symbols-outlined" aria-hidden="true">add</span>Nouveau pays</button>';
     actions.inscriptions = etat.inscriptions.length
       ? '<button class="bouton bouton--discret" type="button" id="btn-export">'
         + '<span class="material-symbols-outlined" aria-hidden="true">download</span>Exporter (CSV)</button>' : '';
@@ -305,6 +309,7 @@
     var b;
     if ((b = $('#btn-nouvelle-formation'))) b.addEventListener('click', function () { ouvrirFormation(null); });
     if ((b = $('#btn-nouvelle-session'))) b.addEventListener('click', function () { ouvrirSession(null); });
+    if ((b = $('#btn-nouveau-pays'))) b.addEventListener('click', function () { ouvrirPays(null); });
     if ((b = $('#btn-export'))) b.addEventListener('click', exporterCsv);
     if ((b = $('#btn-rafraichir'))) b.addEventListener('click', function () {
       afficherMessage('#succes-globale', 'Actualisation…', 1200);
@@ -315,6 +320,7 @@
     if (etat.vue === 'formations') rendreFormations();
     if (etat.vue === 'sessions') rendreSessions();
     if (etat.vue === 'inscriptions') rendreInscriptions();
+    if (etat.vue === 'pays') rendrePays();
     if (etat.vue === 'textes') rendreTextes();
     if (etat.vue === 'reglages') rendreReglages();
   }
@@ -376,6 +382,149 @@
     return etat.inscriptions.filter(function (i) { return i.sessionId === id; }).length;
   }
 
+  // --------------------------------- PAYS ---------------------------------
+
+  /** Pays réellement enregistrés, dans l'ordre d'affichage. */
+  function listePays() {
+    return (etat.catalogue.pays || []).filter(function (p) { return p && p.code; });
+  }
+
+  /** Pays de référence : celui que voit un visiteur qui n'a encore rien choisi. */
+  function paysDefaut() {
+    var l = listePays();
+    return l.filter(function (p) { return p.defaut === true; })[0] || l[0] || null;
+  }
+
+  function trouverPays(code) {
+    var cible = String(code || '').toUpperCase();
+    return listePays().filter(function (p) { return String(p.code).toUpperCase() === cible; })[0] || null;
+  }
+
+  /** « 7 500 FDJ » ou « À confirmer » : jamais de montant converti, jamais de zéro trompeur. */
+  function formatTarif(montant, pays) {
+    if (typeof montant !== 'number') return '<span class="cellule-sous">À confirmer</span>';
+    return echapper(montant.toLocaleString('fr-FR')) + ' ' + echapper((pays && pays.devise) || '');
+  }
+
+  /** Tarif d'une formation dans un pays : `prices` d'abord, ancien `price` en repli. */
+  function tarifFormation(formation, pays) {
+    if (!formation || !pays) return null;
+    var table = formation.prices;
+    if (table && typeof table === 'object' && !Array.isArray(table)) {
+      if (typeof table[pays.code] === 'number') return table[pays.code];
+      if (Object.prototype.hasOwnProperty.call(table, pays.code)) return null;
+    }
+    var defaut = paysDefaut();
+    return defaut && defaut.code === pays.code && typeof formation.price === 'number' ? formation.price : null;
+  }
+
+  function rendrePays() {
+    var p = listePays();
+    if (!p.length) {
+      $('#liste-pays').innerHTML = vide('public',
+        'Aucun pays. Importez le catalogue du site depuis la vue d’ensemble, ou créez-en un.');
+      return;
+    }
+    $('#liste-pays').innerHTML = tableau(
+      ['Pays', 'Devise', 'Téléphone', 'Moyens de paiement', 'Actions'],
+      p.map(function (x) {
+        var moyens = Array.isArray(x.paymentMethods) ? x.paymentMethods : [];
+        var etiquettes = [];
+        if (x.defaut === true) etiquettes.push('<span class="etiquette etiquette--info">Par défaut</span>');
+        if (x.active === false) etiquettes.push('<span class="etiquette etiquette--ferme">Fermé</span>');
+        return [
+          '<div class="cellule-titre">' + echapper(x.nom || x.code) + ' ' + etiquettes.join(' ') + '</div>'
+          + '<div class="cellule-sous">' + echapper(x.code) + '</div>',
+          echapper(x.devise || '—'),
+          '<div>' + echapper(x.indicatif || '—') + '</div>'
+          + (x.exempleTelephone ? '<div class="cellule-sous">' + echapper(x.exempleTelephone) + '</div>' : ''),
+          moyens.length
+            ? echapper(moyens.map(function (m) { return m.label || m.value; }).join(', '))
+            : '<span class="etiquette etiquette--alerte">À configurer</span>',
+          '<div class="cellule-actions">'
+          + '<button class="bouton bouton--discret bouton--petit" type="button" data-modifier-pays="' + echapper(x.code) + '">Modifier</button>'
+          + '<button class="bouton bouton--discret bouton--petit" type="button" data-supprimer-pays="' + echapper(x.code) + '">Supprimer</button>'
+          + '</div>'
+        ];
+      })
+    );
+    $$('[data-modifier-pays]').forEach(function (b) {
+      b.addEventListener('click', function () { ouvrirPays(b.dataset.modifierPays); });
+    });
+    $$('[data-supprimer-pays]').forEach(function (b) {
+      b.addEventListener('click', function () { demanderSuppressionPays(b.dataset.supprimerPays); });
+    });
+  }
+
+  var CHAMPS_PAYS = [
+    { section: 'Identité' },
+    { cle: 'nom', libelle: 'Nom du pays', type: 'text', requis: true, aide: 'Affiché dans le formulaire d’inscription.' },
+    { cle: 'code', libelle: 'Code à deux lettres', type: 'text', requis: true,
+      aide: 'Ex. DJ pour Djibouti, KM pour les Comores. Il identifie le pays : ne le changez plus ensuite.' },
+    { cle: 'devise', libelle: 'Devise', type: 'text', requis: true, aide: 'Affichée après le montant. Ex. FDJ, KMF.' },
+
+    { section: 'Téléphone' },
+    { cle: 'indicatif', libelle: 'Indicatif', type: 'text', aide: 'Ex. +253' },
+    { cle: 'longueurTelephone', libelle: 'Nombre de chiffres', type: 'number',
+      aide: 'Longueur du numéro local, sans l’indicatif. Vide = pas de limite.' },
+    { cle: 'exempleTelephone', libelle: 'Exemple affiché', type: 'text', aide: 'Ex. 77XXXXXX. Vide = aucun exemple.' },
+    { cle: 'motifTelephone', libelle: 'Format accepté', type: 'text', large: true,
+      aide: 'Expression régulière. Ex. ^(77|67)\\d{6}$ . Vide = chiffres uniquement, sans autre contrainte.' },
+    { cle: 'aideTelephone', libelle: 'Message si le numéro est refusé', type: 'text', large: true },
+
+    { section: 'Moyens de paiement' },
+    { cle: 'paymentMethods', libelle: '', type: 'paiements', large: true },
+
+    { section: 'Publication' },
+    { cle: 'active', libelle: 'Pays proposé à l’inscription', type: 'bool', defaut: true },
+    { cle: 'defaut', libelle: 'Pays affiché par défaut', type: 'bool',
+      aide: 'Celui que voit un visiteur avant tout choix. Un seul pays peut l’être.' },
+    { cle: 'ordre', libelle: 'Ordre d’affichage', type: 'number', aide: 'Plus petit = proposé en premier.' }
+  ];
+
+  function ouvrirPays(code) {
+    var p = code ? trouverPays(code) : null;
+    var donnees = p ? Object.assign({}, p) : {
+      code: '', nom: '', devise: '', indicatif: '', active: true, defaut: false,
+      paymentMethods: [], ordre: listePays().length
+    };
+    ouvrirPanneau(p ? 'Modifier ' + (p.nom || p.code) : 'Nouveau pays', CHAMPS_PAYS, donnees,
+      function (valeurs, fini) {
+        valeurs.code = String(valeurs.code || '').trim().toUpperCase();
+        if (!/^[A-Z]{2}$/.test(valeurs.code)) {
+          fini('Le code du pays s’écrit en deux lettres, comme DJ ou KM.');
+          return;
+        }
+        if (p && valeurs.code !== p.code) {
+          fini('Le code identifie le pays : le changer créerait un doublon. '
+            + 'Créez plutôt un nouveau pays, puis supprimez celui-ci.');
+          return;
+        }
+        appeler('admin.pays.save', { donnees: valeurs }).then(function (d) {
+          viderCorbeilleImages();
+          fermerPanneau();
+          afficherMessage('#succes-globale', d.cree
+            ? 'Pays créé. Pensez à saisir ses tarifs dans chaque formation.'
+            : 'Pays mis à jour.', 6000);
+          rendre();
+        }).catch(function (err) { fini(messageLisible(err)); });
+      });
+  }
+
+  function demanderSuppressionPays(code) {
+    var p = trouverPays(code);
+    if (!p) return;
+    confirmer('Supprimer ' + (p.nom || p.code) + ' ? Les candidats ne pourront plus choisir ce pays, '
+      + 'et ses tarifs cesseront d’être affichés. Les inscriptions déjà reçues ne sont pas touchées.',
+      function (fini) {
+        appeler('admin.pays.delete', { code: p.code }).then(function () {
+          fermerConfirmation();
+          afficherMessage('#succes-globale', 'Pays supprimé.', 5000);
+          rendre();
+        }).catch(function (err) { fini(messageLisible(err)); });
+      });
+  }
+
   // ----------------------------- FORMATIONS ------------------------------
 
   function rendreFormations() {
@@ -385,8 +534,9 @@
         'Aucune formation. Importez le catalogue du site depuis la vue d’ensemble, ou créez-en une.');
       return;
     }
+    var pays = listePays();
     $('#liste-formations').innerHTML = tableau(
-      ['Formation', 'Tarif', 'Sessions', 'État', 'Actions'],
+      ['Formation', 'Tarifs', 'Sessions', 'État', 'Actions'],
       f.map(function (x) {
         var sessions = (etat.catalogue.sessions || []).filter(function (s) { return s.formId === x.formId; });
         var etiquettes = [];
@@ -398,8 +548,13 @@
         return [
           '<div class="cellule-titre">' + echapper(x.title || '(sans titre)') + '</div>'
           + '<div class="cellule-sous">/formations/' + echapper(x.slug || '') + '/</div>',
-          typeof x.price === 'number' ? echapper(x.price.toLocaleString('fr-FR')) + ' '
-            + echapper(etat.catalogue.reglages.currency || 'FDJ') : '<span class="cellule-sous">À confirmer</span>',
+          // Un tarif par pays, pour repérer d'un coup d'œil celui qui reste à saisir
+          pays.length
+            ? pays.map(function (p) {
+              return '<div class="cellule-tarif"><span class="cellule-sous">' + echapper(p.code) + '</span> '
+                + formatTarif(tarifFormation(x, p), p) + '</div>';
+            }).join('')
+            : '<span class="cellule-sous">Aucun pays configuré</span>',
           sessions.length,
           etiquettes.join(' '),
           '<div class="cellule-actions">'
@@ -438,10 +593,12 @@
     { cle: 'duration', libelle: 'Durée', type: 'text', aide: 'Ex. « 12 séances ». Laisser « À confirmer » si inconnue.' },
     { cle: 'level', libelle: 'Niveau', type: 'text' },
     { cle: 'mode', libelle: 'Mode', type: 'select', options: ['Présentiel', 'En ligne', 'Hybride', 'À confirmer'] },
-    { cle: 'price', libelle: 'Tarif', type: 'number', aide: 'Laisser vide si non confirmé.' },
     { cle: 'modules', libelle: 'Nombre de modules', type: 'number' },
     { cle: 'levelSubject', libelle: 'Sujet de la question de niveau', type: 'text',
       aide: 'Ex. « Canva » donne « Où en es-tu avec Canva ? ». Vide = formulation générique.' },
+
+    { section: 'Tarifs par pays' },
+    { cle: 'prices', libelle: '', type: 'tarifs', large: true },
 
     { section: 'Visuels' },
     { cle: 'image', libelle: 'Image de la carte', type: 'image', format: 'image', large: true,
@@ -470,6 +627,11 @@
     ouvrirPanneau(f ? 'Modifier la formation' : 'Nouvelle formation', CHAMPS_FORMATION, donnees, function (valeurs, fini) {
       valeurs.id = donnees.id;
       valeurs.formId = donnees.formId || valeurs.slug;
+      /* `price` reste le tarif du pays par défaut : les pages déjà générées et
+         tout ce qui a été écrit avant les tarifs multi-pays le lisent encore. */
+      var reference = paysDefaut();
+      valeurs.price = reference && valeurs.prices && typeof valeurs.prices[reference.code] === 'number'
+        ? valeurs.prices[reference.code] : null;
       if (!valeurs.slug && valeurs.title) valeurs.slug = enLien(valeurs.title);
       /* Une formation créée ici n'a pas encore de page dédiée : son lien pointe vers
          la page d'inscription générique, qui sait afficher n'importe quelle formation.
@@ -529,8 +691,26 @@
       return;
     }
     var aujourdhui = new Date().toISOString().slice(0, 10);
-    $('#liste-sessions').innerHTML = tableau(
-      ['Session', 'Dates', 'Places', 'État', 'Actions'],
+    var pays = listePays();
+    /* Une session sans pays est proposée dans TOUS les pays. C'est le cas des
+       sessions créées avant les tarifs par pays : un candidat comorien se verrait
+       donc proposer une session qui se tient à Djibouti. On le signale, avec de
+       quoi y remédier d'un clic plutôt qu'en rouvrant chaque session. */
+    var sansPays = s.filter(function (x) { return !x.pays; });
+    var avis = '';
+    if (sansPays.length && pays.length > 1) {
+      var reference = paysDefaut();
+      avis = '<div class="bloc"><h2>' + sansPays.length + ' session(s) sans pays</h2>'
+        + '<p class="aide">Une session sans pays est proposée aux candidats de <strong>tous</strong> les pays, '
+        + 'y compris là où elle ne se tient pas. Rattachez-les à '
+        + echapper(reference ? reference.nom : 'un pays') + ', ou ouvrez-les une à une pour choisir.</p>'
+        + '<button class="bouton bouton--primaire" type="button" id="btn-rattacher-sessions">'
+        + '<span class="material-symbols-outlined" aria-hidden="true">public</span>'
+        + 'Rattacher ces sessions à ' + echapper(reference ? reference.nom : '') + '</button></div>';
+    }
+
+    $('#liste-sessions').innerHTML = avis + tableau(
+      ['Session', 'Pays', 'Dates', 'Places', 'État', 'Actions'],
       s.map(function (x) {
         var f = (etat.catalogue.formations || []).find(function (y) { return y.formId === x.formId; });
         var inscrits = compterSession(x.id);
@@ -545,6 +725,11 @@
         return [
           '<div class="cellule-titre">' + echapper(f ? f.title : x.formId) + '</div>'
           + '<div class="cellule-sous">' + echapper(x.schedule || '') + '</div>',
+          x.pays
+            ? '<div>' + echapper((trouverPays(x.pays) || {}).nom || x.pays) + '</div>'
+              + '<div class="cellule-sous">'
+              + formatTarif(typeof x.price === 'number' ? x.price : null, trouverPays(x.pays)) + '</div>'
+            : '<span class="etiquette etiquette--alerte">Tous pays</span>',
           '<div>' + echapper(dateFr(x.startDate)) + '</div>'
           + (x.endDate ? '<div class="cellule-sous">au ' + echapper(dateFr(x.endDate)) + '</div>' : ''),
           typeof x.placesTotal === 'number'
@@ -559,6 +744,9 @@
         ];
       })
     );
+    var rattacher = $('#btn-rattacher-sessions');
+    if (rattacher) rattacher.addEventListener('click', function () { rattacherSessions(sansPays); });
+
     $$('[data-modifier-session]').forEach(function (b) {
       b.addEventListener('click', function () { ouvrirSession(b.dataset.modifierSession); });
     });
@@ -582,10 +770,14 @@
       { cle: 'duration', libelle: 'Volume', type: 'text', aide: 'Ex. « 12 séances · 24 heures ».' },
 
       { section: 'Lieu et tarif' },
+      { cle: 'pays', libelle: 'Pays', type: 'select', large: true,
+        optionsObjets: listePays().map(function (p) { return { valeur: p.code, libelle: p.nom + ' (' + p.devise + ')' }; }),
+        aide: 'Une session ne se tient que dans un pays : elle n’est proposée qu’aux candidats de ce pays. '
+          + 'Vide = proposée partout.' },
       { cle: 'location', libelle: 'Lieu', type: 'text', large: true },
       { cle: 'mode', libelle: 'Mode', type: 'select', options: ['Présentiel', 'En ligne', 'Hybride'] },
-      { cle: 'price', libelle: 'Tarif', type: 'number' },
-      { cle: 'currency', libelle: 'Devise', type: 'text', aide: 'Vide = devise par défaut du site.' },
+      { cle: 'price', libelle: 'Tarif de cette session', type: 'number',
+        aide: 'Dans la devise du pays ci-dessus. Vide = le tarif de la formation s’applique.' },
 
       { section: 'Places et inscriptions' },
       { cle: 'placesTotal', libelle: 'Nombre de places', type: 'number',
@@ -606,7 +798,7 @@
       id: identifiant('sess'), registrationOpen: true, mode: 'Présentiel',
       formId: formations[0].formId,
       location: etat.catalogue.reglages.defaultLocation || '',
-      currency: etat.catalogue.reglages.currency || ''
+      pays: (paysDefaut() || {}).code || ''
     };
     ouvrirPanneau(s ? 'Modifier la session' : 'Nouvelle session', champsSession(), donnees, function (valeurs, fini) {
       valeurs.id = donnees.id;
@@ -621,6 +813,39 @@
         afficherMessage('#succes-globale', d.cree ? 'Session créée.' : 'Session mise à jour.', 5000);
         rendre();
       }).catch(function (err) { fini(messageLisible(err)); });
+    });
+  }
+
+  /**
+   * Rattache d'un coup les sessions sans pays au pays par défaut.
+   * Elles sont enregistrées une à une, et non toutes ensemble : si l'une échoue,
+   * les précédentes restent acquises et le message dit laquelle a résisté.
+   */
+  function rattacherSessions(sessions) {
+    var reference = paysDefaut();
+    if (!reference || !sessions.length) return;
+    var bouton = $('#btn-rattacher-sessions');
+    if (bouton) bouton.disabled = true;
+
+    var suite = Promise.resolve();
+    var faits = 0;
+    sessions.forEach(function (s) {
+      suite = suite.then(function () {
+        return appeler('admin.session.save', {
+          donnees: Object.assign({}, s, { pays: reference.code })
+        }).then(function () { faits++; });
+      });
+    });
+
+    suite.then(function () {
+      afficherMessage('#succes-globale',
+        faits + ' session(s) rattachée(s) à ' + reference.nom + '.', 6000);
+      rendre();
+    }).catch(function (err) {
+      if (bouton) bouton.disabled = false;
+      afficherMessage('#erreur-globale',
+        faits + ' session(s) rattachée(s), puis : ' + messageLisible(err), 9000);
+      rendre();
     });
   }
 
@@ -745,7 +970,9 @@
      les huit mégaoctets d'une photo de téléphone. */
   var FORMATS_IMAGE = {
     image: { largeur: 760, hauteur: 950, libelle: 'portrait 760 × 950' },
-    poster: { largeur: 1000, hauteur: null, libelle: 'largeur 1000 px, hauteur libre' }
+    poster: { largeur: 1000, hauteur: null, libelle: 'largeur 1000 px, hauteur libre' },
+    // Logo d'un moyen de paiement : affiché sur environ 48 px de haut, donc petit
+    logo: { largeur: 240, hauteur: null, libelle: 'largeur 240 px, hauteur libre' }
   };
 
   /**
@@ -1037,19 +1264,17 @@
       aide: 'Chiffres uniquement, indicatif compris. Ex. 25377145306' },
     { cle: 'whatsappDisplay', libelle: 'Numéro affiché', type: 'text', aide: 'Ex. +253 77 14 53 06' },
 
-    { section: 'Marché' },
-    { cle: 'currency', libelle: 'Devise', type: 'text', aide: 'Ex. FDJ' },
-    { cle: 'countryCode', libelle: 'Indicatif téléphonique', type: 'text', aide: 'Ex. +253' },
+    { section: 'Sessions' },
     { cle: 'defaultLocation', libelle: 'Lieu habituel', type: 'text', large: true,
-      aide: 'Proposé par défaut à la création d’une session.' },
-    { cle: 'phoneFormatHint', libelle: 'Message si numéro invalide', type: 'text', large: true }
+      aide: 'Proposé par défaut à la création d’une session.' }
   ];
 
   function rendreReglages() {
     var boite = $('#formulaire-reglages');
     boite.innerHTML = '<div class="bloc"><h2>Réglages du site</h2>'
-      + '<p class="aide">Ces valeurs alimentent les liens WhatsApp, la devise affichée et le format des numéros '
-      + 'demandé aux candidats.</p><form id="form-reglages">'
+      + '<p class="aide">Ces valeurs alimentent les liens WhatsApp et la création des sessions. '
+      + 'La devise, l’indicatif, le format des numéros et les moyens de paiement se règlent '
+      + 'pays par pays dans la rubrique <strong>Pays</strong>.</p><form id="form-reglages">'
       + construireChamps(CHAMPS_REGLAGES, etat.catalogue.reglages || {})
       + '<div class="panneau__boutons" style="justify-content:flex-start;margin-top:18px">'
       + '<button class="bouton bouton--primaire" type="submit" id="btn-reglages">'
@@ -1109,7 +1334,18 @@
       });
     };
     $('#panneau-form').addEventListener('submit', validerCourant);
-    champs.forEach(function (c) { if (c.type === 'image') activerChampImage(c.cle, c.format); });
+    champs.forEach(function (c) {
+      if (c.type === 'image') activerChampImage(c.cle, c.format);
+      if (c.type !== 'paiements') return;
+      // Copie : l'édition ne doit pas modifier le catalogue avant enregistrement
+      var initial = Array.isArray(donnees[c.cle])
+        ? donnees[c.cle].map(function (m) { return Object.assign({}, m); }) : [];
+      rendrePaiements(c.cle, initial);
+      var ajouter = document.querySelector('[data-ajouter-paiement="' + c.cle + '"]');
+      if (ajouter) ajouter.addEventListener('click', function () {
+        rendrePaiements(c.cle, (lirePaiements(c.cle) || []).concat([{ kind: 'mobile', label: '' }]));
+      });
+    });
     var premier = $('#panneau-form input:not([type=hidden]), #panneau-form select, #panneau-form textarea');
     if (premier) premier.focus();
   }
@@ -1137,18 +1373,41 @@
       var classe = 'champ' + (c.large || c.type === 'textarea' || c.type === 'lignes' || c.type === 'objectifs' ? ' pleine-largeur' : '');
 
       if (c.type === 'image') {
-        html += '<div class="champ pleine-largeur"><span class="champ__label">' + echapper(c.libelle) + '</span>'
-          + '<div class="image" id="image-' + c.cle + '">'
-          + '<div class="image__apercu"></div>'
-          + '<div class="image__actions">'
-          + '<label class="bouton bouton--discret bouton--petit">'
-          + '<span class="material-symbols-outlined" aria-hidden="true">upload</span>Choisir une image'
-          + '<input type="file" accept="image/jpeg,image/png,image/webp" hidden></label>'
-          + '<button type="button" class="bouton bouton--discret bouton--petit" data-retirer hidden>Retirer</button>'
-          + '</div><p class="image__etat" role="status"></p></div>'
-          + '<input type="hidden" id="' + id + '" value="' + echapper(v) + '">'
-          + (c.aide ? '<span class="champ__aide">' + echapper(c.aide) + '</span>' : '')
-          + '</div>';
+        html += champImage(c.cle, c.libelle, v, c.aide);
+        return;
+      }
+
+      /* Tarifs par pays : une case par pays, dans SA devise. Rien n'est converti,
+         et un montant laissé vide veut dire « pas encore fixé », pas « gratuit ». */
+      if (c.type === 'tarifs') {
+        var pays = listePays();
+        html += '<div class="champ pleine-largeur">'
+          + (c.libelle ? '<span class="champ__label">' + echapper(c.libelle) + '</span>' : '');
+        html += pays.length
+          ? '<div class="grille-champs" data-tarifs="' + echapper(c.cle) + '">'
+            + pays.map(function (p) {
+              var montant = tarifFormation(donnees, p);
+              return '<label class="champ"><span class="champ__label">' + echapper(p.nom)
+                + ' (' + echapper(p.devise) + ')</span>'
+                + '<input type="number" min="0" step="1" data-tarif="' + echapper(p.code) + '" value="'
+                + (typeof montant === 'number' ? echapper(montant) : '') + '"></label>';
+            }).join('') + '</div>'
+          : '<p class="champ__aide">Aucun pays enregistré. Créez-en un dans la rubrique Pays pour pouvoir saisir des tarifs.</p>';
+        html += '<span class="champ__aide">Chaque montant se saisit dans la devise du pays, tel quel : '
+          + 'aucune conversion n’est faite d’une devise à l’autre. Un tarif laissé vide s’affiche '
+          + '« À confirmer » plutôt qu’un prix approximatif.</span></div>';
+        return;
+      }
+
+      if (c.type === 'paiements') {
+        html += '<div class="champ pleine-largeur">'
+          + (c.libelle ? '<span class="champ__label">' + echapper(c.libelle) + '</span>' : '')
+          + '<div class="paiements" data-paiements="' + echapper(c.cle) + '"></div>'
+          + '<button type="button" class="bouton bouton--discret bouton--petit" data-ajouter-paiement="' + echapper(c.cle) + '">'
+          + '<span class="material-symbols-outlined" aria-hidden="true">add</span>Ajouter un moyen de paiement</button>'
+          + '<span class="champ__aide">Ce sont les coordonnées affichées au candidat à l’étape « Paiement ». '
+          + 'Sans aucun moyen, le formulaire annonce que le règlement en ligne n’est pas encore ouvert pour ce pays '
+          + 'et renvoie vers WhatsApp — plutôt que d’afficher le numéro d’un autre pays.</span></div>';
         return;
       }
 
@@ -1188,6 +1447,8 @@
   }
 
   function lireChamp(c) {
+    if (c.type === 'tarifs') return lireTarifs(c.cle);
+    if (c.type === 'paiements') return lirePaiements(c.cle);
     var el = document.getElementById('champ-' + c.cle);
     if (!el) return undefined;
     if (c.type === 'bool') return el.checked;
@@ -1205,6 +1466,115 @@
         .map(function (l) { return { icon: 'check_circle', label: l, value: l }; });
     }
     return el.value.trim();
+  }
+
+  /** Tarifs saisis : { DJ: 7500, KM: null }. `null` = non fixé, jamais 0. */
+  function lireTarifs(cle) {
+    var boite = document.querySelector('[data-tarifs="' + cle + '"]');
+    if (!boite) return undefined;
+    var o = {};
+    Array.prototype.slice.call(boite.querySelectorAll('[data-tarif]')).forEach(function (input) {
+      var t = input.value.trim();
+      var n = t === '' ? NaN : Number(t);
+      o[input.dataset.tarif] = isNaN(n) ? null : n;
+    });
+    return o;
+  }
+
+  // ----------------------- MOYENS DE PAIEMENT (champ) ---------------------
+
+  /* Un moyen de paiement n'est pas une ligne de texte : il porte un numéro, un
+     nom de compte ou un lieu de rendez-vous. D'où ce petit éditeur répétable,
+     qui affiche les champs du type choisi et masque les autres. */
+  var CHAMPS_MOYEN = [
+    { cle: 'label', libelle: 'Nom affiché', pour: null, aide: 'Ex. Waafi, Orange Money, Espèces.' },
+    { cle: 'numberLabel', libelle: 'Intitulé du numéro', pour: 'mobile', exemple: 'Numéro' },
+    { cle: 'number', libelle: 'Numéro à créditer', pour: 'mobile' },
+    { cle: 'accountName', libelle: 'Nom du compte', pour: 'mobile' },
+    { cle: 'recipient', libelle: 'À remettre à', pour: 'cash' },
+    { cle: 'place', libelle: 'Lieu', pour: 'cash' },
+    { cle: 'phone', libelle: 'Sur rendez-vous', pour: 'cash' }
+  ];
+
+  function rendrePaiements(cle, liste) {
+    var boite = document.querySelector('[data-paiements="' + cle + '"]');
+    if (!boite) return;
+
+    boite.innerHTML = liste.length ? liste.map(function (m, i) {
+      var kind = m.kind === 'cash' ? 'cash' : 'mobile';
+      return '<div class="paiement" data-moyen>'
+        + '<div class="paiement__entete">'
+        + '<span class="paiement__titre">' + echapper(m.label || m.value || 'Moyen de paiement') + '</span>'
+        + '<button type="button" class="bouton bouton--discret bouton--petit" data-retirer-moyen="' + i + '">Retirer</button>'
+        + '</div><div class="grille-champs">'
+        + '<label class="champ"><span class="champ__label">Type</span>'
+        + '<select data-moyen-champ="kind">'
+        + '<option value="mobile"' + (kind === 'mobile' ? ' selected' : '') + '>Paiement mobile</option>'
+        + '<option value="cash"' + (kind === 'cash' ? ' selected' : '') + '>Espèces</option>'
+        + '</select></label>'
+        + CHAMPS_MOYEN.map(function (c) {
+          if (c.pour && c.pour !== kind) return '';
+          return '<label class="champ"><span class="champ__label">' + echapper(c.libelle) + '</span>'
+            + '<input type="text" data-moyen-champ="' + c.cle + '" value="' + echapper(m[c.cle] || '') + '"'
+            + (c.exemple ? ' placeholder="' + echapper(c.exemple) + '"' : '') + '>'
+            + (c.aide ? '<span class="champ__aide">' + echapper(c.aide) + '</span>' : '') + '</label>';
+        }).join('')
+        + '</div>'
+        + champImage('moyen-' + cle + '-' + i, 'Logo (facultatif)', m.image || '',
+          'Affiché sur la carte du moyen de paiement. Sans logo, une icône est utilisée.')
+        /* `value` est l'intitulé enregistré dans la feuille depuis le début : il
+           ne suit PAS le renommage, sinon les inscriptions déjà reçues et les
+           nouvelles ne parleraient plus du même moyen de paiement. */
+        + '<input type="hidden" data-moyen-champ="value" value="' + echapper(m.value || '') + '">'
+        + '</div>';
+    }).join('') : '<p class="champ__aide">Aucun moyen de paiement pour ce pays.</p>';
+
+    liste.forEach(function (m, i) { activerChampImage('moyen-' + cle + '-' + i, 'logo'); });
+
+    boite.querySelectorAll('[data-retirer-moyen]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var courant = lirePaiements(cle);
+        courant.splice(Number(b.dataset.retirerMoyen), 1);
+        rendrePaiements(cle, courant);
+      });
+    });
+    // Changer le type change les champs à remplir : on redessine la liste
+    boite.querySelectorAll('[data-moyen-champ="kind"]').forEach(function (s) {
+      s.addEventListener('change', function () { rendrePaiements(cle, lirePaiements(cle)); });
+    });
+  }
+
+  function champImage(cle, libelle, valeur, aide) {
+    return '<div class="champ pleine-largeur"><span class="champ__label">' + echapper(libelle) + '</span>'
+      + '<div class="image" id="image-' + echapper(cle) + '">'
+      + '<div class="image__apercu"></div>'
+      + '<div class="image__actions">'
+      + '<label class="bouton bouton--discret bouton--petit">'
+      + '<span class="material-symbols-outlined" aria-hidden="true">upload</span>Choisir une image'
+      + '<input type="file" accept="image/jpeg,image/png,image/webp" hidden></label>'
+      + '<button type="button" class="bouton bouton--discret bouton--petit" data-retirer hidden>Retirer</button>'
+      + '</div><p class="image__etat" role="status"></p></div>'
+      + '<input type="hidden" id="champ-' + echapper(cle) + '" value="' + echapper(valeur) + '">'
+      + (aide ? '<span class="champ__aide">' + echapper(aide) + '</span>' : '')
+      + '</div>';
+  }
+
+  /** Relit l'éditeur : un moyen sans nom est ignoré plutôt qu'enregistré vide. */
+  function lirePaiements(cle) {
+    var boite = document.querySelector('[data-paiements="' + cle + '"]');
+    if (!boite) return undefined;
+    return Array.prototype.slice.call(boite.querySelectorAll('[data-moyen]')).map(function (bloc, i) {
+      var m = {};
+      bloc.querySelectorAll('[data-moyen-champ]').forEach(function (el) {
+        m[el.dataset.moyenChamp] = el.value.trim();
+      });
+      var logo = document.getElementById('champ-moyen-' + cle + '-' + i);
+      m.image = logo ? logo.value.trim() : '';
+      m.kind = m.kind === 'cash' ? 'cash' : 'mobile';
+      // Nouveau moyen : l'intitulé enregistré part du nom affiché
+      if (!m.value) m.value = m.label;
+      return m;
+    }).filter(function (m) { return m.label || m.value; });
   }
 
   function lireChamps(champs) {
@@ -1252,15 +1622,21 @@
         return copie;
       }),
       sessions: (window.SESSIONS || []).map(function (s) { return Object.assign({}, s); }),
+      pays: (window.PAYS || []).map(function (p, i) {
+        var copie = Object.assign({}, p);
+        copie.paymentMethods = (p.paymentMethods || []).map(function (m) { return Object.assign({}, m); });
+        if (typeof copie.ordre !== 'number') copie.ordre = i;
+        return copie;
+      }),
       reglages: Object.assign({}, window.SITE_CONTACT || {}, {
         defaultLocation: (window.SESSIONS && window.SESSIONS[0] && window.SESSIONS[0].location) || ''
       })
     };
-    delete donnees.reglages.paymentMethods; // structure conservée côté site, non éditable ici
     appeler('admin.importer', { donnees: donnees }).then(function (d) {
       bouton.disabled = false;
       afficherMessage('#succes-globale',
-        d.formations + ' formation(s) et ' + d.sessions + ' session(s) importées.', 6000);
+        d.formations + ' formation(s), ' + d.sessions + ' session(s) et '
+        + (d.pays || 0) + ' pays importés.', 6000);
       rafraichirTout();
     }).catch(function (err) {
       bouton.disabled = false;

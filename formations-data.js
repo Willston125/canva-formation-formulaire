@@ -21,7 +21,10 @@
  * @property {string} duration
  * @property {string} level
  * @property {string} mode
- * @property {number|null} price         FDJ, null si non confirmé
+ * @property {number|null} price         Tarif du pays par défaut, null si non confirmé.
+ *                                       Conservé pour les données antérieures aux tarifs par pays.
+ * @property {Object<string, number|null>} [prices]  Tarif par code de pays, ex. { DJ: 7500, KM: 25000 }.
+ *                                       Saisi à la main dans le tableau de bord : aucune conversion de devise.
  * @property {number|null} modules       Nombre de modules du programme, null si non défini
  * @property {string[]} learnings        2 à 3 acquis concrets (programme publié, ou reformulation de la description éditoriale)
  * @property {boolean} featured          Mise en avant dans la grille (programme publié et inscriptions ouvertes)
@@ -56,6 +59,7 @@ window.FORMATIONS = Object.freeze([
     level: 'Tous niveaux',
     mode: 'Présentiel',
     price: 7500,
+    prices: Object.freeze({ DJ: 7500 }),
     modules: 4,
     learnings: [
       'Créer un Brand Kit et maîtriser l’interface Canva Pro',
@@ -97,6 +101,7 @@ window.FORMATIONS = Object.freeze([
     level: 'À confirmer',
     mode: 'Présentiel',
     price: 7500,
+    prices: Object.freeze({ DJ: 7500 }),
     modules: null,
     learnings: [
       'Bâtir une stratégie de présence sur les réseaux',
@@ -128,6 +133,7 @@ window.FORMATIONS = Object.freeze([
     level: 'À confirmer',
     mode: 'Présentiel',
     price: 7500,
+    prices: Object.freeze({ DJ: 7500 }),
     modules: null,
     learnings: [
       'Nourrir votre créativité et vos partis pris visuels',
@@ -159,6 +165,7 @@ window.FORMATIONS = Object.freeze([
     level: 'À confirmer',
     mode: 'Présentiel',
     price: 7500,
+    prices: Object.freeze({ DJ: 7500 }),
     modules: null,
     learnings: [
       'Préparer et mener un tournage',
@@ -190,6 +197,7 @@ window.FORMATIONS = Object.freeze([
     level: 'À confirmer',
     mode: 'Présentiel',
     price: 7500,
+    prices: Object.freeze({ DJ: 7500 }),
     modules: null,
     learnings: [
       'Définir une stratégie digitale claire',
@@ -221,6 +229,7 @@ window.FORMATIONS = Object.freeze([
     level: 'À confirmer',
     mode: 'Présentiel',
     price: 7500,
+    prices: Object.freeze({ DJ: 7500 }),
     modules: null,
     learnings: [
       'Prendre en main les principaux outils d’IA',
@@ -249,15 +258,14 @@ window.FORMATIONS = Object.freeze([
  * @property {string} duration       Ex. « 12 jours · 24 heures »
  * @property {string} location       Ex. « Saalam Tower, 5ème étage, Djibouti »
  * @property {string} mode           Présentiel / En ligne / Hybride
- * @property {number|null} price     Tarif dans la devise de la session (voir `currency`)
+ * @property {string} [pays]         Code du pays où elle se tient (voir `window.PAYS`).
+ *                                   La session n'est proposée qu'aux candidats de ce pays ;
+ *                                   vide = proposée partout (session en ligne, par exemple).
+ * @property {number|null} price     Tarif, dans la devise du pays ci-dessus.
+ *                                   Vide = le tarif de la formation s'applique.
  * @property {number|null} placesTotal
  * @property {number|null} placesAvailable  Places réellement disponibles (null = inconnu)
  * @property {boolean} registrationOpen
- * @property {string} [currency]        Devise (par défaut : SITE_CONTACT.currency)
- * @property {string} [countryCode]     Indicatif téléphonique (par défaut : SITE_CONTACT.countryCode)
- * @property {string} [phoneLocalPattern]  Règle de saisie du numéro local (par défaut : SITE_CONTACT.phoneLocalPattern)
- * @property {string} [phoneFormatHint]    Message affiché si le numéro ne respecte pas la règle
- * @property {PaymentMethod[]} [paymentMethods]  Moyens de paiement propres à la session (par défaut : SITE_CONTACT.paymentMethods)
  */
 
 /**
@@ -309,6 +317,7 @@ window.SESSIONS = Object.freeze([
     duration: '12 séances · 24 heures',
     location: 'Saalam Tower, 5ème étage, Djibouti',
     mode: 'Présentiel',
+    pays: 'DJ',
     price: 7500,
     placesTotal: 20,
     placesAvailable: 20,
@@ -323,6 +332,7 @@ window.SESSIONS = Object.freeze([
     duration: '12 séances · 24 heures',
     location: 'Saalam Tower, 5ème étage, Djibouti',
     mode: 'Présentiel',
+    pays: 'DJ',
     price: 7500,
     placesTotal: 20,
     placesAvailable: 20,
@@ -337,6 +347,7 @@ window.SESSIONS = Object.freeze([
     duration: '12 séances · 24 heures',
     location: 'Saalam Tower, 5ème étage, Djibouti',
     mode: 'Présentiel',
+    pays: 'DJ',
     price: 7500,
     placesTotal: 20,
     placesAvailable: 20,
@@ -351,6 +362,7 @@ window.SESSIONS = Object.freeze([
     duration: '12 séances · 24 heures',
     location: 'Saalam Tower, 5ème étage, Djibouti',
     mode: 'Présentiel',
+    pays: 'DJ',
     price: 7500,
     placesTotal: 20,
     placesAvailable: 20,
@@ -365,6 +377,7 @@ window.SESSIONS = Object.freeze([
     duration: '12 séances · 24 heures',
     location: 'Saalam Tower, 5ème étage, Djibouti',
     mode: 'Présentiel',
+    pays: 'DJ',
     price: 7500,
     placesTotal: 20,
     placesAvailable: 20,
@@ -379,6 +392,7 @@ window.SESSIONS = Object.freeze([
     duration: '12 séances · 24 heures',
     location: 'Saalam Tower, 5ème étage, Djibouti',
     mode: 'Présentiel',
+    pays: 'DJ',
     price: 7500,
     placesTotal: 20,
     placesAvailable: 20,
@@ -474,6 +488,69 @@ window.PORTFOLIO = Object.freeze([
 ]);
 
 /**
+ * @typedef {Object} Pays
+ * @property {string} code               Code ISO à deux lettres (DJ, KM…), identifiant du pays
+ * @property {string} nom                Nom affiché dans le sélecteur du formulaire
+ * @property {string} devise             Devise locale, affichée après le montant (FDJ, KMF…)
+ * @property {string} indicatif          Indicatif téléphonique, ex. « +253 »
+ * @property {string} [motifTelephone]   Règle de saisie du numéro local (expression régulière)
+ * @property {string} [aideTelephone]    Message affiché quand le numéro ne respecte pas la règle
+ * @property {string} [exempleTelephone] Exemple affiché dans le champ, ex. « 77XXXXXX »
+ * @property {number|null} [longueurTelephone] Nombre de chiffres du numéro local
+ * @property {boolean} [defaut]          Pays proposé tant que le visiteur n'a rien choisi
+ * @property {boolean} [active]          Pays proposé à l'inscription (true par défaut)
+ * @property {PaymentMethod[]} paymentMethods  Moyens de paiement réellement disponibles dans ce pays
+ */
+
+/**
+ * Pays desservis. C'est ici que vivent la devise, l'indicatif et les coordonnées
+ * de paiement : un même programme n'a ni le même tarif ni le même mode de
+ * règlement d'un pays à l'autre.
+ *
+ * AUCUNE CONVERSION AUTOMATIQUE. Le tarif de chaque pays est saisi tel quel dans
+ * le tableau de bord (Formations → Tarifs par pays) : un montant converti depuis
+ * une autre devise donnerait un prix que personne n'a décidé. Tant qu'un tarif
+ * n'est pas saisi, la fiche affiche « À confirmer » plutôt qu'un chiffre inventé.
+ * @type {ReadonlyArray<Readonly<Pays>>}
+ */
+window.PAYS = Object.freeze([
+  Object.freeze({
+    code: 'DJ',
+    nom: 'Djibouti',
+    devise: 'FDJ',
+    indicatif: '+253',
+    motifTelephone: '^(77|67)\\d{6}$',
+    aideTelephone: 'Format invalide. Utilisez 77XXXXXX ou 67XXXXXX',
+    exempleTelephone: '77XXXXXX',
+    longueurTelephone: 8,
+    defaut: true,
+    active: true,
+    paymentMethods: Object.freeze([
+      Object.freeze({ value: 'Waafi Mobile Money', label: 'Waafi', kind: 'mobile', image: '/assets/images/waafi.png', numberLabel: 'Numéro', number: '+253 77 55 63 44', accountName: 'Ali William' }),
+      Object.freeze({ value: 'Cacpay', label: 'Cacpay', kind: 'mobile', image: '/assets/images/cacpay.png', numberLabel: 'Numéro de compte', number: '11000012127', accountName: 'Ali William' }),
+      Object.freeze({ value: 'Espèces', label: 'Espèces', kind: 'cash', recipient: 'Ali William', place: 'Saalam Tower, 5ème étage', phone: '+253 77 14 53 06' })
+    ])
+  }),
+  Object.freeze({
+    /* Comores : le marché est ouvert, mais ni les tarifs ni les coordonnées de
+       paiement n'y sont encore arrêtés. Ils se saisissent dans le tableau de bord
+       (Pays, puis Formations → Tarifs par pays). Tant qu'ils sont vides, le site
+       le dit franchement au lieu d'afficher des montants djiboutiens. */
+    code: 'KM',
+    nom: 'Comores',
+    devise: 'KMF',
+    indicatif: '+269',
+    motifTelephone: '^\\d{7}$',
+    aideTelephone: 'Format invalide. Le numéro comorien compte 7 chiffres',
+    exempleTelephone: '',
+    longueurTelephone: 7,
+    defaut: false,
+    active: true,
+    paymentMethods: Object.freeze([])
+  })
+]);
+
+/**
  * Point d'entrée du script Google Apps Script.
  * Il reçoit les inscriptions (POST) et, depuis l'ajout de `doGet`, renvoie le
  * nombre d'inscrits par session (GET `?action=places`). Le site s'en sert pour
@@ -483,20 +560,13 @@ window.SITE_ENDPOINTS = Object.freeze({
   registration: 'https://script.google.com/macros/s/AKfycbzqmEd66FzKKpjbpP2BiypQvNl8m5SCQ8YR-Thc1cS6idD6wBbA0WPsU-1B4saKr8w/exec'
 });
 
-/** Contact officiel utilisé par les liens WhatsApp du site (numéro déjà en usage). */
+/**
+ * Contact officiel du site (numéro déjà en usage).
+ * Tout ce qui dépend du marché — devise, indicatif, format des numéros, moyens
+ * de paiement — vit maintenant dans `window.PAYS`, pays par pays.
+ */
 window.SITE_CONTACT = Object.freeze({
   whatsappNumber: '25377145306',
   whatsappDisplay: '+253 77 14 53 06',
-  contactName: 'Ali William',
-  countryCode: '+253',
-  currency: 'FDJ',
-  /** Règle de saisie du numéro local pour ce marché (Djibouti). Une session peut la surcharger. */
-  phoneLocalPattern: '^(77|67)\\d{6}$',
-  phoneFormatHint: 'Format invalide. Utilisez 77XXXXXX ou 67XXXXXX',
-  /** Moyens de paiement par défaut (une session peut les surcharger via `paymentMethods`). */
-  paymentMethods: Object.freeze([
-    Object.freeze({ value: 'Waafi Mobile Money', label: 'Waafi', kind: 'mobile', image: '/assets/images/waafi.png', numberLabel: 'Numéro', number: '+253 77 55 63 44', accountName: 'Ali William' }),
-    Object.freeze({ value: 'Cacpay', label: 'Cacpay', kind: 'mobile', image: '/assets/images/cacpay.png', numberLabel: 'Numéro de compte', number: '11000012127', accountName: 'Ali William' }),
-    Object.freeze({ value: 'Espèces', label: 'Espèces', kind: 'cash', recipient: 'Ali William', place: 'Saalam Tower, 5ème étage', phone: '+253 77 14 53 06' })
-  ])
+  contactName: 'Ali William'
 });

@@ -77,35 +77,41 @@
         } catch (e) { /* silent */ }
     }
 
-    /* ---- Paramètres dépendant de la session ----
-       Devise, indicatif, tarif et moyens de paiement viennent de la session quand elle
-       les précise, sinon du contact du site : aucune valeur de marché n'est écrite ici. */
+    /* ---- Paramètres dépendant du PAYS ----
+       Devise, indicatif, format des numéros, moyens de paiement et tarif viennent
+       tous du pays choisi par le candidat à l'étape 1. Aucune valeur de marché
+       n'est écrite ici, et aucun montant n'est converti d'une devise à l'autre :
+       le tarif affiché est celui qui a été saisi pour ce pays, ou rien. */
     const activeSession = () => displaySession || selectedSession;
-    const currentCurrency = () => activeSession()?.currency || CONTACT.currency;
-    const currentCountryCode = () => activeSession()?.countryCode || CONTACT.countryCode || '';
+    const currentPays = () => (common ? common.paysActif() : null);
+    const currentCurrency = () => (currentPays()?.devise) || '';
+    const currentCountryCode = () => (currentPays()?.indicatif) || '';
+    /**
+     * Tarif applicable : celui de la session quand elle en fixe un pour ce pays,
+     * sinon celui de la formation. `null` signifie « non communiqué », jamais 0.
+     */
     const currentPrice = () => {
-        const session = activeSession();
-        return typeof session?.price === 'number' ? session.price : selectedFormation?.price;
+        if (!common) return null;
+        const duSession = common.prixDe(activeSession());
+        return typeof duSession === 'number' ? duSession : common.prixDe(selectedFormation);
     };
     const currentPaymentMethods = () => {
-        const session = activeSession();
-        return Array.isArray(session?.paymentMethods) && session.paymentMethods.length
-            ? session.paymentMethods
-            : (Array.isArray(CONTACT.paymentMethods) ? CONTACT.paymentMethods : []);
+        const methods = currentPays()?.paymentMethods;
+        return Array.isArray(methods) ? methods : [];
     };
     const formatPrice = price => (common ? common.formatPrice(price, currentCurrency())
         : (typeof price === 'number' ? `${price.toLocaleString('fr-FR')} ${currentCurrency() || ''}`.trim() : 'À confirmer'));
 
     /**
-     * Format du numéro local : la règle du marché est déclarée dans les données
-     * (SITE_CONTACT.phoneLocalPattern). Sans règle, on n'exige que des chiffres.
+     * Format du numéro local : la règle est déclarée sur le pays
+     * (Pays.motifTelephone). Sans règle, on n'exige que des chiffres.
      */
     function phonePattern() {
-        const source = activeSession()?.phoneLocalPattern || CONTACT.phoneLocalPattern;
+        const source = currentPays()?.motifTelephone;
         try { return source ? new RegExp(source) : /^\d{6,15}$/; } catch (e) { return /^\d{6,15}$/; }
     }
     function phoneFormatHint() {
-        return activeSession()?.phoneFormatHint || CONTACT.phoneFormatHint || 'Format invalide : chiffres uniquement';
+        return currentPays()?.aideTelephone || 'Format invalide : chiffres uniquement';
     }
 
     /** Formate une date ISO (YYYY-MM-DD) en français, ex. "16 avril 2026". */
@@ -200,8 +206,12 @@
         const upcoming = common?.upcomingSessions
             ? common.upcomingSessions().filter(item => item.formId === formation.formId)
             : SESSIONS.filter(item => item.formId === formation.formId && item.startDate && new Date(`${item.startDate}T23:59:59`) >= new Date());
+        /* Une session retenue qui a disparu de la liste ne doit pas survivre :
+           changer de pays écarte les sessions qui se tiennent ailleurs, et garder
+           l'ancienne ferait payer un tarif d'un autre marché. */
         if (sessionId !== undefined) selectedSession = upcoming.find(item => item.id === sessionId) || null;
-        else if (!selectedSession || selectedSession.formId !== formation.formId) {
+        else if (!selectedSession || selectedSession.formId !== formation.formId
+            || !upcoming.some(item => item.id === selectedSession.id)) {
             selectedSession = upcoming.find(item => item.registrationOpen && item.placesAvailable !== 0) || null;
         }
         const sessionInput = document.getElementById('session-id');
@@ -231,6 +241,7 @@
         renderSelectedSessionFacts();
 
         renderEnteteGenerique(formation);
+        renderPaysSelector();
         renderSessionDetails();
         renderRegistrationState();
         renderPaymentDetails();
@@ -419,11 +430,100 @@
         set('cash-payment-place', cash?.place);
         set('cash-payment-phone', cash?.phone);
         document.querySelectorAll('.country-code').forEach(el => { el.textContent = currentCountryCode(); });
-        // La règle de saisie du numéro suit les données du marché, pas un motif figé dans la page
+        renderPaymentMethods();
+
+        /* Règle de saisie du numéro : elle suit le pays, pas un motif figé dans
+           la page. La longueur maximale et l'exemple suivent aussi, sans quoi un
+           numéro comorien serait tronqué par le gabarit djiboutien. */
+        const pays = currentPays();
         const motif = phonePattern().source;
-        document.querySelectorAll('#telephone, #tel-paiement').forEach(champ => { champ.pattern = motif; });
+        document.querySelectorAll('#telephone, #tel-paiement').forEach(champ => {
+            champ.pattern = motif;
+            if (typeof pays?.longueurTelephone === 'number' && pays.longueurTelephone > 0) {
+                champ.maxLength = pays.longueurTelephone;
+            } else {
+                champ.removeAttribute('maxlength');
+            }
+            champ.placeholder = pays?.exempleTelephone || 'Numéro local';
+        });
+        const aide = document.getElementById('telephone-help');
+        if (aide) {
+            aide.textContent = pays?.exempleTelephone
+                ? `Format : ${pays.exempleTelephone}`
+                : (pays?.aideTelephone || 'Numéro local, chiffres uniquement');
+        }
+
         const summaryPrice = document.getElementById('selected-training-price');
         if (summaryPrice) summaryPrice.textContent = price;
+    }
+
+    /**
+     * Sélecteur de pays (étape 1). Les options viennent des données, donc un pays
+     * ajouté depuis le tableau de bord apparaît sans toucher au HTML. Avec un seul
+     * pays desservi, le champ reste masqué : un choix unique n'est pas un choix.
+     */
+    function renderPaysSelector() {
+        const groupe = document.getElementById('field-pays');
+        const champ = document.getElementById('pays');
+        if (!groupe || !champ || !common) return;
+
+        const liste = common.paysDisponibles();
+        const actif = currentPays();
+        groupe.hidden = liste.length < 2;
+        champ.disabled = liste.length < 2;
+
+        const valeurs = liste.map(p => p.code).join('|');
+        if (champ.dataset.pays !== valeurs) {
+            champ.innerHTML = liste.map(p =>
+                `<option value="${escapeHtml(p.code)}">${escapeHtml(p.nom)}</option>`).join('');
+            champ.dataset.pays = valeurs;
+        }
+        if (actif) champ.value = actif.code;
+    }
+
+    /**
+     * Cartes des moyens de paiement, propres au pays choisi.
+     * Un pays dont les coordonnées ne sont pas encore saisies l'annonce
+     * clairement : afficher celles d'un autre pays enverrait de l'argent au
+     * mauvais endroit, ce qui est pire que ne rien afficher.
+     */
+    function renderPaymentMethods() {
+        const grille = document.getElementById('paiement-cards');
+        const avis = document.getElementById('paiement-indisponible');
+        if (!grille) return;
+
+        const methods = currentPaymentMethods();
+        const pays = currentPays();
+        const classes = 'paiement-card flex flex-col items-center justify-center gap-2 p-4 rounded-2xl '
+            + 'border-2 border-[#CBFD00]/20 bg-[#0D1723]/40 hover:border-[#CBFD00]/40 hover:bg-primary/20 '
+            + 'transition-all duration-200 cursor-pointer group';
+
+        grille.innerHTML = methods.map(method => {
+            const visuel = method.image
+                ? `<img src="${escapeHtml(method.image)}" alt="${escapeHtml(method.label || method.value)}" class="h-10 sm:h-12 w-auto object-contain group-hover:scale-110 transition-transform">`
+                : `<span class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-100 transition-colors group-hover:scale-110"><span class="material-symbols-outlined text-blue-600 text-xl sm:text-2xl" style="font-variation-settings: 'FILL' 1;">${method.kind === 'cash' ? 'payments' : 'smartphone'}</span></span>`;
+            return `<button type="button" class="${classes}" data-value="${escapeHtml(method.value)}">${visuel}`
+                + `<span class="text-xs sm:text-sm font-bold text-[#FFFFFF] group-hover:text-primary text-center">${escapeHtml(method.label || method.value)}</span></button>`;
+        }).join('');
+
+        grille.hidden = !methods.length;
+        if (avis) {
+            avis.hidden = methods.length > 0;
+            if (!methods.length) {
+                avis.textContent = `Les moyens de paiement pour ${pays?.nom || 'ce pays'} ne sont pas encore `
+                    + 'ouverts en ligne. Contactez-nous sur WhatsApp : nous convenons ensemble du règlement '
+                    + 'et nous enregistrons votre inscription.';
+            }
+        }
+
+        // La sélection en cours peut ne plus exister dans ce pays
+        const choisi = paiementSelect?.value;
+        if (choisi && !methods.some(method => method.value === choisi)) {
+            paiementSelect.value = '';
+            const telPaiement = document.getElementById('tel-paiement');
+            if (telPaiement) telPaiement.value = '';
+            handlePaymentChange();
+        }
     }
 
     /** Conditions acceptées à l'étape 4 : uniquement des faits connus. */
@@ -604,6 +704,14 @@
                 params.get('sessionId') || undefined);
             initPlacesCounter();
         });
+
+        /* Pays changé : tarif, devise, indicatif, format du numéro et moyens de
+           paiement changent d'un coup. La session est recalculée, car une session
+           qui se tient dans un autre pays n'est plus proposée ici. */
+        document.addEventListener('impactali:pays', () => {
+            setSelectedFormation(selectedFormation?.formId || PAGE_FORMATION_ID, true, undefined);
+            initPlacesCounter();
+        });
     }
 
     /** Inscrit pour cette formation : à la session choisie, ou sans session (dates à annoncer). */
@@ -647,9 +755,24 @@
         // Submit
         form.addEventListener('submit', handleSubmit);
 
-        // ---- Paiement Cards ----
-        document.querySelectorAll('.paiement-card').forEach(card => {
-            card.addEventListener('click', () => {
+        /* ---- Choix du pays ----
+           Premier champ du formulaire, parce qu'il commande tout le reste :
+           tarif, devise, format du numéro et moyens de paiement. */
+        const champPays = document.getElementById('pays');
+        if (champPays && common) {
+            champPays.addEventListener('change', () => {
+                if (!common.choisirPays(champPays.value)) renderPaysSelector();
+            });
+        }
+
+        /* ---- Moyens de paiement ----
+           Les cartes sont reconstruites à chaque changement de pays : l'écoute se
+           fait sur le conteneur, sinon les nouvelles cartes seraient inertes. */
+        const grillePaiement = document.getElementById('paiement-cards');
+        if (grillePaiement) {
+            grillePaiement.addEventListener('click', event => {
+                const card = event.target.closest('.paiement-card');
+                if (!card || !grillePaiement.contains(card)) return;
                 document.querySelectorAll('.paiement-card').forEach(c => {
                     c.classList.remove('!border-primary', '!bg-primary-fixed/30', 'ring-2', 'ring-primary/30', 'scale-[1.02]');
                 });
@@ -658,7 +781,7 @@
                 clearFieldError(document.getElementById('paiement'));
                 handlePaymentChange();
             });
-        });
+        }
 
         // Motivation counter
         motivationField.addEventListener('input', updateCharCounter);
@@ -938,9 +1061,11 @@
 
         // Tel-paiement when visible (step 3)
         if (step === 3) {
+            // Le caractère « mobile » vient des données du pays, pas d'une liste figée :
+            // un moyen ajouté pour un nouveau pays doit être validé comme les autres.
             const paiementValue = paiementSelect.value;
-            const mobileMethods = ['Waafi Mobile Money', 'Cacpay', 'D-Money'];
-            if (mobileMethods.includes(paiementValue)) {
+            const choisi = currentPaymentMethods().find(method => method.value === paiementValue);
+            if (choisi ? choisi.kind === 'mobile' : ['Waafi Mobile Money', 'Cacpay', 'D-Money'].includes(paiementValue)) {
                 const telPaiement = document.getElementById('tel-paiement');
                 if (!telPaiement.value.trim()) {
                     showFieldError(telPaiement, 'Veuillez entrer votre numéro de paiement');
@@ -1016,7 +1141,11 @@
             'profession': 'Veuillez choisir votre profession',
             'niveau': 'Veuillez choisir votre niveau',
             'motivation': 'Veuillez expliquer votre motivation',
-            'paiement': 'Veuillez choisir un mode de paiement',
+            /* Sans moyen de paiement configuré pour le pays, réclamer un choix
+               enverrait le candidat dans une impasse sans lui dire pourquoi. */
+            'paiement': currentPaymentMethods().length
+                ? 'Veuillez choisir un mode de paiement'
+                : `Le règlement en ligne n’est pas encore ouvert pour ${currentPays()?.nom || 'ce pays'}. Écrivez-nous sur WhatsApp : nous convenons du paiement et enregistrons votre inscription.`,
             'conditions': 'Vous devez accepter les conditions',
             'remboursement': 'Vous devez accepter la politique de remboursement',
         };
@@ -1115,6 +1244,7 @@
             { label: 'Session', value: selectedSession ? formatSessionDate(selectedSession.startDate) : 'Dates à annoncer' },
             { label: 'Nom', value: data.nom },
             { label: 'Prénom', value: data.prenom },
+            { label: 'Pays', value: currentPays()?.nom || '—' },
             { label: 'Téléphone', value: `${currentCountryCode()} ${data.telephone}` },
             { label: 'Email', value: data.email || '—' },
             { label: 'Âge', value: data.age + ' ans' },
@@ -1232,6 +1362,8 @@
             professionDetail: data.professionDetail,
             montant: typeof currentPrice() === 'number' ? currentPrice() : '',
             currency: currentCurrency(),
+            pays: currentPays()?.nom || '',
+            paysCode: currentPays()?.code || '',
             countryCode: currentCountryCode(),
             telephoneInternational: `${currentCountryCode()}${data.telephone}`,
             dateInscription: now.toISOString(),
@@ -1348,6 +1480,7 @@ Je confirme mon inscription à la formation ${formationTitle}.
 📋 INFORMATIONS D'INSCRIPTION
 ━━━━━━━━━━━━━━━━━━━━━━━━━━
 👤 Participant : ${prenomNom}
+🌍 Pays : ${currentPays()?.nom || '—'}
 📱 Téléphone : ${currentCountryCode()} ${data.telephone}
 💳 Paiement : ${data.paiement} - ${formationPrice}
 📅 Formation : ${formationTitle}${selectedSession ? ` — session du ${formatSessionDate(selectedSession.startDate)}` : ' — session à annoncer'}

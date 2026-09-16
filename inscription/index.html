@@ -362,6 +362,18 @@
                         </div>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
+                            <!-- Pays : il commande la devise, le tarif, l'indicatif et les moyens
+                                 de paiement. Les options sont écrites par script.js depuis les
+                                 données ; le bloc reste masqué tant qu'un seul pays est desservi. -->
+                            <div class="field-group md:col-span-2" id="field-pays" hidden>
+                                <label for="pays" class="field-label">Pays <span class="text-primary">*</span></label>
+                                <select id="pays" name="pays" required class="field-select"
+                                    aria-describedby="pays-help pays-error"></select>
+                                <span class="text-[11px] text-[#E5E5E5] mt-0.5 ml-1" id="pays-help">Le tarif et les
+                                    moyens de paiement s’adaptent au pays choisi.</span>
+                                <span class="field-error" id="pays-error" role="alert" aria-live="polite"></span>
+                            </div>
+
                             <div class="field-group" id="field-nom">
                                 <label for="nom" class="field-label">Nom <span class="text-primary">*</span></label>
                                 <input type="text" id="nom" name="nom" required autocomplete="family-name"
@@ -711,36 +723,12 @@
                             <div class="field-group" id="field-paiement">
                                 <label class="field-label">Mode de paiement <span class="text-primary">*</span></label>
                                 <input type="hidden" id="paiement" name="paiement" required>
+                                <!-- Les moyens de paiement dépendent du pays : ils sont écrits par
+                                     script.js depuis les données, jamais figés dans la page. -->
                                 <div class="grid grid-cols-2 md:grid-cols-3 gap-3 lg:gap-4" id="paiement-cards"
-                                    role="radiogroup" aria-label="Votre mode de paiement">
-                                    <button type="button"
-                                        class="paiement-card flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border-2 border-[#CBFD00]/20 bg-[#0D1723]/40 hover:border-[#CBFD00]/40 hover:bg-primary/20 transition-all duration-200 cursor-pointer group"
-                                        data-value="Waafi Mobile Money">
-                                        <img src="/assets/images/waafi.png" alt="Waafi"
-                                            class="h-10 sm:h-12 w-auto object-contain group-hover:scale-110 transition-transform">
-                                        <span
-                                            class="text-xs sm:text-sm font-bold text-[#FFFFFF] font-bold group-hover:text-primary">Waafi</span>
-                                    </button>
-                                    <button type="button"
-                                        class="paiement-card flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border-2 border-[#CBFD00]/20 bg-[#0D1723]/40 hover:border-[#CBFD00]/40 hover:bg-primary/20 transition-all duration-200 cursor-pointer group"
-                                        data-value="Cacpay">
-                                        <img src="/assets/images/cacpay.png" alt="Cacpay"
-                                            class="h-10 sm:h-12 w-auto object-contain group-hover:scale-110 transition-transform">
-                                        <span
-                                            class="text-xs sm:text-sm font-bold text-[#FFFFFF] font-bold group-hover:text-primary">Cacpay</span>
-                                    </button>
-                                    <button type="button"
-                                        class="paiement-card flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border-2 border-[#CBFD00]/20 bg-[#0D1723]/40 hover:border-[#CBFD00]/40 hover:bg-primary/20 transition-all duration-200 cursor-pointer group"
-                                        data-value="Espèces">
-                                        <span
-                                            class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-100 transition-colors group-hover:scale-110">
-                                            <span class="material-symbols-outlined text-blue-600 text-xl sm:text-2xl"
-                                                style="font-variation-settings: 'FILL' 1;">payments</span>
-                                        </span>
-                                        <span
-                                            class="text-xs sm:text-sm font-bold text-[#FFFFFF] font-bold group-hover:text-primary text-center">Espèces</span>
-                                    </button>
-                                </div>
+                                    role="radiogroup" aria-label="Votre mode de paiement"></div>
+                                <div class="rounded-2xl border border-amber-500/40 bg-amber-500/10 p-4 text-[13px] leading-relaxed text-[#E5E5E5]"
+                                    id="paiement-indisponible" role="status" hidden></div>
                                 <span class="field-error" id="paiement-error" role="alert" aria-live="polite"></span>
                             </div>
 

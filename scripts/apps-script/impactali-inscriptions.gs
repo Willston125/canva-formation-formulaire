@@ -30,9 +30,10 @@
    7. Vérifier : https://VOTRE_URL/exec?action=version doit répondre
       « drive: true ».
 
-   Les onglets Formations, Sessions, Reglages et Inscriptions sont créés
-   automatiquement au premier usage. Vous n'avez jamais à les ouvrir : tout
-   se pilote depuis le tableau de bord du site.
+   Les onglets Formations, Sessions, Pays, Reglages et Inscriptions sont créés
+   automatiquement au premier usage, et les colonnes ajoutées par une mise à
+   jour apparaissent d'elles-mêmes dans un classeur déjà rempli. Vous n'avez
+   jamais à les ouvrir : tout se pilote depuis le tableau de bord du site.
    ========================================================================= */
 
 // ----------------------------- CONFIGURATION -----------------------------
@@ -43,7 +44,7 @@
  * déploiement n'a pas été publiée, et Google sert encore l'ancien code.
  * C'est l'erreur la plus fréquente, et la plus difficile à diagnostiquer.
  */
-var VERSION = '2026-09-15-images';
+var VERSION = '2026-09-16-pays';
 
 /** Classeur. Vide = le classeur auquel ce script est rattaché (cas normal). */
 var ID_CLASSEUR = '';
@@ -54,6 +55,7 @@ var F_FORMATIONS = 'Formations';
 var F_SESSIONS = 'Sessions';
 var F_REGLAGES = 'Reglages';
 var F_TEXTES = 'Textes';
+var F_PAYS = 'Pays';
 
 /** Adresse professionnelle qui reçoit l'alerte à chaque inscription. */
 var EMAIL_PRO = 'infos@impactali.site';
@@ -99,6 +101,8 @@ var COLONNES = [
   ['telPaiement', 'telPaiement'],
   ['montant', 'montant'],
   ['currency', 'currency'],
+  ['pays', 'pays'],
+  ['paysCode', 'paysCode'],
   ['statut', 'statut'],
   ['source', 'source'],
   ['pageUrl', 'pageUrl'],
@@ -111,7 +115,7 @@ var CHAMPS_FORMATION = [
   ['id', 'texte'], ['slug', 'texte'], ['title', 'texte'], ['shortTitle', 'texte'],
   ['category', 'texte'], ['family', 'texte'], ['promise', 'texte'], ['shortDescription', 'texte'],
   ['image', 'texte'], ['imageAlt', 'texte'], ['duration', 'texte'], ['level', 'texte'],
-  ['mode', 'texte'], ['price', 'num'], ['modules', 'num'], ['learnings', 'json'],
+  ['mode', 'texte'], ['price', 'num'], ['prices', 'json'], ['modules', 'num'], ['learnings', 'json'],
   ['featured', 'bool'], ['registrationOpen', 'bool'], ['active', 'bool'],
   ['allowRegistrationWithoutSession', 'bool'], ['hasDetailPage', 'bool'],
   ['href', 'texte'], ['formId', 'texte'], ['poster', 'texte'], ['lead', 'texte'],
@@ -122,7 +126,19 @@ var CHAMPS_SESSION = [
   ['id', 'texte'], ['formId', 'texte'], ['startDate', 'texte'], ['endDate', 'texte'],
   ['schedule', 'texte'], ['duration', 'texte'], ['location', 'texte'], ['mode', 'texte'],
   ['price', 'num'], ['placesTotal', 'num'], ['placesAvailable', 'num'],
-  ['registrationOpen', 'bool'], ['currency', 'texte']
+  ['registrationOpen', 'bool'], ['currency', 'texte'], ['pays', 'texte']
+];
+
+/**
+ * Pays desservis : devise, indicatif, format des numéros et moyens de paiement.
+ * Les tarifs, eux, restent sur la formation (colonne `prices`), un même pays
+ * n'ayant pas le même prix d'un programme à l'autre.
+ */
+var CHAMPS_PAYS = [
+  ['code', 'texte'], ['nom', 'texte'], ['devise', 'texte'], ['indicatif', 'texte'],
+  ['motifTelephone', 'texte'], ['aideTelephone', 'texte'], ['exempleTelephone', 'texte'],
+  ['longueurTelephone', 'num'], ['defaut', 'bool'], ['active', 'bool'],
+  ['paymentMethods', 'json'], ['ordre', 'num']
 ];
 
 // ------------------------------ ROUTAGE ----------------------------------
@@ -178,15 +194,18 @@ function recevoirInscription(d) {
 
 function enregistrer(d) {
   var feuille = onglet(F_INSCRIPTIONS);
-  if (feuille.getLastRow() === 0) {
-    feuille.appendRow(COLONNES.map(function (c) { return c[0]; }));
-    feuille.setFrozenRows(1);
-  }
-  feuille.appendRow(COLONNES.map(function (c) {
-    if (c[0] === 'Horodatage réception') return new Date();
-    if (c[0] === 'JSON complet') return JSON.stringify(d);
-    var v = d[c[1]];
-    return v === undefined || v === null ? '' : v;
+  /* Les colonnes ajoutées après coup (le pays, par exemple) sont créées dans les
+     classeurs existants, et chaque valeur est écrite sous SON en-tête. */
+  var entetes = assurerEntetes(feuille, COLONNES.map(function (c) { return c[0]; }));
+  feuille.appendRow(entetes.map(function (entete) {
+    if (entete === 'Horodatage réception') return new Date();
+    if (entete === 'JSON complet') return JSON.stringify(d);
+    for (var j = 0; j < COLONNES.length; j++) {
+      if (COLONNES[j][0] !== entete) continue;
+      var v = d[COLONNES[j][1]];
+      return v === undefined || v === null ? '' : v;
+    }
+    return '';
   }));
 }
 
@@ -212,6 +231,8 @@ function commandeAdmin(d) {
       case 'admin.formation.delete': return repondre(supprimerFormation(d.id), null);
       case 'admin.session.save':     return repondre(enregistrerSession(d.donnees), null);
       case 'admin.session.delete':   return repondre(supprimerSession(d.id), null);
+      case 'admin.pays.save':        return repondre(enregistrerPays(d.donnees), null);
+      case 'admin.pays.delete':      return repondre(supprimerPays(d.code), null);
       case 'admin.reglages.save':    return repondre(enregistrerReglages(d.donnees), null);
       case 'admin.textes.save':      return repondre(enregistrerTextes(d.donnees), null);
       case 'admin.inscriptions':     return repondre({ ok: true, inscriptions: lireInscriptions(d.formationId) }, null);
@@ -256,6 +277,9 @@ function lireCatalogue() {
       return (typeof a.ordre === 'number' ? a.ordre : 999) - (typeof b.ordre === 'number' ? b.ordre : 999);
     }),
     sessions: lireTable(F_SESSIONS, CHAMPS_SESSION),
+    pays: lireTable(F_PAYS, CHAMPS_PAYS).sort(function (a, b) {
+      return (typeof a.ordre === 'number' ? a.ordre : 999) - (typeof b.ordre === 'number' ? b.ordre : 999);
+    }),
     reglages: lireReglages(),
     textes: lireTextes(),
     places: compterInscrits(),
@@ -297,18 +321,49 @@ function versCellule(valeur, type) {
   return valeur;
 }
 
-/** Écrit ou remplace une ligne identifiée par sa première colonne. */
-function ecrireLigne(nom, champs, donnees) {
-  var feuille = onglet(nom);
-  var entetes = champs.map(function (c) { return c[0]; });
+/**
+ * Garantit qu'un onglet possède une colonne pour chacun des noms demandés, et
+ * renvoie l'ordre réel de ses en-têtes.
+ *
+ * Sans cela, ajouter un champ au script casserait les classeurs déjà remplis :
+ * l'écriture se fait par position, la lecture par nom d'en-tête. Une colonne
+ * ajoutée en fin de liste serait écrite sous un en-tête vide, donc jamais
+ * relue — une donnée saisie qui disparaît sans aucun message d'erreur.
+ */
+function assurerEntetes(feuille, noms) {
   if (feuille.getLastRow() === 0) {
-    feuille.appendRow(entetes);
+    feuille.appendRow(noms);
     feuille.setFrozenRows(1);
+    return noms.slice();
   }
-  var ligne = champs.map(function (c) { return versCellule(donnees[c[0]], c[1]); });
+  var entetes = feuille.getRange(1, 1, 1, Math.max(1, feuille.getLastColumn()))
+    .getValues()[0].map(function (v) { return String(v).trim(); });
+  var manquants = noms.filter(function (n) { return entetes.indexOf(n) < 0; });
+  if (manquants.length) {
+    feuille.getRange(1, entetes.length + 1, 1, manquants.length).setValues([manquants]);
+    entetes = entetes.concat(manquants);
+  }
+  return entetes;
+}
+
+/** Écrit ou remplace une ligne identifiée par la colonne `cleId` (« id » par défaut). */
+function ecrireLigne(nom, champs, donnees, cleId) {
+  cleId = cleId || 'id';
+  var feuille = onglet(nom);
+  var entetes = assurerEntetes(feuille, champs.map(function (c) { return c[0]; }));
+  // Écriture dans l'ordre RÉEL des colonnes, pas dans celui de la déclaration
+  var ligne = entetes.map(function (entete) {
+    for (var j = 0; j < champs.length; j++) {
+      if (champs[j][0] === entete) return versCellule(donnees[entete], champs[j][1]);
+    }
+    return '';
+  });
+  var colonneId = entetes.indexOf(cleId);
+  if (colonneId < 0) colonneId = 0;
+
   var valeurs = feuille.getDataRange().getValues();
   for (var i = 1; i < valeurs.length; i++) {
-    if (String(valeurs[i][0]).trim() === String(donnees.id).trim()) {
+    if (String(valeurs[i][colonneId]).trim() === String(donnees[cleId]).trim()) {
       feuille.getRange(i + 1, 1, 1, ligne.length).setValues([ligne]);
       return { ok: true, cree: false };
     }
@@ -317,11 +372,17 @@ function ecrireLigne(nom, champs, donnees) {
   return { ok: true, cree: true };
 }
 
-function supprimerLigne(nom, id) {
+function supprimerLigne(nom, id, cleId) {
   var feuille = onglet(nom);
   var valeurs = feuille.getDataRange().getValues();
+  if (!valeurs.length) return false;
+  var colonneId = 0;
+  if (cleId) {
+    var trouve = valeurs[0].map(function (v) { return String(v).trim(); }).indexOf(cleId);
+    if (trouve >= 0) colonneId = trouve;
+  }
   for (var i = 1; i < valeurs.length; i++) {
-    if (String(valeurs[i][0]).trim() === String(id).trim()) {
+    if (String(valeurs[i][colonneId]).trim() === String(id).trim()) {
       feuille.deleteRow(i + 1);
       return true;
     }
@@ -405,6 +466,68 @@ function supprimerSession(id) {
       + 'Fermez les inscriptions plutôt que de la supprimer.');
   }
   if (!supprimerLigne(F_SESSIONS, id)) throw new Error('Session introuvable.');
+  return { ok: true, catalogue: lireCatalogue() };
+}
+
+// --------------------------------- PAYS ----------------------------------
+
+function enregistrerPays(p) {
+  if (!p || !p.code) throw new Error('Le code du pays est obligatoire.');
+  p.code = String(p.code).trim().toUpperCase();
+  if (!/^[A-Z]{2}$/.test(p.code)) {
+    throw new Error('Le code du pays s’écrit en deux lettres, comme DJ ou KM.');
+  }
+  if (!p.nom) throw new Error('Le nom du pays est obligatoire.');
+  if (!p.devise) throw new Error('La devise est obligatoire : sans elle, aucun tarif n’est lisible.');
+
+  // Un motif de numéro invalide bloquerait toutes les inscriptions du pays
+  if (p.motifTelephone) {
+    try { new RegExp(p.motifTelephone); }
+    catch (err) { throw new Error('Le format de numéro n’est pas une expression valide : ' + p.motifTelephone); }
+  }
+  if (!Array.isArray(p.paymentMethods)) p.paymentMethods = [];
+
+  /* Un seul pays par défaut : c'est celui que voit un visiteur qui n'a rien
+     choisi. Deux valeurs par défaut rendraient l'affichage imprévisible. */
+  if (p.defaut === true) {
+    lireTable(F_PAYS, CHAMPS_PAYS).forEach(function (autre) {
+      if (autre.code === p.code || autre.defaut !== true) return;
+      autre.defaut = false;
+      ecrireLigne(F_PAYS, CHAMPS_PAYS, autre, 'code');
+    });
+  }
+
+  var r = ecrireLigne(F_PAYS, CHAMPS_PAYS, p, 'code');
+  return { ok: true, cree: r.cree, catalogue: lireCatalogue() };
+}
+
+function supprimerPays(code) {
+  if (!code) throw new Error('Code manquant.');
+  code = String(code).trim().toUpperCase();
+
+  var restants = lireTable(F_PAYS, CHAMPS_PAYS).filter(function (p) { return p.code !== code; });
+  if (!restants.length) {
+    throw new Error('C’est le dernier pays : le site n’aurait plus ni devise ni moyen de paiement. '
+      + 'Créez-en un autre avant de supprimer celui-ci.');
+  }
+
+  /* Une session qui se tient dans ce pays deviendrait invisible partout : on
+     refuse plutôt que de la faire disparaître en silence. */
+  var sessions = lireTable(F_SESSIONS, CHAMPS_SESSION).filter(function (s) {
+    return String(s.pays || '').toUpperCase() === code;
+  });
+  if (sessions.length) {
+    throw new Error(sessions.length + ' session(s) se tiennent dans ce pays. '
+      + 'Rattachez-les ailleurs, ou supprimez-les d’abord.');
+  }
+
+  if (!supprimerLigne(F_PAYS, code, 'code')) throw new Error('Pays introuvable.');
+
+  // Le pays supprimé était peut-être celui par défaut : il en faut toujours un
+  if (!restants.some(function (p) { return p.defaut === true; })) {
+    restants[0].defaut = true;
+    ecrireLigne(F_PAYS, CHAMPS_PAYS, restants[0], 'code');
+  }
   return { ok: true, catalogue: lireCatalogue() };
 }
 
@@ -715,8 +838,16 @@ function importerDepuisSite(donnees) {
     ecrireLigne(F_SESSIONS, CHAMPS_SESSION, s);
     nbS++;
   });
+  var nbP = 0;
+  (donnees.pays || []).forEach(function (p, i) {
+    if (!p || !p.code) return;
+    p.code = String(p.code).toUpperCase();
+    if (typeof p.ordre !== 'number') p.ordre = i;
+    ecrireLigne(F_PAYS, CHAMPS_PAYS, p, 'code');
+    nbP++;
+  });
   if (donnees.reglages) enregistrerReglages(donnees.reglages);
-  return { ok: true, formations: nbF, sessions: nbS, catalogue: lireCatalogue() };
+  return { ok: true, formations: nbF, sessions: nbS, pays: nbP, catalogue: lireCatalogue() };
 }
 
 // ------------------------------ ALERTE EMAIL -----------------------------
@@ -745,6 +876,7 @@ function messageRelance(d, formation, session) {
 function lignesRecap(d, nomComplet, formation, session) {
   return [
     ['Formation', formation], ['Session', session], ['Nom et prénom', nomComplet],
+    ['Pays', d.pays || d.paysCode || '—'],
     ['Téléphone', (d.countryCode || '') + ' ' + (d.telephone || '')], ['Email', d.email || '—'],
     ['Âge', d.age ? d.age + ' ans' : '—'],
     ['Profession', [d.profession, d.professionDetail].filter(Boolean).join(' · ') || '—'],
@@ -828,6 +960,7 @@ function testerInstallation() {
     email: '', age: 30, profession: 'Étudiant', professionDetail: '', niveau: 'Jamais utilisé',
     objectifs: 'Test', motivation: 'Ligne de test technique, à supprimer.',
     modePaiement: 'Espèces', telPaiement: '', montant: 7500, currency: 'FDJ',
+    pays: 'Djibouti', paysCode: 'DJ', countryCode: '+253',
     statut: 'TEST', source: 'Test installation', pageUrl: ''
   };
   enregistrer(essai);

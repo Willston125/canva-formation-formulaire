@@ -11,6 +11,11 @@ const SITE_URL = 'https://canva-formation-formulaire.vercel.app';
 const sandbox = { window: {} };
 vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'formations-data.js'), 'utf8'), sandbox);
 const FORMATIONS = sandbox.window.FORMATIONS || [];
+const PAYS = sandbox.window.PAYS || [];
+/* Pays de référence des pages générées : le visiteur peut en changer dans le
+   formulaire, et script.js réécrit alors tarif et devise. Ce qui est écrit ici
+   n'est donc qu'un point de départ, celui du marché par défaut. */
+const PAYS_DEFAUT = PAYS.find(p => p.defaut && p.active !== false) || PAYS[0] || null;
 
 /** Adresse absolue pour les aperçus de partage : une image déjà absolue (Drive) est laissée telle quelle. */
 const absolue = u => (/^https?:/i.test(String(u || '')) ? String(u) : SITE_URL + String(u || ''));
@@ -18,7 +23,17 @@ const absolue = u => (/^https?:/i.test(String(u || '')) ? String(u) : SITE_URL +
 const esc = value => String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;')
   .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const known = value => typeof value === 'string' && value.trim() && !/^à confirmer$/i.test(value.trim());
-const price = value => typeof value === 'number' ? `${value.toLocaleString('fr-FR')} FDJ` : 'À confirmer';
+/** Tarif du pays par défaut : `prices` s'il existe, sinon l'ancien champ `price`. */
+const priceOf = f => {
+  const table = f && f.prices;
+  if (PAYS_DEFAUT && table && typeof table === 'object' && typeof table[PAYS_DEFAUT.code] === 'number') {
+    return table[PAYS_DEFAUT.code];
+  }
+  return f && typeof f.price === 'number' ? f.price : null;
+};
+const price = value => typeof value === 'number'
+  ? `${value.toLocaleString('fr-FR')} ${(PAYS_DEFAUT && PAYS_DEFAUT.devise) || ''}`.trim()
+  : 'À confirmer';
 
 function replace(html, pattern, value, label) {
   if (!pattern.test(html)) throw new Error(`Zone introuvable dans le template : ${label}`);
@@ -40,7 +55,7 @@ function facts(f) {
   if (known(f.mode)) rows.push(['co_present', 'Mode', f.mode, '', false]);
   rows.push(['schedule', 'Horaires', '', 'fiche-schedule', true]);
   rows.push(['location_on', 'Lieu', '', 'fiche-location', true]);
-  rows.push(['payments', 'Participation', price(f.price), 'fiche-price', false]);
+  rows.push(['payments', 'Participation', price(priceOf(f)), 'fiche-price', false]);
   rows.push(['event', 'Prochaine session', 'Dates à annoncer', 'fiche-next-session', false]);
   return `<dl class="fiche-facts" aria-label="Informations clés">${rows.map(([icon, label, value, id, sessionRow]) =>
     `<div${sessionRow ? ' data-session-fact hidden' : ''}><dt><span class="material-symbols-outlined" aria-hidden="true">${icon}</span>${esc(label)}</dt><dd${id ? ` id="${id}"` : ''}>${esc(value)}</dd></div>`).join('')}</dl>`;

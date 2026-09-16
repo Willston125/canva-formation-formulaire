@@ -13,7 +13,90 @@
        remplace dès que la réponse de l'API arrive. */
     let FORMATIONS = Array.isArray(window.FORMATIONS) ? window.FORMATIONS : [];
     let SESSIONS = Array.isArray(window.SESSIONS) ? window.SESSIONS : [];
-    let CONTACT = window.SITE_CONTACT || { whatsappNumber: '25377145306', whatsappDisplay: '+253 77 14 53 06', countryCode: '+253', currency: 'FDJ' };
+    let PAYS = Array.isArray(window.PAYS) ? window.PAYS : [];
+    let CONTACT = window.SITE_CONTACT || { whatsappNumber: '25377145306', whatsappDisplay: '+253 77 14 53 06', contactName: 'Ali William' };
+
+    /* ---------- Pays desservis ----------
+       Le pays détermine la devise, l'indicatif, le format des numéros, les
+       moyens de paiement et — surtout — le tarif. Rien n'est converti d'une
+       devise à l'autre : chaque montant est celui qui a été saisi pour ce pays.
+       Le choix du visiteur est conservé d'une page à l'autre, pour qu'il n'ait
+       pas à le refaire en revenant au catalogue. */
+    const CLE_PAYS = 'impactali_pays';
+    let codePays = null;
+
+    /** Pays réellement proposés (un pays peut être préparé sans être ouvert). */
+    function paysDisponibles() {
+        return PAYS.filter(p => p && p.code && p.active !== false);
+    }
+
+    function paysParDefaut() {
+        const liste = paysDisponibles();
+        return liste.find(p => p.defaut) || liste[0] || null;
+    }
+
+    function trouverPays(code) {
+        if (!code) return null;
+        const cible = String(code).trim().toUpperCase();
+        return paysDisponibles().find(p => String(p.code).toUpperCase() === cible) || null;
+    }
+
+    /** Pays courant : celui choisi par le visiteur, sinon celui par défaut. */
+    function paysActif() {
+        if (codePays === null) {
+            let memorise = null;
+            try { memorise = localStorage.getItem(CLE_PAYS); } catch (e) { /* stockage indisponible */ }
+            codePays = trouverPays(memorise) ? String(memorise).toUpperCase() : '';
+        }
+        return trouverPays(codePays) || paysParDefaut();
+    }
+
+    /**
+     * Change le pays courant. Les pages écoutent « impactali:pays » pour
+     * réafficher tarifs, devises et coordonnées SANS rechargement.
+     * @returns {boolean} true si le pays a réellement changé
+     */
+    function choisirPays(code) {
+        const pays = trouverPays(code);
+        if (!pays || (paysActif() && paysActif().code === pays.code)) return false;
+        codePays = pays.code;
+        try { localStorage.setItem(CLE_PAYS, pays.code); } catch (e) { /* stockage indisponible */ }
+        document.dispatchEvent(new CustomEvent('impactali:pays', { detail: { pays: pays } }));
+        return true;
+    }
+
+    function devise(pays) { return (pays || paysActif() || {}).devise || ''; }
+
+    /**
+     * Tarif d'une formation (ou d'une session) dans le pays demandé.
+     * `prices` donne le montant pays par pays ; `price` reste le tarif du pays
+     * par défaut, pour les données antérieures aux tarifs multi-pays et pour les
+     * sessions, qui se déroulent dans un seul pays.
+     * Aucun repli d'un pays sur un autre : un tarif non saisi vaut « inconnu ».
+     * @returns {number|null}
+     */
+    function prixDe(objet, code) {
+        if (!objet) return null;
+        const pays = trouverPays(code) || paysActif();
+        if (!pays) return null;
+        const table = objet.prices;
+        if (table && typeof table === 'object') {
+            const valeur = table[pays.code];
+            if (typeof valeur === 'number' && isFinite(valeur)) return valeur;
+            if (Object.prototype.hasOwnProperty.call(table, pays.code)) return null;
+        }
+        // Une session appartient à un pays : son tarif ne vaut que pour celui-là
+        if (objet.pays) return String(objet.pays).toUpperCase() === pays.code && typeof objet.price === 'number' ? objet.price : null;
+        const defaut = paysParDefaut();
+        if (defaut && defaut.code === pays.code && typeof objet.price === 'number') return objet.price;
+        return null;
+    }
+
+    /** « 7 500 FDJ » pour la formation ou la session donnée, dans le pays courant. */
+    function formatPrixDe(objet, code) {
+        const pays = trouverPays(code) || paysActif();
+        return formatPrice(prixDe(objet, pays && pays.code), devise(pays));
+    }
 
     /** Formate une date ISO (YYYY-MM-DD) en français, ex. « 16 avril 2026 ». */
     function formatSessionDate(isoDate) {
@@ -51,12 +134,19 @@
         return Object.assign({}, session, { placesAvailable: placesEnDirect.get(session.id) });
     }
 
-    /** Sessions à venir (date de début non dépassée), triées par date. */
+    /**
+     * Sessions à venir (date de début non dépassée), triées par date.
+     * Une session qui déclare un pays n'est proposée que dans ce pays : annoncer
+     * à un Comorien une session qui se tient à Djibouti serait un faux espoir.
+     * Une session sans pays reste visible partout (comportement d'origine).
+     */
     function upcomingSessions() {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
+        const pays = paysActif();
         return SESSIONS
             .filter(session => session.startDate && new Date(`${session.startDate}T23:59:59`) >= today)
+            .filter(session => !session.pays || !pays || String(session.pays).toUpperCase() === pays.code)
             .map(avecPlacesEnDirect)
             .sort((a, b) => a.startDate.localeCompare(b.startDate));
     }
@@ -113,9 +203,15 @@
         SESSIONS = Array.isArray(donnees.sessions) ? donnees.sessions : [];
         window.FORMATIONS = FORMATIONS;
         window.SESSIONS = SESSIONS;
+        /* Un catalogue sans pays laisse ceux du fichier en place : sans cette
+           garde, une base pas encore alimentée effacerait devises, indicatifs et
+           coordonnées de paiement, et le formulaire n'aurait plus rien à afficher. */
+        if (Array.isArray(donnees.pays) && donnees.pays.length) {
+            PAYS = donnees.pays;
+            window.PAYS = PAYS;
+        }
         if (donnees.reglages && Object.keys(donnees.reglages).length) {
-            // Les moyens de paiement ne transitent pas par l'API : on garde ceux du fichier
-            CONTACT = Object.assign({}, CONTACT, donnees.reglages, { paymentMethods: CONTACT.paymentMethods });
+            CONTACT = Object.assign({}, CONTACT, donnees.reglages);
             window.SITE_CONTACT = CONTACT;
         }
         placesEnDirect.clear();
@@ -288,7 +384,8 @@
     }
 
     function formatPrice(price, currency) {
-        return typeof price === 'number' ? `${price.toLocaleString('fr-FR')} ${currency || CONTACT.currency || 'FDJ'}` : 'À confirmer';
+        if (typeof price !== 'number') return 'À confirmer';
+        return `${price.toLocaleString('fr-FR')} ${currency || devise()}`.trim();
     }
 
     /**
@@ -449,6 +546,14 @@
         formatPrice,
         sessionState,
         refreshPlaces,
+        paysDisponibles,
+        paysParDefaut,
+        paysActif,
+        choisirPays,
+        trouverPays,
+        devise,
+        prixDe,
+        formatPrixDe,
         contact: CONTACT,
         endpoints: ENDPOINTS
     });
@@ -470,5 +575,15 @@
         const banner = document.getElementById('session-banner');
         if (!banner || banner.classList.contains('hidden')) return;
         if (!nextOpenSession()) banner.classList.add('hidden');
+    });
+
+    /* Changement de pays : les sessions proposées ne sont plus les mêmes, donc
+       la bannière non plus. On la reconstruit entièrement plutôt que de la
+       masquer, car une session peut aussi APPARAÎTRE en changeant de pays. */
+    document.addEventListener('impactali:pays', () => {
+        const banner = document.getElementById('session-banner');
+        if (!banner) return;
+        banner.classList.add('hidden');
+        initSessionBanner();
     });
 })();

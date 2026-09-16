@@ -11,7 +11,7 @@
     const PORTFOLIO = Array.isArray(window.PORTFOLIO) ? window.PORTFOLIO : [];
     const common = window.SiteCommon;
     if (!common) return;
-    const { escapeHtml, formatSessionDate, findFormation, upcomingSessions, formatPrice } = common;
+    const { escapeHtml, formatSessionDate, findFormation, upcomingSessions, prixDe, formatPrixDe } = common;
 
     /** Lien d'inscription : page dédiée quand elle existe, sinon fiche rapide. */
     function registrationHref(formation, sessionId) {
@@ -401,7 +401,7 @@
         if (typeof formation.modules === 'number') facts.push(['view_module', 'Programme', `${formation.modules} modules`]);
         if (isKnown(formation.level)) facts.push(['signal_cellular_alt', 'Niveau', formation.level]);
         if (isKnown(formation.mode)) facts.push(['co_present', 'Mode', formation.mode]);
-        if (typeof formation.price === 'number') facts.push(['payments', 'Tarif', formatPrice(formation.price)]);
+        if (typeof prixDe(formation) === 'number') facts.push(['payments', 'Tarif', formatPrixDe(formation)]);
         const session = upcomingSessions().find(item => item.formId === formation.formId);
         if (session) facts.push(['event', 'Prochaine session', formatSessionDate(session.startDate)]);
         if (session && typeof session.placesAvailable === 'number') facts.push(['group', 'Places', `${session.placesAvailable} disponibles`]);
@@ -509,7 +509,7 @@
                         <li><span class="material-symbols-outlined" aria-hidden="true">schedule</span>${escapeHtml(session.schedule)}</li>
                         <li><span class="material-symbols-outlined" aria-hidden="true">timelapse</span>${escapeHtml(session.duration)}</li>
                         <li><span class="material-symbols-outlined" aria-hidden="true">location_on</span>${escapeHtml(session.location)} · ${escapeHtml(session.mode)}</li>
-                        <li><span class="material-symbols-outlined" aria-hidden="true">payments</span>${escapeHtml(formatPrice(session.price))}</li>
+                        <li><span class="material-symbols-outlined" aria-hidden="true">payments</span>${escapeHtml(formatPrixDe(session))}</li>
                         <li><span class="material-symbols-outlined" aria-hidden="true">group</span>${escapeHtml(places)}</li>
                     </ul>
                 </div>
@@ -564,6 +564,14 @@
             if (avant !== FORMATIONS.map(f => f.slug).join('|')) initTrainingCarousel();
             common.observeReveals?.();
         });
+        /* Pays changé depuis le formulaire d'inscription : les tarifs affichés
+           sur l'accueil ne sont plus les bons, et les sessions proposées non plus. */
+        document.addEventListener('impactali:pays', () => {
+            renderCatalogueGrid();
+            renderSessions();
+            common.observeReveals?.();
+        });
+
         initTrainingDialog();
         renderSessions();
         renderPortfolio();

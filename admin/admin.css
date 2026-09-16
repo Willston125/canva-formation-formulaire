@@ -579,3 +579,52 @@ select.statut:focus { outline: none; border-color: var(--brand); }
   font-size: 0.72rem;
 }
 .etat-script__version { color: var(--texte-faible); }
+
+/* ------------------------ TARIFS ET MOYENS DE PAIEMENT ------------------- */
+
+/* Colonne « Tarifs » du tableau des formations : une ligne par pays, pour voir
+   d'un coup d'œil lequel reste à renseigner. */
+.cellule-tarif {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  white-space: nowrap;
+}
+.cellule-tarif + .cellule-tarif { margin-top: 2px; }
+
+.paiements {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.paiement {
+  padding: 14px 15px 4px;
+  background: var(--surface-2);
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon);
+}
+
+.paiement__entete {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.paiement__titre {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--texte);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Les champs d'un moyen de paiement sont déjà dans une carte : leur grille ne
+   doit pas rouvrir une marge, sinon les blocs s'écartent les uns des autres. */
+.paiement .grille-champs { gap: 0 14px; }
+.paiement .image { margin-bottom: 4px; }
