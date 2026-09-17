@@ -622,7 +622,16 @@ window.PAYS = Object.freeze([
  * décompter les places réellement prises : voir scripts/apps-script/places.gs.
  */
 window.SITE_ENDPOINTS = Object.freeze({
-  registration: 'https://script.google.com/macros/s/AKfycbw_fGtr_y_Mso7aKbg43mnKpSffZtb3XMiCvxcfTxOd76FM9HAJA6BBmdWS0_FkY5AmFQ/exec'
+  registration: 'https://script.google.com/macros/s/AKfycbw_fGtr_y_Mso7aKbg43mnKpSffZtb3XMiCvxcfTxOd76FM9HAJA6BBmdWS0_FkY5AmFQ/exec',
+  /**
+   * Version du script Google attendue par ce site (VERSION dans le fichier .gs).
+   * Google continue de servir l'ANCIEN code tant qu'on n'a pas publié une
+   * NOUVELLE VERSION du déploiement — sans le moindre avertissement, et c'est
+   * l'erreur la plus coûteuse de tout ce montage. Le tableau de bord compare
+   * donc ce numéro à celui réellement servi, et le dit franchement.
+   * Une épreuve du banc d'essai vérifie que les deux restent alignés.
+   */
+  versionScript: '2026-09-17-portfolio'
 });
 
 /**

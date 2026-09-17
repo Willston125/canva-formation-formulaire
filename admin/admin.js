@@ -246,10 +246,27 @@
           pied.innerHTML = '<span class="etiquette etiquette--alerte">Script à mettre à jour</span>';
           return;
         }
+        /* Version servie ≠ version attendue : Google sert encore l'ancien code.
+           C'est invisible autrement — les commandes répondent, mais avec les
+           règles d'hier. On le dit avant tout le reste. */
+        var attendue = (window.SITE_ENDPOINTS && window.SITE_ENDPOINTS.versionScript) || '';
+        var perime = attendue && d.version !== attendue;
+
         var drive = d.drive
           ? '<span class="etiquette etiquette--ouvert">Drive autorisé</span>'
           : '<span class="etiquette etiquette--alerte">Drive non autorisé</span>';
-        pied.innerHTML = drive + '<span class="etat-script__version">script ' + echapper(d.version) + '</span>';
+        pied.innerHTML = (perime ? '<span class="etiquette etiquette--alerte">Script périmé</span>' : drive)
+          + '<span class="etat-script__version">script ' + echapper(d.version) + '</span>';
+
+        if (perime) {
+          afficherMessage('#erreur-globale',
+            'Google sert encore l’ancienne version du script : ' + d.version
+            + ', alors que le site attend ' + attendue + '. Vos modifications passeront peut-être, '
+            + 'mais avec les règles d’avant. Dans l’éditeur Apps Script : collez le fichier, '
+            + 'ENREGISTREZ (Ctrl+S), puis Déployer → Gérer les déploiements → crayon → '
+            + 'Version : « Nouvelle version » → Déployer.');
+          return;
+        }
         if (!d.drive) {
           afficherMessage('#erreur-globale',
             'L’envoi d’images ne fonctionnera pas : l’autorisation Google Drive n’a pas été accordée. '

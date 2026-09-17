@@ -10,7 +10,8 @@ const EPREUVES = [
   ['installation-neuve.test.js', 'Installation sur un classeur vierge'],
   ['colonnes.test.js', 'Colonnes ajoutées à un classeur déjà rempli'],
   ['formules.test.js', 'Valeurs commençant par + = - (formules Sheets)'],
-  ['textes.test.js', 'Textes modifiables du site']
+  ['textes.test.js', 'Textes modifiables du site'],
+  ['version.test.js', 'Version attendue par le site']
 ];
 
 let echecs = 0;

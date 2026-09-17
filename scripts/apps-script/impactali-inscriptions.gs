@@ -1106,6 +1106,10 @@ function testerInstallation() {
     pays: 'Djibouti', paysCode: 'DJ', countryCode: '+253',
     statut: 'TEST', source: 'Test installation', pageUrl: ''
   };
+  /* Ce journal dit quelle version est ENREGISTRÉE dans l'éditeur. Comparée à
+     celle que renvoie /exec?action=version, elle distingue les deux pannes qui
+     se ressemblent : un fichier mal collé, ou un déploiement non republié. */
+  Logger.log('Version dans l’éditeur : ' + VERSION);
   enregistrer(essai);
   try { envoyerAlerte(essai); Logger.log('Alerte email envoyée à ' + EMAIL_PRO); }
   catch (err) { Logger.log('Alerte email NON envoyée : ' + err); }
