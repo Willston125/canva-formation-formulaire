@@ -1301,7 +1301,7 @@
 
     /* Les pages parcourues. La fiche formation sert d'exemple pour tout le
        gabarit : ses textes partagés valent pour les six fiches. */
-    var pages = ['/', '/entreprises/'];
+    var pages = ['/', '/entreprises/', '/mentions-legales/'];
     var premiere = (etat.catalogue.formations || []).filter(function (f) { return f.hasDetailPage !== false; })[0];
     pages.push(premiere ? premiere.href : '/formations/canva-pro/');
 
@@ -1355,7 +1355,7 @@
       g.items.push(t);
     });
 
-    boite.innerHTML = '<div class="bloc"><h2>Textes de la page d’accueil</h2>'
+    boite.innerHTML = '<div class="bloc"><h2>Textes du site</h2>'
       + '<p class="aide">Modifiez ce que vous voulez et laissez le reste vide : un champ vide affiche le '
       + 'texte d’origine du site. C’est ainsi qu’on annule une modification.</p></div>'
       + '<form id="form-textes">'
