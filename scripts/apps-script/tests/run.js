@@ -14,7 +14,8 @@ const EPREUVES = [
   ['version.test.js', 'Version attendue par le site'],
   ['pays.test.js', 'Pays desservis'],
   ['polices.test.js', 'Typographie du site et du tableau de bord'],
-  ['mise-a-jour-partielle.test.js', 'Une modification n’efface pas le reste de la ligne']
+  ['mise-a-jour-partielle.test.js', 'Une modification n’efface pas le reste de la ligne'],
+  ['formulaires.test.js', 'Deux formulaires ne se lisent pas l’un l’autre']
 ];
 
 let echecs = 0;

@@ -1821,7 +1821,7 @@
       + '<p class="aide">Ces valeurs alimentent les liens WhatsApp et la création des sessions. '
       + 'La devise, l’indicatif, le format des numéros et les moyens de paiement se règlent '
       + 'pays par pays dans la rubrique <strong>Pays</strong>.</p><form id="form-reglages">'
-      + construireChamps(champs, etat.catalogue.reglages || {})
+      + construireChamps(champs, etat.catalogue.reglages || {}, FORM_REGLAGES)
       + '<div class="panneau__boutons" style="justify-content:flex-start;margin-top:18px">'
       + '<button class="bouton bouton--primaire" type="submit" id="btn-reglages">'
       + '<span class="btn-texte">Enregistrer les réglages</span>'
@@ -1835,7 +1835,7 @@
       var erreur = $('#erreur-reglages');
       erreur.hidden = true;
       attente(bouton, true);
-      appeler('admin.reglages.save', { donnees: lireChamps(champs) }).then(function () {
+      appeler('admin.reglages.save', { donnees: lireChamps(champs, FORM_REGLAGES) }).then(function () {
         attente(bouton, false);
         afficherMessage('#succes-globale', 'Réglages enregistrés.', 5000);
       }).catch(function (err) {
@@ -1928,7 +1928,35 @@
     attente($('#panneau-valider'), false);
   }
 
-  function construireChamps(champs, donnees) {
+  /**
+   * Un formulaire, et l'espace de noms de ses champs.
+   *
+   * « Numéro WhatsApp » est déclaré à DEUX endroits : les réglages du site, et
+   * la fiche d'un pays. Les deux <input> portaient le même identifiant. Or une
+   * vue quittée reste dans la page — elle est seulement masquée — si bien que
+   * getElementById rendait le PREMIER du document, celui des réglages. On
+   * saisissait le numéro comorien dans la fiche des Comores, et c'est le numéro
+   * djiboutien qui partait au serveur ; à l'actualisation, il était de retour.
+   *
+   * Un préfixe par formulaire supprime les identifiants en double — ce qui
+   * répare aussi les étiquettes, qui donnaient le focus au champ de l'autre
+   * formulaire. La lecture est en outre bornée au conteneur : même en cas de
+   * clé identique, un formulaire ne peut plus lire celui d'à côté.
+   */
+  function formulaire(prefixe, selecteurRacine) {
+    return {
+      prefixe: prefixe || '',
+      racine: function () {
+        return (selecteurRacine && document.querySelector(selecteurRacine)) || document;
+      }
+    };
+  }
+
+  var FORM_PANNEAU = formulaire('', '#panneau');
+  var FORM_REGLAGES = formulaire('reglages-', '#formulaire-reglages');
+
+  function construireChamps(champs, donnees, form) {
+    form = form || FORM_PANNEAU;
     var html = '<div class="grille-champs">';
     champs.forEach(function (c) {
       if (c.section) {
@@ -1937,7 +1965,7 @@
       }
       var v = donnees[c.cle];
       if (v === undefined || v === null) v = c.defaut !== undefined ? c.defaut : '';
-      var id = 'champ-' + c.cle;
+      var id = 'champ-' + form.prefixe + c.cle;
       var classe = 'champ' + (c.large || c.type === 'textarea' || c.type === 'lignes' || c.type === 'objectifs' ? ' pleine-largeur' : '');
 
       if (c.type === 'image') {
@@ -2034,12 +2062,16 @@
     return html + '</div>';
   }
 
-  function lireChamp(c) {
-    if (c.type === 'tarifs') return lireTarifs(c.cle);
-    if (c.type === 'paiements') return lirePaiements(c.cle);
-    if (c.type === 'programme') return lireProgrammeChamp(c.cle);
-    if (c.type === 'faq') return lireFaqChamp(c.cle);
-    var el = document.getElementById('champ-' + c.cle);
+  function lireChamp(c, form) {
+    form = form || FORM_PANNEAU;
+    var racine = form.racine();
+    if (c.type === 'tarifs') return lireTarifs(c.cle, racine);
+    if (c.type === 'paiements') return lirePaiements(c.cle, racine);
+    if (c.type === 'programme') return lireProgrammeChamp(c.cle, racine);
+    if (c.type === 'faq') return lireFaqChamp(c.cle, racine);
+    /* querySelector borné au conteneur, et non getElementById sur tout le
+       document : c'est ce qui empêche de lire le champ homonyme d'ailleurs. */
+    var el = racine.querySelector('[id="champ-' + form.prefixe + c.cle + '"]');
     if (!el) return undefined;
     if (c.type === 'bool') return el.checked;
     if (c.type === 'number') {
@@ -2059,8 +2091,8 @@
   }
 
   /** Tarifs saisis : { DJ: 7500, KM: null }. `null` = non fixé, jamais 0. */
-  function lireTarifs(cle) {
-    var boite = document.querySelector('[data-tarifs="' + cle + '"]');
+  function lireTarifs(cle, racine) {
+    var boite = (racine || document).querySelector('[data-tarifs="' + cle + '"]');
     if (!boite) return undefined;
     var o = {};
     Array.prototype.slice.call(boite.querySelectorAll('[data-tarif]')).forEach(function (input) {
@@ -2214,8 +2246,8 @@
     });
   }
 
-  function lireProgrammeChamp(cle) {
-    var boite = document.querySelector('[data-programme="' + cle + '"]');
+  function lireProgrammeChamp(cle, racine) {
+    var boite = (racine || document).querySelector('[data-programme="' + cle + '"]');
     if (!boite) return undefined;
     var resume = boite.querySelector('[data-programme-resume]');
     var modules = Array.prototype.slice.call(boite.querySelectorAll('[data-module]')).map(function (bloc) {
@@ -2261,8 +2293,8 @@
     });
   }
 
-  function lireFaqChamp(cle) {
-    var boite = document.querySelector('[data-faq="' + cle + '"]');
+  function lireFaqChamp(cle, racine) {
+    var boite = (racine || document).querySelector('[data-faq="' + cle + '"]');
     if (!boite) return undefined;
     return Array.prototype.slice.call(boite.querySelectorAll('[data-question]')).map(function (bloc) {
       var q = {};
@@ -2274,8 +2306,8 @@
   }
 
   /** Relit l'éditeur : un moyen sans nom est ignoré plutôt qu'enregistré vide. */
-  function lirePaiements(cle) {
-    var boite = document.querySelector('[data-paiements="' + cle + '"]');
+  function lirePaiements(cle, racine) {
+    var boite = (racine || document).querySelector('[data-paiements="' + cle + '"]');
     if (!boite) return undefined;
     return Array.prototype.slice.call(boite.querySelectorAll('[data-moyen]')).map(function (bloc, i) {
       var m = {};
@@ -2291,11 +2323,11 @@
     }).filter(function (m) { return m.label || m.value; });
   }
 
-  function lireChamps(champs) {
+  function lireChamps(champs, form) {
     var o = {};
     champs.forEach(function (c) {
       if (!c.cle) return;
-      var v = lireChamp(c);
+      var v = lireChamp(c, form);
       if (v !== undefined) o[c.cle] = v;
     });
     return o;
