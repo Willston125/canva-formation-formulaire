@@ -69,6 +69,9 @@
                 <button class="onglet" type="button" data-vue="pays">
                     <span class="material-symbols-outlined" aria-hidden="true">public</span>Pays
                     <span class="pastille" id="compte-pays"></span></button>
+                <button class="onglet" type="button" data-vue="portfolio">
+                    <span class="material-symbols-outlined" aria-hidden="true">photo_library</span>Réalisations
+                    <span class="pastille" id="compte-portfolio"></span></button>
                 <button class="onglet" type="button" data-vue="textes">
                     <span class="material-symbols-outlined" aria-hidden="true">edit_note</span>Textes du site</button>
                 <button class="onglet" type="button" data-vue="reglages">
@@ -136,6 +139,11 @@
             <!-- Pays : devise, indicatif, format des numéros et moyens de paiement -->
             <section class="vue" id="vue-pays">
                 <div id="liste-pays"></div>
+            </section>
+
+            <!-- Réalisations affichées sur l'accueil -->
+            <section class="vue" id="vue-portfolio">
+                <div id="liste-portfolio"></div>
             </section>
 
             <!-- Textes du site -->

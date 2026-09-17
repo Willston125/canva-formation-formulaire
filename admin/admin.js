@@ -13,7 +13,7 @@
   /** État courant, rechargé à chaque écriture depuis la réponse de l'API. */
   var etat = {
     motDePasse: '',
-    catalogue: { formations: [], sessions: [], pays: [], reglages: {} },
+    catalogue: { formations: [], sessions: [], pays: [], portfolio: [], reglages: {} },
     inscriptions: [],
     vue: 'apercu',
     filtreInscriptions: '',
@@ -280,6 +280,7 @@
       sessions: ['Sessions', 'Les dates ouvertes à l’inscription'],
       inscriptions: ['Inscriptions', 'Les candidats et leur suivi'],
       pays: ['Pays', 'Devise, indicatif et moyens de paiement de chaque marché'],
+      portfolio: ['Réalisations', 'Les travaux mis en avant sur l’accueil'],
       textes: ['Textes du site', 'Les mots affichés sur la page d’accueil'],
       reglages: ['Réglages', 'Contact et lieu habituel']
     };
@@ -297,13 +298,16 @@
     $('#compte-sessions').textContent = s.length || '';
     $('#compte-inscriptions').textContent = etat.inscriptions.length || '';
     $('#compte-pays').textContent = (etat.catalogue.pays || []).length || '';
+    $('#compte-portfolio').textContent = (etat.catalogue.portfolio || []).length || '';
     $('#bloc-amorcage').hidden = f.length > 0;
 
-    var actions = { apercu: '', formations: '', sessions: '', inscriptions: '', pays: '', textes: '', reglages: '' };
+    var actions = { apercu: '', formations: '', sessions: '', inscriptions: '', pays: '', portfolio: '', textes: '', reglages: '' };
     actions.formations = '<button class="bouton bouton--primaire" type="button" id="btn-nouvelle-formation">'
       + '<span class="material-symbols-outlined" aria-hidden="true">add</span>Nouvelle formation</button>';
     actions.sessions = '<button class="bouton bouton--primaire" type="button" id="btn-nouvelle-session">'
       + '<span class="material-symbols-outlined" aria-hidden="true">add</span>Nouvelle session</button>';
+    actions.portfolio = '<button class="bouton bouton--primaire" type="button" id="btn-nouvelle-realisation">'
+      + '<span class="material-symbols-outlined" aria-hidden="true">add</span>Nouvelle réalisation</button>';
     actions.pays = '<button class="bouton bouton--primaire" type="button" id="btn-nouveau-pays">'
       + '<span class="material-symbols-outlined" aria-hidden="true">add</span>Nouveau pays</button>';
     actions.inscriptions = etat.inscriptions.length
@@ -317,6 +321,7 @@
     if ((b = $('#btn-nouvelle-formation'))) b.addEventListener('click', function () { ouvrirFormation(null); });
     if ((b = $('#btn-nouvelle-session'))) b.addEventListener('click', function () { ouvrirSession(null); });
     if ((b = $('#btn-nouveau-pays'))) b.addEventListener('click', function () { ouvrirPays(null); });
+    if ((b = $('#btn-nouvelle-realisation'))) b.addEventListener('click', function () { ouvrirRealisation(null); });
     if ((b = $('#btn-export'))) b.addEventListener('click', exporterCsv);
     if ((b = $('#btn-rafraichir'))) b.addEventListener('click', function () {
       afficherMessage('#succes-globale', 'Actualisation…', 1200);
@@ -328,6 +333,7 @@
     if (etat.vue === 'sessions') rendreSessions();
     if (etat.vue === 'inscriptions') rendreInscriptions();
     if (etat.vue === 'pays') rendrePays();
+    if (etat.vue === 'portfolio') rendrePortfolio();
     if (etat.vue === 'textes') rendreTextes();
     if (etat.vue === 'reglages') rendreReglages();
   }
@@ -387,6 +393,102 @@
 
   function compterSession(id) {
     return etat.inscriptions.filter(function (i) { return i.sessionId === id; }).length;
+  }
+
+  // ----------------------------- RÉALISATIONS -----------------------------
+
+  function listeRealisations() {
+    return (etat.catalogue.portfolio || []).filter(function (r) { return r && r.id; });
+  }
+
+  function rendrePortfolio() {
+    var liste = listeRealisations();
+    if (!liste.length) {
+      $('#liste-portfolio').innerHTML = vide('photo_library',
+        'Aucune réalisation. Importez le catalogue du site depuis la vue d’ensemble, ou créez-en une.');
+      return;
+    }
+    $('#liste-portfolio').innerHTML = tableau(
+      ['Réalisation', 'Catégorie', 'Visuel', 'Actions'],
+      liste.map(function (x) {
+        return [
+          '<div class="cellule-titre">' + echapper(x.title || '(sans titre)') + '</div>'
+          + '<div class="cellule-sous">' + echapper((x.description || '').slice(0, 80)) + '</div>',
+          echapper(x.category || '—'),
+          x.image
+            ? '<img src="' + echapper(x.image) + '" alt="" class="vignette" loading="lazy">'
+            : '<span class="etiquette etiquette--alerte">À fournir</span>',
+          '<div class="cellule-actions">'
+          + '<button class="bouton bouton--discret bouton--petit" type="button" data-modifier-realisation="' + echapper(x.id) + '">Modifier</button>'
+          + '<button class="bouton bouton--discret bouton--petit" type="button" data-supprimer-realisation="' + echapper(x.id) + '">Supprimer</button>'
+          + '</div>'
+        ];
+      })
+    );
+    $$('[data-modifier-realisation]').forEach(function (b) {
+      b.addEventListener('click', function () { ouvrirRealisation(b.dataset.modifierRealisation); });
+    });
+    $$('[data-supprimer-realisation]').forEach(function (b) {
+      b.addEventListener('click', function () { demanderSuppressionRealisation(b.dataset.supprimerRealisation); });
+    });
+  }
+
+  var CHAMPS_REALISATION = [
+    { section: 'La réalisation' },
+    { cle: 'title', libelle: 'Titre', type: 'text', requis: true, large: true },
+    { cle: 'category', libelle: 'Catégorie', type: 'text',
+      aide: 'Affichée au-dessus du titre. Ex. Affiche, Vidéo, Identité visuelle.' },
+    { cle: 'href', libelle: 'Lien (facultatif)', type: 'url', aide: 'Vers le projet publié, si vous en avez un.' },
+    { cle: 'description', libelle: 'Description', type: 'textarea', large: true },
+
+    { section: 'Visuel' },
+    { cle: 'image', libelle: 'Image', type: 'image', format: 'portfolio', large: true,
+      aide: 'Sans image, l’accueil annonce « visuel à fournir » plutôt que d’afficher un cadre vide.' },
+    { cle: 'imageAlt', libelle: 'Description de l’image', type: 'text', large: true,
+      aide: 'Lue par les personnes malvoyantes et par Google.' },
+    /* Le recadrage se choisit en mots : « 50% 18% » ne dit rien à personne,
+       alors que « haut » décrit exactement ce qu'on veut garder du visuel. */
+    { cle: 'imagePosition', libelle: 'Partie de l’image à privilégier', type: 'select',
+      optionsObjets: [
+        { valeur: '50% 50%', libelle: 'Centre' },
+        { valeur: '50% 18%', libelle: 'Haut' },
+        { valeur: '50% 85%', libelle: 'Bas' },
+        { valeur: '20% 50%', libelle: 'Gauche' },
+        { valeur: '80% 50%', libelle: 'Droite' }
+      ], aide: 'Utile quand le cadre rogne le visuel.' },
+
+    { section: 'Affichage' },
+    { cle: 'ordre', libelle: 'Ordre d’affichage', type: 'number', aide: 'Plus petit = affiché en premier.' }
+  ];
+
+  function ouvrirRealisation(id) {
+    var r = id ? listeRealisations().filter(function (x) { return x.id === id; })[0] : null;
+    var donnees = r ? Object.assign({}, r) : {
+      id: identifiant('real'), imagePosition: '50% 50%', ordre: listeRealisations().length
+    };
+    ouvrirPanneau(r ? 'Modifier la réalisation' : 'Nouvelle réalisation', CHAMPS_REALISATION, donnees,
+      function (valeurs, fini) {
+        valeurs.id = donnees.id;
+        appeler('admin.portfolio.save', { donnees: valeurs }).then(function (d) {
+          viderCorbeilleImages();
+          fermerPanneau();
+          afficherMessage('#succes-globale', d.cree ? 'Réalisation ajoutée.' : 'Réalisation mise à jour.', 5000);
+          rendre();
+        }).catch(function (err) { fini(messageLisible(err)); });
+      });
+  }
+
+  function demanderSuppressionRealisation(id) {
+    var r = listeRealisations().filter(function (x) { return x.id === id; })[0];
+    if (!r) return;
+    confirmer('Supprimer « ' + (r.title || 'cette réalisation') + ' » de l’accueil ? Cette action est définitive.',
+      function (fini) {
+        appeler('admin.portfolio.delete', { id: id }).then(function () {
+          fermerConfirmation();
+          afficherMessage('#succes-globale', 'Réalisation supprimée.', 5000);
+          rendre();
+        }).catch(function (err) { fini(messageLisible(err)); });
+      });
   }
 
   // --------------------------------- PAYS ---------------------------------
@@ -1018,7 +1120,9 @@
     image: { largeur: 760, hauteur: 950, libelle: 'portrait 760 × 950' },
     poster: { largeur: 1000, hauteur: null, libelle: 'largeur 1000 px, hauteur libre' },
     // Logo d'un moyen de paiement : affiché sur environ 48 px de haut, donc petit
-    logo: { largeur: 240, hauteur: null, libelle: 'largeur 240 px, hauteur libre' }
+    logo: { largeur: 240, hauteur: null, libelle: 'largeur 240 px, hauteur libre' },
+    // Vignette de réalisation : la grille de l'accueil l'affiche en 4/3
+    portfolio: { largeur: 900, hauteur: 675, libelle: 'paysage 900 × 675' }
   };
 
   /**
@@ -1842,6 +1946,12 @@
         if (typeof copie.ordre !== 'number') copie.ordre = i;
         return copie;
       }),
+      portfolio: (window.PORTFOLIO || []).map(function (r, i) {
+        var copie = Object.assign({}, r);
+        if (typeof copie.ordre !== 'number') copie.ordre = i;
+        delete copie.placeholder; // déduit de l'absence d'image, plus simple à tenir
+        return copie;
+      }),
       reglages: Object.assign({}, window.SITE_CONTACT || {}, {
         defaultLocation: (window.SESSIONS && window.SESSIONS[0] && window.SESSIONS[0].location) || ''
       })
@@ -1849,8 +1959,8 @@
     appeler('admin.importer', { donnees: donnees }).then(function (d) {
       bouton.disabled = false;
       afficherMessage('#succes-globale',
-        d.formations + ' formation(s), ' + d.sessions + ' session(s) et '
-        + (d.pays || 0) + ' pays importés.', 6000);
+        d.formations + ' formation(s), ' + d.sessions + ' session(s), '
+        + (d.pays || 0) + ' pays et ' + (d.portfolio || 0) + ' réalisation(s) importés.', 6000);
       rafraichirTout();
     }).catch(function (err) {
       bouton.disabled = false;

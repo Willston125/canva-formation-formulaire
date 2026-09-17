@@ -18,7 +18,7 @@ const PORT = Number(process.argv[3] || 5174);
    comme une FORMULE. On reproduit ce comportement, sinon l'émulateur serait
    plus indulgent que la réalité et masquerait le défaut. */
 function commeSheets(v) {
-  if (typeof v !== 'string') return v;
+  if (typeof v !== 'string' || v === '') return v;   // une cellule vidée reste vide
   if (v.charAt(0) === "'") return v.slice(1);            // apostrophe = texte forcé
   if ('=+-'.indexOf(v.charAt(0)) < 0) return v;
   const reste = v.replace(/^[=+-]/, '').trim();

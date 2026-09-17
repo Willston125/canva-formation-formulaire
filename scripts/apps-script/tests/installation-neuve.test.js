@@ -39,6 +39,7 @@ verifier('version servie', JSON.parse(bac.doGet({ parameter: { action: 'version'
 const envoi = {
   formations: site.window.FORMATIONS.map((f, i) => Object.assign({}, f, { ordre: i })),
   sessions: site.window.SESSIONS.map(s => Object.assign({}, s)),
+  portfolio: site.window.PORTFOLIO.map((r, i) => Object.assign({}, r, { ordre: i })),
   pays: site.window.PAYS.map((p, i) => Object.assign({}, p, {
     paymentMethods: (p.paymentMethods || []).map(m => Object.assign({}, m)), ordre: i
   })),
@@ -52,6 +53,7 @@ const coutImport = appelsSheets.total;
 verifier('import : formations', importe.formations, 6);
 verifier('import : sessions', importe.sessions, 6);
 verifier('import : pays', importe.pays, 2);
+verifier('import : realisations', importe.portfolio, site.window.PORTFOLIO.length);
 /* Chaque operation Sheets est un aller-retour chez Google (~300 ms a froid).
    Au-dela d'une trentaine, l'amorcage depassait le delai d'attente du
    tableau de bord et paraissait n'avoir rien fait. */
@@ -64,7 +66,7 @@ const dj = c.pays.find(p => p.code === 'DJ');
 const km = c.pays.find(p => p.code === 'KM');
 
 verifier('onglets créés', Object.keys(classeur.feuilles).sort(),
-  ['Formations', 'Inscriptions', 'Pays', 'Reglages', 'Sessions', 'Textes']);
+  ['Formations', 'Inscriptions', 'Pays', 'Portfolio', 'Reglages', 'Sessions', 'Textes']);
 verifier('formation : titre', canva.title, 'Canva Pro & Création de contenu');
 verifier('formation : tarifs par pays', canva.prices, { DJ: 7500 });
 verifier('formation : acquis', canva.learnings.length, 3);
@@ -85,6 +87,10 @@ verifier('pays KM : aucun moyen de paiement', km.paymentMethods, []);
 verifier('réglages : numéro affiché intact', c.reglages.whatsappDisplay, '+253 77 14 53 06');
 verifier('réglages : numéro WhatsApp', c.reglages.whatsappNumber, '25377145306');
 verifier('compteur de places vierge', c.places, {});
+verifier('realisations relues', c.portfolio.length, site.window.PORTFOLIO.length);
+verifier('realisation : titre', c.portfolio[0].title, site.window.PORTFOLIO[0].title);
+verifier('realisation : cadrage', c.portfolio[0].imagePosition, site.window.PORTFOLIO[0].imagePosition);
+verifier('realisation sans visuel', c.portfolio.filter(r => !r.image).length, site.window.PORTFOLIO.filter(r => !r.image).length);
 
 // --- Une inscription réelle sur ce classeur neuf ---
 bac.doPost({ postData: { contents: JSON.stringify({

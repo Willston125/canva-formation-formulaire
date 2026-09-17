@@ -55,7 +55,7 @@
    7. Vérifier : https://VOTRE_URL/exec?action=version doit répondre avec le
       numéro de VERSION ci-dessous et « drive: true ».
 
-   Les onglets Formations, Sessions, Pays, Reglages et Inscriptions sont créés
+   Les onglets Formations, Sessions, Pays, Portfolio, Reglages et Inscriptions sont créés
    automatiquement au premier usage, et les colonnes ajoutées par une mise à
    jour apparaissent d'elles-mêmes dans un classeur déjà rempli. Vous n'avez
    jamais à les ouvrir : tout se pilote depuis le tableau de bord du site.
@@ -69,7 +69,7 @@
  * déploiement n'a pas été publiée, et Google sert encore l'ancien code.
  * C'est l'erreur la plus fréquente, et la plus difficile à diagnostiquer.
  */
-var VERSION = '2026-09-17-programme';
+var VERSION = '2026-09-17-portfolio';
 
 /** Classeur. Vide = le classeur auquel ce script est rattaché (cas normal). */
 var ID_CLASSEUR = '';
@@ -81,6 +81,7 @@ var F_SESSIONS = 'Sessions';
 var F_REGLAGES = 'Reglages';
 var F_TEXTES = 'Textes';
 var F_PAYS = 'Pays';
+var F_PORTFOLIO = 'Portfolio';
 
 /** Adresse professionnelle qui reçoit l'alerte à chaque inscription. */
 var EMAIL_PRO = 'infos@impactali.site';
@@ -165,6 +166,16 @@ var CHAMPS_PAYS = [
   ['motifTelephone', 'texte'], ['aideTelephone', 'texte'], ['exempleTelephone', 'texte'],
   ['longueurTelephone', 'num'], ['defaut', 'bool'], ['active', 'bool'],
   ['paymentMethods', 'json'], ['ordre', 'num']
+];
+
+/**
+ * Réalisations affichées sur l'accueil. Sans visuel, l'emplacement s'annonce
+ * « à fournir » plutôt que de laisser un cadre vide sans explication.
+ */
+var CHAMPS_PORTFOLIO = [
+  ['id', 'texte'], ['category', 'texte'], ['title', 'texte'], ['description', 'texte'],
+  ['image', 'texte'], ['imageAlt', 'texte'], ['imagePosition', 'texte'],
+  ['href', 'texte'], ['ordre', 'num']
 ];
 
 // ------------------------------ ROUTAGE ----------------------------------
@@ -259,6 +270,8 @@ function commandeAdmin(d) {
       case 'admin.session.delete':   return repondre(supprimerSession(d.id), null);
       case 'admin.pays.save':        return repondre(enregistrerPays(d.donnees), null);
       case 'admin.pays.delete':      return repondre(supprimerPays(d.code), null);
+      case 'admin.portfolio.save':   return repondre(enregistrerRealisation(d.donnees), null);
+      case 'admin.portfolio.delete': return repondre(supprimerRealisation(d.id), null);
       case 'admin.reglages.save':    return repondre(enregistrerReglages(d.donnees), null);
       case 'admin.textes.save':      return repondre(enregistrerTextes(d.donnees), null);
       case 'admin.inscriptions':     return repondre({ ok: true, inscriptions: lireInscriptions(d.formationId) }, null);
@@ -304,6 +317,9 @@ function lireCatalogue() {
     }),
     sessions: lireTable(F_SESSIONS, CHAMPS_SESSION),
     pays: lireTable(F_PAYS, CHAMPS_PAYS).sort(function (a, b) {
+      return (typeof a.ordre === 'number' ? a.ordre : 999) - (typeof b.ordre === 'number' ? b.ordre : 999);
+    }),
+    portfolio: lireTable(F_PORTFOLIO, CHAMPS_PORTFOLIO).sort(function (a, b) {
       return (typeof a.ordre === 'number' ? a.ordre : 999) - (typeof b.ordre === 'number' ? b.ordre : 999);
     }),
     reglages: lireReglages(),
@@ -621,6 +637,21 @@ function supprimerPays(code) {
     restants[0].defaut = true;
     ecrireLigne(F_PAYS, CHAMPS_PAYS, restants[0], 'code');
   }
+  return { ok: true, catalogue: lireCatalogue() };
+}
+
+// ---------------------------- RÉALISATIONS -------------------------------
+
+function enregistrerRealisation(r) {
+  if (!r || !r.id) throw new Error('Identifiant de réalisation manquant.');
+  if (!r.title) throw new Error('Le titre est obligatoire.');
+  var sortie = ecrireLigne(F_PORTFOLIO, CHAMPS_PORTFOLIO, r);
+  return { ok: true, cree: sortie.cree, catalogue: lireCatalogue() };
+}
+
+function supprimerRealisation(id) {
+  if (!id) throw new Error('Identifiant manquant.');
+  if (!supprimerLigne(F_PORTFOLIO, id)) throw new Error('Réalisation introuvable.');
   return { ok: true, catalogue: lireCatalogue() };
 }
 
@@ -951,8 +982,15 @@ function importerDepuisSite(donnees) {
   var nbS = ecrireLignes(F_SESSIONS, CHAMPS_SESSION, donnees.sessions || []);
   var nbP = ecrireLignes(F_PAYS, CHAMPS_PAYS, pays, 'code');
 
+  var portfolio = (donnees.portfolio || []).filter(function (r) { return r && r.id; })
+    .map(function (r, i) {
+      if (typeof r.ordre !== 'number') r.ordre = i;
+      return r;
+    });
+  var nbR = ecrireLignes(F_PORTFOLIO, CHAMPS_PORTFOLIO, portfolio);
+
   if (donnees.reglages) ecrirePaires(F_REGLAGES, donnees.reglages, 'Réglages invalides.');
-  return { ok: true, formations: nbF, sessions: nbS, pays: nbP, catalogue: lireCatalogue() };
+  return { ok: true, formations: nbF, sessions: nbS, pays: nbP, portfolio: nbR, catalogue: lireCatalogue() };
 }
 
 // ------------------------------ ALERTE EMAIL -----------------------------

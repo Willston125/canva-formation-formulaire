@@ -210,6 +210,12 @@
             PAYS = donnees.pays;
             window.PAYS = PAYS;
         }
+        // Même garde pour les réalisations : une base vide n'efface pas l'accueil
+        if (Array.isArray(donnees.portfolio) && donnees.portfolio.length) {
+            window.PORTFOLIO = donnees.portfolio.map(item => Object.assign({}, item, {
+                image: normaliserImage(item.image, 900)
+            }));
+        }
         if (donnees.reglages && Object.keys(donnees.reglages).length) {
             CONTACT = Object.assign({}, CONTACT, donnees.reglages);
             window.SITE_CONTACT = CONTACT;
@@ -533,11 +539,23 @@
         observeReveals();
     }
 
-    // ---------- Liens WhatsApp préremplis ----------
+    /* ---------- Liens WhatsApp préremplis, et numéro affiché ----------
+       Le numéro écrit en toutes lettres dans les pages suit lui aussi le
+       réglage : sans cela, en changer un dans le tableau de bord en laissait
+       d'autres périmés sur le site, et un candidat appelait dans le vide. */
     function initWhatsappLinks() {
         document.querySelectorAll('[data-whatsapp-message]').forEach(link => {
             link.href = whatsappUrl(link.dataset.whatsappMessage);
         });
+
+        const affiche = String(CONTACT.whatsappDisplay || '').trim();
+        if (affiche) {
+            document.querySelectorAll('[data-whatsapp-affiche]').forEach(el => { el.textContent = affiche; });
+        }
+        const brut = String(CONTACT.whatsappNumber || '').replace(/\D/g, '');
+        if (brut) {
+            document.querySelectorAll('[data-whatsapp-tel]').forEach(el => { el.href = `tel:+${brut}`; });
+        }
     }
 
     window.SiteCommon = Object.freeze({
@@ -592,4 +610,7 @@
         banner.classList.add('hidden');
         initSessionBanner();
     });
+
+    // Contact modifié depuis le tableau de bord : liens et numéros affichés suivent
+    document.addEventListener('impactali:catalogue', initWhatsappLinks);
 })();

@@ -628,3 +628,14 @@ select.statut:focus { outline: none; border-color: var(--brand); }
    doit pas rouvrir une marge, sinon les blocs s'écartent les uns des autres. */
 .paiement .grille-champs { gap: 0 14px; }
 .paiement .image { margin-bottom: 4px; }
+
+/* Vignette d'une réalisation, dans le tableau des réalisations */
+.vignette {
+  display: block;
+  width: 72px;
+  height: 54px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid var(--bordure);
+  background: var(--surface-2);
+}

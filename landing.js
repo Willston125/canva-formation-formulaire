@@ -8,7 +8,8 @@
     /* Réassignable : le catalogue peut être rechargé depuis l'API après une
        modification faite dans le tableau de bord. */
     let FORMATIONS = Array.isArray(window.FORMATIONS) ? window.FORMATIONS : [];
-    const PORTFOLIO = Array.isArray(window.PORTFOLIO) ? window.PORTFOLIO : [];
+    /* Réassignable : les réalisations se modifient depuis le tableau de bord. */
+    let PORTFOLIO = Array.isArray(window.PORTFOLIO) ? window.PORTFOLIO : [];
     const common = window.SiteCommon;
     if (!common) return;
     const { escapeHtml, formatSessionDate, findFormation, upcomingSessions, prixDe, formatPrixDe } = common;
@@ -558,9 +559,11 @@
         document.addEventListener('impactali:catalogue', event => {
             const avant = FORMATIONS.map(f => f.slug).join('|');
             FORMATIONS = Array.isArray(window.FORMATIONS) ? window.FORMATIONS : [];
+            PORTFOLIO = Array.isArray(window.PORTFOLIO) ? window.PORTFOLIO : PORTFOLIO;
             renderCatalogueGrid();
             renderDomains();
             renderSessions();
+            renderPortfolio();
             if (avant !== FORMATIONS.map(f => f.slug).join('|')) initTrainingCarousel();
             common.observeReveals?.();
         });
