@@ -4777,6 +4777,9 @@ button.portfolio-card.has-video { cursor: pointer; }
   max-height: calc(100vh - 40px);
   display: flex;
   flex-direction: column;
+  /* Sans cela, une colonne flexible étire ses enfants sur toute la largeur :
+     l'affiche resterait à son rapport, mais entourée de bandes vides. */
+  align-items: center;
   gap: 12px;
 }
 
