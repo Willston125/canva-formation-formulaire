@@ -69,7 +69,7 @@
  * déploiement n'a pas été publiée, et Google sert encore l'ancien code.
  * C'est l'erreur la plus fréquente, et la plus difficile à diagnostiquer.
  */
-var VERSION = '2026-09-17-visuels';
+var VERSION = '2026-09-17-video';
 
 /** Classeur. Vide = le classeur auquel ce script est rattaché (cas normal). */
 var ID_CLASSEUR = '';
@@ -180,7 +180,9 @@ var CHAMPS_PAYS = [
 var CHAMPS_PORTFOLIO = [
   ['id', 'texte'], ['category', 'texte'], ['title', 'texte'], ['description', 'texte'],
   ['image', 'texte'], ['imageAlt', 'texte'], ['imagePosition', 'texte'],
-  ['href', 'texte'], ['ordre', 'num']
+  /* `video` : lien YouTube. La carte affiche alors un bouton de lecture, et
+     la vidéo s'ouvre sur le site — rien n'est chargé chez YouTube avant le clic. */
+  ['href', 'texte'], ['video', 'texte'], ['ordre', 'num']
 ];
 
 // ------------------------------ ROUTAGE ----------------------------------

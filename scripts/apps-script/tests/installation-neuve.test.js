@@ -66,7 +66,7 @@ const dj = c.pays.find(p => p.code === 'DJ');
 const km = c.pays.find(p => p.code === 'KM');
 
 verifier('onglets créés', Object.keys(classeur.feuilles).sort(),
-  ['Formations', 'Inscriptions', 'Pays', 'Portfolio', 'Reglages', 'Sessions', 'Textes']);
+  ['Formations', 'Images', 'Inscriptions', 'Pays', 'Portfolio', 'Reglages', 'Sessions', 'Textes']);
 verifier('formation : titre', canva.title, 'Canva Pro & Création de contenu');
 verifier('formation : tarifs par pays', canva.prices, { DJ: 7500 });
 verifier('formation : acquis', canva.learnings.length, 3);

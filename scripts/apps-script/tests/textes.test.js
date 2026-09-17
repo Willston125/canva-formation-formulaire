@@ -63,6 +63,40 @@ verifier('le tableau de bord parcourt les mentions légales',
 
 verifier('nombre de textes modifiables relevés', total >= 100, true);
 
+/* Les visuels remplaçables suivent la même convention que les textes. Sans
+   groupe, libellé et format, le tableau de bord ne saurait ni où les ranger,
+   ni à quelles mesures recadrer la photo envoyée. */
+const visuels = [];
+const visuelsIncomplets = [];
+for (const page of PAGES_PARCOURUES) {
+  const chemin = path.join(RACINE, page);
+  if (!fs.existsSync(chemin)) continue;
+  const html = fs.readFileSync(chemin, 'utf8');
+  for (const m of html.matchAll(/<img\b[^>]*data-image="([^"]+)"[^>]*>/g)) {
+    visuels.push(m[1]);
+    if (!/data-image-groupe=/.test(m[0]) || !/data-image-libelle=/.test(m[0])
+      || !/data-image-format=/.test(m[0])) visuelsIncomplets.push(m[1]);
+  }
+}
+verifier('chaque visuel remplaçable porte groupe, libellé et format', visuelsIncomplets, []);
+verifier('aucun visuel déclaré deux fois',
+  visuels.filter((c, i, t) => t.indexOf(c) !== i), []);
+verifier('des visuels sont bien remplaçables', visuels.length >= 5, true);
+
+const formatsConnus = ['paysage', 'portrait', 'image', 'poster', 'logo', 'portfolio'];
+verifier('les formats annoncés sont connus du tableau de bord',
+  (() => {
+    const admin = fs.readFileSync(path.join(RACINE, 'admin', 'admin.js'), 'utf8');
+    const declares = [...admin.matchAll(/^\s{4}([a-z]+): \{ largeur:/gm)].map(m => m[1]);
+    const utilises = new Set();
+    for (const page of PAGES_PARCOURUES) {
+      const chemin = path.join(RACINE, page);
+      if (!fs.existsSync(chemin)) continue;
+      for (const m of fs.readFileSync(chemin, 'utf8').matchAll(/data-image-format="([^"]+)"/g)) utilises.add(m[1]);
+    }
+    return [...utilises].filter(f => !declares.includes(f) && !formatsConnus.includes(f));
+  })(), []);
+
 console.log('Textes modifiables : ' + total + ' occurrences, ' + parCle.size + ' clés distinctes');
 console.log(resultats.join('\n'));
 const echecs = resultats.filter(x => x.startsWith('ÉCHEC')).length;

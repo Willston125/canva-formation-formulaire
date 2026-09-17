@@ -520,24 +520,99 @@
     }
 
     // ---------- Portfolio ----------
+    /**
+     * Identifiant d'une vidéo YouTube, quelle que soit la forme du lien collé :
+     * watch?v=, youtu.be/, /embed/, /shorts/. Une adresse qu'on ne reconnaît pas
+     * ne devient pas une vidéo — mieux vaut pas de lecteur qu'un lecteur vide.
+     */
+    function identifiantYoutube(url) {
+        const t = String(url || '').trim();
+        if (!t) return null;
+        const m = t.match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/)
+            || t.match(/^([A-Za-z0-9_-]{11})$/);
+        return m ? m[1] : null;
+    }
+
     function renderPortfolio() {
         const grid = document.getElementById('portfolio-grid');
         if (!grid || !PORTFOLIO.length) return;
 
-        grid.innerHTML = PORTFOLIO.map(item => {
-            const media = item.placeholder || !item.image
+        grid.innerHTML = PORTFOLIO.map((item, i) => {
+            const video = identifiantYoutube(item.video);
+            /* Miniature : celle qu'on a téléversée, sinon celle de YouTube.
+               Rien n'est chargé chez YouTube tant qu'on n'a pas cliqué : le
+               lecteur n'apparaît qu'à la demande, sans cookie au passage. */
+            const visuel = item.image || (video ? `https://i.ytimg.com/vi/${video}/hqdefault.jpg` : '');
+            const media = !visuel
                 ? `<div class="portfolio-card__placeholder" aria-hidden="true"><span class="material-symbols-outlined">add_photo_alternate</span><span>Visuel à fournir</span></div>`
-                : `<img src="${escapeHtml(item.image)}" alt="${escapeHtml(item.imageAlt)}" loading="lazy" decoding="async" width="800" height="600" style="object-position:${escapeHtml(item.imagePosition)}">`;
+                : `<img src="${escapeHtml(visuel)}" alt="${escapeHtml(item.imageAlt || item.title)}" loading="lazy" decoding="async" style="object-position:${escapeHtml(item.imagePosition || '50% 50%')}">`;
+
             const inner = `${media}
+                ${video ? '<span class="portfolio-card__lecture" aria-hidden="true"><span class="material-symbols-outlined">play_arrow</span></span>' : ''}
                 <div class="portfolio-card__content">
                     <span class="portfolio-card__category">${escapeHtml(item.category)}</span>
                     <h3>${escapeHtml(item.title)}</h3>
                     <p>${escapeHtml(item.description)}</p>
                 </div>`;
-            return item.href
-                ? `<a class="portfolio-card${item.placeholder ? ' is-placeholder' : ''}" href="${escapeHtml(item.href)}" target="_blank" rel="noopener noreferrer">${inner}</a>`
-                : `<article class="portfolio-card${item.placeholder ? ' is-placeholder' : ''}">${inner}</article>`;
+
+            const classes = ['portfolio-card'];
+            if (!visuel) classes.push('is-placeholder');
+            if (video) classes.push('has-video');
+
+            /* Un visuel ou une vidéo s'ouvre en grand : c'est un bouton, pas un
+               lien, pour que le clavier et les lecteurs d'écran le comprennent.
+               Un lien externe déclaré l'emporte : il mène au projet publié. */
+            if (item.href && !video) {
+                return `<a class="${classes.join(' ')}" href="${escapeHtml(item.href)}" target="_blank" rel="noopener noreferrer">${inner}</a>`;
+            }
+            if (!visuel) return `<article class="${classes.join(' ')}">${inner}</article>`;
+            return `<button type="button" class="${classes.join(' ')}" data-realisation="${i}"
+                aria-label="${escapeHtml((video ? 'Lire la vidéo : ' : 'Voir en grand : ') + item.title)}">${inner}</button>`;
         }).join('');
+
+        grid.querySelectorAll('[data-realisation]').forEach(carte => {
+            carte.addEventListener('click', () => ouvrirRealisation(PORTFOLIO[Number(carte.dataset.realisation)]));
+        });
+    }
+
+    /* ---------- Affichage en grand ----------
+       Sur mobile, un survol n'existe pas : le clic ouvre l'affiche en entier.
+       Sur ordinateur, le survol la montre déjà dans la carte (voir style.css) ;
+       le clic reste utile pour la voir en pleine taille, et pour les vidéos. */
+    let fermerVisionneuse = null;
+
+    function ouvrirRealisation(item) {
+        if (!item) return;
+        if (fermerVisionneuse) fermerVisionneuse();
+
+        const video = identifiantYoutube(item.video);
+        const boite = document.createElement('div');
+        boite.className = 'visionneuse';
+        boite.innerHTML = `
+            <div class="visionneuse__fond" data-fermer></div>
+            <div class="visionneuse__boite" role="dialog" aria-modal="true" aria-label="${escapeHtml(item.title)}">
+                <button type="button" class="visionneuse__fermer" data-fermer aria-label="Fermer">
+                    <span class="material-symbols-outlined" aria-hidden="true">close</span></button>
+                ${video
+                ? `<div class="visionneuse__video"><iframe src="https://www.youtube-nocookie.com/embed/${escapeHtml(video)}?autoplay=1&rel=0"
+                        title="${escapeHtml(item.title)}" frameborder="0" allow="accelerometer; autoplay; encrypted-media; picture-in-picture"
+                        referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div>`
+                : `<img src="${escapeHtml(item.image)}" alt="${escapeHtml(item.imageAlt || item.title)}">`}
+                <p class="visionneuse__legende"><strong>${escapeHtml(item.title)}</strong>${item.description ? ` — ${escapeHtml(item.description)}` : ''}</p>
+            </div>`;
+        document.body.appendChild(boite);
+        document.body.style.overflow = 'hidden';
+
+        const auClavier = event => { if (event.key === 'Escape') fermerVisionneuse(); };
+        fermerVisionneuse = () => {
+            document.removeEventListener('keydown', auClavier);
+            boite.remove();
+            document.body.style.overflow = '';
+            fermerVisionneuse = null;
+        };
+        boite.querySelectorAll('[data-fermer]').forEach(el => el.addEventListener('click', fermerVisionneuse));
+        document.addEventListener('keydown', auClavier);
+        boite.querySelector('.visionneuse__fermer').focus();
     }
 
     document.addEventListener('DOMContentLoaded', () => {

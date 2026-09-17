@@ -457,7 +457,11 @@
     { cle: 'title', libelle: 'Titre', type: 'text', requis: true, large: true },
     { cle: 'category', libelle: 'Catégorie', type: 'text',
       aide: 'Affichée au-dessus du titre. Ex. Affiche, Vidéo, Identité visuelle.' },
-    { cle: 'href', libelle: 'Lien (facultatif)', type: 'url', aide: 'Vers le projet publié, si vous en avez un.' },
+    { cle: 'href', libelle: 'Lien (facultatif)', type: 'url', aide: 'Vers le projet publié, si vous en avez un. Ignoré si une vidéo est renseignée.' },
+    { cle: 'video', libelle: 'Vidéo YouTube (facultatif)', type: 'url', large: true,
+      aide: 'Collez le lien de la vidéo : youtube.com/watch?v=… ou youtu.be/… La carte affiche alors '
+        + 'un bouton de lecture, et la vidéo s’ouvre sur le site. Sans visuel téléversé, la miniature '
+        + 'de YouTube est utilisée.' },
     { cle: 'description', libelle: 'Description', type: 'textarea', large: true },
 
     { section: 'Visuel' },
