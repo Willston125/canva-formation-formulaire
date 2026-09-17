@@ -241,6 +241,7 @@
         renderSelectedSessionFacts();
 
         renderEnteteGenerique(formation);
+        renderBlocsFiche(formation);
         renderPaysSelector();
         renderSessionDetails();
         renderRegistrationState();
@@ -315,6 +316,39 @@
             lien.dataset.whatsappMessage = message;
             if (common) lien.href = common.whatsappUrl(message);
         });
+    }
+
+    /**
+     * Programme détaillé et questions fréquentes, écrits depuis les données.
+     *
+     * La page générée porte déjà ce contenu — c'est ce que lit Google. On le
+     * réécrit quand même dès que le catalogue arrive : une modification faite
+     * dans le tableau de bord s'affiche alors sans republier le site. Et sur la
+     * page d'inscription générique, qui sert les formations créées après la
+     * dernière publication, c'est le SEUL moyen de les afficher.
+     *
+     * Un contenu vide ne remplace jamais un contenu affiché : mieux vaut le
+     * texte publié, même daté, qu'une section vide.
+     */
+    function renderBlocsFiche(formation) {
+        const blocs = window.FicheBlocs;
+        if (!blocs || !formation) return;
+
+        const remplir = (id, html) => {
+            const section = document.getElementById(id);
+            if (!section) return;
+            if (!html) return;
+            if (section.innerHTML.trim() === html.trim()) { section.hidden = false; return; }
+            section.innerHTML = html;
+            section.hidden = false;
+            common?.initAccordions?.(section);
+            common?.observeReveals?.(section.parentElement || undefined);
+        };
+
+        remplir('programme-section', blocs.aUnProgramme(formation)
+            ? blocs.programmeInterieur(formation)
+            : blocs.programmeSimpleInterieur(formation));
+        remplir('faq-section', blocs.aUneFaq(formation) ? blocs.faqInterieur(formation) : '');
     }
 
     // ====== INFORMATIONS DE SESSION SUR LA FICHE ======

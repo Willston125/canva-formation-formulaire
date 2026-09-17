@@ -472,9 +472,14 @@
         banner.classList.remove('hidden');
     }
 
-    // ---------- Accordéons accessibles (FAQ + programme) ----------
-    function initAccordions() {
-        document.querySelectorAll('.programme-accordion .accordion-header, .faq-item .faq-question').forEach(header => {
+    /* ---------- Accordéons accessibles (FAQ + programme) ----------
+       Appelable après coup : le programme et les questions fréquentes sont
+       réécrits quand le catalogue modifié depuis le tableau de bord arrive, et
+       les nouveaux dépliants seraient sinon inertes. */
+    function initAccordions(root) {
+        (root || document).querySelectorAll('.programme-accordion .accordion-header, .faq-item .faq-question').forEach(header => {
+            if (header.dataset.accordeon === 'cable') return;
+            header.dataset.accordeon = 'cable';
             header.addEventListener('click', () => {
                 const item = header.closest('.programme-accordion, .faq-item');
                 const body = item.querySelector('.accordion-body, .faq-answer');
@@ -537,6 +542,7 @@
 
     window.SiteCommon = Object.freeze({
         observeReveals,
+        initAccordions,
         formatSessionDate,
         escapeHtml,
         findFormation,

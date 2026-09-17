@@ -69,7 +69,7 @@
  * déploiement n'a pas été publiée, et Google sert encore l'ancien code.
  * C'est l'erreur la plus fréquente, et la plus difficile à diagnostiquer.
  */
-var VERSION = '2026-09-17-import';
+var VERSION = '2026-09-17-programme';
 
 /** Classeur. Vide = le classeur auquel ce script est rattaché (cas normal). */
 var ID_CLASSEUR = '';
@@ -144,7 +144,8 @@ var CHAMPS_FORMATION = [
   ['featured', 'bool'], ['registrationOpen', 'bool'], ['active', 'bool'],
   ['allowRegistrationWithoutSession', 'bool'], ['hasDetailPage', 'bool'],
   ['href', 'texte'], ['formId', 'texte'], ['poster', 'texte'], ['lead', 'texte'],
-  ['levelSubject', 'texte'], ['objectives', 'json'], ['ordre', 'num']
+  ['levelSubject', 'texte'], ['objectives', 'json'], ['ordre', 'num'],
+  ['programme', 'json'], ['faq', 'json']
 ];
 
 var CHAMPS_SESSION = [

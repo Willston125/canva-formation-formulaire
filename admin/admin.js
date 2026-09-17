@@ -625,7 +625,7 @@
     { cle: 'promise', libelle: 'Promesse courte', type: 'text', large: true, aide: 'Trois mots qui résument, ex. « Créer, captiver, partager. »' },
     { cle: 'shortDescription', libelle: 'Description', type: 'textarea', large: true },
     { cle: 'lead', libelle: 'Accroche de la fiche', type: 'textarea', large: true, aide: 'Facultative. La mise en gras <strong>…</strong> est acceptée.' },
-    { cle: 'learnings', libelle: 'Ce que l’on apprend', type: 'lignes', large: true, aide: 'Un acquis par ligne, deux ou trois suffisent.' },
+    { cle: 'learnings', libelle: 'Ce que l’on apprend', type: 'lignes', large: true, aide: 'Un acquis par ligne, deux ou trois suffisent. Repris sur la carte du catalogue.' },
     { cle: 'objectives', libelle: 'Objectifs proposés au candidat', type: 'objectifs', large: true,
       aide: 'Un objectif par ligne, proposé à l’étape 2 du formulaire. Vide = liste commune.' },
 
@@ -636,6 +636,12 @@
     { cle: 'modules', libelle: 'Nombre de modules', type: 'number' },
     { cle: 'levelSubject', libelle: 'Sujet de la question de niveau', type: 'text',
       aide: 'Ex. « Canva » donne « Où en es-tu avec Canva ? ». Vide = formulation générique.' },
+
+    { section: 'Programme détaillé' },
+    { cle: 'programme', libelle: '', type: 'programme', large: true },
+
+    { section: 'Questions fréquentes' },
+    { cle: 'faq', libelle: '', type: 'faq', large: true },
 
     { section: 'Tarifs par pays' },
     { cle: 'prices', libelle: '', type: 'tarifs', large: true },
@@ -1376,6 +1382,28 @@
     $('#panneau-form').addEventListener('submit', validerCourant);
     champs.forEach(function (c) {
       if (c.type === 'image') activerChampImage(c.cle, c.format);
+
+      if (c.type === 'programme') {
+        rendreProgramme(c.cle, donnees[c.cle] ? JSON.parse(JSON.stringify(donnees[c.cle])) : null);
+        var ajouterModule = document.querySelector('[data-ajouter-module="' + c.cle + '"]');
+        if (ajouterModule) ajouterModule.addEventListener('click', function () {
+          var courant = lireProgrammeChamp(c.cle) || { sousTitre: '', modules: [] };
+          courant.modules.push({ icone: 'menu_book', titre: '', points: [] });
+          rendreProgramme(c.cle, courant);
+        });
+        return;
+      }
+
+      if (c.type === 'faq') {
+        rendreFaq(c.cle, Array.isArray(donnees[c.cle])
+          ? donnees[c.cle].map(function (q) { return Object.assign({}, q); }) : []);
+        var ajouterQuestion = document.querySelector('[data-ajouter-question="' + c.cle + '"]');
+        if (ajouterQuestion) ajouterQuestion.addEventListener('click', function () {
+          rendreFaq(c.cle, (lireFaqChamp(c.cle) || []).concat([{ question: '', reponse: '' }]));
+        });
+        return;
+      }
+
       if (c.type !== 'paiements') return;
       // Copie : l'édition ne doit pas modifier le catalogue avant enregistrement
       var initial = Array.isArray(donnees[c.cle])
@@ -1439,6 +1467,26 @@
         return;
       }
 
+      if (c.type === 'programme') {
+        html += '<div class="champ pleine-largeur">'
+          + '<div class="paiements" data-programme="' + echapper(c.cle) + '"></div>'
+          + '<button type="button" class="bouton bouton--discret bouton--petit" data-ajouter-module="' + echapper(c.cle) + '">'
+          + '<span class="material-symbols-outlined" aria-hidden="true">add</span>Ajouter un module</button>'
+          + '<span class="champ__aide">C’est le bloc « Qu’allez-vous apprendre ? » de la fiche. '
+          + 'Sans module, la fiche se rabat sur la liste des acquis ci-dessus.</span></div>';
+        return;
+      }
+
+      if (c.type === 'faq') {
+        html += '<div class="champ pleine-largeur">'
+          + '<div class="paiements" data-faq="' + echapper(c.cle) + '"></div>'
+          + '<button type="button" class="bouton bouton--discret bouton--petit" data-ajouter-question="' + echapper(c.cle) + '">'
+          + '<span class="material-symbols-outlined" aria-hidden="true">add</span>Ajouter une question</button>'
+          + '<span class="champ__aide">Les questions que posent vraiment les candidats. '
+          + 'Sans question, la fiche affiche trois réponses communes à toutes les formations.</span></div>';
+        return;
+      }
+
       if (c.type === 'paiements') {
         html += '<div class="champ pleine-largeur">'
           + (c.libelle ? '<span class="champ__label">' + echapper(c.libelle) + '</span>' : '')
@@ -1489,6 +1537,8 @@
   function lireChamp(c) {
     if (c.type === 'tarifs') return lireTarifs(c.cle);
     if (c.type === 'paiements') return lirePaiements(c.cle);
+    if (c.type === 'programme') return lireProgrammeChamp(c.cle);
+    if (c.type === 'faq') return lireFaqChamp(c.cle);
     var el = document.getElementById('champ-' + c.cle);
     if (!el) return undefined;
     if (c.type === 'bool') return el.checked;
@@ -1597,6 +1647,130 @@
       + '<input type="hidden" id="champ-' + echapper(cle) + '" value="' + echapper(valeur) + '">'
       + (aide ? '<span class="champ__aide">' + echapper(aide) + '</span>' : '')
       + '</div>';
+  }
+
+  // ---------------------- PROGRAMME ET FAQ (champs) ----------------------
+
+  /* Icônes proposées pour les modules. Liste fermée à dessein : une icône saisie
+     librement qui n'existe pas dans la police du site s'afficherait en toutes
+     lettres sur la fiche. Elles sont écrites ici sous la forme `icon: '…'`, que
+     le générateur de polices relève automatiquement dans les sources. */
+  var ICONES_MODULE = [
+    { icon: 'design_services', label: 'Design' },
+    { icon: 'phone_iphone', label: 'Réseaux sociaux' },
+    { icon: 'movie', label: 'Vidéo' },
+    { icon: 'rocket_launch', label: 'Lancement' },
+    { icon: 'photo_camera', label: 'Photo' },
+    { icon: 'campaign', label: 'Communication' },
+    { icon: 'brush', label: 'Création' },
+    { icon: 'psychology', label: 'Stratégie' },
+    { icon: 'auto_awesome', label: 'Intelligence artificielle' },
+    { icon: 'business_center', label: 'Business' },
+    { icon: 'groups', label: 'Communauté' },
+    { icon: 'menu_book', label: 'Général' }
+  ];
+
+  /**
+   * Programme détaillé : un sous-titre, puis des modules qui portent chacun une
+   * icône, un titre et des points. Les points se saisissent un par ligne —
+   * c'est le format le plus rapide pour ce qui est, au fond, une liste.
+   */
+  function rendreProgramme(cle, valeur) {
+    var boite = document.querySelector('[data-programme="' + cle + '"]');
+    if (!boite) return;
+    var modules = (valeur && valeur.modules) || [];
+
+    boite.innerHTML = '<label class="champ pleine-largeur"><span class="champ__label">Résumé du parcours</span>'
+      + '<input type="text" data-programme-resume value="' + echapper((valeur && valeur.sousTitre) || '') + '"'
+      + ' placeholder="Ex. 12 séances · 24 heures · 4 modules">'
+      + '<span class="champ__aide">Affiché sous le titre « Qu’allez-vous apprendre ? ». Facultatif.</span></label>'
+      + (modules.length ? modules.map(function (m, i) {
+        return '<div class="paiement" data-module>'
+          + '<div class="paiement__entete">'
+          + '<span class="paiement__titre">' + echapper(m.titre || ('Module ' + (i + 1))) + '</span>'
+          + '<button type="button" class="bouton bouton--discret bouton--petit" data-retirer-module="' + i + '">Retirer</button>'
+          + '</div><div class="grille-champs">'
+          + '<label class="champ"><span class="champ__label">Icône</span><select data-module-champ="icone">'
+          + ICONES_MODULE.map(function (o) {
+            return '<option value="' + echapper(o.icon) + '"'
+              + (String(m.icone || 'menu_book') === o.icon ? ' selected' : '') + '>'
+              + echapper(o.label) + '</option>';
+          }).join('') + '</select></label>'
+          + '<label class="champ"><span class="champ__label">Titre du module</span>'
+          + '<input type="text" data-module-champ="titre" value="' + echapper(m.titre || '') + '"'
+          + ' placeholder="Ex. MODULE 1 · DESIGN &amp; IDENTITÉ"></label>'
+          + '<label class="champ pleine-largeur"><span class="champ__label">Ce qui est couvert</span>'
+          + '<textarea data-module-champ="points">' + echapper((m.points || []).join('\n')) + '</textarea>'
+          + '<span class="champ__aide">Un point par ligne.</span></label>'
+          + '</div></div>';
+      }).join('') : '<p class="champ__aide">Aucun module. Sans module, la fiche affiche simplement la liste des acquis.</p>');
+
+    boite.querySelectorAll('[data-retirer-module]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var courant = lireProgrammeChamp(cle);
+        courant.modules.splice(Number(b.dataset.retirerModule), 1);
+        rendreProgramme(cle, courant);
+      });
+    });
+  }
+
+  function lireProgrammeChamp(cle) {
+    var boite = document.querySelector('[data-programme="' + cle + '"]');
+    if (!boite) return undefined;
+    var resume = boite.querySelector('[data-programme-resume]');
+    var modules = Array.prototype.slice.call(boite.querySelectorAll('[data-module]')).map(function (bloc) {
+      var m = {};
+      bloc.querySelectorAll('[data-module-champ]').forEach(function (el) {
+        m[el.dataset.moduleChamp] = el.value;
+      });
+      m.titre = String(m.titre || '').trim();
+      m.icone = String(m.icone || 'menu_book').trim();
+      m.points = String(m.points || '').split('\n')
+        .map(function (l) { return l.trim(); }).filter(Boolean);
+      return m;
+    }).filter(function (m) { return m.titre || m.points.length; });
+    return { sousTitre: resume ? resume.value.trim() : '', modules: modules };
+  }
+
+  /** Questions fréquentes propres à la formation. */
+  function rendreFaq(cle, liste) {
+    var boite = document.querySelector('[data-faq="' + cle + '"]');
+    if (!boite) return;
+    liste = liste || [];
+
+    boite.innerHTML = liste.length ? liste.map(function (q, i) {
+      return '<div class="paiement" data-question>'
+        + '<div class="paiement__entete">'
+        + '<span class="paiement__titre">' + echapper(q.question || ('Question ' + (i + 1))) + '</span>'
+        + '<button type="button" class="bouton bouton--discret bouton--petit" data-retirer-question="' + i + '">Retirer</button>'
+        + '</div><div class="grille-champs">'
+        + '<label class="champ pleine-largeur"><span class="champ__label">Question</span>'
+        + '<input type="text" data-question-champ="question" value="' + echapper(q.question || '') + '"></label>'
+        + '<label class="champ pleine-largeur"><span class="champ__label">Réponse</span>'
+        + '<textarea data-question-champ="reponse">' + echapper(q.reponse || '') + '</textarea></label>'
+        + '</div></div>';
+    }).join('') : '<p class="champ__aide">Aucune question propre à cette formation : la fiche affiche trois '
+      + 'questions communes à toutes les formations.</p>';
+
+    boite.querySelectorAll('[data-retirer-question]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var courant = lireFaqChamp(cle);
+        courant.splice(Number(b.dataset.retirerQuestion), 1);
+        rendreFaq(cle, courant);
+      });
+    });
+  }
+
+  function lireFaqChamp(cle) {
+    var boite = document.querySelector('[data-faq="' + cle + '"]');
+    if (!boite) return undefined;
+    return Array.prototype.slice.call(boite.querySelectorAll('[data-question]')).map(function (bloc) {
+      var q = {};
+      bloc.querySelectorAll('[data-question-champ]').forEach(function (el) {
+        q[el.dataset.questionChamp] = el.value.trim();
+      });
+      return q;
+    }).filter(function (q) { return q.question && q.reponse; });
   }
 
   /** Relit l'éditeur : un moyen sans nom est ignoré plutôt qu'enregistré vide. */

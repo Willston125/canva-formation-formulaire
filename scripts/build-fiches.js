@@ -10,6 +10,10 @@ const TEMPLATE = path.join(ROOT, 'formations', '_template', 'fiche.html');
 const SITE_URL = 'https://canva-formation-formulaire.vercel.app';
 const sandbox = { window: {} };
 vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'formations-data.js'), 'utf8'), sandbox);
+vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'fiche-blocs.js'), 'utf8'), sandbox);
+/* Le balisage du programme et de la FAQ vit dans fiche-blocs.js, partage avec
+   le site : ecrire le meme HTML ici l'aurait fait diverger a la premiere retouche. */
+const BLOCS = sandbox.window.FicheBlocs;
 const FORMATIONS = sandbox.window.FORMATIONS || [];
 const PAYS = sandbox.window.PAYS || [];
 /* Pays de référence des pages générées : le visiteur peut en changer dans le
@@ -61,9 +65,17 @@ function facts(f) {
     `<div${sessionRow ? ' data-session-fact hidden' : ''}><dt><span class="material-symbols-outlined" aria-hidden="true">${icon}</span>${esc(label)}</dt><dd${id ? ` id="${id}"` : ''}>${esc(value)}</dd></div>`).join('')}</dl>`;
 }
 
-function genericProgramme(f) {
-  const items = (f.learnings || []).map(item => `<li><span class="material-symbols-outlined" aria-hidden="true">check_circle</span>${esc(item)}</li>`).join('');
-  return `<section class="fiche-block reveal-on-scroll" id="programme-section" aria-labelledby="programme-title"><div class="glass-card rounded-2xl sm:rounded-3xl p-6 sm:p-8"><p class="eyebrow">PROGRAMME</p><h2 id="programme-title" class="text-xl sm:text-2xl font-extrabold text-white font-headline">Ce que vous allez apprendre</h2><p class="text-[#94A3B8] mt-2">Un parcours pratique centré sur des compétences directement applicables.</p><ul class="fiche-prerequisites mt-6">${items}</ul></div></section>`;
+/**
+ * Programme : les modules saisis pour la formation, sinon la liste de ses acquis.
+ * Le balisage vient de fiche-blocs.js, partagé avec le site, pour que le
+ * tableau de bord et les pages générées produisent exactement la même chose.
+ */
+function sectionProgramme(f) {
+  const interieur = BLOCS.aUnProgramme(f)
+    ? BLOCS.programmeInterieur(f)
+    : BLOCS.programmeSimpleInterieur(f);
+  if (!interieur) return '<!-- Programme : rien de saisi pour cette formation -->';
+  return `<section class="fiche-block reveal-on-scroll" id="programme-section" aria-labelledby="programme-title">${interieur}</section>`;
 }
 
 function genericPrerequisites() {
@@ -74,13 +86,20 @@ function genericTrainer(f) {
   return `<section class="fiche-block reveal-on-scroll" id="formateur-section" aria-labelledby="formateur-title"><div class="glass-card rounded-2xl sm:rounded-3xl shadow-xl shadow-black/20 border border-white/40 p-6 sm:p-8"><p class="eyebrow">VOTRE FORMATEUR</p><h2 id="formateur-title" class="text-xl sm:text-2xl font-extrabold text-white font-headline">Ali William</h2><p class="text-[#E5E5E5] mt-3 leading-relaxed">Expert en communication multimédia, réalisateur et stratège digital, Ali William transmet pour la formation « ${esc(f.title)} » une méthode pratique issue de son expérience de terrain.</p></div></section>`;
 }
 
-function genericFaq(f) {
-  const entries = [
-    ['Cette formation est-elle accessible aux débutants ?', 'Oui. Le parcours est progressif et privilégie la pratique.'],
-    ['Quand aura lieu la prochaine session ?', 'La date sera affichée sur cette fiche dès sa confirmation.'],
-    ['Comment confirmer mon inscription ?', 'Votre inscription est confirmée après validation du paiement et de la preuve envoyée sur WhatsApp.']
-  ];
-  return `<section class="fiche-block reveal-on-scroll" id="faq-section" aria-labelledby="faq-title"><div class="flex items-center gap-3 mb-5 px-2"><h2 class="text-lg sm:text-xl font-extrabold text-white font-headline" id="faq-title">Questions fréquentes sur ${esc(f.shortTitle || f.title)}</h2></div><div class="faq-list">${entries.map((entry, i) => `<div class="faq-item"><h3><button class="faq-question" type="button" aria-expanded="false" aria-controls="faq-${i}" id="faq-q-${i}">${esc(entry[0])}<span class="material-symbols-outlined" aria-hidden="true">expand_more</span></button></h3><div class="faq-answer" id="faq-${i}" role="region" aria-labelledby="faq-q-${i}" hidden><p>${esc(entry[1])}</p></div></div>`).join('')}</div></section>`;
+/**
+ * Questions fréquentes. Celles saisies pour la formation, sinon trois réponses
+ * communes — vraies pour toutes les formations, et qui n'inventent ni date ni
+ * modalité. Elles se remplacent depuis le tableau de bord, formation par formation.
+ */
+const FAQ_COMMUNE = [
+  { question: 'Cette formation est-elle accessible aux débutants ?', reponse: 'Oui. Le parcours est progressif et privilégie la pratique.' },
+  { question: 'Quand aura lieu la prochaine session ?', reponse: 'La date est affichée sur cette fiche dès sa confirmation.' },
+  { question: 'Comment confirmer mon inscription ?', reponse: 'Votre inscription est confirmée après validation du paiement et de la preuve envoyée sur WhatsApp.' }
+];
+
+function sectionFaq(f) {
+  const source = BLOCS.aUneFaq(f) ? f : Object.assign({}, f, { faq: FAQ_COMMUNE });
+  return `<section class="fiche-block reveal-on-scroll" id="faq-section" aria-labelledby="faq-title">${BLOCS.faqInterieur(source)}</section>`;
 }
 
 /** Métadonnées du bandeau « Formation choisie » : uniquement des valeurs confirmées. */
@@ -147,11 +166,15 @@ function render(template, f) {
     .replace(/J['’]utilise\s+Canva régulièrement/g, esc(niveau.often));
   html = replace(html, /(<div[^>]*id="objectifs-grid"[\s\S]*?>)[\s\S]*?(<\/div>\s*<span class="field-error" id="objectifs-error")/i, `$1${objectives(f)}$2`, 'objectifs');
 
+  /* Programme et FAQ viennent des données pour TOUTES les fiches, Canva Pro
+     comprise : son programme n'est plus écrit dans le gabarit, il se modifie
+     depuis le tableau de bord comme celui des autres. */
+  html = replace(html, /<section[^>]*id="programme-section"[\s\S]*?<\/section>/i, sectionProgramme(f), 'programme');
+  html = replace(html, /<section[^>]*id="faq-section"[\s\S]*?<\/section>/i, sectionFaq(f), 'FAQ');
+
   if (f.slug !== 'canva-pro') {
-    html = replace(html, /<section[^>]*id="programme-section"[\s\S]*?<\/section>/i, genericProgramme(f), 'programme');
     html = replace(html, /<section[^>]*id="prerequis-section"[\s\S]*?<\/section>/i, genericPrerequisites(), 'prérequis');
     html = replace(html, /<section[^>]*id="formateur-section"[\s\S]*?<\/section>/i, genericTrainer(f), 'formateur');
-    html = replace(html, /<section[^>]*id="faq-section"[\s\S]*?<\/section>/i, genericFaq(f), 'FAQ');
     html = html
       .replace(/Canva Pro &amp; Création de contenu/g, esc(f.title))
       .replace(/Canva Pro & Création de contenu/g, esc(f.title));
@@ -202,10 +225,14 @@ generique = generique.replace(/(<main id="inscription" data-formation-id=")[^"]*
 generique = generique.replace(/(<input type="hidden" id="formation" name="formation" value=")[^"]*/, '$1');
 // Signale à script.js qu'il doit écrire lui-même l'en-tête de la page
 generique = generique.replace('<body ', '<body data-fiche-generique ');
-// Aucun contenu éditorial à afficher pour une page qui sert toutes les formations
-generique = generique.replace(/<section[^>]*id="programme-section"[\s\S]*?<\/section>/i, '');
+/* Sections laissées VIDES plutôt que supprimées : une formation créée depuis le
+   tableau de bord n'a pas de page générée tant que le site n'a pas été republié,
+   et c'est ici que script.js écrit son programme et ses questions fréquentes. */
+generique = generique.replace(/<section[^>]*id="programme-section"[\s\S]*?<\/section>/i,
+  '<section class="fiche-block reveal-on-scroll" id="programme-section" aria-labelledby="programme-title" hidden></section>');
+generique = generique.replace(/<section[^>]*id="faq-section"[\s\S]*?<\/section>/i,
+  '<section class="fiche-block reveal-on-scroll" id="faq-section" aria-labelledby="faq-title" hidden></section>');
 generique = generique.replace(/<section[^>]*id="prerequis-section"[\s\S]*?<\/section>/i, '');
-generique = generique.replace(/<section[^>]*id="faq-section"[\s\S]*?<\/section>/i, '');
 generique = generique.replace(/<meta name="robots"[^>]*>/i, '');
 generique = generique.replace('</head>', '    <meta name="robots" content="noindex, follow">\n</head>');
 

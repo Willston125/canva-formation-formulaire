@@ -39,6 +39,9 @@
  * @property {string} [poster]           Affiche dédiée (par défaut : `image`)
  * @property {string} [lead]             Accroche de la fiche, HTML léger autorisé (par défaut : `shortDescription`)
  * @property {string} [levelSubject]     Sujet de la question « Où en es-tu avec … ? » (par défaut : formulation générique)
+ * @property {{sousTitre?: string, modules: {icone?: string, titre: string, points: string[]}[]}} [programme]  Programme détaillé.
+ *                                       Sans lui, la fiche affiche la liste des `learnings`.
+ * @property {{question: string, reponse: string}[]} [faq]  Questions fréquentes propres à la formation
  * @property {{icon: string, label: string, value: string}[]} [objectives]  Objectifs proposés à l'étape 2 (par défaut : liste commune)
  */
 
@@ -78,6 +81,68 @@ window.FORMATIONS = Object.freeze([
     poster: '/assets/images/formation canva (2).jpg',
     lead: 'Devenez graphiste, community manager ou créateur de contenu grâce à <strong>12 jours de pratique 100 % concrète</strong>. Un programme intensif en 4 modules pour maîtriser Canva Pro et repartir avec un portfolio validé.',
     levelSubject: 'Canva',
+    /* Programme réel, module par module. Repris du gabarit où il était écrit
+       en dur : il se modifie maintenant depuis le tableau de bord, et une
+       formation sans modules retombe sur la liste de ses acquis. */
+    programme: Object.freeze({
+      sousTitre: '12 jours · 24 heures · 4 modules · 3 séances/semaine',
+      modules: Object.freeze([
+      Object.freeze({
+        icone: 'design_services',
+        titre: 'MODULE 1 · DESIGN & IDENTITÉ',
+        points: Object.freeze([
+          'Psychologie des couleurs et typographies',
+          'Création d\'un Brand Kit pro',
+          'Hiérarchie visuelle et équilibre',
+          'Maîtrise de l\'interface Canva Pro'
+        ])
+      }),
+      Object.freeze({
+        icone: 'phone_iphone',
+        titre: 'MODULE 2 · CONTENT STRATEGIE',
+        points: Object.freeze([
+          'Posts et Carrousels irrésistibles',
+          'Storytelling et Copywriting visuel',
+          'Planning éditorial et automatisation',
+          'Audit et optimisation de compte'
+        ])
+      }),
+      Object.freeze({
+        icone: 'movie',
+        titre: 'MODULE 3 · VIDÉO & IA',
+        points: Object.freeze([
+          'Montage Reels et TikTok pro',
+          'Animations et transitions dynamiques',
+          'Studio Magique et IA générative',
+          'Effets spéciaux et trucages photo'
+        ])
+      }),
+      Object.freeze({
+        icone: 'rocket_launch',
+        titre: 'MODULE 4 · BUSINESS & FREELANCE',
+        points: Object.freeze([
+          'Trouver ses premiers clients',
+          'Vendre une offre de Design',
+          'Gestion de projets et Mockups',
+          'Certificat et Lancement pro'
+        ])
+      })
+      ])
+    }),
+    faq: Object.freeze([
+      Object.freeze({
+        question: 'Faut-il un ordinateur portable pour participer ?',
+        reponse: 'C\'est fortement recommandé pour être à l\'aise avec les exercices pratiques et les raccourcis. Cependant, si vous avez une tablette performante ou un grand smartphone, vous pouvez tout de même suivre la formation, l\'application Canva étant très bien optimisée sur mobile.'
+      }),
+      Object.freeze({
+        question: 'Dois-je déjà avoir la version Canva Pro payante ?',
+        reponse: 'Non, pas d\'inquiétude ! Venez avec votre compte Canva gratuit. Je vous montrerai comment exploiter l\'outil à 100% et vous donnerai toutes les astuces concernant les fonctionnalités "Pro" pendant nos sessions.'
+      }),
+      Object.freeze({
+        question: 'Je suis totalement débutant(e), est-ce fait pour moi ?',
+        reponse: 'Absolument ! La première semaine est consacrée aux "Fondations du Design". Nous reprenons les bases pas-à-pas. Que vous n\'ayez jamais ouvert l\'application ou que vous bricoliez déjà un peu, le programme intensif est conçu pour vous amener au niveau professionnel en 12 jours.'
+      })
+    ]),
     objectives: [
       { icon: 'forum', label: 'Devenir Community Manager', value: 'Devenir Community Manager' },
       { icon: 'brush', label: 'Graphiste freelance', value: 'Travailler comme Graphiste freelance' },
