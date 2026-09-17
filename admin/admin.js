@@ -626,7 +626,10 @@
     { cle: 'devise', libelle: 'Devise', type: 'text', requis: true, aide: 'Affichée après le montant. Ex. FDJ, KMF.' },
 
     { section: 'Téléphone' },
-    { cle: 'indicatif', libelle: 'Indicatif', type: 'text', aide: 'Ex. +253' },
+    { cle: 'indicatif', libelle: 'Indicatif du pays', type: 'text',
+      aide: 'Le « + » et l’indicatif SEULEMENT : +253 pour Djibouti, +269 pour les Comores. '
+        + 'Pas de numéro ici — il s’affiche devant le champ que remplit le candidat. '
+        + 'Votre numéro de contact se saisit plus bas, dans « Contact dans ce pays ».' },
     { cle: 'longueurTelephone', libelle: 'Nombre de chiffres', type: 'number',
       aide: 'Longueur du numéro local, sans l’indicatif. Vide = pas de limite.' },
     { cle: 'exempleTelephone', libelle: 'Exemple affiché', type: 'text', aide: 'Ex. 77XXXXXX. Vide = aucun exemple.' },
@@ -675,6 +678,17 @@
             + 'Créez plutôt un nouveau pays, puis supprimez celui-ci.');
           return;
         }
+        /* L'indicatif s'affiche collé devant le numéro que tape le candidat.
+           Y glisser un numéro complet produit un téléphone inutilisable dans la
+           feuille — « +269 380 46 483801234 » — sans que rien ne le signale. */
+        var indicatif = String(valeurs.indicatif || '').trim();
+        if (indicatif && !/^\+\d{1,4}$/.test(indicatif)) {
+          fini('L’indicatif ne contient que le « + » et l’indicatif du pays, sans espace ni numéro : '
+            + '+253, +269… Vous avez saisi « ' + indicatif + ' ». '
+            + 'Si c’est votre numéro de contact, il va dans « Contact dans ce pays ».');
+          return;
+        }
+        valeurs.indicatif = indicatif;
         appeler('admin.pays.save', { donnees: valeurs }).then(function (d) {
           viderCorbeilleImages();
           fermerPanneau();

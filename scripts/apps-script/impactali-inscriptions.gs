@@ -69,7 +69,7 @@
  * déploiement n'a pas été publiée, et Google sert encore l'ancien code.
  * C'est l'erreur la plus fréquente, et la plus difficile à diagnostiquer.
  */
-var VERSION = '2026-09-17-contact-pays';
+var VERSION = '2026-09-17-indicatif';
 
 /** Classeur. Vide = le classeur auquel ce script est rattaché (cas normal). */
 var ID_CLASSEUR = '';
@@ -604,6 +604,18 @@ function enregistrerPays(p) {
   }
   if (!p.nom) throw new Error('Le nom du pays est obligatoire.');
   if (!p.devise) throw new Error('La devise est obligatoire : sans elle, aucun tarif n’est lisible.');
+
+  /* L'indicatif s'affiche collé devant le numéro que tape le candidat. Y glisser
+     un numéro complet produit un téléphone inutilisable — « +269 380 46 483801234 »
+     — sans que rien ne le signale au moment de l'inscription. */
+  if (p.indicatif) {
+    p.indicatif = String(p.indicatif).trim();
+    if (!/^\+\d{1,4}$/.test(p.indicatif)) {
+      throw new Error('L’indicatif ne contient que le « + » et l’indicatif du pays, sans espace ni '
+        + 'numéro : +253, +269… Reçu : « ' + p.indicatif + ' ». '
+        + 'Un numéro de contact se saisit dans whatsappNumber.');
+    }
+  }
 
   // Un motif de numéro invalide bloquerait toutes les inscriptions du pays
   if (p.motifTelephone) {

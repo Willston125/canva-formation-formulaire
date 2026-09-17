@@ -77,6 +77,19 @@ const defaut = actifs.find(p => p.defaut === true);
 verifier('le pays par défaut a un numéro de contact',
   !!(defaut && String(defaut.whatsappNumber || '').replace(/\D/g, '')), true);
 
+
+/* Un numéro glissé dans le champ « indicatif » produit un téléphone
+   inutilisable dans la feuille : le script doit le refuser. */
+const essaisIndicatif = [
+  ['+269 380 46 48', false],
+  ['269', false],
+  ['+2 6 9', false],
+  ['+269', true],
+  ['+253', true]
+];
+verifier('un indicatif mal saisi est reconnu comme tel',
+  essaisIndicatif.filter(([v, valide]) => /^\+\d{1,4}$/.test(v) !== valide).map(([v]) => v), []);
+
 console.log('Pays desservis : ' + actifs.map(p => p.code + ' (' + p.devise + ')').join(', '));
 console.log(resultats.join('\n'));
 const echecs = resultats.filter(x => x.startsWith('ÉCHEC')).length;
