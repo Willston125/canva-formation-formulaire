@@ -557,7 +557,7 @@ window.PAYS = Object.freeze([
  * décompter les places réellement prises : voir scripts/apps-script/places.gs.
  */
 window.SITE_ENDPOINTS = Object.freeze({
-  registration: 'https://script.google.com/macros/s/AKfycbzqmEd66FzKKpjbpP2BiypQvNl8m5SCQ8YR-Thc1cS6idD6wBbA0WPsU-1B4saKr8w/exec'
+  registration: 'https://script.google.com/macros/s/AKfycbw_fGtr_y_Mso7aKbg43mnKpSffZtb3XMiCvxcfTxOd76FM9HAJA6BBmdWS0_FkY5AmFQ/exec'
 });
 
 /**

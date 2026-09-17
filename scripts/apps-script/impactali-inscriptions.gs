@@ -69,7 +69,7 @@
  * déploiement n'a pas été publiée, et Google sert encore l'ancien code.
  * C'est l'erreur la plus fréquente, et la plus difficile à diagnostiquer.
  */
-var VERSION = '2026-09-16-formules';
+var VERSION = '2026-09-17-drive';
 
 /** Classeur. Vide = le classeur auquel ce script est rattaché (cas normal). */
 var ID_CLASSEUR = '';
@@ -750,10 +750,10 @@ function dossierImages() {
     } catch (err) { /* dossier disparu : on en refait un */ }
   }
 
-  /* Recherche par nom : elle explore tout le Drive, ce que la permission
-     restreinte « fichiers créés par l'application » n'autorise pas. On l'essaie
-     sans en dépendre — un dossier oublié est ainsi retrouvé quand c'est
-     possible, sans exiger un accès à l'ensemble des documents de l'utilisateur. */
+  /* Recherche par nom : elle retrouve un dossier dont l'identifiant a été perdu
+     (script re-créé, propriétés effacées). Enveloppée par prudence : si la
+     permission venait à être restreinte, on créerait simplement un dossier neuf
+     plutôt que de faire échouer tout envoi d'image. */
   try {
     var it = DriveApp.getFoldersByName(NOM_DOSSIER_IMAGES);
     while (it.hasNext()) {
@@ -817,7 +817,7 @@ function etatDuScript() {
     dossierImages();
     drive = true;
   } catch (err) {
-    detail = String(err).slice(0, 120);
+    detail = String(err).slice(0, 300);
   }
   return {
     version: VERSION,
