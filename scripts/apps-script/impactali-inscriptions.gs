@@ -69,7 +69,7 @@
  * déploiement n'a pas été publiée, et Google sert encore l'ancien code.
  * C'est l'erreur la plus fréquente, et la plus difficile à diagnostiquer.
  */
-var VERSION = '2026-09-17-reglages';
+var VERSION = '2026-09-17-contact-pays';
 
 /** Classeur. Vide = le classeur auquel ce script est rattaché (cas normal). */
 var ID_CLASSEUR = '';
@@ -165,7 +165,11 @@ var CHAMPS_PAYS = [
   ['code', 'texte'], ['nom', 'texte'], ['devise', 'texte'], ['indicatif', 'texte'],
   ['motifTelephone', 'texte'], ['aideTelephone', 'texte'], ['exempleTelephone', 'texte'],
   ['longueurTelephone', 'num'], ['defaut', 'bool'], ['active', 'bool'],
-  ['paymentMethods', 'json'], ['ordre', 'num']
+  ['paymentMethods', 'json'], ['ordre', 'num'],
+  /* Contact propre au pays, et indices qui permettent au site de reconnaître
+     d'où vient le visiteur sans interroger le moindre service extérieur. */
+  ['whatsappNumber', 'texte'], ['whatsappDisplay', 'texte'],
+  ['fuseaux', 'json'], ['regions', 'json']
 ];
 
 /**

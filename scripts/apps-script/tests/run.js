@@ -11,7 +11,8 @@ const EPREUVES = [
   ['colonnes.test.js', 'Colonnes ajoutées à un classeur déjà rempli'],
   ['formules.test.js', 'Valeurs commençant par + = - (formules Sheets)'],
   ['textes.test.js', 'Textes modifiables du site'],
-  ['version.test.js', 'Version attendue par le site']
+  ['version.test.js', 'Version attendue par le site'],
+  ['pays.test.js', 'Pays desservis']
 ];
 
 let echecs = 0;

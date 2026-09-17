@@ -590,6 +590,16 @@ window.PAYS = Object.freeze([
     longueurTelephone: 8,
     defaut: true,
     active: true,
+    /* Contact propre au pays : un visiteur djiboutien voit un numéro djiboutien.
+       Vide = on retombe sur le contact général du site. */
+    whatsappNumber: '25377145306',
+    whatsappDisplay: '+253 77 14 53 06',
+    /* Reconnaissance du pays du visiteur, sans aucune requête ni service tiers :
+       le fuseau horaire et la région de la langue sont déjà dans le navigateur.
+       Rien n'est envoyé nulle part, et le visiteur garde la main via le
+       sélecteur du formulaire d'inscription. */
+    fuseaux: Object.freeze(['Africa/Djibouti']),
+    regions: Object.freeze(['DJ']),
     paymentMethods: Object.freeze([
       Object.freeze({ value: 'Waafi Mobile Money', label: 'Waafi', kind: 'mobile', image: '/assets/images/waafi.png', numberLabel: 'Numéro', number: '+253 77 55 63 44', accountName: 'Ali William' }),
       Object.freeze({ value: 'Cacpay', label: 'Cacpay', kind: 'mobile', image: '/assets/images/cacpay.png', numberLabel: 'Numéro de compte', number: '11000012127', accountName: 'Ali William' }),
@@ -611,6 +621,13 @@ window.PAYS = Object.freeze([
     longueurTelephone: 7,
     defaut: false,
     active: true,
+    /* À renseigner dans le tableau de bord (Pays → Comores). Tant que c'est
+       vide, le site affiche le contact général plutôt que rien : mieux vaut un
+       numéro joignable qu'aucun moyen de nous écrire. */
+    whatsappNumber: '',
+    whatsappDisplay: '',
+    fuseaux: Object.freeze(['Indian/Comoro']),
+    regions: Object.freeze(['KM']),
     paymentMethods: Object.freeze([])
   })
 ]);
@@ -631,7 +648,7 @@ window.SITE_ENDPOINTS = Object.freeze({
    * donc ce numéro à celui réellement servi, et le dit franchement.
    * Une épreuve du banc d'essai vérifie que les deux restent alignés.
    */
-  versionScript: '2026-09-17-reglages'
+  versionScript: '2026-09-17-contact-pays'
 });
 
 /**

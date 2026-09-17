@@ -14,6 +14,12 @@
     let FORMATIONS = Array.isArray(window.FORMATIONS) ? window.FORMATIONS : [];
     let SESSIONS = Array.isArray(window.SESSIONS) ? window.SESSIONS : [];
     let PAYS = Array.isArray(window.PAYS) ? window.PAYS : [];
+    /* Les pays tels que le FICHIER les déclare. Le catalogue de la feuille les
+       remplace, mais une feuille créée avant l'ajout d'une colonne ne peut pas
+       la renseigner : les repères techniques (fuseaux horaires, codes de
+       région) seraient alors perdus, et la reconnaissance du visiteur avec eux.
+       On les récupère d'ici quand la feuille n'a rien à dire. */
+    const PAYS_FICHIER = Array.isArray(window.PAYS) ? window.PAYS.slice() : [];
     let CONTACT = window.SITE_CONTACT || { whatsappNumber: '25377145306', whatsappDisplay: '+253 77 14 53 06', contactName: 'Ali William' };
 
     /* ---------- Pays desservis ----------
@@ -41,14 +47,55 @@
         return paysDisponibles().find(p => String(p.code).toUpperCase() === cible) || null;
     }
 
-    /** Pays courant : celui choisi par le visiteur, sinon celui par défaut. */
+    /**
+     * Pays deviné à partir du navigateur, sans aucune requête ni service tiers.
+     *
+     * Deux indices, déjà présents sur l'appareil : le fuseau horaire déclaré
+     * (« Indian/Comoro », « Africa/Djibouti ») et la région de la langue
+     * (« fr-KM »). Rien n'est envoyé nulle part — contrairement à une
+     * géolocalisation par adresse IP, qui confierait la position du visiteur à
+     * un service extérieur pour un résultat guère plus sûr.
+     *
+     * Une supposition n'est jamais définitive : le sélecteur du formulaire
+     * d'inscription reste maître, et son choix est mémorisé.
+     * @returns {Object|null}
+     */
+    function paysDevine() {
+        const liste = paysDisponibles();
+        if (!liste.length) return null;
+
+        let fuseau = '';
+        try { fuseau = Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (e) { /* non géré */ }
+        if (fuseau) {
+            const parFuseau = liste.find(p => (p.fuseaux || []).some(f => String(f).toLowerCase() === fuseau.toLowerCase()));
+            if (parFuseau) return parFuseau;
+        }
+
+        const langues = []
+            .concat(Array.isArray(navigator.languages) ? navigator.languages : [])
+            .concat(navigator.language ? [navigator.language] : []);
+        for (const langue of langues) {
+            // « fr-KM » → « KM » ; « fr » seul ne dit rien du pays
+            const region = String(langue).split('-')[1];
+            if (!region || region.length !== 2) continue;
+            const parRegion = liste.find(p => (p.regions || []).some(r => String(r).toUpperCase() === region.toUpperCase())
+                || String(p.code).toUpperCase() === region.toUpperCase());
+            if (parRegion) return parRegion;
+        }
+        return null;
+    }
+
+    /**
+     * Pays courant : le choix explicite du visiteur d'abord, sinon celui que
+     * son navigateur laisse deviner, sinon le pays par défaut.
+     */
     function paysActif() {
         if (codePays === null) {
             let memorise = null;
             try { memorise = localStorage.getItem(CLE_PAYS); } catch (e) { /* stockage indisponible */ }
             codePays = trouverPays(memorise) ? String(memorise).toUpperCase() : '';
         }
-        return trouverPays(codePays) || paysParDefaut();
+        return trouverPays(codePays) || paysDevine() || paysParDefaut();
     }
 
     /**
@@ -207,7 +254,18 @@
            garde, une base pas encore alimentée effacerait devises, indicatifs et
            coordonnées de paiement, et le formulaire n'aurait plus rien à afficher. */
         if (Array.isArray(donnees.pays) && donnees.pays.length) {
-            PAYS = donnees.pays;
+            PAYS = donnees.pays.map(pays => {
+                const duFichier = PAYS_FICHIER.find(p =>
+                    String(p.code).toUpperCase() === String(pays.code).toUpperCase());
+                if (!duFichier) return pays;
+                // Repères techniques : ceux de la feuille s'ils existent, ceux du fichier sinon
+                const garder = (valeur, repli) =>
+                    (Array.isArray(valeur) && valeur.length) ? valeur : (repli || []);
+                return Object.assign({}, pays, {
+                    fuseaux: garder(pays.fuseaux, duFichier.fuseaux),
+                    regions: garder(pays.regions, duFichier.regions)
+                });
+            });
             window.PAYS = PAYS;
         }
         // Même garde pour les réalisations : une base vide n'efface pas l'accueil
@@ -385,8 +443,25 @@
         return upcomingSessions().find(session => session.registrationOpen && session.placesAvailable !== 0 && (!formId || session.formId === formId)) || null;
     }
 
+    /**
+     * Numéro WhatsApp joignable : celui du pays du visiteur quand il est
+     * renseigné, sinon le contact général du site. Un pays sans numéro propre
+     * ne doit pas rendre le site injoignable.
+     */
+    function numeroWhatsapp() {
+        const pays = paysActif();
+        const propre = pays && String(pays.whatsappNumber || '').replace(/\D/g, '');
+        return propre || String(CONTACT.whatsappNumber || '').replace(/\D/g, '');
+    }
+
+    /** Numéro tel qu'on l'écrit dans les pages, mêmes règles de repli. */
+    function numeroWhatsappAffiche() {
+        const pays = paysActif();
+        return (pays && String(pays.whatsappDisplay || '').trim()) || String(CONTACT.whatsappDisplay || '').trim();
+    }
+
     function whatsappUrl(message) {
-        return `https://wa.me/${CONTACT.whatsappNumber}?text=${encodeURIComponent(message)}`;
+        return `https://wa.me/${numeroWhatsapp()}?text=${encodeURIComponent(message)}`;
     }
 
     function formatPrice(price, currency) {
@@ -548,11 +623,11 @@
             link.href = whatsappUrl(link.dataset.whatsappMessage);
         });
 
-        const affiche = String(CONTACT.whatsappDisplay || '').trim();
+        const affiche = numeroWhatsappAffiche();
         if (affiche) {
             document.querySelectorAll('[data-whatsapp-affiche]').forEach(el => { el.textContent = affiche; });
         }
-        const brut = String(CONTACT.whatsappNumber || '').replace(/\D/g, '');
+        const brut = numeroWhatsapp();
         if (brut) {
             document.querySelectorAll('[data-whatsapp-tel]').forEach(el => { el.href = `tel:+${brut}`; });
         }
@@ -572,9 +647,12 @@
         refreshPlaces,
         paysDisponibles,
         paysParDefaut,
+        paysDevine,
         paysActif,
         choisirPays,
         trouverPays,
+        numeroWhatsapp,
+        numeroWhatsappAffiche,
         devise,
         prixDe,
         formatPrixDe,
@@ -605,6 +683,8 @@
        la bannière non plus. On la reconstruit entièrement plutôt que de la
        masquer, car une session peut aussi APPARAÎTRE en changeant de pays. */
     document.addEventListener('impactali:pays', () => {
+        // Le contact joignable change avec le pays : liens et numéros affichés suivent
+        initWhatsappLinks();
         const banner = document.getElementById('session-banner');
         if (!banner) return;
         banner.classList.add('hidden');

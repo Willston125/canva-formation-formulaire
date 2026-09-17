@@ -562,7 +562,7 @@
       return;
     }
     $('#liste-pays').innerHTML = tableau(
-      ['Pays', 'Devise', 'Téléphone', 'Moyens de paiement', 'Actions'],
+      ['Pays', 'Devise', 'Téléphone', 'Contact affiché', 'Moyens de paiement', 'Actions'],
       p.map(function (x) {
         var moyens = Array.isArray(x.paymentMethods) ? x.paymentMethods : [];
         var etiquettes = [];
@@ -574,6 +574,9 @@
           echapper(x.devise || '—'),
           '<div>' + echapper(x.indicatif || '—') + '</div>'
           + (x.exempleTelephone ? '<div class="cellule-sous">' + echapper(x.exempleTelephone) + '</div>' : ''),
+          (x.whatsappDisplay || x.whatsappNumber)
+            ? '<div>' + echapper(x.whatsappDisplay || x.whatsappNumber) + '</div>'
+            : '<span class="etiquette etiquette--alerte">Contact général</span>',
           moyens.length
             ? echapper(moyens.map(function (m) { return m.label || m.value; }).join(', '))
             : '<span class="etiquette etiquette--alerte">À configurer</span>',
@@ -631,6 +634,18 @@
       aide: 'Expression régulière. Ex. ^(77|67)\\d{6}$ . Vide = chiffres uniquement, sans autre contrainte.' },
     { cle: 'aideTelephone', libelle: 'Message si le numéro est refusé', type: 'text', large: true },
 
+    { section: 'Contact dans ce pays' },
+    { cle: 'whatsappNumber', libelle: 'Numéro WhatsApp', type: 'text',
+      aide: 'Chiffres uniquement, indicatif compris. Ex. 25377145306. Vide = le contact général du site est affiché.' },
+    { cle: 'whatsappDisplay', libelle: 'Numéro tel qu’il s’affiche', type: 'text', aide: 'Ex. +253 77 14 53 06' },
+
+    { section: 'Reconnaissance du visiteur' },
+    { cle: 'fuseaux', libelle: 'Fuseaux horaires', type: 'lignes', large: true,
+      aide: 'Un par ligne, au format IANA : Africa/Djibouti, Indian/Comoro. Le site s’en sert pour '
+        + 'reconnaître d’où vient le visiteur, sans interroger aucun service extérieur.' },
+    { cle: 'regions', libelle: 'Codes de région', type: 'lignes', large: true,
+      aide: 'Un par ligne, deux lettres : DJ, KM. Deuxième indice, lu dans la langue du navigateur.' },
+
     { section: 'Moyens de paiement' },
     { cle: 'paymentMethods', libelle: '', type: 'paiements', large: true },
 
@@ -645,6 +660,7 @@
     var p = code ? trouverPays(code) : null;
     var donnees = p ? Object.assign({}, p) : {
       code: '', nom: '', devise: '', indicatif: '', active: true, defaut: false,
+      whatsappNumber: '', whatsappDisplay: '', fuseaux: [], regions: [],
       paymentMethods: [], ordre: listePays().length
     };
     ouvrirPanneau(p ? 'Modifier ' + (p.nom || p.code) : 'Nouveau pays', CHAMPS_PAYS, donnees,
