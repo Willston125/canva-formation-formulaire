@@ -102,6 +102,50 @@ verifier('le générateur relève les sources du tableau de bord',
   !!sourcesRelevees && /admin\/admin\.js/.test(sourcesRelevees[1]) && /admin\/index\.html/.test(sourcesRelevees[1]),
   true);
 
+// --- 7. Chaque icône employée entre bien dans le sous-ensemble --------------
+
+/* Une icône que le générateur ne relève pas n'entre pas dans le fichier
+   téléchargé, et le navigateur affiche alors son NOM en toutes lettres à la
+   place du pictogramme. C'est ainsi que « inbox » s'affichait sur l'écran
+   d'accueil du tableau de bord. On refait ici un relevé LARGE, indépendant du
+   générateur, et on vérifie qu'il ne trouve rien de plus que lui. */
+const SOURCES_ICONES = [
+  'index.html', 'entreprises/index.html', 'mentions-legales/index.html', 'admin/index.html',
+  'formations/_template/fiche.html', 'inscription/index.html', 'script.js', 'site-common.js',
+  'landing.js', 'admin/admin.js', 'fiche-blocs.js', 'formations-data.js', 'scripts/build-fiches.js'
+];
+const MOTIFS_ICONES = [
+  /material-symbols-outlined[^>]*>\s*([a-z0-9_]+)\s*</g,
+  /(?:textContent|icon|icone)\s*[:=]\s*['"]([a-z][a-z0-9_]{2,})['"]/g,
+  /\bvide\(\s*['"]([a-z][a-z0-9_]{2,})['"]/g
+];
+
+const employees = new Set(['menu', 'close', 'expand_more', 'arrow_forward', 'arrow_back']);
+for (const source of SOURCES_ICONES) {
+  if (!existe(source)) continue;
+  const contenu = lire(source);
+  for (const re of MOTIFS_ICONES) {
+    re.lastIndex = 0;
+    let m;
+    while ((m = re.exec(contenu))) employees.add(m[1]);
+  }
+}
+
+// Le relevé du générateur, rejoué tel quel
+const relevees = new Set();
+{
+  const src = lire('scripts/fetch-fonts.js');
+  const corps = src.slice(src.indexOf('function collectIcons'), src.indexOf('const ICONES ='));
+  const collecter = new Function('fs', 'path', corps + '; return collectIcons();');
+  const depart = process.cwd();
+  process.chdir(RACINE);
+  try { collecter(fs, path).forEach(n => relevees.add(n)); } finally { process.chdir(depart); }
+}
+
+verifier('le générateur relève toutes les icônes employées',
+  [...employees].filter(n => !relevees.has(n)).sort(), []);
+
+console.log('Icônes : ' + relevees.size + ' dans le sous-ensemble, ' + employees.size + ' employées');
 console.log(resultats.join('\n'));
 const echecs = resultats.filter(x => x.startsWith('ÉCHEC')).length;
 console.log(echecs ? '\n>>> ' + echecs + ' ÉCHEC(S)' : '\n>>> Tout est conforme');

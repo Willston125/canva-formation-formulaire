@@ -18,7 +18,10 @@ function collectIcons() {
     /* Le tableau de bord utilise ses propres icônes (dashboard, settings, upload,
        public…). Sans ces deux fichiers, elles étaient absentes du sous-ensemble
        et s'affichaient en toutes lettres : « UPLOAD » au lieu du pictogramme. */
-    'admin/index.html', 'admin/admin.js'
+    'admin/index.html', 'admin/admin.js',
+    /* Le balisage partagé des fiches et les données du site nomment eux aussi
+       des icônes, en français (`icone:`) pour les modules du programme. */
+    'fiche-blocs.js', 'formations-data.js'
   ];
   for (const dossier of fs.readdirSync('formations')) {
     const page = path.join('formations', dossier, 'index.html');
@@ -26,13 +29,23 @@ function collectIcons() {
   }
 
   const noms = new Set();
-  // <span class="material-symbols-outlined">nom</span> et textContent = 'nom'
-  const balise = /material-symbols-outlined[^>]*>\s*([a-z0-9_]+)\s*</g;
-  const chaine = /(?:textContent|icon)\s*[:=]\s*['"]([a-z][a-z0-9_]{2,})['"]/g;
+  /* Toutes les façons dont un nom d'icône entre dans une page. Il en manquait
+     une : `vide('inbox', …)`, l'aide du tableau de bord qui construit un état
+     vide. Son icône n'apparaissait donc dans aucun fichier sous une forme
+     reconnue, et le mot « inbox » s'affichait en toutes lettres à la place du
+     pictogramme, sur l'écran d'accueil de l'administration. */
+  const MOTIFS = [
+    // <span class="material-symbols-outlined">nom</span>
+    /material-symbols-outlined[^>]*>\s*([a-z0-9_]+)\s*</g,
+    // textContent = 'nom', icon: 'nom', icone: 'nom' (clef française des modules)
+    /(?:textContent|icon|icone)\s*[:=]\s*['"]([a-z][a-z0-9_]{2,})['"]/g,
+    // vide('nom', 'message') : l'icône est le premier argument
+    /\bvide\(\s*['"]([a-z][a-z0-9_]{2,})['"]/g
+  ];
   for (const fichier of fichiers) {
     if (!fs.existsSync(fichier)) continue;
     const contenu = fs.readFileSync(fichier, 'utf8');
-    for (const re of [balise, chaine]) {
+    for (const re of MOTIFS) {
       re.lastIndex = 0;
       let m;
       while ((m = re.exec(contenu))) noms.add(m[1]);
