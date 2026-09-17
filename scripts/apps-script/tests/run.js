@@ -12,7 +12,8 @@ const EPREUVES = [
   ['formules.test.js', 'Valeurs commençant par + = - (formules Sheets)'],
   ['textes.test.js', 'Textes modifiables du site'],
   ['version.test.js', 'Version attendue par le site'],
-  ['pays.test.js', 'Pays desservis']
+  ['pays.test.js', 'Pays desservis'],
+  ['polices.test.js', 'Typographie du site et du tableau de bord']
 ];
 
 let echecs = 0;

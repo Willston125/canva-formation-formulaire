@@ -178,7 +178,9 @@ h1, h2, h3 { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; font-weigh
   padding: 11px 18px;
   border: 1px solid transparent;
   border-radius: 10px;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  /* Les boutons du site public sont en Inter : celui-ci doit leur ressembler.
+     Plus Jakarta Sans reste réservé aux titres, des deux côtés. */
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   font-size: 0.88rem;
   font-weight: 700;
   cursor: pointer;
@@ -348,7 +350,7 @@ h1, h2, h3 { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; font-weigh
   border: 1px solid var(--bordure);
   border-radius: var(--rayon);
 }
-.carte__valeur { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.9rem; font-weight: 800; line-height: 1.1; }
+.carte__valeur { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; font-size: 1.9rem; font-weight: 800; line-height: 1.1; }
 .carte__libelle { color: var(--texte-doux); font-size: 0.8rem; margin-top: 4px; }
 .carte--accent .carte__valeur { color: var(--brand); }
 .carte--alerte .carte__valeur { color: var(--danger); }
@@ -615,7 +617,7 @@ select.statut:focus { outline: none; border-color: var(--brand); }
 }
 
 .paiement__titre {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
   font-weight: 700;
   font-size: 0.9rem;
   color: var(--texte);

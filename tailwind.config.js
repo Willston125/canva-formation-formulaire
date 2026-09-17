@@ -47,9 +47,9 @@ module.exports = Object.assign({
                 "on-error-container": "#f87171",
             },
             fontFamily: {
-                "headline": ["Plus Jakarta Sans", "sans-serif"],
-                "body": ["Inter", "sans-serif"],
-                "label": ["Inter", "sans-serif"]
+                "headline": ["Plus Jakarta Sans", "system-ui", "sans-serif"],
+                "body": ["Inter", "system-ui", "-apple-system", "sans-serif"],
+                "label": ["Inter", "system-ui", "-apple-system", "sans-serif"]
             },
             borderRadius: {
                 "DEFAULT": "0.25rem",
