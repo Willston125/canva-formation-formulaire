@@ -617,15 +617,14 @@ window.PAYS = Object.freeze([
     indicatif: '+269',
     motifTelephone: '^\\d{7}$',
     aideTelephone: 'Format invalide. Le numéro comorien compte 7 chiffres',
-    exempleTelephone: '',
+    exempleTelephone: 'XXXXXXX',
     longueurTelephone: 7,
     defaut: false,
     active: true,
-    /* À renseigner dans le tableau de bord (Pays → Comores). Tant que c'est
-       vide, le site affiche le contact général plutôt que rien : mieux vaut un
-       numéro joignable qu'aucun moyen de nous écrire. */
-    whatsappNumber: '',
-    whatsappDisplay: '',
+    /* Contact sur place : c'est lui que voit un visiteur reconnu comorien, à la
+       place du contact général djiboutien. */
+    whatsappNumber: '2693804648',
+    whatsappDisplay: '+269 380 46 48',
     fuseaux: Object.freeze(['Indian/Comoro']),
     regions: Object.freeze(['KM']),
     paymentMethods: Object.freeze([])
