@@ -641,3 +641,85 @@ select.statut:focus { outline: none; border-color: var(--brand); }
   border: 1px solid var(--bordure);
   background: var(--surface-2);
 }
+
+/* ------------------------------ RECADRAGE ------------------------------- */
+
+/* Choix du cadrage avant envoi : l'image se déplace derrière un cadre fixe,
+   qui a exactement le rapport du format visé. Ce qu'on voit est ce qui part. */
+.recadrage {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+
+.recadrage__fond {
+  position: absolute;
+  inset: 0;
+  background: rgba(3, 5, 8, 0.78);
+}
+
+.recadrage__boite {
+  position: relative;
+  width: 100%;
+  max-width: 620px;
+  max-height: calc(100vh - 40px);
+  overflow: auto;
+  padding: 0 22px 18px;
+  background: var(--surface);
+  border: 1px solid var(--bordure);
+  border-radius: 20px;
+}
+
+.recadrage__scene {
+  position: relative;
+  display: grid;
+  place-items: center;
+  margin: 4px 0 12px;
+}
+
+.recadrage__toile {
+  display: block;
+  border-radius: 12px;
+  background: var(--surface-2);
+  cursor: grab;
+  touch-action: none;
+}
+.recadrage__toile:active { cursor: grabbing; }
+
+/* Le cadre ne fait que souligner la zone conservée : il ne capte pas la souris,
+   sinon le glissement de l'image s'arrêterait dès qu'on le survole. */
+.recadrage__cadre {
+  position: absolute;
+  pointer-events: none;
+  border: 2px solid var(--brand);
+  border-radius: 12px;
+  box-shadow: 0 0 0 9999px rgba(3, 5, 8, 0.45);
+}
+
+.recadrage__aide {
+  margin: 0 0 14px;
+  color: var(--texte-doux);
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+
+.recadrage input[type="range"] {
+  width: 100%;
+  accent-color: var(--brand);
+}
+
+/* Un visuel remplaçable du site, dans la rubrique « Visuels du site » */
+.visuel { margin-bottom: 18px; }
+.visuel:last-child { margin-bottom: 0; }
+
+.visuel__entete {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  color: var(--texte);
+  font-size: 0.88rem;
+}

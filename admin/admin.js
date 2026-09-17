@@ -298,6 +298,7 @@
       inscriptions: ['Inscriptions', 'Les candidats et leur suivi'],
       pays: ['Pays', 'Devise, indicatif et moyens de paiement de chaque marché'],
       portfolio: ['Réalisations', 'Les travaux mis en avant sur l’accueil'],
+      visuels: ['Visuels du site', 'Les images de l’accueil et des fiches'],
       textes: ['Textes du site', 'Les mots affichés sur la page d’accueil'],
       reglages: ['Réglages', 'Contact et lieu habituel']
     };
@@ -318,7 +319,7 @@
     $('#compte-portfolio').textContent = (etat.catalogue.portfolio || []).length || '';
     $('#bloc-amorcage').hidden = f.length > 0;
 
-    var actions = { apercu: '', formations: '', sessions: '', inscriptions: '', pays: '', portfolio: '', textes: '', reglages: '' };
+    var actions = { apercu: '', formations: '', sessions: '', inscriptions: '', pays: '', portfolio: '', visuels: '', textes: '', reglages: '' };
     actions.formations = '<button class="bouton bouton--primaire" type="button" id="btn-nouvelle-formation">'
       + '<span class="material-symbols-outlined" aria-hidden="true">add</span>Nouvelle formation</button>';
     actions.sessions = '<button class="bouton bouton--primaire" type="button" id="btn-nouvelle-session">'
@@ -351,6 +352,7 @@
     if (etat.vue === 'inscriptions') rendreInscriptions();
     if (etat.vue === 'pays') rendrePays();
     if (etat.vue === 'portfolio') rendrePortfolio();
+    if (etat.vue === 'visuels') rendreVisuels();
     if (etat.vue === 'textes') rendreTextes();
     if (etat.vue === 'reglages') rendreReglages();
   }
@@ -1168,6 +1170,9 @@
     poster: { largeur: 1000, hauteur: null, libelle: 'largeur 1000 px, hauteur libre' },
     // Logo d'un moyen de paiement : affiché sur environ 48 px de haut, donc petit
     logo: { largeur: 240, hauteur: null, libelle: 'largeur 240 px, hauteur libre' },
+    // Visuels du site : bandeau large, et portrait pour la photo du formateur
+    paysage: { largeur: 1400, hauteur: 788, libelle: 'paysage 1400 × 788' },
+    portrait: { largeur: 900, hauteur: 1125, libelle: 'portrait 900 × 1125' },
     // Vignette de réalisation : la grille de l'accueil l'affiche en 4/3
     portfolio: { largeur: 900, hauteur: 675, libelle: 'paysage 900 × 675' }
   };
@@ -1211,19 +1216,170 @@
     return createImageBitmap(fichier, options)
       .catch(function () { throw new Error('Image illisible. Essayez un JPEG ou un PNG.'); })
       .then(function (bitmap) {
-        var cible = calculerTaille(bitmap.width, bitmap.height, format);
-        var toile = document.createElement('canvas');
-        toile.width = cible.largeur;
-        toile.height = cible.hauteur;
-        var ctx = toile.getContext('2d');
-        ctx.imageSmoothingQuality = 'high';
-        // Recadrage centré : on remplit le cadre sans déformer le sujet
-        ctx.drawImage(bitmap, cible.sx, cible.sy, cible.sw, cible.sh, 0, 0, cible.largeur, cible.hauteur);
-        bitmap.close && bitmap.close();
+        // On montre l'image et on laisse choisir la partie à garder
+        return choisirCadrage(bitmap, format).then(function (zone) {
+          if (!zone) {
+            bitmap.close && bitmap.close();
+            var renonce = new Error('Recadrage annulé.');
+            renonce.annule = true;
+            throw renonce;
+          }
 
-        return encoder(toile, 'image/webp', 0.82)
-          .catch(function () { return encoder(toile, 'image/jpeg', 0.85); });
+          var f = FORMATS_IMAGE[format] || FORMATS_IMAGE.poster;
+          /* Cadre imposé : la sortie a exactement les mesures du format.
+             Hauteur libre : on garde le rapport choisi, largeur bornée. */
+          var largeur = f.hauteur ? f.largeur : Math.round(Math.min(f.largeur, zone.largeur));
+          var hauteur = f.hauteur ? f.hauteur : Math.round(largeur * zone.hauteur / zone.largeur);
+
+          var toile = document.createElement('canvas');
+          toile.width = largeur;
+          toile.height = hauteur;
+          var ctx = toile.getContext('2d');
+          ctx.imageSmoothingQuality = 'high';
+          ctx.drawImage(bitmap, zone.x, zone.y, zone.largeur, zone.hauteur, 0, 0, largeur, hauteur);
+          bitmap.close && bitmap.close();
+
+          return encoder(toile, 'image/webp', 0.82)
+            .catch(function () { return encoder(toile, 'image/jpeg', 0.85); });
+        });
       });
+  }
+
+  // ------------------------------ RECADRAGE -------------------------------
+
+  /**
+   * Choix du cadrage avant envoi.
+   *
+   * Le recadrage automatique prenait le centre de la photo : pratique, mais
+   * faux dès que le sujet est ailleurs — un visage en haut du cadre se
+   * retrouvait coupé au front. On montre donc l'image entière et on laisse
+   * déplacer et agrandir le cadre. Ce qui part est exactement ce qui est vu.
+   *
+   * @returns {Promise<{x:number,y:number,largeur:number,hauteur:number}|null>}
+   *          la zone retenue dans les coordonnées de l'image, ou null si on renonce
+   */
+  function choisirCadrage(bitmap, format) {
+    return new Promise(function (resoudre) {
+      var f = FORMATS_IMAGE[format] || FORMATS_IMAGE.poster;
+      var rapport = f.hauteur ? f.largeur / f.hauteur : bitmap.width / bitmap.height;
+
+      var boite = document.createElement('div');
+      boite.className = 'recadrage';
+      boite.innerHTML =
+        '<div class="recadrage__fond"></div>'
+        + '<div class="recadrage__boite" role="dialog" aria-modal="true" aria-label="Choisir le cadrage">'
+        + '<header class="panneau__entete"><h2>Choisir le cadrage</h2></header>'
+        + '<div class="recadrage__scene"><canvas class="recadrage__toile"></canvas>'
+        + '<div class="recadrage__cadre" aria-hidden="true"></div></div>'
+        + '<p class="recadrage__aide">Faites glisser l’image pour la déplacer, et réglez '
+        + 'l’agrandissement ci-dessous. Seule la partie nette sera conservée.</p>'
+        + '<label class="champ"><span class="champ__label">Agrandissement</span>'
+        + '<input type="range" class="recadrage__zoom" min="100" max="400" value="100"></label>'
+        + '<footer class="panneau__pied"><div class="panneau__boutons">'
+        + '<button type="button" class="bouton bouton--discret" data-annuler>Annuler</button>'
+        + '<button type="button" class="bouton bouton--primaire" data-valider>Utiliser ce cadrage</button>'
+        + '</div></footer></div>';
+      document.body.appendChild(boite);
+      document.body.style.overflow = 'hidden';
+
+      var toile = boite.querySelector('.recadrage__toile');
+      var cadre = boite.querySelector('.recadrage__cadre');
+      var zoom = boite.querySelector('.recadrage__zoom');
+      var ctx = toile.getContext('2d');
+
+      /* Le cadre occupe la scène ; l'image se déplace derrière lui. `echelle`
+         est le rapport entre pixels affichés et pixels de l'image. */
+      var largeurScene = Math.min(560, window.innerWidth - 80);
+      var hauteurScene = Math.round(largeurScene / rapport);
+      if (hauteurScene > window.innerHeight - 320) {
+        hauteurScene = window.innerHeight - 320;
+        largeurScene = Math.round(hauteurScene * rapport);
+      }
+      toile.width = largeurScene;
+      toile.height = hauteurScene;
+      toile.style.width = largeurScene + 'px';
+      toile.style.height = hauteurScene + 'px';
+      cadre.style.width = largeurScene + 'px';
+      cadre.style.height = hauteurScene + 'px';
+
+      // Échelle minimale : celle qui couvre tout le cadre, sans bord vide
+      var echelleMin = Math.max(largeurScene / bitmap.width, hauteurScene / bitmap.height);
+      var echelle = echelleMin;
+      var centreX = bitmap.width / 2;
+      var centreY = bitmap.height / 2;
+
+      function borner() {
+        var demiLargeur = largeurScene / (2 * echelle);
+        var demiHauteur = hauteurScene / (2 * echelle);
+        centreX = Math.min(bitmap.width - demiLargeur, Math.max(demiLargeur, centreX));
+        centreY = Math.min(bitmap.height - demiHauteur, Math.max(demiHauteur, centreY));
+      }
+
+      function dessiner() {
+        borner();
+        ctx.clearRect(0, 0, largeurScene, hauteurScene);
+        var l = largeurScene / echelle;
+        var h = hauteurScene / echelle;
+        ctx.drawImage(bitmap, centreX - l / 2, centreY - h / 2, l, h, 0, 0, largeurScene, hauteurScene);
+      }
+
+      zoom.addEventListener('input', function () {
+        echelle = echelleMin * (Number(zoom.value) / 100);
+        dessiner();
+      });
+
+      var glisse = false, departX = 0, departY = 0;
+      var debut = function (e) {
+        glisse = true;
+        var p = e.touches ? e.touches[0] : e;
+        departX = p.clientX;
+        departY = p.clientY;
+        e.preventDefault();
+      };
+      var bouge = function (e) {
+        if (!glisse) return;
+        var p = e.touches ? e.touches[0] : e;
+        centreX -= (p.clientX - departX) / echelle;
+        centreY -= (p.clientY - departY) / echelle;
+        departX = p.clientX;
+        departY = p.clientY;
+        dessiner();
+        e.preventDefault();
+      };
+      var fin = function () { glisse = false; };
+
+      toile.addEventListener('mousedown', debut);
+      window.addEventListener('mousemove', bouge);
+      window.addEventListener('mouseup', fin);
+      toile.addEventListener('touchstart', debut, { passive: false });
+      toile.addEventListener('touchmove', bouge, { passive: false });
+      toile.addEventListener('touchend', fin);
+
+      function fermer(resultat) {
+        window.removeEventListener('mousemove', bouge);
+        window.removeEventListener('mouseup', fin);
+        document.removeEventListener('keydown', auClavier);
+        boite.remove();
+        document.body.style.overflow = '';
+        resoudre(resultat);
+      }
+      function auClavier(e) { if (e.key === 'Escape') fermer(null); }
+      document.addEventListener('keydown', auClavier);
+
+      boite.querySelector('[data-annuler]').addEventListener('click', function () { fermer(null); });
+      boite.querySelector('.recadrage__fond').addEventListener('click', function () { fermer(null); });
+      boite.querySelector('[data-valider]').addEventListener('click', function () {
+        borner();
+        fermer({
+          x: centreX - largeurScene / (2 * echelle),
+          y: centreY - hauteurScene / (2 * echelle),
+          largeur: largeurScene / echelle,
+          hauteur: hauteurScene / echelle
+        });
+      });
+
+      dessiner();
+    });
   }
 
   function calculerTaille(largeur, hauteur, format) {
@@ -1329,7 +1485,8 @@
           if (ancienne !== reponse.url) aRetirer(ancienne);
         })
         .catch(function (err) {
-          etatEl.textContent = messageLisible(err);
+          // Renoncer au recadrage n'est pas une panne : on ne crie pas à l'erreur
+          etatEl.textContent = err && err.annule ? '' : messageLisible(err);
           entree.disabled = false;
           entree.value = '';
         });
@@ -1380,6 +1537,121 @@
       if (!liste.length) throw new Error('Aucun texte modifiable trouvé sur le site.');
       etat.textesDeclares = liste;
       return liste;
+    });
+  }
+
+  // --------------------------- VISUELS DU SITE ---------------------------
+
+  /**
+   * Comme pour les textes, la liste n'est écrite nulle part : elle est relevée
+   * dans les pages elles-mêmes, sur les éléments porteurs de `data-image`.
+   * Marquer un visuel dans le HTML suffit donc à le rendre remplaçable ici.
+   */
+  function chargerVisuelsDuSite() {
+    if (etat.visuelsDeclares) return Promise.resolve(etat.visuelsDeclares);
+
+    var pages = ['/', '/entreprises/'];
+    var premiere = (etat.catalogue.formations || []).filter(function (f) { return f.hasDetailPage !== false; })[0];
+    pages.push(premiere ? premiere.href : '/formations/canva-pro/');
+
+    var vues = {};
+    var liste = [];
+    return Promise.all(pages.map(function (url) {
+      return fetch(url, { cache: 'no-store' })
+        .then(function (r) { return r.ok ? r.text() : ''; })
+        .catch(function () { return ''; });
+    })).then(function (contenus) {
+      contenus.forEach(function (html) {
+        if (!html) return;
+        var page = new DOMParser().parseFromString(html, 'text/html');
+        page.querySelectorAll('[data-image]').forEach(function (el) {
+          var cle = el.getAttribute('data-image');
+          if (!cle || vues[cle]) return;
+          vues[cle] = true;
+          liste.push({
+            cle: cle,
+            groupe: el.getAttribute('data-image-groupe') || 'Autres',
+            libelle: el.getAttribute('data-image-libelle') || cle,
+            format: el.getAttribute('data-image-format') || 'paysage',
+            origine: el.getAttribute('src') || '',
+            description: el.getAttribute('alt') || ''
+          });
+        });
+      });
+      if (!liste.length) throw new Error('Aucun visuel remplaçable trouvé sur le site.');
+      etat.visuelsDeclares = liste;
+      return liste;
+    });
+  }
+
+  function rendreVisuels() {
+    var boite = $('#formulaire-visuels');
+    if (!etat.visuelsDeclares) {
+      boite.innerHTML = '<div class="bloc"><p class="aide">Lecture des visuels du site…</p></div>';
+      chargerVisuelsDuSite().then(rendreVisuels).catch(function (err) {
+        boite.innerHTML = '<div class="message message--erreur">Impossible de lire le site : '
+          + echapper(messageLisible(err)) + '</div>';
+      });
+      return;
+    }
+
+    var enregistres = etat.catalogue.images || {};
+    var groupes = [];
+    etat.visuelsDeclares.forEach(function (v) {
+      var g = groupes.filter(function (x) { return x.nom === v.groupe; })[0];
+      if (!g) { g = { nom: v.groupe, items: [] }; groupes.push(g); }
+      g.items.push(v);
+    });
+
+    boite.innerHTML = '<div class="bloc"><h2>Visuels du site</h2>'
+      + '<p class="aide">Remplacez une image et choisissez son cadrage. Retirer le remplacement '
+      + 'rétablit le visuel d’origine du site.</p></div>'
+      + groupes.map(function (g) {
+        return '<div class="bloc"><h2>' + echapper(g.nom) + '</h2>'
+          + g.items.map(function (v) {
+            var valeur = typeof enregistres[v.cle] === 'string' ? enregistres[v.cle] : '';
+            return '<div class="visuel">'
+              + '<div class="visuel__entete"><strong>' + echapper(v.libelle) + '</strong>'
+              + (valeur ? ' <span class="etiquette etiquette--ouvert">remplacé</span>' : '') + '</div>'
+              + champImage('visuel-' + v.cle, '', valeur || v.origine,
+                (valeur ? '' : 'Visuel d’origine du site. ')
+                + 'Format ' + echapper(v.format) + '. ' + echapper(v.description))
+              + '</div>';
+          }).join('')
+          + '</div>';
+      }).join('')
+      + '<div class="bloc"><div class="panneau__boutons" style="justify-content:flex-start">'
+      + '<button class="bouton bouton--primaire" type="button" id="btn-visuels">'
+      + '<span class="btn-texte">Enregistrer les visuels</span>'
+      + '<span class="btn-attente" hidden><span class="rondelle"></span>Enregistrement…</span></button></div>'
+      + '<p class="message message--erreur" id="erreur-visuels" role="alert" hidden></p></div>';
+
+    etat.visuelsDeclares.forEach(function (v) { activerChampImage('visuel-' + v.cle, v.format); });
+
+    $('#btn-visuels').addEventListener('click', function () {
+      var bouton = $('#btn-visuels');
+      var erreur = $('#erreur-visuels');
+      erreur.hidden = true;
+      attente(bouton, true);
+      var donnees = {};
+      etat.visuelsDeclares.forEach(function (v) {
+        var champ = document.getElementById('champ-visuel-' + v.cle);
+        if (!champ) return;
+        var valeur = champ.value.trim();
+        /* Un champ revenu au visuel d'origine n'est pas un remplacement :
+           on efface la ligne, et la page réaffiche ce que son HTML contient. */
+        donnees[v.cle] = (valeur && valeur !== v.origine) ? valeur : '';
+      });
+      appeler('admin.images.save', { donnees: donnees }).then(function () {
+        attente(bouton, false);
+        viderCorbeilleImages();
+        afficherMessage('#succes-globale', 'Visuels enregistrés. Ils apparaissent sur le site dans la minute.', 6000);
+        rendreVisuels();
+      }).catch(function (err) {
+        attente(bouton, false);
+        erreur.textContent = messageLisible(err);
+        erreur.hidden = false;
+      });
     });
   }
 

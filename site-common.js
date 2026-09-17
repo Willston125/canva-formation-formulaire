@@ -365,6 +365,33 @@
     }
 
     /**
+     * Applique les visuels remplacés depuis le tableau de bord.
+     * Même principe que les textes : chaque image remplaçable porte `data-image`
+     * dans le HTML, et une valeur absente laisse le visuel d'origine en place.
+     * C'est ainsi qu'on annule un remplacement — en vidant simplement le champ.
+     */
+    function appliquerImages(images) {
+        if (!images || typeof images !== 'object') return false;
+        let change = false;
+
+        document.querySelectorAll('[data-image]').forEach(el => {
+            const valeur = images[el.dataset.image];
+            if (typeof valeur !== 'string' || !valeur.trim()) return;
+            const adresse = normaliserImage(valeur.trim(), 1400);
+            if (el.getAttribute('src') === adresse) return;
+            el.setAttribute('src', adresse);
+            /* Les dimensions d'origine décrivaient l'ancienne image : les garder
+               réserverait une place au mauvais rapport, et la nouvelle photo
+               s'afficherait déformée le temps de son chargement. */
+            el.removeAttribute('width');
+            el.removeAttribute('height');
+            change = true;
+        });
+
+        return change;
+    }
+
+    /**
      * Ces textes-ci acceptent une mise en valeur, d'où l'insertion en HTML.
      * On n'y tolère qu'une poignée de balises et aucun attribut : même écrit
      * depuis l'administration, un contenu ne doit pas pouvoir exécuter de script.
@@ -401,9 +428,10 @@
             // Les textes sont indépendants du catalogue : ils s'appliquent même
             // si aucune formation n'a encore été importée.
             const textesChanges = appliquerTextes(donnees && donnees.textes);
+            const imagesChangees = appliquerImages(donnees && donnees.images);
             const catalogueChange = appliquerCatalogue(donnees);
             const placesChangees = appliquerReleve(donnees && donnees.places ? donnees.places : donnees);
-            return textesChanges || catalogueChange || placesChangees;
+            return textesChanges || imagesChangees || catalogueChange || placesChangees;
         };
 
         if (!force) {

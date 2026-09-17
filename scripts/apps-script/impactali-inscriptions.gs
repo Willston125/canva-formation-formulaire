@@ -69,7 +69,7 @@
  * déploiement n'a pas été publiée, et Google sert encore l'ancien code.
  * C'est l'erreur la plus fréquente, et la plus difficile à diagnostiquer.
  */
-var VERSION = '2026-09-17-indicatif';
+var VERSION = '2026-09-17-visuels';
 
 /** Classeur. Vide = le classeur auquel ce script est rattaché (cas normal). */
 var ID_CLASSEUR = '';
@@ -82,6 +82,7 @@ var F_REGLAGES = 'Reglages';
 var F_TEXTES = 'Textes';
 var F_PAYS = 'Pays';
 var F_PORTFOLIO = 'Portfolio';
+var F_IMAGES = 'Images';
 
 /** Adresse professionnelle qui reçoit l'alerte à chaque inscription. */
 var EMAIL_PRO = 'infos@impactali.site';
@@ -278,6 +279,7 @@ function commandeAdmin(d) {
       case 'admin.portfolio.delete': return repondre(supprimerRealisation(d.id), null);
       case 'admin.reglages.save':    return repondre(enregistrerReglages(d.donnees), null);
       case 'admin.textes.save':      return repondre(enregistrerTextes(d.donnees), null);
+      case 'admin.images.save':      return repondre(enregistrerImages(d.donnees), null);
       case 'admin.inscriptions':     return repondre({ ok: true, inscriptions: lireInscriptions(d.formationId) }, null);
       case 'admin.inscription.statut': return repondre(changerStatut(d.ligne, d.statut), null);
       case 'admin.image.upload':     return repondre(televerserImage(d.donnees), null);
@@ -328,6 +330,7 @@ function lireCatalogue() {
     }),
     reglages: lireReglages(),
     textes: lireTextes(),
+    images: lireImages(),
     places: compterInscrits(),
     maj: new Date().toISOString()
   };
@@ -688,6 +691,9 @@ function supprimerRealisation(id) {
 /** Réglages du site : paires clé / valeur, valeur JSON autorisée. */
 function lireReglages() { return lirePaires(F_REGLAGES); }
 
+/** Visuels du site remplaces depuis le tableau de bord (cle -> adresse). */
+function lireImages() { return lirePaires(F_IMAGES); }
+
 /** Textes de l'accueil modifiés depuis le tableau de bord. */
 function lireTextes() { return lirePaires(F_TEXTES); }
 
@@ -734,6 +740,16 @@ function enregistrerReglages(donnees) {
  */
 function enregistrerTextes(donnees) {
   ecrirePaires(F_TEXTES, donnees, 'Textes invalides.');
+  return { ok: true, catalogue: lireCatalogue() };
+}
+
+/**
+ * Visuels du site. Une valeur vide REMET l'image d'origine, exactement comme
+ * pour les textes : la ligne est effacée et la page réaffiche ce que son HTML
+ * contient. C'est le moyen d'annuler un remplacement sans rien reverser.
+ */
+function enregistrerImages(donnees) {
+  ecrirePaires(F_IMAGES, donnees, 'Visuels invalides.');
   return { ok: true, catalogue: lireCatalogue() };
 }
 
