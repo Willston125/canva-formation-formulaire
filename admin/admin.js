@@ -85,11 +85,18 @@
    * requête préalable — Apps Script ne sait pas traiter celle-ci.
    * La réponse est lue : un échec est un échec, jamais un succès silencieux.
    */
+  /* Délais d'attente. Une écriture ordinaire répond en quelques secondes ;
+     l'amorçage écrit quatorze lignes d'un coup sur un projet Google qui démarre
+     à froid, et mérite plus de patience. Abandonner trop tôt laisserait croire
+     que rien ne s'est passé alors que le serveur travaille encore. */
+  var DELAIS = { 'admin.importer': 120000 };
+
   function appeler(action, charge) {
     if (!API) return Promise.reject(new Error('Adresse de l’API non configurée dans formations-data.js.'));
     var corps = Object.assign({ action: action, motDePasse: etat.motDePasse }, charge || {});
     var expiration = new Promise(function (_, rejeter) {
-      window.setTimeout(function () { rejeter(new Error('Le serveur met trop de temps à répondre.')); }, 30000);
+      window.setTimeout(function () { rejeter(new Error('Le serveur met trop de temps à répondre.')); },
+        DELAIS[action] || 30000);
     });
     var envoi = fetch(API, {
       method: 'POST',

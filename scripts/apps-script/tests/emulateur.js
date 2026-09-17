@@ -27,6 +27,11 @@ function commeSheets(v) {
 }
 
 const classeur = { feuilles: {} };
+/* Chaque opération Sheets est un aller-retour réseau (~100 à 300 ms depuis
+   Apps Script). Les compter permet de mesurer le coût d'une commande, là où
+   un chronomètre local ne dirait rien de ce qui se passe chez Google. */
+const appelsSheets = { total: 0 };
+const compter = () => { appelsSheets.total++; };
 
 function creerFeuille(nom) {
   const grille = [];
@@ -37,17 +42,18 @@ function creerFeuille(nom) {
   };
   const feuille = {
     getName: () => nom,
-    getLastRow: () => grille.length,
-    getLastColumn: () => borner(),
+    getLastRow: () => { compter(); return grille.length; },
+    getLastColumn: () => { compter(); return borner(); },
     setFrozenRows: () => feuille,
-    getDataRange: () => ({ getValues: () => { borner(); return grille.map(l => l.slice()); } }),
-    appendRow: valeurs => { grille.push(valeurs.map(commeSheets)); borner(); return feuille; },
-    deleteRow: n => { grille.splice(n - 1, 1); return feuille; },
+    getDataRange: () => ({ getValues: () => { compter(); borner(); return grille.map(l => l.slice()); } }),
+    appendRow: valeurs => { compter(); grille.push(valeurs.map(commeSheets)); borner(); return feuille; },
+    deleteRow: n => { compter(); grille.splice(n - 1, 1); return feuille; },
     getRange: (ligne, colonne, nbLignes, nbColonnes) => {
       nbLignes = nbLignes || 1;
       nbColonnes = nbColonnes || 1;
       return {
         getValues: () => {
+          compter();
           const sortie = [];
           for (let i = 0; i < nbLignes; i++) {
             const source = grille[ligne - 1 + i] || [];
@@ -58,6 +64,7 @@ function creerFeuille(nom) {
           return sortie;
         },
         setValues: valeurs => {
+          compter();
           valeurs.forEach((l, i) => {
             while (grille.length < ligne + i) grille.push([]);
             const cible = grille[ligne - 1 + i];
@@ -65,7 +72,16 @@ function creerFeuille(nom) {
           });
           borner();
         },
+        clearContent: () => {
+          compter();
+          for (let i = 0; i < nbLignes; i++) {
+            const cible = grille[ligne - 1 + i];
+            if (!cible) continue;
+            for (let j = 0; j < nbColonnes; j++) cible[colonne - 1 + j] = '';
+          }
+        },
         setValue: v => {
+          compter();
           while (grille.length < ligne) grille.push([]);
           grille[ligne - 1][colonne - 1] = commeSheets(v);
           borner();
@@ -144,7 +160,7 @@ vm.runInContext("MOT_DE_PASSE_ADMIN = 'motdepasse-de-test';", bac);
 
 // -------------------------------- SERVEUR --------------------------------
 
-module.exports = { bac, classeur, creerFeuille };
+module.exports = { bac, classeur, creerFeuille, appelsSheets };
 if (require.main !== module) return;
 
 http.createServer((req, res) => {

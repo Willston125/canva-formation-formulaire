@@ -10,7 +10,7 @@ const vm = require('vm');
 const RACINE = path.resolve(__dirname, '..', '..', '..');
 const CHEMIN_GS = require('path').resolve(__dirname, '..', 'impactali-inscriptions.gs');
 process.env.GS_SOURCE = CHEMIN_GS;
-const { bac, classeur } = require('./emulateur.js');
+const { bac, classeur, appelsSheets } = require('./emulateur.js');
 
 // Données du site, telles que le tableau de bord les enverrait
 const site = { window: {} };
@@ -46,10 +46,16 @@ const envoi = {
     defaultLocation: site.window.SESSIONS[0].location
   })
 };
+appelsSheets.total = 0;
 const importe = poste({ action: 'admin.importer', donnees: envoi });
+const coutImport = appelsSheets.total;
 verifier('import : formations', importe.formations, 6);
 verifier('import : sessions', importe.sessions, 6);
 verifier('import : pays', importe.pays, 2);
+/* Chaque operation Sheets est un aller-retour chez Google (~300 ms a froid).
+   Au-dela d'une trentaine, l'amorcage depassait le delai d'attente du
+   tableau de bord et paraissait n'avoir rien fait. */
+verifier('import : cout en operations Sheets (<= 30)', coutImport <= 30, true);
 
 // --- Relecture : c'est ce que le site affichera ---
 const c = JSON.parse(bac.doGet({ parameter: { action: 'catalogue' } })._t);

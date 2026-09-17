@@ -69,7 +69,7 @@
  * déploiement n'a pas été publiée, et Google sert encore l'ancien code.
  * C'est l'erreur la plus fréquente, et la plus difficile à diagnostiquer.
  */
-var VERSION = '2026-09-17-drive';
+var VERSION = '2026-09-17-import';
 
 /** Classeur. Vide = le classeur auquel ce script est rattaché (cas normal). */
 var ID_CLASSEUR = '';
@@ -412,6 +412,58 @@ function ecrireLigne(nom, champs, donnees, cleId) {
   return { ok: true, cree: true };
 }
 
+/**
+ * Écrit PLUSIEURS lignes en une seule fois.
+ *
+ * Chaque opération Sheets est un aller-retour réseau. Écrire quatorze lignes
+ * une à une en coûtait près de quatre-vingt-dix, soit une trentaine de secondes
+ * sur un projet qui démarre à froid — assez pour que le tableau de bord renonce
+ * avant la réponse, et que l'import semble n'avoir rien fait. On lit donc
+ * l'onglet une fois, on fusionne en mémoire, et on réécrit d'un bloc.
+ */
+function ecrireLignes(nom, champs, liste, cleId) {
+  cleId = cleId || 'id';
+  if (!liste || !liste.length) return 0;
+
+  var feuille = onglet(nom);
+  var entetes = assurerEntetes(feuille, champs.map(function (c) { return c[0]; }));
+  var largeur = entetes.length;
+  var colonneId = entetes.indexOf(cleId);
+  if (colonneId < 0) colonneId = 0;
+
+  /* Toutes les lignes existantes sont conservées à leur place, y compris les
+     vides : les réécrire décalées ferait apparaître des doublons en fin d'onglet. */
+  var grille = feuille.getDataRange().getValues();
+  var corps = [];
+  var index = {};
+  for (var i = 1; i < grille.length; i++) {
+    var existante = grille[i].slice(0, largeur);
+    while (existante.length < largeur) existante.push('');
+    var cleExistante = String(existante[colonneId] || '').trim();
+    if (cleExistante) index[cleExistante] = corps.length;
+    corps.push(existante);
+  }
+
+  liste.forEach(function (item) {
+    var ligne = entetes.map(function (entete) {
+      for (var j = 0; j < champs.length; j++) {
+        if (champs[j][0] === entete) return versCellule(item[entete], champs[j][1]);
+      }
+      return '';
+    });
+    var cle = String(item[cleId] === undefined || item[cleId] === null ? '' : item[cleId]).trim();
+    if (cle && Object.prototype.hasOwnProperty.call(index, cle)) {
+      corps[index[cle]] = ligne;
+    } else {
+      if (cle) index[cle] = corps.length;
+      corps.push(ligne);
+    }
+  });
+
+  if (corps.length) feuille.getRange(2, 1, corps.length, largeur).setValues(corps);
+  return liste.length;
+}
+
 function supprimerLigne(nom, id, cleId) {
   var feuille = onglet(nom);
   var valeurs = feuille.getDataRange().getValues();
@@ -625,30 +677,44 @@ function enregistrerTextes(donnees) {
   return { ok: true, catalogue: lireCatalogue() };
 }
 
-/** Écriture générique dans un onglet « clé / valeur ». */
+/**
+ * Écriture générique dans un onglet « clé / valeur ».
+ * Une lecture, une écriture : les textes de l'accueil se comptent par dizaines,
+ * et les traiter un par un coûtait autant d'allers-retours que de clés.
+ * Une valeur vide SUPPRIME la clé — c'est ainsi qu'on rétablit le texte d'origine.
+ */
 function ecrirePaires(nom, donnees, messageErreur) {
   if (!donnees || typeof donnees !== 'object') throw new Error(messageErreur);
   var feuille = onglet(nom);
-  if (feuille.getLastRow() === 0) {
-    feuille.appendRow(['cle', 'valeur']);
-    feuille.setFrozenRows(1);
+  assurerEntetes(feuille, ['cle', 'valeur']);
+
+  var grille = feuille.getDataRange().getValues();
+  var ordre = [], table = {};
+  for (var i = 1; i < grille.length; i++) {
+    var existante = String(grille[i][0] || '').trim();
+    if (!existante) continue;
+    if (!Object.prototype.hasOwnProperty.call(table, existante)) ordre.push(existante);
+    table[existante] = grille[i][1];
   }
+
   Object.keys(donnees).forEach(function (cle) {
     var brut = donnees[cle];
-    var vide = brut === null || brut === undefined || String(brut).trim() === '';
-    var valeur = typeof brut === 'string' ? brut : JSON.stringify(brut);
-    // On relit à chaque tour : une suppression de ligne décale les suivantes
-    var valeurs = feuille.getDataRange().getValues();
-    var trouve = false;
-    for (var i = 1; i < valeurs.length; i++) {
-      if (String(valeurs[i][0]).trim() !== cle) continue;
-      trouve = true;
-      if (vide) feuille.deleteRow(i + 1);
-      else feuille.getRange(i + 1, 2).setValue(protegerFormule(valeur));
-      break;
+    if (brut === null || brut === undefined || String(brut).trim() === '') {
+      delete table[cle];
+      return;
     }
-    if (!trouve && !vide) feuille.appendRow([cle, protegerFormule(valeur)]);
+    if (!Object.prototype.hasOwnProperty.call(table, cle)) ordre.push(cle);
+    table[cle] = protegerFormule(typeof brut === 'string' ? brut : JSON.stringify(brut));
   });
+
+  var corps = ordre
+    .filter(function (cle) { return Object.prototype.hasOwnProperty.call(table, cle); })
+    .map(function (cle) { return [cle, table[cle]]; });
+
+  // On efface l'ancien corps avant de réécrire : sinon une clé supprimée subsisterait
+  var anciennes = Math.max(0, grille.length - 1);
+  if (anciennes) feuille.getRange(2, 1, anciennes, 2).clearContent();
+  if (corps.length) feuille.getRange(2, 1, corps.length, 2).setValues(corps);
 }
 
 // ----------------------------- INSCRIPTIONS ------------------------------
@@ -868,25 +934,23 @@ function identifiantDrive(url) {
  */
 function importerDepuisSite(donnees) {
   if (!donnees) throw new Error('Rien à importer.');
-  var nbF = 0, nbS = 0;
-  (donnees.formations || []).forEach(function (f, i) {
+
+  var formations = (donnees.formations || []).map(function (f, i) {
     if (typeof f.ordre !== 'number') f.ordre = i;
-    ecrireLigne(F_FORMATIONS, CHAMPS_FORMATION, f);
-    nbF++;
+    return f;
   });
-  (donnees.sessions || []).forEach(function (s) {
-    ecrireLigne(F_SESSIONS, CHAMPS_SESSION, s);
-    nbS++;
-  });
-  var nbP = 0;
-  (donnees.pays || []).forEach(function (p, i) {
-    if (!p || !p.code) return;
-    p.code = String(p.code).toUpperCase();
-    if (typeof p.ordre !== 'number') p.ordre = i;
-    ecrireLigne(F_PAYS, CHAMPS_PAYS, p, 'code');
-    nbP++;
-  });
-  if (donnees.reglages) enregistrerReglages(donnees.reglages);
+  var pays = (donnees.pays || []).filter(function (p) { return p && p.code; })
+    .map(function (p, i) {
+      p.code = String(p.code).toUpperCase();
+      if (typeof p.ordre !== 'number') p.ordre = i;
+      return p;
+    });
+
+  var nbF = ecrireLignes(F_FORMATIONS, CHAMPS_FORMATION, formations);
+  var nbS = ecrireLignes(F_SESSIONS, CHAMPS_SESSION, donnees.sessions || []);
+  var nbP = ecrireLignes(F_PAYS, CHAMPS_PAYS, pays, 'code');
+
+  if (donnees.reglages) ecrirePaires(F_REGLAGES, donnees.reglages, 'Réglages invalides.');
   return { ok: true, formations: nbF, sessions: nbS, pays: nbP, catalogue: lireCatalogue() };
 }
 
