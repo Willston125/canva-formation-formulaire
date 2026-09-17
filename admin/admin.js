@@ -113,10 +113,24 @@
         if (d && d.authentification === false) err.authentification = false;
         throw err;
       }
-      if (d.catalogue) etat.catalogue = d.catalogue;
+      if (d.catalogue) { etat.catalogue = d.catalogue; signalerModification(); }
       return d;
     });
     return Promise.race([envoi, expiration]);
+  }
+
+  /**
+   * Prévient les onglets du site qu'une donnée vient de changer.
+   *
+   * Chaque page garde le catalogue une minute en mémoire d'onglet pour ne pas
+   * rappeler le serveur à chaque navigation. Sans ce repère, une modification
+   * enregistrée ici met jusqu'à une minute à se voir : on actualise le site, et
+   * l'ancienne valeur revient — au point de croire l'enregistrement perdu.
+   * localStorage est partagé par tous les onglets du même site, contrairement à
+   * sessionStorage : c'est ce qui permet d'avertir l'onglet d'à côté.
+   */
+  function signalerModification() {
+    try { localStorage.setItem('impactali_maj', String(Date.now())); } catch (e) { /* stockage refusé */ }
   }
 
   /** Apps Script préfixe ses erreurs par « Error: » : inutile de l'infliger à l'utilisateur. */
@@ -624,7 +638,23 @@
     });
   }
 
-  var CHAMPS_PAYS = [
+  /**
+   * Formulaire d'un pays. Les exemples se construisent à partir du pays qu'on
+   * édite, en X.
+   *
+   * Ils montraient jusqu'ici le vrai numéro de Djibouti — « 25377145306 ». Un
+   * exemple qui est une valeur valable se recopie : la fiche des Comores a fini
+   * par porter le numéro de Djibouti, que le site affichait alors à la place du
+   * contact général, sans que rien ne l'explique.
+   */
+  function champsPays(p) {
+    var indicatif = String((p && p.indicatif) || '').replace(/\D/g, '');
+    var longueur = Number(p && p.longueurTelephone) || 0;
+    var local = longueur ? new Array(longueur + 1).join('X') : 'XXXXXXXX';
+    var gabarit = indicatif ? indicatif + local : 'indicatif + numéro, ex. 269XXXXXXX';
+    var gabaritAffiche = indicatif ? '+' + indicatif + ' ' + local : '+269 XXX XX XX';
+
+    return [
     { section: 'Identité' },
     { cle: 'nom', libelle: 'Nom du pays', type: 'text', requis: true, aide: 'Affiché dans le formulaire d’inscription.' },
     { cle: 'code', libelle: 'Code à deux lettres', type: 'text', requis: true,
@@ -638,15 +668,20 @@
         + 'Votre numéro de contact se saisit plus bas, dans « Contact dans ce pays ».' },
     { cle: 'longueurTelephone', libelle: 'Nombre de chiffres', type: 'number',
       aide: 'Longueur du numéro local, sans l’indicatif. Vide = pas de limite.' },
-    { cle: 'exempleTelephone', libelle: 'Exemple affiché', type: 'text', aide: 'Ex. 77XXXXXX. Vide = aucun exemple.' },
+    { cle: 'exempleTelephone', libelle: 'Exemple affiché', type: 'text',
+      aide: 'Un gabarit en X, pas un vrai numéro : ' + local + '. C’est ce que le candidat a '
+        + 'sous les yeux, et il doit respecter le format ci-dessous. Vide = aucun exemple.' },
     { cle: 'motifTelephone', libelle: 'Format accepté', type: 'text', large: true,
       aide: 'Expression régulière. Ex. ^(77|67)\\d{6}$ . Vide = chiffres uniquement, sans autre contrainte.' },
     { cle: 'aideTelephone', libelle: 'Message si le numéro est refusé', type: 'text', large: true },
 
     { section: 'Contact dans ce pays' },
     { cle: 'whatsappNumber', libelle: 'Numéro WhatsApp', type: 'text',
-      aide: 'Chiffres uniquement, indicatif compris. Ex. 25377145306. Vide = le contact général du site est affiché.' },
-    { cle: 'whatsappDisplay', libelle: 'Numéro tel qu’il s’affiche', type: 'text', aide: 'Ex. +253 77 14 53 06' },
+      aide: 'VOTRE numéro dans ce pays, chiffres uniquement, indicatif compris : ' + gabarit + '. '
+        + 'Il remplace le contact général du site pour les visiteurs d’ici. '
+        + 'Laissez vide pour afficher le contact général.' },
+    { cle: 'whatsappDisplay', libelle: 'Numéro tel qu’il s’affiche', type: 'text',
+      aide: 'Le même, écrit comme vous voulez le lire sur le site : ' + gabaritAffiche },
 
     { section: 'Reconnaissance du visiteur' },
     { cle: 'fuseaux', libelle: 'Fuseaux horaires', type: 'lignes', large: true,
@@ -663,7 +698,8 @@
     { cle: 'defaut', libelle: 'Pays affiché par défaut', type: 'bool',
       aide: 'Celui que voit un visiteur avant tout choix. Un seul pays peut l’être.' },
     { cle: 'ordre', libelle: 'Ordre d’affichage', type: 'number', aide: 'Plus petit = proposé en premier.' }
-  ];
+    ];
+  }
 
   function ouvrirPays(code) {
     var p = code ? trouverPays(code) : null;
@@ -672,7 +708,7 @@
       whatsappNumber: '', whatsappDisplay: '', fuseaux: [], regions: [],
       paymentMethods: [], ordre: listePays().length
     };
-    ouvrirPanneau(p ? 'Modifier ' + (p.nom || p.code) : 'Nouveau pays', CHAMPS_PAYS, donnees,
+    ouvrirPanneau(p ? 'Modifier ' + (p.nom || p.code) : 'Nouveau pays', champsPays(p), donnees,
       function (valeurs, fini) {
         valeurs.code = String(valeurs.code || '').trim().toUpperCase();
         if (!/^[A-Z]{2}$/.test(valeurs.code)) {
@@ -695,6 +731,24 @@
           return;
         }
         valeurs.indicatif = indicatif;
+
+        /* L'exemple est ce que le candidat recopie. S'il ne satisfait pas le
+           format qu'on annonce juste à côté, on refuse à l'inscription ce qu'on
+           vient de lui montrer. Un gabarit en X reste permis : ce n'est pas un numéro. */
+        var exemple = String(valeurs.exempleTelephone || '').trim();
+        var motif = String(valeurs.motifTelephone || '').trim();
+        if (exemple && motif && !/X/i.test(exemple)) {
+          var accepte = false;
+          try { accepte = new RegExp(motif).test(exemple); } catch (e) { accepte = true; }
+          if (!accepte) {
+            fini('L’exemple « ' + exemple + ' » ne respecte pas le format accepté (' + motif + ') : '
+              + 'un candidat qui le recopierait serait refusé. Mettez un gabarit, comme 77XXXXXX. '
+              + 'Votre vrai numéro de contact se saisit dans « Contact dans ce pays ».');
+            return;
+          }
+        }
+        valeurs.exempleTelephone = exemple;
+
         appeler('admin.pays.save', { donnees: valeurs }).then(function (d) {
           viderCorbeilleImages();
           fermerPanneau();
@@ -1730,25 +1784,44 @@
 
   // ------------------------------ RÉGLAGES -------------------------------
 
-  var CHAMPS_REGLAGES = [
+  /**
+   * Réglages du site. Le contact déclaré ici n'est qu'un repli : un pays qui
+   * renseigne son propre numéro le remplace pour ses visiteurs. Tant que cela
+   * restait tacite, modifier le numéro ici semblait sans effet — on actualisait
+   * le site, et l'autre numéro revenait.
+   */
+  function champsReglages() {
+    var surcharges = listePays()
+      .filter(function (p) { return String(p.whatsappDisplay || p.whatsappNumber || '').trim(); })
+      .map(function (p) { return (p.nom || p.code) + ' (' + (p.whatsappDisplay || p.whatsappNumber) + ')'; });
+
+    return [
     { section: 'Contact' },
     { cle: 'contactName', libelle: 'Nom du contact', type: 'text' },
     { cle: 'whatsappNumber', libelle: 'Numéro WhatsApp', type: 'text',
-      aide: 'Chiffres uniquement, indicatif compris. Ex. 25377145306' },
-    { cle: 'whatsappDisplay', libelle: 'Numéro affiché', type: 'text', aide: 'Ex. +253 77 14 53 06' },
+      aide: 'Chiffres uniquement, indicatif compris, sans + ni espace : 253XXXXXXXX.'
+        + (surcharges.length
+          ? ' ⚠ Ce numéro n’est PAS affiché aux visiteurs de : ' + surcharges.join(', ')
+            + '. Ces pays ont leur propre contact, qui se modifie dans la rubrique Pays.'
+          : ' Affiché partout, tant qu’aucun pays n’a son propre contact.') },
+    { cle: 'whatsappDisplay', libelle: 'Numéro affiché', type: 'text',
+      aide: 'Le même, écrit comme vous voulez le lire : +253 XX XX XX XX' },
 
     { section: 'Sessions' },
     { cle: 'defaultLocation', libelle: 'Lieu habituel', type: 'text', large: true,
       aide: 'Proposé par défaut à la création d’une session.' }
-  ];
+    ];
+  }
 
   function rendreReglages() {
+    // La même liste sert à construire le formulaire et à le relire : une seule fois
+    var champs = champsReglages();
     var boite = $('#formulaire-reglages');
     boite.innerHTML = '<div class="bloc"><h2>Réglages du site</h2>'
       + '<p class="aide">Ces valeurs alimentent les liens WhatsApp et la création des sessions. '
       + 'La devise, l’indicatif, le format des numéros et les moyens de paiement se règlent '
       + 'pays par pays dans la rubrique <strong>Pays</strong>.</p><form id="form-reglages">'
-      + construireChamps(CHAMPS_REGLAGES, etat.catalogue.reglages || {})
+      + construireChamps(champs, etat.catalogue.reglages || {})
       + '<div class="panneau__boutons" style="justify-content:flex-start;margin-top:18px">'
       + '<button class="bouton bouton--primaire" type="submit" id="btn-reglages">'
       + '<span class="btn-texte">Enregistrer les réglages</span>'
@@ -1762,7 +1835,7 @@
       var erreur = $('#erreur-reglages');
       erreur.hidden = true;
       attente(bouton, true);
-      appeler('admin.reglages.save', { donnees: lireChamps(CHAMPS_REGLAGES) }).then(function () {
+      appeler('admin.reglages.save', { donnees: lireChamps(champs) }).then(function () {
         attente(bouton, false);
         afficherMessage('#succes-globale', 'Réglages enregistrés.', 5000);
       }).catch(function (err) {

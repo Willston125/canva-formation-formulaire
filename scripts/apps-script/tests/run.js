@@ -13,7 +13,8 @@ const EPREUVES = [
   ['textes.test.js', 'Textes modifiables du site'],
   ['version.test.js', 'Version attendue par le site'],
   ['pays.test.js', 'Pays desservis'],
-  ['polices.test.js', 'Typographie du site et du tableau de bord']
+  ['polices.test.js', 'Typographie du site et du tableau de bord'],
+  ['mise-a-jour-partielle.test.js', 'Une modification n’efface pas le reste de la ligne']
 ];
 
 let echecs = 0;

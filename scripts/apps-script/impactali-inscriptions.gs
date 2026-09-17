@@ -69,7 +69,7 @@
  * déploiement n'a pas été publiée, et Google sert encore l'ancien code.
  * C'est l'erreur la plus fréquente, et la plus difficile à diagnostiquer.
  */
-var VERSION = '2026-09-17-video';
+var VERSION = '2026-09-17-preserve';
 
 /** Classeur. Vide = le classeur auquel ce script est rattaché (cas normal). */
 var ID_CLASSEUR = '';
@@ -424,27 +424,56 @@ function assurerEntetes(feuille, noms) {
   return entetes;
 }
 
-/** Écrit ou remplace une ligne identifiée par la colonne `cleId` (« id » par défaut). */
+/**
+ * Reprend telle quelle une valeur déjà présente dans la feuille.
+ *
+ * Sheets ne rend pas l'apostrophe qui protège un texte commençant par « + » :
+ * « +253 77 14 53 06 » se relit sans elle. La réécrire sans la reposer en
+ * ferait une formule, et la cellule afficherait #ERROR!.
+ */
+function reprendreCellule(valeur) {
+  return typeof valeur === 'string' ? protegerFormule(valeur) : valeur;
+}
+
+/**
+ * Écrit ou remplace une ligne identifiée par la colonne `cleId` (« id » par défaut).
+ *
+ * Une colonne que la charge ne mentionne pas n'est pas une colonne vidée : le
+ * formulaire qui a produit cette charge ne la propose simplement pas — parce
+ * qu'elle a été ajoutée depuis, ou parce qu'elle ne se règle pas à la main.
+ * On garde alors ce que la cellule contenait. Remplir chaque colonne à partir
+ * de la seule charge reçue effaçait en silence tout le reste de la ligne.
+ */
 function ecrireLigne(nom, champs, donnees, cleId) {
   cleId = cleId || 'id';
   var feuille = onglet(nom);
   var entetes = assurerEntetes(feuille, champs.map(function (c) { return c[0]; }));
-  // Écriture dans l'ordre RÉEL des colonnes, pas dans celui de la déclaration
-  var ligne = entetes.map(function (entete) {
-    for (var j = 0; j < champs.length; j++) {
-      if (champs[j][0] === entete) return versCellule(donnees[entete], champs[j][1]);
-    }
-    return '';
-  });
   var colonneId = entetes.indexOf(cleId);
   if (colonneId < 0) colonneId = 0;
 
   var valeurs = feuille.getDataRange().getValues();
+  var rang = -1;
   for (var i = 1; i < valeurs.length; i++) {
-    if (String(valeurs[i][colonneId]).trim() === String(donnees[cleId]).trim()) {
-      feuille.getRange(i + 1, 1, 1, ligne.length).setValues([ligne]);
-      return { ok: true, cree: false };
+    if (String(valeurs[i][colonneId]).trim() === String(donnees[cleId]).trim()) { rang = i; break; }
+  }
+  var ancienne = rang >= 0 ? valeurs[rang] : [];
+  var garder = function (index) {
+    return index < ancienne.length ? reprendreCellule(ancienne[index]) : '';
+  };
+
+  // Écriture dans l'ordre RÉEL des colonnes, pas dans celui de la déclaration
+  var ligne = entetes.map(function (entete, index) {
+    for (var j = 0; j < champs.length; j++) {
+      if (champs[j][0] !== entete) continue;
+      if (!Object.prototype.hasOwnProperty.call(donnees, entete)) return garder(index);
+      return versCellule(donnees[entete], champs[j][1]);
     }
+    return garder(index); // colonne étrangère au script : elle ne nous appartient pas
+  });
+
+  if (rang >= 0) {
+    feuille.getRange(rang + 1, 1, 1, ligne.length).setValues([ligne]);
+    return { ok: true, cree: false };
   }
   feuille.appendRow(ligne);
   return { ok: true, cree: true };
@@ -483,15 +512,23 @@ function ecrireLignes(nom, champs, liste, cleId) {
   }
 
   liste.forEach(function (item) {
-    var ligne = entetes.map(function (entete) {
-      for (var j = 0; j < champs.length; j++) {
-        if (champs[j][0] === entete) return versCellule(item[entete], champs[j][1]);
-      }
-      return '';
-    });
     var cle = String(item[cleId] === undefined || item[cleId] === null ? '' : item[cleId]).trim();
-    if (cle && Object.prototype.hasOwnProperty.call(index, cle)) {
-      corps[index[cle]] = ligne;
+    var place = (cle && Object.prototype.hasOwnProperty.call(index, cle)) ? index[cle] : -1;
+    var ancienne = place >= 0 ? corps[place] : [];
+    // Même règle que ecrireLigne : ce qui n'est pas mentionné n'est pas effacé
+    var garder = function (k) {
+      return k < ancienne.length ? reprendreCellule(ancienne[k]) : '';
+    };
+    var ligne = entetes.map(function (entete, k) {
+      for (var j = 0; j < champs.length; j++) {
+        if (champs[j][0] !== entete) continue;
+        if (!Object.prototype.hasOwnProperty.call(item, entete)) return garder(k);
+        return versCellule(item[entete], champs[j][1]);
+      }
+      return garder(k);
+    });
+    if (place >= 0) {
+      corps[place] = ligne;
     } else {
       if (cle) index[cle] = corps.length;
       corps.push(ligne);
@@ -626,6 +663,20 @@ function enregistrerPays(p) {
   if (p.motifTelephone) {
     try { new RegExp(p.motifTelephone); }
     catch (err) { throw new Error('Le format de numéro n’est pas une expression valide : ' + p.motifTelephone); }
+  }
+
+  /* L'exemple est ce que le candidat a sous les yeux et recopie. S'il ne
+     satisfait pas le format annoncé, on refuse exactement ce qu'on vient de
+     lui montrer. Un gabarit — 77XXXXXX — reste permis : il n'est pas un numéro. */
+  if (p.exempleTelephone) {
+    p.exempleTelephone = String(p.exempleTelephone).trim();
+    if (p.motifTelephone && !/X/i.test(p.exempleTelephone)
+      && !new RegExp(p.motifTelephone).test(p.exempleTelephone)) {
+      throw new Error('L’exemple « ' + p.exempleTelephone + ' » ne respecte pas le format accepté ('
+        + p.motifTelephone + ') : un candidat qui le recopierait serait refusé. '
+        + 'Mettez un gabarit, comme 77XXXXXX. Votre vrai numéro de contact se saisit '
+        + 'dans « Contact dans ce pays ».');
+    }
   }
   if (!Array.isArray(p.paymentMethods)) p.paymentMethods = [];
 

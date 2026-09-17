@@ -437,7 +437,13 @@
         if (!force) {
             try {
                 const cache = JSON.parse(sessionStorage.getItem(CACHE_PLACES) || 'null');
-                if (cache && Date.now() - cache.horodatage < DUREE_CACHE) {
+                /* Le tableau de bord pose cet horodatage à chaque enregistrement.
+                   Un cache antérieur est périmé, si récent soit-il : sans cela,
+                   on modifie une valeur, on actualise le site, et l'ancienne
+                   revient pendant une minute. */
+                let modifieLe = 0;
+                try { modifieLe = Number(localStorage.getItem('impactali_maj')) || 0; } catch (e) { }
+                if (cache && Date.now() - cache.horodatage < DUREE_CACHE && cache.horodatage > modifieLe) {
                     return Promise.resolve(appliquer(cache.releve));
                 }
             } catch (e) { /* cache illisible : on interroge */ }

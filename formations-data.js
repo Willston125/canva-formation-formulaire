@@ -648,7 +648,7 @@ window.SITE_ENDPOINTS = Object.freeze({
    * donc ce numéro à celui réellement servi, et le dit franchement.
    * Une épreuve du banc d'essai vérifie que les deux restent alignés.
    */
-  versionScript: '2026-09-17-video'
+  versionScript: '2026-09-17-preserve'
 });
 
 /**
