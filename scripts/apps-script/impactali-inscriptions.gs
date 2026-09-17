@@ -69,7 +69,7 @@
  * déploiement n'a pas été publiée, et Google sert encore l'ancien code.
  * C'est l'erreur la plus fréquente, et la plus difficile à diagnostiquer.
  */
-var VERSION = '2026-09-17-portfolio';
+var VERSION = '2026-09-17-reglages';
 
 /** Classeur. Vide = le classeur auquel ce script est rattaché (cas normal). */
 var ID_CLASSEUR = '';
@@ -376,6 +376,18 @@ function versCellule(valeur, type) {
 function protegerFormule(valeur) {
   if (typeof valeur !== 'string' || valeur === '') return valeur;
   return /^[=+\-@]/.test(valeur) ? "'" + valeur : valeur;
+}
+
+/**
+ * Réglages : TOUTE valeur est écrite en texte, pas seulement celles qui
+ * ressemblent à une formule. Un numéro comme « 25377145306 » revenait sinon en
+ * NOMBRE, et un jour une suite de chiffres plus longue y perdrait ses
+ * dernières décimales — ou un zéro initial disparaîtrait. Sheets n'affiche pas
+ * l'apostrophe et ne la restitue pas à la lecture.
+ */
+function forcerTexte(valeur) {
+  if (typeof valeur !== 'string' || valeur === '') return valeur;
+  return "'" + valeur;
 }
 
 /**
@@ -736,7 +748,7 @@ function ecrirePaires(nom, donnees, messageErreur) {
       return;
     }
     if (!Object.prototype.hasOwnProperty.call(table, cle)) ordre.push(cle);
-    table[cle] = protegerFormule(typeof brut === 'string' ? brut : JSON.stringify(brut));
+    table[cle] = forcerTexte(typeof brut === 'string' ? brut : JSON.stringify(brut));
   });
 
   var corps = ordre

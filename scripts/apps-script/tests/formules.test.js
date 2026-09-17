@@ -23,11 +23,15 @@ poste({ action: 'admin.reglages.save', donnees: {
   whatsappNumber: '25377145306',
   whatsappDisplay: '+253 77 14 53 06',
   contactName: 'Ali William',
-  defaultLocation: 'Saalam Tower, 5ème étage, Djibouti'
+  defaultLocation: 'Saalam Tower, 5ème étage, Djibouti',
+  numeroLocal: '077145306',
+  compte: '1100001212712345678'
 } });
 const r = catalogue().reglages;
 verifier('réglages : numéro affiché', r.whatsappDisplay, '+253 77 14 53 06');
-verifier('réglages : numéro WhatsApp', r.whatsappNumber, '25377145306');
+verifier('réglages : numéro WhatsApp reste du TEXTE', r.whatsappNumber, '25377145306');
+verifier('réglages : zéro initial conservé', r.numeroLocal, '077145306');
+verifier('réglages : longue suite de chiffres intacte', r.compte, '1100001212712345678');
 verifier('réglages : lieu intact', r.defaultLocation, 'Saalam Tower, 5ème étage, Djibouti');
 
 // --- 2. Pays : l'indicatif commence par « + », les moyens de paiement en JSON ---
