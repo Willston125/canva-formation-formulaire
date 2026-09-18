@@ -1611,7 +1611,11 @@ a:focus-visible {
   right: 6%;
   margin: 0;
   color: rgba(255, 255, 255, 0.62);
-  font: italic 1.2rem/1.5 'Plus Jakarta Sans', system-ui, sans-serif;
+  /* Pas d'italique : aucune face italique n'est chargée, et le navigateur en
+     fabriquait un faux, penché mécaniquement — mesuré, seul élément du site
+     dans ce cas. L'inclinaison de -7° porte déjà l'intention. */
+  font: 500 1.2rem/1.5 'Plus Jakarta Sans', system-ui, sans-serif;
+  letter-spacing: 0.02em;
   transform: rotate(-7deg);
 }
 
@@ -1765,8 +1769,11 @@ a:focus-visible {
 }
 
 .carousel-dot {
-  width: 24px;
-  height: 24px;
+  /* Le point visible reste à 9 px (::before) ; la zone qu'on touche passe de
+     24 à 36 px — mesuré à 375 px, cinq cibles de 24×24, en dessous de ce qu'un
+     pouce atteint sûrement. */
+  width: 36px;
+  height: 36px;
   padding: 0;
   display: grid;
   place-items: center;
@@ -4568,7 +4575,9 @@ body:has(#already-registered-card:not(.hidden)) #mobile-progress {
 .site-footer__col h2 {
   margin: 0 0 8px;
   color: var(--color-white);
-  font: 800 0.72rem/1 'Inter', system-ui, -apple-system, sans-serif;
+  /* Un titre : la famille des titres, comme tous les h2 du site. C'était le
+     seul h2 en Inter — mesuré, trois occurrences, une par colonne du pied. */
+  font: 800 0.72rem/1 'Plus Jakarta Sans', system-ui, sans-serif;
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }

@@ -93,7 +93,9 @@ h1, h2, h3 { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; font-weigh
 .connexion__carte h1 { font-size: 1.4rem; margin-bottom: 6px; }
 .connexion__aide { margin: 0 0 24px; color: var(--texte-doux); font-size: 0.88rem; }
 .connexion__retour {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   margin-top: 20px;
   color: var(--texte-faible);
   font-size: 0.82rem;

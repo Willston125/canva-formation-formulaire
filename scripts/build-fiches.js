@@ -202,7 +202,12 @@ function objectives(f) {
 
 function render(template, f) {
   let html = template;
-  const url = `${SITE_URL}/formations/${f.slug}/`;
+  /* La page d'inscription générique vit à /inscription/, pas sous /formations/.
+     Dériver son adresse du slug lui donnait /formations/inscription/ — dans le
+     canonical, les balises de partage et deux liens internes : quatre 404 sur
+     la seule page qu'une formation créée après publication possède. */
+  const chemin = f.id === 'inscription-generique' ? '/inscription/' : `/formations/${f.slug}/`;
+  const url = `${SITE_URL}${chemin}`;
   html = html.replace(/<title>[\s\S]*?<\/title>/i, `<title>${esc(f.title)} — Fiche formation &amp; inscription | IMPACTALI</title>`);
   html = setMeta(html, 'name="title"', `${f.title} — Fiche formation & inscription`);
   html = setMeta(html, 'name="description"', f.shortDescription);
@@ -216,7 +221,7 @@ function render(template, f) {
   html = setMeta(html, 'property="twitter:image"', absolue(f.image));
   html = html.replace(/<link rel="canonical" href="[^"]+">/i, `<link rel="canonical" href="${url}">`);
   html = html.replaceAll('data-register-formation="canva-pro"', `data-register-formation="${esc(f.formId)}"`);
-  html = html.replaceAll('/formations/canva-pro/#inscription', `/formations/${f.slug}/#inscription`);
+  html = html.replaceAll('/formations/canva-pro/#inscription', `${chemin}#inscription`);
   html = html.replace(/(<main id="inscription" data-formation-id=")[^"]+/, `$1${esc(f.formId)}`);
   html = html.replace(/(<input type="hidden" id="formation" name="formation" value=")[^"]+/, `$1${esc(f.formId)}`);
   html = replace(html, /<span aria-current="page">[\s\S]*?<\/span>/i, `<span aria-current="page">${esc(f.shortTitle || f.title)}</span>`, 'fil d’Ariane');
@@ -268,7 +273,7 @@ function render(template, f) {
     html = html
       .replace(/Canva Pro &amp; Création de contenu/g, esc(f.title))
       .replace(/Canva Pro & Création de contenu/g, esc(f.title));
-    html = html.replaceAll('/formations/canva-pro/', `/formations/${f.slug}/`);
+    html = html.replaceAll('/formations/canva-pro/', chemin);
   }
   // Bouton WhatsApp flottant : message propre à la formation, pour toutes les fiches.
   html = replace(html, /(<a href="https:\/\/wa\.me\/[^"]*") data-whatsapp-float/,
