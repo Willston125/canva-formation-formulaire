@@ -779,4 +779,53 @@
 
     // Contact modifié depuis le tableau de bord : liens et numéros affichés suivent
     document.addEventListener('impactali:catalogue', initWhatsappLinks);
+
+    /**
+     * Choix du pays, atteignable depuis n'importe quelle page.
+     *
+     * Le seul sélecteur du site vivait dans le formulaire d'inscription — donc
+     * masqué précisément quand aucune session n'est ouverte, c'est-à-dire au
+     * moment où un visiteur mal reconnu n'avait plus aucun recours : il voyait
+     * les tarifs et le numéro d'un autre pays sans pouvoir rien y changer.
+     * Le pied de page existe sur toutes les pages, y compris les fiches
+     * générées : on s'y greffe, sans toucher à neuf fichiers HTML.
+     */
+    function initChoixPays() {
+        const dispo = paysDisponibles();
+        const hote = document.querySelector('.site-footer__brand');
+        if (!hote) return;
+
+        const ancien = hote.querySelector('.choix-pays');
+        // Un seul pays desservi : il n'y a rien à choisir, on n'encombre pas
+        if (dispo.length < 2) { if (ancien) ancien.remove(); return; }
+        if (ancien) ancien.remove();
+
+        const boite = document.createElement('div');
+        boite.className = 'choix-pays';
+        boite.innerHTML =
+            '<label class="choix-pays__label" for="choix-pays-pied">Votre pays</label>'
+            + '<select class="choix-pays__select" id="choix-pays-pied">'
+            + dispo.map(p => `<option value="${escapeHtml(p.code)}">${escapeHtml(p.nom)}`
+                + (p.devise ? ` (${escapeHtml(p.devise)})` : '') + '</option>').join('')
+            + '</select>'
+            + '<span class="choix-pays__aide">Les tarifs et le numéro de contact affichés suivent ce choix.</span>';
+        hote.appendChild(boite);
+
+        const select = boite.querySelector('select');
+        const actif = paysActif();
+        if (actif) select.value = actif.code;
+        select.addEventListener('change', () => { choisirPays(select.value); });
+    }
+
+    /* Le pays peut changer depuis le formulaire d'inscription : le sélecteur du
+       pied doit dire la même chose, sinon les deux se contrediraient à l'écran. */
+    document.addEventListener('impactali:pays', () => {
+        const select = document.getElementById('choix-pays-pied');
+        const actif = paysActif();
+        if (select && actif && select.value !== actif.code) select.value = actif.code;
+    });
+
+    // La liste des pays vient de la feuille : elle peut changer en cours de route
+    document.addEventListener('impactali:catalogue', initChoixPays);
+    document.addEventListener('DOMContentLoaded', initChoixPays);
 })();

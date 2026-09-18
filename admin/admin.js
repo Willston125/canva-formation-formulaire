@@ -22,7 +22,9 @@
     /* Envois d'image en cours. Enregistrer pendant un envoi faisait partir la
        fiche SANS son image, avec un message de succes : on croyait l'avoir
        posee, et rien ne le demantait. */
-    envoisImage: 0
+    envoisImage: 0,
+    /** Images envoyées mais pas encore enregistrées : à effacer si on renonce. */
+    imagesPosees: []
   };
 
   // ------------------------------- OUTILS --------------------------------
@@ -359,6 +361,8 @@
        et le premier enregistrement fait AILLEURS mettait à la corbeille Drive
        une image que la feuille référence toujours — image cassée sur le site. */
     etat.imagesARetirer = [];
+    // Et ce qu'on avait envoyé sans l'enregistrer n'a plus de raison d'exister
+    abandonnerImagesPosees();
     $$('.onglet').forEach(function (o) { o.classList.toggle('is-actif', o.dataset.vue === vue); });
     $$('.vue').forEach(function (v) { v.classList.toggle('is-actif', v.id === 'vue-' + vue); });
     $('#barre').classList.remove('is-ouverte');
@@ -1583,6 +1587,25 @@
   function viderCorbeilleImages() {
     var liste = etat.imagesARetirer.slice();
     etat.imagesARetirer = [];
+    /* Ce qui vient d'être enregistré n'est plus « en attente » : la feuille y
+       renvoie désormais, il ne faut surtout plus l'effacer. */
+    etat.imagesPosees = [];
+    liste.forEach(function (url) {
+      appeler('admin.image.delete', { url: url }).catch(function () { });
+    });
+  }
+
+  /**
+   * Efface de Drive les images envoyées puis abandonnées.
+   *
+   * Une image part vers Drive dès qu'on la choisit, bien avant d'enregistrer.
+   * Renoncer ensuite — fermer le panneau, changer de vue — la laissait là pour
+   * toujours : rien ne la référençait, et rien ne la supprimait. Sur un compte
+   * dont l'espace est compté, ces oubliées s'accumulent sans se voir.
+   */
+  function abandonnerImagesPosees() {
+    var liste = etat.imagesPosees.slice();
+    etat.imagesPosees = [];
     liste.forEach(function (url) {
       appeler('admin.image.delete', { url: url }).catch(function () { });
     });
@@ -1634,6 +1657,8 @@
         })
         .then(function (reponse) {
           champ.value = reponse.url;
+          // Elle est sur Drive, mais rien ne la référence encore : à effacer si on renonce
+          if (etat.imagesPosees.indexOf(reponse.url) < 0) etat.imagesPosees.push(reponse.url);
           rafraichir();
           etatEl.textContent = 'Image envoyée. Enregistrez pour l’appliquer.';
           etat.envoisImage--;
@@ -2037,8 +2062,10 @@
   }
 
   function fermerPanneau() {
-    // Édition abandonnée : les visuels remplacés restent en place
+    // Édition abandonnée : les visuels remplacés restent en place…
     etat.imagesARetirer = [];
+    // … et ceux qu'on venait d'envoyer sans les enregistrer s'effacent de Drive
+    abandonnerImagesPosees();
     if (validerCourant) $('#panneau-form').removeEventListener('submit', validerCourant);
     validerCourant = null;
     $('#panneau').hidden = true;

@@ -326,6 +326,61 @@ verifier('une réalisation n’est pas rognée à l’envoi',
 verifier('le survol montre bien l’affiche entière',
   /object-fit: contain/.test(style), true);
 
+// --- 17. Le choix du pays doit être atteignable partout ---
+
+/* Le seul sélecteur vivait dans le formulaire d'inscription, masqué justement
+   quand aucune session n'est ouverte : un visiteur mal reconnu voyait alors les
+   tarifs et le numéro d'un autre pays sans aucun recours. */
+verifier('un choix du pays est greffé au pied de page',
+  /function initChoixPays\(\)/.test(commun)
+  && /document\.querySelector\('\.site-footer__brand'\)/.test(commun), true);
+verifier('il n’apparaît pas quand un seul pays est desservi',
+  /if \(dispo\.length < 2\) \{ if \(ancien\) ancien\.remove\(\); return; \}/.test(commun), true);
+verifier('il reste d’accord avec celui du formulaire',
+  /document\.addEventListener\('impactali:pays', \(\) => \{\s*\n\s*const select = document\.getElementById\('choix-pays-pied'\);/.test(commun), true);
+
+/* Le greffon ne tient que si ce pied existe sur TOUTES les pages, fiches
+   générées comprises — sinon le sélecteur manquerait là où il sert le plus. */
+const pagesDuSite = ['index.html', 'entreprises/index.html', 'mentions-legales/index.html',
+  'inscription/index.html'].concat(fiches.map(f => 'formations/' + f + '/index.html'));
+const sansPied = pagesDuSite.filter(p => lire(p).indexOf('site-footer__brand') < 0);
+verifier('chaque page porte le pied où le sélecteur se greffe', sansPied, []);
+
+verifier('le sélecteur est habillé', /\.choix-pays__select \{/.test(style), true);
+/* Cible tactile : un menu déroulant de moins de 44 px se rate au doigt. */
+const hauteurSelect = /\.choix-pays__select \{[^}]*min-height: (\d+)px/.exec(style);
+verifier('sa hauteur permet de le viser au doigt',
+  hauteurSelect ? Number(hauteurSelect[1]) >= 44 : false, true);
+
+// --- 18. Une image envoyée puis abandonnée ne reste pas dans Drive ---
+
+/* L'image part vers Drive dès qu'on la choisit, bien avant d'enregistrer.
+   Renoncer ensuite la laissait là pour toujours : rien ne la référençait, rien
+   ne la supprimait. Sur un compte dont l'espace est compté, elles s'accumulent. */
+verifier('les images envoyées non encore enregistrées sont suivies',
+  /if \(etat\.imagesPosees\.indexOf\(reponse\.url\) < 0\) etat\.imagesPosees\.push\(reponse\.url\);/.test(admin), true);
+verifier('un enregistrement réussi les retire de la liste à effacer',
+  /function viderCorbeilleImages\(\)[\s\S]{0,400}?etat\.imagesPosees = \[\];/.test(admin), true);
+
+const abandons = ['function fermerPanneau', 'function allerA'].filter(f => {
+  const i = admin.indexOf(f);
+  return i >= 0 && /abandonnerImagesPosees\(\);/.test(admin.slice(i, i + 900));
+});
+verifier('renoncer les efface — panneau fermé ET vue changée',
+  abandons, ['function fermerPanneau', 'function allerA']);
+
+// --- 19. La barre d'en-tête doit passer à la ligne sur petit écran ---
+
+/* `order: 3` et `width: 100%` ne peuvent rien dans un conteneur flex qui ne
+   passe pas à la ligne : tout reste sur une rangée et se comprime. Mesuré à
+   375 px : le bouton d'action tenait dans 167 px et faisait 57 px de haut,
+   c'est-à-dire deux lignes, collé au titre. Après : 343 px, 44 px, une ligne. */
+const petitEcran = css.slice(css.indexOf('@media (max-width: 900px)'));
+verifier('l’en-tête passe à la ligne sous 900 px',
+  /\.entete \{ flex-wrap: wrap; \}/.test(petitEcran.slice(0, 900)), true);
+verifier('la règle qui en dépend est toujours là',
+  /\.entete__actions \{ width: 100%; margin-left: 0; order: 3; \}/.test(petitEcran.slice(0, 900)), true);
+
 // ---------------------------------- BILAN ----------------------------------
 resultats.forEach(l => console.log(l));
 const echecs = resultats.filter(l => l.indexOf('ÉCHEC') === 0).length;

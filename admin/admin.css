@@ -499,6 +499,12 @@ table.tableau tr:hover td { background: rgba(255, 255, 255, 0.02); }
   .barre.is-ouverte { transform: none; box-shadow: 0 0 0 100vmax rgba(3, 5, 8, 0.6); }
   .contenu { margin-left: 0; padding: 18px 16px 60px; }
   .entete__menu { display: inline-flex; }
+  /* Sans cette ligne, `order: 3` et `width: 100%` ci-dessous ne pouvaient rien :
+     un conteneur flex qui ne passe pas à la ligne garde tout sur une seule
+     rangée et comprime ses éléments. Le bouton d'action, censé occuper toute la
+     largeur en dessous, tenait dans 167 px sur 375 et se cassait en deux
+     lignes, collé au titre. */
+  .entete { flex-wrap: wrap; }
   .entete__actions { width: 100%; margin-left: 0; order: 3; }
   .grille-champs { grid-template-columns: 1fr; }
   .panneau__boite { width: 100%; border-left: 0; }
