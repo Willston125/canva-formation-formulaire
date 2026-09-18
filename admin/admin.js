@@ -848,6 +848,21 @@
           return;
         }
 
+        /* Le petit titre au-dessus du numéro s'est retrouvé rempli avec le numéro
+           lui-même : le candidat lisait « 4866807 » écrit deux fois, l'un au-dessus
+           de l'autre. Un intitulé ne s'écrit pas en chiffres. */
+        var moyens = Array.isArray(valeurs.paymentMethods) ? valeurs.paymentMethods : [];
+        for (var k = 0; k < moyens.length; k++) {
+          var titre = String(moyens[k].numberLabel || '').trim();
+          if (titre && !/[a-zà-öø-ÿ]/i.test(titre)) {
+            fini('Pour « ' + (moyens[k].label || moyens[k].value || 'ce moyen de paiement')
+              + ' », le petit titre au-dessus du numéro vaut « ' + titre + ' » : c’est un numéro, '
+              + 'pas un intitulé. Le candidat le verrait écrit deux fois. Mettez un mot — '
+              + '« Numéro », « Numéro de compte » — et laissez le numéro dans sa propre case.');
+            return;
+          }
+        }
+
         appeler('admin.pays.save', { donnees: valeurs }).then(function (d) {
           viderCorbeilleImages();
           fermerPanneau();
@@ -2299,8 +2314,11 @@
      qui affiche les champs du type choisi et masque les autres. */
   var CHAMPS_MOYEN = [
     { cle: 'label', libelle: 'Nom affiché', pour: null, aide: 'Ex. Waafi, Orange Money, Espèces.' },
-    { cle: 'numberLabel', libelle: 'Intitulé du numéro', pour: 'mobile', exemple: 'Numéro' },
-    { cle: 'number', libelle: 'Numéro à créditer', pour: 'mobile' },
+    { cle: 'numberLabel', libelle: 'Petit titre au-dessus du numéro', pour: 'mobile', exemple: 'Numéro',
+      aide: 'Ce qui s’écrit AU-DESSUS du numéro, en petit. Ex. Numéro, Numéro de compte. '
+        + 'Pas le numéro lui-même : il se saisit dans la case d’à côté.' },
+    { cle: 'number', libelle: 'Numéro à créditer', pour: 'mobile',
+      aide: 'Le numéro sur lequel le candidat envoie son règlement.' },
     { cle: 'accountName', libelle: 'Nom du compte', pour: 'mobile' },
     { cle: 'recipient', libelle: 'À remettre à', pour: 'cash' },
     { cle: 'place', libelle: 'Lieu', pour: 'cash' },

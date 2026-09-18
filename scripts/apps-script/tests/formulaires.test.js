@@ -258,6 +258,14 @@ verifier('un gabarit saisi comme numéro de contact est refusé',
 verifier('le numéro WhatsApp n’accepte que des chiffres',
   /if \(chiffres && !\/\^\\d\{6,15\}\$\/\.test\(chiffres\)\) \{/.test(src), true);
 
+/* Même confusion sur un moyen de paiement : le petit titre au-dessus du numéro
+   a été rempli avec le numéro lui-même, et le candidat le lisait deux fois,
+   l'un au-dessus de l'autre. Un intitulé comporte au moins une lettre. */
+verifier('un intitulé de numéro sans aucune lettre est refusé',
+  /if \(titre && !\/\[a-zà-öø-ÿ\]\/i\.test\(titre\)\) \{/.test(src), true);
+verifier('le champ dit ce qu’on attend de lui',
+  /libelle: 'Petit titre au-dessus du numéro'/.test(src), true);
+
 // ---------------------------------- BILAN ----------------------------------
 resultats.forEach(l => console.log(l));
 const echecs = resultats.filter(l => l.indexOf('ÉCHEC') === 0).length;
