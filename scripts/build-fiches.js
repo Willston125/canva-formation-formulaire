@@ -74,7 +74,15 @@ function sectionProgramme(f) {
   const interieur = BLOCS.aUnProgramme(f)
     ? BLOCS.programmeInterieur(f)
     : BLOCS.programmeSimpleInterieur(f);
-  if (!interieur) return '<!-- Programme : rien de saisi pour cette formation -->';
+  /* Sans programme, la section reste EN PLACE, simplement masquée. Elle était
+     remplacée par un commentaire : script.js n'avait alors plus rien à remplir,
+     et le programme saisi ensuite dans le tableau de bord ne s'affichait nulle
+     part — notamment sur la page d'inscription générique, la seule dont dispose
+     une formation créée après la publication du site. */
+  if (!interieur) {
+    return '<section class="fiche-block reveal-on-scroll" id="programme-section" '
+      + 'aria-labelledby="programme-title" hidden></section>';
+  }
   return `<section class="fiche-block reveal-on-scroll" id="programme-section" aria-labelledby="programme-title">${interieur}</section>`;
 }
 
@@ -272,11 +280,52 @@ function render(template, f) {
 }
 
 const template = fs.readFileSync(TEMPLATE, 'utf8');
-for (const formation of FORMATIONS.filter(item => item.active !== false)) {
-  const dir = path.join(ROOT, 'formations', formation.slug);
-  fs.mkdirSync(dir, { recursive: true });
-  fs.writeFileSync(path.join(dir, 'index.html'), render(template, formation));
-  console.log(`formations/${formation.slug}/index.html`);
+
+/**
+ * Les formations dont on génère la fiche.
+ *
+ * Par défaut celles du fichier. Avec `--depuis-le-site`, celles de la BASE :
+ * une formation créée dans le tableau de bord n'existe pas dans le fichier et
+ * n'aurait donc jamais sa page — seulement l'inscription générique, sans
+ * programme, sans FAQ, sans prérequis. C'est ce qui permet de donner une vraie
+ * fiche à chaque nouvelle formation sans toucher au code.
+ */
+async function formationsAGenerer() {
+  if (!process.argv.includes('--depuis-le-site')) return FORMATIONS;
+
+  const api = (sandbox.window.SITE_ENDPOINTS || {}).registration;
+  if (!api) throw new Error('Adresse de l’API absente de formations-data.js');
+  const reponse = await fetch(`${api}?action=catalogue`, { redirect: 'follow' });
+  if (!reponse.ok) throw new Error(`L’API a répondu ${reponse.status}`);
+  const donnees = await reponse.json();
+  const liste = Array.isArray(donnees.formations) ? donnees.formations : [];
+  /* Une base vide écraserait toutes les fiches par rien : on s'arrête plutôt
+     que de publier un site sans catalogue. */
+  if (!liste.length) throw new Error('La base ne renvoie aucune formation : rien n’est généré.');
+  console.log(`Catalogue lu depuis la base : ${liste.length} formation(s).`);
+  return liste;
+}
+
+async function principal() {
+  const formations = (await formationsAGenerer()).filter(item => item.active !== false);
+  for (const formation of formations) {
+    if (!formation.slug) { console.log(`ignorée : une formation sans lien (${formation.title || '?'})`); continue; }
+    const dir = path.join(ROOT, 'formations', formation.slug);
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, 'index.html'), render(template, formation));
+    console.log(`formations/${formation.slug}/index.html`);
+  }
+
+  /* Une fiche générée n'est atteignable que si la formation annonce qu'elle en
+     a une. Sans cela, son lien continue de pointer vers l'inscription
+     générique, et la page qu'on vient d'écrire ne sert à personne. */
+  const aPrevenir = formations.filter(f => f.slug && f.hasDetailPage === false);
+  if (aPrevenir.length) {
+    console.log('\n⚠ Ces formations ont désormais une fiche, mais le site renvoie encore');
+    console.log('  vers l’inscription générique. Cochez « Elle a sa propre page »');
+    console.log('  dans le tableau de bord, une fois le site publié :');
+    aPrevenir.forEach(f => console.log('   · ' + (f.title || f.slug) + '  →  /formations/' + f.slug + '/'));
+  }
 }
 
 /* ---------------------------------------------------------------------------
@@ -314,10 +363,15 @@ generique = generique.replace(/<section[^>]*id="programme-section"[\s\S]*?<\/sec
   '<section class="fiche-block reveal-on-scroll" id="programme-section" aria-labelledby="programme-title" hidden></section>');
 generique = generique.replace(/<section[^>]*id="faq-section"[\s\S]*?<\/section>/i,
   '<section class="fiche-block reveal-on-scroll" id="faq-section" aria-labelledby="faq-title" hidden></section>');
-generique = generique.replace(/<section[^>]*id="prerequis-section"[\s\S]*?<\/section>/i, '');
+/* Gardée VIDE comme le programme et la FAQ : une formation créée depuis le
+   tableau de bord y porte ses propres prérequis, écrits par script.js. */
+generique = generique.replace(/<section[^>]*id="prerequis-section"[\s\S]*?<\/section>/i,
+  '<section class="fiche-block reveal-on-scroll" id="prerequis-section" aria-labelledby="prerequis-title" hidden></section>');
 generique = generique.replace(/<meta name="robots"[^>]*>/i, '');
 generique = generique.replace('</head>', '    <meta name="robots" content="noindex, follow">\n</head>');
 
 fs.mkdirSync(path.join(ROOT, 'inscription'), { recursive: true });
 fs.writeFileSync(path.join(ROOT, 'inscription', 'index.html'), generique);
 console.log('inscription/index.html (page générique)');
+
+principal().catch(err => { console.error('\n' + err.message); process.exitCode = 1; });

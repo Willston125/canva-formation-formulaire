@@ -983,6 +983,10 @@
 
     { section: 'Publication' },
     { cle: 'active', libelle: 'Visible sur le site', type: 'bool', defaut: true },
+    { cle: 'hasDetailPage', libelle: 'Elle a sa propre page', type: 'bool',
+      aide: 'Décochée, la formation s’inscrit par la page générique — sans programme, '
+        + 'sans FAQ, sans prérequis. Cochez-la seulement APRÈS avoir fait générer sa '
+        + 'fiche et publier le site, sinon son lien ne mènera nulle part.' },
     { cle: 'registrationOpen', libelle: 'Inscriptions ouvertes', type: 'bool', defaut: true },
     { cle: 'featured', libelle: 'Mise en avant', type: 'bool' },
     { cle: 'allowRegistrationWithoutSession', libelle: 'Inscription possible sans date annoncée', type: 'bool',
@@ -1009,9 +1013,16 @@
       if (!valeurs.slug && valeurs.title) valeurs.slug = enLien(valeurs.title);
       /* Une formation créée ici n'a pas encore de page dédiée : son lien pointe vers
          la page d'inscription générique, qui sait afficher n'importe quelle formation.
-         Les formations déjà publiées conservent leur page. */
+         La case « Elle a sa propre page » se coche une fois la fiche générée et
+         publiée — la cocher avant rendrait le lien mort. */
       if (f) {
-        valeurs.hasDetailPage = donnees.hasDetailPage !== false;
+        if (valeurs.hasDetailPage && donnees.hasDetailPage === false) {
+          /* On passe de la page générique à une vraie fiche : elle doit exister,
+             sinon le lien tombe sur l'accueil à cause de la réécriture Vercel. */
+          if (!window.confirm('La page /formations/' + valeurs.slug + '/ a-t-elle bien été '
+            + 'générée ET publiée ?\n\nSi ce n’est pas encore fait, annulez : le lien de cette '
+            + 'formation ne mènerait nulle part.')) { fini(''); return; }
+        }
         /* La fiche est un FICHIER, généré puis publié avec le site. Changer le
            lien ne déplace rien : l'ancienne adresse resterait servie, et la
            nouvelle n'existerait nulle part. On refuse, au lieu de rendre la
@@ -1025,8 +1036,11 @@
             + 'pour renommer une fiche déjà publiée.');
           return;
         }
-        valeurs.href = valeurs.hasDetailPage ? '/formations/' + valeurs.slug + '/' : donnees.href;
+        valeurs.href = valeurs.hasDetailPage
+          ? '/formations/' + valeurs.slug + '/'
+          : '/inscription/?trainingId=' + encodeURIComponent(valeurs.formId);
       } else {
+        // À la création, la fiche n'existe pas encore : on passe par la page générique
         valeurs.hasDetailPage = false;
         valeurs.href = '/inscription/?trainingId=' + encodeURIComponent(valeurs.formId);
       }

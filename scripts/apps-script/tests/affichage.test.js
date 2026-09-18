@@ -487,6 +487,32 @@ verifier('le script et le site annoncent la même version',
   versionGs && versionSite ? versionGs[1] === versionSite[1] : false, true);
 resultats.push('NOTE  version attendue en production : ' + (versionGs ? versionGs[1] : '?'));
 
+// --- 24. Une formation ajoutée plus tard peut avoir sa vraie fiche ---
+
+/* Le générateur ne lisait que le FICHIER : une formation créée dans le tableau
+   de bord n'y figure pas, et n'aurait donc jamais eu de page — seulement
+   l'inscription générique, sans programme, sans FAQ, sans prérequis. */
+verifier('le générateur sait lire la base',
+  /--depuis-le-site/.test(generateur) && /action=catalogue/.test(generateur), true);
+/* Une base vide écraserait toutes les fiches par rien. */
+verifier('une base vide interrompt la génération',
+  /if \(!liste\.length\) throw new Error/.test(generateur), true);
+
+/* Générer la fiche ne suffit pas : tant que la formation annonce qu'elle n'a
+   pas de page, son lien pointe vers l'inscription générique. */
+verifier('le tableau de bord permet de déclarer une fiche',
+  /cle: 'hasDetailPage'/.test(admin), true);
+verifier('et prévient avant de le faire',
+  /a-t-elle bien été /.test(admin), true);
+
+/* La page générique garde ses trois sections en réserve : c'est là que
+   script.js écrit programme, FAQ et prérequis d'une formation sans fiche. */
+const generique = lire('inscription/index.html');
+['programme-section', 'faq-section', 'prerequis-section'].forEach(id => {
+  verifier('la page générique garde « ' + id + ' » en réserve',
+    new RegExp('id="' + id + '"[^>]*hidden').test(generique), true);
+});
+
 // ---------------------------------- BILAN ----------------------------------
 resultats.forEach(l => console.log(l));
 const echecs = resultats.filter(l => l.indexOf('ÉCHEC') === 0).length;
