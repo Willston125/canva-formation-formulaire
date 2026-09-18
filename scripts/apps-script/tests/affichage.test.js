@@ -539,6 +539,35 @@ verifier('et relit toutes les cases cochées',
 verifier('le serveur détecte un pays cité parmi d’autres',
   /String\(s\.pays \|\| ''\)\.split\(','\)\.some\(function \(c\) \{/.test(gs), true);
 
+// --- 26. Audit avant lancement : polices, liens, cibles tactiles ---
+
+/* Aucune face italique n'est chargée : demander un `font: italic` fait
+   fabriquer au navigateur un faux penché. Seule la signature du hero était
+   dans ce cas. Elle ne doit plus réclamer d'italique. (`style` et `generateur`
+   sont déjà lus plus haut dans ce fichier.) */
+const sig = /\.hero-signature\s*\{[\s\S]*?\}/.exec(style);
+verifier('la signature du hero ne réclame plus d’italique',
+  sig ? /font:\s*italic/.test(sig[0]) : true, false);
+
+/* Tous les titres du site sont en Plus Jakarta Sans. Les h2 du pied faisaient
+   exception, seuls titres en Inter. */
+const piedH2 = /\.site-footer__col h2\s*\{[\s\S]*?\}/.exec(style);
+verifier('les titres du pied de page sont dans la famille des titres',
+  piedH2 ? /'Plus Jakarta Sans'/.test(piedH2[0]) : false, true);
+
+/* La page d'inscription générique vit à /inscription/, pas sous /formations/.
+   Son adresse ne doit plus jamais être dérivée du slug. */
+verifier('l’adresse de la page générique n’est pas dérivée du slug',
+  /f\.id === 'inscription-generique' \? '\/inscription\/'/.test(generateur), true);
+const inscriptionHtml = lire('inscription/index.html');
+verifier('la page générique ne contient aucun lien /formations/inscription/',
+  inscriptionHtml.indexOf('formations/inscription') >= 0, false);
+
+/* La zone tactile des points du carrousel : au moins 36 px, mesuré à 375 px. */
+const dot = /\.carousel-dot\s*\{[\s\S]*?\}/.exec(style);
+const tailleDot = dot ? Number((/(?:width|height):\s*(\d+)px/.exec(dot[0]) || [])[1]) : 0;
+verifier('la cible tactile des points du carrousel atteint 36 px', tailleDot >= 36, true);
+
 // ---------------------------------- BILAN ----------------------------------
 resultats.forEach(l => console.log(l));
 const echecs = resultats.filter(l => l.indexOf('ÉCHEC') === 0).length;
