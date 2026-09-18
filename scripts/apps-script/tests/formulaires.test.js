@@ -191,6 +191,20 @@ verifier('le site ne compare plus le texte entier, enfants compris',
 verifier('le tableau de bord relève le texte propre, sans les icônes',
   /defaut: \(estHtml \? el\.innerHTML : texteSeulDe\(el\)\)/.test(src), true);
 
+// --- 7. La file des visuels à supprimer ne doit pas survivre à un abandon ---
+
+/* Un visuel remplacé n'est mis à la corbeille Drive qu'après enregistrement.
+   La vue « Visuels » n'étant pas un panneau, rien ne vidait sa file quand on
+   changeait de vue : le premier enregistrement fait ailleurs détruisait une
+   image que la feuille référence encore. */
+const videe = ['function fermerPanneau', 'function allerA']
+  .filter(f => {
+    const i = src.indexOf(f);
+    return i >= 0 && /etat\.imagesARetirer = \[\];/.test(src.slice(i, i + 900));
+  });
+verifier('la file des visuels est vidée en fermant un panneau ET en changeant de vue',
+  videe, ['function fermerPanneau', 'function allerA']);
+
 // ---------------------------------- BILAN ----------------------------------
 resultats.forEach(l => console.log(l));
 const echecs = resultats.filter(l => l.indexOf('ÉCHEC') === 0).length;

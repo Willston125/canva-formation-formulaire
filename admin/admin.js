@@ -316,6 +316,11 @@
   function allerA(vue) {
     etat.vue = vue;
     masquerMessages();
+    /* Changer de vue, c'est renoncer à ce qu'on y faisait. La vue « Visuels »
+       n'est pas un panneau : rien ne vidait donc sa file de visuels remplacés,
+       et le premier enregistrement fait AILLEURS mettait à la corbeille Drive
+       une image que la feuille référence toujours — image cassée sur le site. */
+    etat.imagesARetirer = [];
     $$('.onglet').forEach(function (o) { o.classList.toggle('is-actif', o.dataset.vue === vue); });
     $$('.vue').forEach(function (v) { v.classList.toggle('is-actif', v.id === 'vue-' + vue); });
     $('#barre').classList.remove('is-ouverte');
