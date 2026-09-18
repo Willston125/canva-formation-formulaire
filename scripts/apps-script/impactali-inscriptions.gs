@@ -31,8 +31,15 @@
 
    1. Ouvrir le projet Apps Script rattaché au classeur des inscriptions.
    2. Remplacer tout le contenu par ce fichier.
-   3. Renseigner MOT_DE_PASSE_ADMIN ci-dessous (c'est le mot de passe du
-      tableau de bord). Enregistrer.
+   3. MOT DE PASSE DU TABLEAU DE BORD — à faire UNE SEULE FOIS.
+      ⚙ Paramètres du projet → Propriétés du script → Ajouter une propriété :
+         nom    MOT_DE_PASSE_ADMIN
+         valeur votre phrase de passe
+      Rangé là, il SURVIT au remplacement de ce fichier : les mises à jour
+      suivantes ne l'effacent plus, et il n'y a plus rien à retaper.
+      (La constante MOT_DE_PASSE_ADMIN plus bas reste acceptée, mais elle est
+      écrasée à chaque mise à jour du script — d'où l'oubli, et le tableau de
+      bord qui refuse soudain d'ouvrir.)
    4. DÉCLARER LES PERMISSIONS — étape indispensable dès qu'on ajoute un
       service Google à un projet déjà autorisé : Apps Script conserve sinon les
       anciennes permissions et n'en redemande jamais, ce qui produit une erreur
@@ -69,7 +76,7 @@
  * déploiement n'a pas été publiée, et Google sert encore l'ancien code.
  * C'est l'erreur la plus fréquente, et la plus difficile à diagnostiquer.
  */
-var VERSION = '2026-09-18-multipays';
+var VERSION = '2026-09-18-motdepasse';
 
 /** Classeur. Vide = le classeur auquel ce script est rattaché (cas normal). */
 var ID_CLASSEUR = '';
@@ -298,8 +305,28 @@ function commandeAdmin(d) {
 }
 
 /** Comparaison à durée constante, pour ne rien révéler par le temps de réponse. */
+/**
+ * Mot de passe du tableau de bord.
+ *
+ * Il est cherché D'ABORD dans les propriétés du script, où il survit au
+ * remplacement du code : mettre à jour ce fichier ne l'efface pas. Sans
+ * propriété, on retombe sur la constante ci-dessus — mais il faut alors la
+ * retaper à CHAQUE mise à jour, et l'oublier ferme l'administration.
+ *
+ * Pour ne plus jamais avoir à y penser : dans l'éditeur Apps Script,
+ * ⚙ Paramètres du projet → Propriétés du script → Ajouter une propriété,
+ * nom « MOT_DE_PASSE_ADMIN », valeur votre phrase de passe.
+ */
+function motDePasseAdmin() {
+  try {
+    var enregistre = PropertiesService.getScriptProperties().getProperty('MOT_DE_PASSE_ADMIN');
+    if (enregistre) return String(enregistre);
+  } catch (e) { /* propriétés indisponibles : la constante fait foi */ }
+  return String(MOT_DE_PASSE_ADMIN || '');
+}
+
 function verifierMotDePasse(saisi) {
-  var attendu = String(MOT_DE_PASSE_ADMIN || '');
+  var attendu = motDePasseAdmin();
   saisi = String(saisi || '');
   if (!attendu || attendu === 'CHANGEZ-MOI-avant-de-deployer') {
     // Mot de passe non configuré : on refuse plutôt que d'ouvrir l'administration
@@ -1023,7 +1050,7 @@ function etatDuScript() {
     version: VERSION,
     drive: drive,
     driveDetail: detail,
-    motDePasseConfigure: MOT_DE_PASSE_ADMIN !== 'CHANGEZ-MOI-avant-de-deployer' && !!MOT_DE_PASSE_ADMIN,
+    motDePasseConfigure: motDePasseAdmin() !== 'CHANGEZ-MOI-avant-de-deployer' && !!motDePasseAdmin(),
     email: EMAIL_PRO
   };
 }
@@ -1216,7 +1243,8 @@ function testerInstallation() {
   try { envoyerAlerte(essai); Logger.log('Alerte email envoyée à ' + EMAIL_PRO); }
   catch (err) { Logger.log('Alerte email NON envoyée : ' + err); }
   Logger.log('Comptage : ' + JSON.stringify(compterInscrits()));
-  Logger.log('Mot de passe configuré : ' + (verifierMotDePasse(MOT_DE_PASSE_ADMIN) ? 'oui' : 'NON — changez MOT_DE_PASSE_ADMIN'));
+  Logger.log('Mot de passe configuré : ' + (verifierMotDePasse(motDePasseAdmin())
+    ? 'oui' : 'NON — renseignez la propriété MOT_DE_PASSE_ADMIN, ou la constante du fichier'));
 
   /* Touche Drive volontairement : c'est ce qui déclenche l'écran d'autorisation.
      Sans cette exécution préalable, le premier téléversement depuis le tableau
