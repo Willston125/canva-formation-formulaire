@@ -18,7 +18,11 @@
     vue: 'apercu',
     filtreInscriptions: '',
     /** Visuels remplacés, mis à la corbeille seulement après enregistrement. */
-    imagesARetirer: []
+    imagesARetirer: [],
+    /* Envois d'image en cours. Enregistrer pendant un envoi faisait partir la
+       fiche SANS son image, avec un message de succes : on croyait l'avoir
+       posee, et rien ne le demantait. */
+    envoisImage: 0
   };
 
   // ------------------------------- OUTILS --------------------------------
@@ -1611,6 +1615,7 @@
       var ancienne = champ.value.trim();
       etatEl.textContent = 'Préparation de l’image…';
       entree.disabled = true;
+      etat.envoisImage++;
 
       preparerImage(fichier, format)
         .then(function (prete) {
@@ -1626,6 +1631,7 @@
           champ.value = reponse.url;
           rafraichir();
           etatEl.textContent = 'Image envoyée. Enregistrez pour l’appliquer.';
+          etat.envoisImage--;
           entree.disabled = false;
           entree.value = '';
           if (ancienne !== reponse.url) aRetirer(ancienne);
@@ -1633,6 +1639,7 @@
         .catch(function (err) {
           // Renoncer au recadrage n'est pas une panne : on ne crie pas à l'erreur
           etatEl.textContent = err && err.annule ? '' : messageLisible(err);
+          etat.envoisImage--;
           entree.disabled = false;
           entree.value = '';
         });
@@ -1959,6 +1966,14 @@
         $('#panneau-erreur').hidden = false;
         var el = $('#champ-' + manquant[0].cle);
         if (el) el.focus();
+        return;
+      }
+      /* Une image encore en route ne serait pas dans la charge : la fiche
+         partirait sans elle, avec un message de succès. On attend. */
+      if (etat.envoisImage > 0) {
+        $('#panneau-erreur').textContent = 'Une image est encore en cours d’envoi. '
+          + 'Attendez « Image envoyée » avant d’enregistrer.';
+        $('#panneau-erreur').hidden = false;
         return;
       }
       $('#panneau-erreur').hidden = true;

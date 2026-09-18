@@ -299,6 +299,19 @@ verifier('chaque couleur de texte atteint le seuil AA (4,5)', souslesSeuil, []);
 resultats.push('NOTE  contrastes mesurés : '
   + textes.map(([n, c]) => n + ' ' + Math.min(...fonds.map(f => contraste(c, f))).toFixed(2)).join(' · '));
 
+// --- 15. On n'enregistre pas pendant l'envoi d'une image ---
+
+/* Le panneau pouvait être validé pendant qu'une image montait encore : la fiche
+   partait SANS elle, avec un message de succès, et rien ne le démentait. Le
+   compteur doit être rendu dans les DEUX issues — succès et échec — sinon il
+   resterait positif et plus rien ne s'enregistrerait. */
+verifier('un envoi d’image en cours empêche l’enregistrement',
+  admin.indexOf('if (etat.envoisImage > 0) {') >= 0, true);
+verifier('le compteur est rendu dans les deux issues',
+  (admin.match(/etat\.envoisImage--;/g) || []).length, 2);
+verifier('et pris une seule fois',
+  (admin.match(/etat\.envoisImage\+\+;/g) || []).length, 1);
+
 // ---------------------------------- BILAN ----------------------------------
 resultats.forEach(l => console.log(l));
 const echecs = resultats.filter(l => l.indexOf('ÉCHEC') === 0).length;
