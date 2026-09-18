@@ -513,6 +513,32 @@ const generique = lire('inscription/index.html');
     new RegExp('id="' + id + '"[^>]*hidden').test(generique), true);
 });
 
+// --- 25. Une session peut être proposée dans PLUSIEURS pays ---
+
+/* Le champ ne portait qu'UN code : une session s'ouvrait à un pays, ou à tous.
+   Il accepte maintenant une liste — « DJ,KM » — cochée pays par pays. Vide
+   garde l'ancien sens : partout, y compris dans un pays ajouté plus tard. */
+verifier('le site sait lire une liste de pays',
+  /function paysDeSession\(session\)/.test(commun) && /function sessionOuverteAu\(session, code\)/.test(commun), true);
+verifier('le calendrier filtre sur cette liste',
+  /\.filter\(session => !pays \|\| sessionOuverteAu\(session, pays\.code\)\)/.test(commun), true);
+
+/* Une session n'a qu'UN prix, donc une seule devise. L'appliquer à plusieurs
+   pays afficherait 7 500 FDJ en « 7 500 KMF » — un montant que personne n'a
+   saisi, et la conversion que l'exploitant refuse. */
+verifier('le prix d’une session multi-pays est écarté',
+  /if \(codesSession\.length > 1\) return null;/.test(commun), true);
+
+verifier('le tableau de bord coche les pays un à un',
+  /type: 'paysCases'/.test(admin) && /function lirePaysCases\(cle, racine\)/.test(admin), true);
+verifier('et relit toutes les cases cochées',
+  /\.filter\(function \(e\) \{ return e\.checked; \}\)/.test(admin), true);
+
+/* Supprimer un pays doit voir les sessions qui le citent PARMI d'autres, sinon
+   elles resteraient en renvoyant à un pays disparu. */
+verifier('le serveur détecte un pays cité parmi d’autres',
+  /String\(s\.pays \|\| ''\)\.split\(','\)\.some\(function \(c\) \{/.test(gs), true);
+
 // ---------------------------------- BILAN ----------------------------------
 resultats.forEach(l => console.log(l));
 const echecs = resultats.filter(l => l.indexOf('ÉCHEC') === 0).length;

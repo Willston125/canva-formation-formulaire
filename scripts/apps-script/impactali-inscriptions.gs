@@ -69,7 +69,7 @@
  * déploiement n'a pas été publiée, et Google sert encore l'ancien code.
  * C'est l'erreur la plus fréquente, et la plus difficile à diagnostiquer.
  */
-var VERSION = '2026-09-18-prerequis';
+var VERSION = '2026-09-18-multipays';
 
 /** Classeur. Vide = le classeur auquel ce script est rattaché (cas normal). */
 var ID_CLASSEUR = '';
@@ -707,7 +707,12 @@ function supprimerPays(code) {
   /* Une session qui se tient dans ce pays deviendrait invisible partout : on
      refuse plutôt que de la faire disparaître en silence. */
   var sessions = lireTable(F_SESSIONS, CHAMPS_SESSION).filter(function (s) {
-    return String(s.pays || '').toUpperCase() === code;
+    /* Une session peut être proposée dans PLUSIEURS pays — « DJ,KM ». Comparer
+       la chaîne entière laissait supprimer un pays encore cité parmi d'autres :
+       la session serait restée, en renvoyant à un pays disparu. */
+    return String(s.pays || '').split(',').some(function (c) {
+      return c.trim().toUpperCase() === code;
+    });
   });
   if (sessions.length) {
     throw new Error(sessions.length + ' session(s) se tiennent dans ce pays. '

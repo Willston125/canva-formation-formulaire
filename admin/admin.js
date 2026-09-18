@@ -1142,11 +1142,19 @@
         return [
           '<div class="cellule-titre">' + echapper(f ? f.title : x.formId) + '</div>'
           + '<div class="cellule-sous">' + echapper(x.schedule || '') + '</div>',
-          x.pays
-            ? '<div>' + echapper((trouverPays(x.pays) || {}).nom || x.pays) + '</div>'
-              + '<div class="cellule-sous">'
-              + formatTarif(typeof x.price === 'number' ? x.price : null, trouverPays(x.pays)) + '</div>'
-            : '<span class="etiquette etiquette--alerte">Tous pays</span>',
+          /* Une session peut désormais être proposée dans PLUSIEURS pays : on les
+             nomme tous, et on ne montre le tarif que s'il n'y a pas d'ambiguïté
+             sur la devise. */
+          (function () {
+            var codes = codesPays(x.pays);
+            if (!codes.length) return '<span class="etiquette etiquette--alerte">Tous pays</span>';
+            var noms = codes.map(function (c) { return (trouverPays(c) || {}).nom || c; });
+            var tarif = codes.length === 1
+              ? '<div class="cellule-sous">'
+                + formatTarif(typeof x.price === 'number' ? x.price : null, trouverPays(codes[0])) + '</div>'
+              : '<div class="cellule-sous">Tarif de la formation, dans la devise de chacun</div>';
+            return '<div>' + echapper(noms.join(' · ')) + '</div>' + tarif;
+          })(),
           '<div>' + echapper(dateFr(x.startDate)) + '</div>'
           + (x.endDate ? '<div class="cellule-sous">au ' + echapper(dateFr(x.endDate)) + '</div>' : ''),
           typeof x.placesTotal === 'number'
@@ -1187,11 +1195,10 @@
       { cle: 'duration', libelle: 'Volume', type: 'text', aide: 'Ex. « 12 séances · 24 heures ».' },
 
       { section: 'Lieu et tarif' },
-      { cle: 'pays', libelle: 'Pays où se tient la session', type: 'select', large: true,
-        videLibelle: 'Tous les pays — proposée partout',
-        optionsObjets: listePays().map(function (p) { return { valeur: p.code, libelle: p.nom + ' (' + p.devise + ')' }; }),
-        aide: 'Choisissez « Tous les pays » pour la proposer à tout le monde, ou un pays précis '
-          + 'pour ne la montrer qu’aux candidats de ce pays.' },
+      { cle: 'pays', libelle: 'Pays où cette session est proposée', type: 'paysCases', large: true,
+        aide: 'Cochez les pays dont les candidats verront cette session. Plusieurs sont '
+          + 'possibles. Aucune case cochée = proposée partout, y compris dans un pays '
+          + 'que vous ajouteriez plus tard.' },
       { cle: 'location', libelle: 'Lieu', type: 'text', large: true },
       { cle: 'mode', libelle: 'Mode', type: 'select', options: ['Présentiel', 'En ligne', 'Hybride'] },
       { cle: 'price', libelle: 'Tarif de cette session', type: 'number',
@@ -2264,6 +2271,21 @@
 
       if (c.type === 'textarea') {
         html += '<textarea id="' + id + '">' + echapper(v) + '</textarea>';
+      } else if (c.type === 'paysCases') {
+        /* Une case par pays, plutôt qu'un choix unique : une session peut se
+           tenir dans plusieurs pays à la fois, et on veut l'activer ou non
+           pays par pays sans rouvrir un menu déroulant. */
+        var coches = codesPays(v);
+        var listeP = listePays();
+        html += '<div class="grille-champs" data-pays-cases="' + echapper(c.cle) + '">'
+          + (listeP.length
+            ? listeP.map(function (p) {
+              return '<label class="case"><input type="checkbox" data-pays-case="'
+                + echapper(p.code) + '"' + (coches.indexOf(p.code) >= 0 ? ' checked' : '') + '>'
+                + '<span>' + echapper(p.nom) + ' (' + echapper(p.devise) + ')</span></label>';
+            }).join('')
+            : '<p class="champ__aide">Aucun pays enregistré : créez-en un dans la rubrique Pays.</p>')
+          + '</div>';
       } else if (c.type === 'lignes') {
         html += '<textarea id="' + id + '">' + echapper(Array.isArray(v) ? v.join('\n') : '') + '</textarea>';
       } else if (c.type === 'objectifs') {
@@ -2313,6 +2335,7 @@
   function lireChamp(c, form) {
     form = form || FORM_PANNEAU;
     var racine = form.racine();
+    if (c.type === 'paysCases') return lirePaysCases(c.cle, racine);
     if (c.type === 'tarifs') return lireTarifs(c.cle, racine);
     if (c.type === 'paiements') return lirePaiements(c.cle, racine);
     if (c.type === 'programme') return lireProgrammeChamp(c.cle, racine);
@@ -2336,6 +2359,29 @@
         .map(function (l) { return { icon: 'check_circle', label: l, value: l }; });
     }
     return el.value.trim();
+  }
+
+  /**
+   * Les codes de pays d'une session, quelle que soit leur écriture.
+   *
+   * Le champ portait UN seul code ; il accepte maintenant une liste — « DJ,KM ».
+   * Vide garde l'ancien sens : proposée partout.
+   */
+  function codesPays(valeur) {
+    if (Array.isArray(valeur)) valeur = valeur.join(',');
+    return String(valeur || '').split(',')
+      .map(function (c) { return c.trim().toUpperCase(); })
+      .filter(Boolean);
+  }
+
+  /** Pays cochés, écrits « DJ,KM ». Aucune case = chaîne vide = partout. */
+  function lirePaysCases(cle, racine) {
+    var boite = (racine || document).querySelector('[data-pays-cases="' + cle + '"]');
+    if (!boite) return undefined;
+    return Array.prototype.slice.call(boite.querySelectorAll('[data-pays-case]'))
+      .filter(function (e) { return e.checked; })
+      .map(function (e) { return e.dataset.paysCase; })
+      .join(',');
   }
 
   /** Tarifs saisis : { DJ: 7500, KM: null }. `null` = non fixé, jamais 0. */

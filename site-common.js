@@ -115,6 +115,25 @@
     function devise(pays) { return (pays || paysActif() || {}).devise || ''; }
 
     /**
+     * Pays où une session est proposée.
+     *
+     * Le champ portait UN seul code : une session ne pouvait s'ouvrir qu'à un
+     * pays, ou à tous. Il accepte maintenant une liste — « DJ,KM » — pour qu'on
+     * coche les pays un à un. Une liste vide garde l'ancien sens : proposée
+     * partout, y compris dans un pays ajouté plus tard.
+     */
+    function paysDeSession(session) {
+        return String((session && session.pays) || '')
+            .split(',').map(c => c.trim().toUpperCase()).filter(Boolean);
+    }
+
+    /** Cette session est-elle proposée aux candidats de ce pays ? */
+    function sessionOuverteAu(session, code) {
+        const liste = paysDeSession(session);
+        return !liste.length || liste.indexOf(String(code || '').toUpperCase()) >= 0;
+    }
+
+    /**
      * Tarif d'une formation (ou d'une session) dans le pays demandé.
      * `prices` donne le montant pays par pays ; `price` reste le tarif du pays
      * par défaut, pour les données antérieures aux tarifs multi-pays et pour les
@@ -133,7 +152,16 @@
             if (Object.prototype.hasOwnProperty.call(table, pays.code)) return null;
         }
         // Une session appartient à un pays : son tarif ne vaut que pour celui-là
-        if (objet.pays) return String(objet.pays).toUpperCase() === pays.code && typeof objet.price === 'number' ? objet.price : null;
+        const codesSession = paysDeSession(objet);
+        if (codesSession.length) {
+            /* Une session ne porte qu'UN prix, donc une seule devise. Dès qu'elle
+               est proposée dans plusieurs pays, ce montant ne peut pas valoir
+               pour tous : on l'écarte, et le tarif de la formation — saisi pays
+               par pays — reprend la main. Sans cela, ouvrir aux Comores une
+               session djiboutienne à 7 500 FDJ affichait « 7 500 KMF ». */
+            if (codesSession.length > 1) return null;
+            return sessionOuverteAu(objet, pays.code) && typeof objet.price === 'number' ? objet.price : null;
+        }
 
         /* `price` est le tarif unique d'avant les tarifs par pays. Il ne vaut
            QUE pour un objet qui n'a aucune table : en sortir un montant parce
@@ -202,7 +230,7 @@
         const pays = paysActif();
         return SESSIONS
             .filter(session => session.startDate && new Date(`${session.startDate}T23:59:59`) >= today)
-            .filter(session => !session.pays || !pays || String(session.pays).toUpperCase() === pays.code)
+            .filter(session => !pays || sessionOuverteAu(session, pays.code))
             /* Masquer une formation doit tout retirer, calendrier compris : ses
                dates continuaient sinon d'être annoncées sur l'accueil. On ne
                masque que ce qu'on sait masqué — une session orpheline reste
