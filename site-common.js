@@ -340,6 +340,26 @@
      * valeur n'a été enregistrée, le texte écrit dans le HTML reste affiché.
      * C'est ce qui permet d'annuler une modification en vidant simplement le champ.
      */
+    /* Le texte propre d'un élément, sans celui de ses enfants. Un libellé porte
+       parfois un enfant — le chevron d'un accordéon, « expand_more » — qui
+       compterait sinon dans le texte. */
+    const texteSeul = el => Array.from(el.childNodes)
+        .filter(n => n.nodeType === 3).map(n => n.nodeValue).join('');
+
+    /**
+     * Remplace le texte d'un élément SANS toucher à ses enfants.
+     *
+     * `textContent = valeur` les supprimerait : modifier une question de la FAQ
+     * depuis le tableau de bord faisait disparaître le chevron de l'accordéon,
+     * définitivement, puisque le remplacement est réappliqué à chaque visite.
+     */
+    function poserTexte(el, valeur) {
+        const elements = Array.from(el.childNodes).filter(n => n.nodeType === 1);
+        if (!elements.length) { el.textContent = valeur; return; }
+        Array.from(el.childNodes).filter(n => n.nodeType === 3).forEach(n => n.remove());
+        el.insertBefore(document.createTextNode(valeur), el.firstChild);
+    }
+
     function appliquerTextes(textes) {
         if (!textes || typeof textes !== 'object') return false;
         let change = false;
@@ -347,8 +367,8 @@
         document.querySelectorAll('[data-texte]').forEach(el => {
             const valeur = textes[el.dataset.texte];
             if (typeof valeur !== 'string' || !valeur.trim()) return;
-            if (el.textContent === valeur) return;
-            el.textContent = valeur;
+            if (texteSeul(el).trim() === valeur.trim()) return;
+            poserTexte(el, valeur);
             change = true;
         });
 

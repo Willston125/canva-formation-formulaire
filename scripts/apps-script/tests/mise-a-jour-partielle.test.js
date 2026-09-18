@@ -65,6 +65,23 @@ verifier('la modification demandée est bien prise', cellule('Sessions', 'id', '
 verifier('une colonne absente du formulaire survit (currency)',
   cellule('Sessions', 'id', 'sess-1', 'currency'), 'FDJ');
 
+// ------------- 1 bis. FORMATION : tarifs quand aucun pays n'existe -------------
+/* Le champ « Tarifs par pays » ne s'affiche pas tant qu'aucun pays n'est
+   enregistré : lireTarifs ne trouve alors pas son conteneur et ne renvoie rien.
+   La charge part donc sans `prices`. Le tarif ne doit pas disparaître pour
+   autant — c'est le même mécanisme que « currency », sur une donnée qui compte. */
+
+const formationsT = classeur.feuilles['Formations'];
+formationsT.getRange(1, 6, 1, 1).setValue('prices');
+formationsT.getRange(2, 6, 1, 1).setValue('{"DJ":7500,"KM":3000}');
+
+admin('admin.formation.save', { donnees: {
+  id: 'formation-canva-pro', formId: 'canva-pro', slug: 'canva-pro', title: 'Canva Pro', active: true
+} });
+
+verifier('les tarifs par pays survivent à un enregistrement sans aucun pays',
+  cellule('Formations', 'id', 'formation-canva-pro', 'prices'), '{"DJ":7500,"KM":3000}');
+
 // --------------------- 2. PAYS : colonnes ajoutées depuis ---------------------
 /* Cas réel de la production : la feuille Pays a reçu whatsappNumber, fuseaux et
    regions après coup. Un enregistrement qui ne les mentionne pas les effacerait. */

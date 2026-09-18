@@ -32,6 +32,20 @@
     return d.innerHTML;
   }
 
+  /**
+   * Le texte propre d'un élément, sans celui de ses enfants.
+   *
+   * Un libellé porte parfois un enfant — le chevron d'un accordéon, dont la
+   * ligature s'écrit « expand_more ». textContent le ramassait : le tableau de
+   * bord affichait « Les formations sont-elles accessibles ?expand_more » comme
+   * texte actuel, et l'enregistrer effaçait le chevron sur le site.
+   */
+  function texteSeulDe(el) {
+    return Array.prototype.slice.call(el.childNodes)
+      .filter(function (n) { return n.nodeType === 3; })
+      .map(function (n) { return n.nodeValue; }).join('');
+  }
+
   function dateFr(iso) {
     if (!iso) return '';
     var d = new Date(String(iso).length <= 10 ? iso + 'T12:00:00' : iso);
@@ -1587,7 +1601,10 @@
             cle: cle,
             groupe: el.getAttribute('data-texte-groupe') || 'Autres',
             libelle: el.getAttribute('data-texte-libelle') || cle,
-            defaut: (estHtml ? el.innerHTML : el.textContent).replace(/\s+/g, ' ').trim(),
+            /* Texte propre, sans celui des enfants : un libellé porte parfois un
+               chevron d'accordéon, et le tableau de bord affichait alors
+               « … ?expand_more » comme texte actuel. */
+            defaut: (estHtml ? el.innerHTML : texteSeulDe(el)).replace(/\s+/g, ' ').trim(),
             html: estHtml
           });
         });

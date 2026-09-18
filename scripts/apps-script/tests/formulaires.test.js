@@ -165,6 +165,32 @@ const modesStockes = [...new Set((donnees.window.SESSIONS || []).map(s => s.mode
 verifier('chaque mode de session enregistré est proposé',
   modesStockes.filter(m => modesSession.indexOf(m) < 0), []);
 
+// --- 6. Un libellé modifiable ne doit pas perdre ses enfants ---
+
+/* Le bouton d'une question de la FAQ contient le libellé ET le chevron de
+   l'accordéon. Écrire textContent supprimait le chevron — définitivement, le
+   remplacement étant réappliqué à chaque visite — et le tableau de bord
+   affichait « … ?expand_more » comme texte actuel, ligature comprise. */
+const RACINE = path.resolve(__dirname, '..', '..', '..');
+const accueil = fs.readFileSync(path.join(RACINE, 'index.html'), 'utf8');
+const avecEnfant = accueil.split('\n')
+  .filter(l => /data-texte=/.test(l) && /material-symbols-outlined/.test(l))
+  .map(l => (/data-texte="([^"]+)"/.exec(l) || [])[1])
+  .filter(Boolean);
+
+verifier('des libellés modifiables portent bien un enfant (sinon ce contrôle ne prouve rien)',
+  avecEnfant.length > 0, true);
+resultats.push('NOTE  libellés modifiables contenant une icône : ' + JSON.stringify(avecEnfant));
+
+const commun = fs.readFileSync(path.join(RACINE, 'site-common.js'), 'utf8');
+verifier('le site remplace le texte sans toucher aux enfants',
+  /function poserTexte\(el, valeur\)/.test(commun)
+  && /el\.insertBefore\(document\.createTextNode\(valeur\), el\.firstChild\);/.test(commun), true);
+verifier('le site ne compare plus le texte entier, enfants compris',
+  /if \(texteSeul\(el\)\.trim\(\) === valeur\.trim\(\)\) return;/.test(commun), true);
+verifier('le tableau de bord relève le texte propre, sans les icônes',
+  /defaut: \(estHtml \? el\.innerHTML : texteSeulDe\(el\)\)/.test(src), true);
+
 // ---------------------------------- BILAN ----------------------------------
 resultats.forEach(l => console.log(l));
 const echecs = resultats.filter(l => l.indexOf('ÉCHEC') === 0).length;
