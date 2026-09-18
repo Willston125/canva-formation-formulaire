@@ -742,20 +742,23 @@
         + 'Votre numéro de contact se saisit plus bas, dans « Contact dans ce pays ».' },
     { cle: 'longueurTelephone', libelle: 'Nombre de chiffres', type: 'number',
       aide: 'Longueur du numéro local, sans l’indicatif. Vide = pas de limite.' },
-    { cle: 'exempleTelephone', libelle: 'Exemple affiché', type: 'text',
-      aide: 'Un gabarit en X, pas un vrai numéro : ' + local + '. C’est ce que le candidat a '
-        + 'sous les yeux, et il doit respecter le format ci-dessous. Vide = aucun exemple.' },
+    { cle: 'exempleTelephone', libelle: 'Exemple affiché sous le champ du candidat', type: 'text',
+      exemple: local,
+      aide: 'Un gabarit en X, jamais un vrai numéro. C’est ce que le candidat a sous les yeux '
+        + 'quand il tape le sien, et il doit respecter le format ci-dessous. Vide = aucun exemple.' },
     { cle: 'motifTelephone', libelle: 'Format accepté', type: 'text', large: true,
       aide: 'Expression régulière. Ex. ^(77|67)\\d{6}$ . Vide = chiffres uniquement, sans autre contrainte.' },
     { cle: 'aideTelephone', libelle: 'Message si le numéro est refusé', type: 'text', large: true },
 
     { section: 'Contact dans ce pays' },
-    { cle: 'whatsappNumber', libelle: 'Numéro WhatsApp', type: 'text',
-      aide: 'VOTRE numéro dans ce pays, chiffres uniquement, indicatif compris : ' + gabarit + '. '
-        + 'Il remplace le contact général du site pour les visiteurs d’ici. '
-        + 'Laissez vide pour afficher le contact général.' },
-    { cle: 'whatsappDisplay', libelle: 'Numéro tel qu’il s’affiche', type: 'text',
-      aide: 'Le même, écrit comme vous voulez le lire sur le site : ' + gabaritAffiche },
+    { cle: 'whatsappNumber', libelle: 'Votre numéro WhatsApp dans ce pays', type: 'text',
+      exemple: gabarit,
+      aide: 'Votre VRAI numéro, celui sur lequel on vous joint ici. Chiffres uniquement, '
+        + 'indicatif compris, sans + ni espace. Il remplace le contact général du site pour '
+        + 'les visiteurs d’ici. Laissez vide pour afficher le contact général.' },
+    { cle: 'whatsappDisplay', libelle: 'Le même, écrit comme il s’affichera', type: 'text',
+      exemple: gabaritAffiche,
+      aide: 'Votre vrai numéro là aussi, mis en forme comme vous voulez le lire sur le site.' },
 
     { section: 'Reconnaissance du visiteur' },
     { cle: 'fuseaux', libelle: 'Fuseaux horaires', type: 'lignes', large: true,
@@ -822,6 +825,28 @@
           }
         }
         valeurs.exempleTelephone = exemple;
+
+        /* Le gabarit proposé en repère dans la case a été recopié tel quel comme
+           numéro de contact : « 269XXXXXXX » serait parti sur le site, et le lien
+           WhatsApp n'aurait mené nulle part. Un numéro ne contient jamais de X. */
+        var contact = [
+          ['whatsappNumber', 'Numéro WhatsApp', String(valeurs.whatsappNumber || '').trim()],
+          ['whatsappDisplay', 'Numéro tel qu’il s’affiche', String(valeurs.whatsappDisplay || '').trim()]
+        ];
+        for (var i = 0; i < contact.length; i++) {
+          if (contact[i][2] && /x/i.test(contact[i][2])) {
+            fini('« ' + contact[i][1] +' » contient des X : c’est le gabarit affiché en gris dans '
+              + 'la case, pas un numéro. Tapez votre vrai numéro par-dessus — le gris disparaît '
+              + 'dès la première touche.');
+            return;
+          }
+        }
+        var chiffres = String(valeurs.whatsappNumber || '').trim();
+        if (chiffres && !/^\d{6,15}$/.test(chiffres)) {
+          fini('Le numéro WhatsApp ne prend que des chiffres, indicatif compris, sans + ni '
+            + 'espace : 2693804648 pour +269 380 46 48. Reçu : « ' + chiffres + ' ».');
+          return;
+        }
 
         appeler('admin.pays.save', { donnees: valeurs }).then(function (d) {
           viderCorbeilleImages();
@@ -2213,7 +2238,11 @@
               + '>' + echapper(o.libelle) + '</option>';
           }).join('') + '</select>';
       } else {
-        html += '<input type="' + (c.type || 'text') + '" id="' + id + '" value="' + echapper(v) + '">';
+        /* Un gabarit se met en `placeholder`, jamais dans le texte d'aide : gris,
+           à l'intérieur de la case, il disparaît dès qu'on tape. Écrit dans
+           l'aide, il se lit comme la valeur à saisir — et finit recopié tel quel. */
+        html += '<input type="' + (c.type || 'text') + '" id="' + id + '" value="' + echapper(v) + '"'
+          + (c.exemple ? ' placeholder="' + echapper(c.exemple) + '"' : '') + '>';
       }
 
       if (c.aide) html += '<span class="champ__aide">' + echapper(c.aide) + '</span>';

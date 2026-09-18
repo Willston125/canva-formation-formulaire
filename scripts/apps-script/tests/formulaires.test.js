@@ -205,6 +205,59 @@ const videe = ['function fermerPanneau', 'function allerA']
 verifier('la file des visuels est vidée en fermant un panneau ET en changeant de vue',
   videe, ['function fermerPanneau', 'function allerA']);
 
+// --- 8. Un gabarit ne doit pas pouvoir être pris pour la valeur à saisir ---
+
+/* Le gabarit vivait dans le texte d'aide, juste après un deux-points : il se
+   lisait comme la valeur à taper. Mis d'abord en vrai numéro, il a été recopié
+   dans la fiche du pays voisin ; remplacé par des X, c'est « 269XXXXXXX » qui
+   s'est retrouvé dans le champ du numéro de contact. Sa place est le
+   placeholder — gris, dans la case, effacé dès la première touche. */
+verifier('un champ texte sait porter un gabarit en placeholder',
+  /placeholder="' \+ echapper\(c\.exemple\) \+ '"/.test(src), true);
+
+const blocPays = src.slice(src.indexOf('function champsPays(p)'), src.indexOf('function ouvrirPays'));
+
+/** Le texte d'un champ, de sa clé jusqu'au champ suivant. */
+function champDe(cle) {
+  const i = blocPays.indexOf("cle: '" + cle + "'");
+  if (i < 0) return '';
+  const suite = blocPays.slice(i);
+  const fin = suite.search(/\n {4}\{|\n {4}\];/);
+  return fin < 0 ? suite : suite.slice(0, fin);
+}
+
+/* Les trois variables qui portent le gabarit. Leur place est `exemple:` — le
+   placeholder. Dans `aide:`, elles reproduisent le piège d'origine. */
+const VARIABLES = ['local', 'gabaritAffiche', 'gabarit'];
+
+['exempleTelephone', 'whatsappNumber', 'whatsappDisplay'].forEach(cle => {
+  const champ = champDe(cle);
+  verifier('« ' + cle + ' » est bien repéré dans le formulaire', champ.length > 0, true);
+  verifier('« ' + cle + ' » porte son gabarit en placeholder', /exemple: /.test(champ), true);
+
+  /* On coupe à `aide:` et on n'examine QUE ce qui suit : ni gabarit interpolé,
+     ni suite de X, ni numéro écrit en clair. La première version de ce contrôle
+     ne relevait que les chaînes littérales et laissait passer « + gabarit + »,
+     c'est-à-dire exactement ce qu'il fallait attraper. */
+  const j = champ.indexOf('aide:');
+  const aide = j < 0 ? '' : champ.slice(j);
+  /* On retire d'abord les chaînes : sans cela, le mot français « gabarit » du
+     texte d'aide se ferait prendre pour la variable du même nom. C'est le CODE
+     qu'on inspecte, pas la prose. */
+  const codeDeLAide = aide.replace(/'(?:[^'\\]|\\.)*'/g, "''");
+  const fautifs = VARIABLES.filter(v => new RegExp('\\b' + v + '\\b').test(codeDeLAide));
+  verifier('l’aide de « ' + cle + ' » n’interpole aucun gabarit', fautifs, []);
+  verifier('l’aide de « ' + cle + ' » n’écrit aucun gabarit en clair',
+    /XX|\d{4,}/.test(aide), false);
+});
+
+/* Le garde-fou décisif : un numéro ne contient jamais de X, et le champ
+   « chiffres uniquement » n'accepte que des chiffres. */
+verifier('un gabarit saisi comme numéro de contact est refusé',
+  /if \(contact\[i\]\[2\] && \/x\/i\.test\(contact\[i\]\[2\]\)\) \{/.test(src), true);
+verifier('le numéro WhatsApp n’accepte que des chiffres',
+  /if \(chiffres && !\/\^\\d\{6,15\}\$\/\.test\(chiffres\)\) \{/.test(src), true);
+
 // ---------------------------------- BILAN ----------------------------------
 resultats.forEach(l => console.log(l));
 const echecs = resultats.filter(l => l.indexOf('ÉCHEC') === 0).length;
