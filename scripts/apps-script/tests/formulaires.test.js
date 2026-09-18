@@ -122,6 +122,49 @@ verifier('les réglages construisent leurs champs dans leur espace de noms',
 verifier('les réglages relisent leurs champs dans leur espace de noms',
   /lireChamps\(champs, FORM_REGLAGES\)/.test(src), true);
 
+// --- 5. Un select ne doit jamais perdre la valeur déjà enregistrée ---
+
+/* Le navigateur retient la PREMIÈRE option quand aucune n'est marquée
+   « selected ». Une valeur enregistrée absente de la liste se transformait donc
+   en option vide — et le premier enregistrement venu l'écrasait. Mesuré : un
+   cadrage « 30% 50% » perdu en corrigeant une faute dans la description.
+   Sur un champ obligatoire, c'est pire : la première VRAIE valeur est retenue. */
+verifier('un select réinsère la valeur enregistrée absente de sa liste',
+  /var connue = options\.some\(function \(o\) \{ return String\(o\.valeur\) === actuelle; \}\);/.test(src)
+  && /options = \[\{ valeur: actuelle,/.test(src), true);
+
+/* Les valeurs proposées à la création doivent, elles, figurer dans la liste :
+   sinon le tableau de bord se contredit dès le premier écran. */
+const vm = require('vm');
+const donnees = { window: {} };
+vm.runInNewContext(fs.readFileSync(path.resolve(__dirname, '..', '..', '..', 'formations-data.js'), 'utf8'), donnees);
+
+function optionsDe(cle) {
+  const i = src.indexOf("cle: '" + cle + "'");
+  if (i < 0) return null;
+  const bloc = src.slice(i, i + 900);
+  const parObjet = [...bloc.matchAll(/\{ valeur: '([^']*)'/g)].map(m => m[1]);
+  if (parObjet.length) return parObjet;
+  const parListe = /options: \[([^\]]*)\]/.exec(bloc);
+  return parListe ? [...parListe[1].matchAll(/'([^']*)'/g)].map(m => m[1]) : null;
+}
+
+const posOffertes = optionsDe('imagePosition') || [];
+verifier('le cadrage proposé à la création d’une réalisation est dans la liste',
+  posOffertes.indexOf('50% 50%') >= 0, true);
+
+const posStockees = [...new Set((donnees.window.PORTFOLIO || []).map(p => p.imagePosition).filter(Boolean))];
+const horsListe = posStockees.filter(p => posOffertes.indexOf(p) < 0);
+resultats.push('NOTE  cadrages enregistrés hors de la liste proposée : ' + JSON.stringify(horsListe)
+  + ' — conservés par la réinsertion ci-dessus, et affichés « (valeur enregistrée) »');
+
+/* Les modes, eux, doivent rester couverts des deux côtés : c'est une liste
+   courte et stable, une divergence y serait une étourderie, pas un choix. */
+const modesSession = optionsDe('mode') || [];
+const modesStockes = [...new Set((donnees.window.SESSIONS || []).map(s => s.mode).filter(Boolean))];
+verifier('chaque mode de session enregistré est proposé',
+  modesStockes.filter(m => modesSession.indexOf(m) < 0), []);
+
 // ---------------------------------- BILAN ----------------------------------
 resultats.forEach(l => console.log(l));
 const echecs = resultats.filter(l => l.indexOf('ÉCHEC') === 0).length;

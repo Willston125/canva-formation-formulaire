@@ -2046,6 +2046,21 @@
         html += '<textarea id="' + id + '">' + echapper(lignes.join('\n')) + '</textarea>';
       } else if (c.type === 'select') {
         var options = c.optionsObjets || (c.options || []).map(function (o) { return { valeur: o, libelle: o }; });
+
+        /* Une valeur enregistrée absente de la liste doit y entrer, et être
+           retenue. Sans cela le navigateur garde la PREMIÈRE option — l'option
+           vide, ou, quand le champ est obligatoire, la première vraie valeur —
+           et le premier enregistrement venu remplace la valeur d'origine sans
+           rien dire. Un cadrage choisi à la main se perdait ainsi en corrigeant
+           une faute dans la description ; sur un champ obligatoire comme la
+           formation d'une session, c'est un rattachement qui changerait seul.
+           Même remède que selecteurStatut. */
+        var actuelle = (v === null || v === undefined) ? '' : String(v);
+        var connue = options.some(function (o) { return String(o.valeur) === actuelle; });
+        if (actuelle !== '' && !connue) {
+          options = [{ valeur: actuelle, libelle: actuelle + ' (valeur enregistrée)' }].concat(options);
+        }
+
         html += '<select id="' + id + '">'
           + (c.requis ? '' : '<option value=""></option>')
           + options.map(function (o) {
