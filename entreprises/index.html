@@ -117,15 +117,15 @@
                 </div>
                 <label class="pro-form__consent">
                     <input type="checkbox" id="pro-consent" name="consent" required>
-                    <span>J’accepte que ces informations soient transmises via WhatsApp au formateur pour traiter ma demande. <span class="text-primary">*</span></span>
+                    <span>J’accepte que ces informations soient transmises par email au formateur pour traiter ma demande. <span class="text-primary">*</span></span>
                 </label>
                 <span class="field-error" id="pro-consent-error" role="alert"></span>
 
                 <button class="button button--primary pro-form__submit" type="submit">
-                    Envoyer ma demande via WhatsApp
+                    Envoyer ma demande par email
                     <span class="material-symbols-outlined" aria-hidden="true">send</span>
                 </button>
-                <p class="pro-form__alt">Vous préférez appeler ? <a href="tel:+25377145306" data-whatsapp-tel><span data-whatsapp-affiche>+253 77 14 53 06</span></a></p>
+                <p class="pro-form__alt">Vous préférez écrire directement ? <a href="mailto:infos@impactali.site" data-email-sujet="Demande de formation pour une organisation"><span data-email-affiche>infos@impactali.site</span></a></p>
             </form>
         </div>
     </main>
@@ -153,8 +153,7 @@
                 <h2 id="pied-infos">Informations</h2>
                 <a href="/entreprises/">Former mon équipe</a>
                 <a href="/mentions-legales/">Mentions légales</a>
-                <a target="_blank" rel="noopener noreferrer" href="https://wa.me/25377145306"
-                    data-whatsapp-message="Bonjour, je souhaite vous contacter au sujet de vos formations.">Nous contacter</a>
+                <a href="mailto:infos@impactali.site" data-email-sujet="Contact au sujet de vos formations">Nous contacter</a>
             </nav>
         </div>
     </footer>
@@ -188,7 +187,12 @@
                     value('pro-effectif') ? `👥 Participants : ${value('pro-effectif')}` : null,
                     value('pro-theme') ? `🎯 Thématique : ${value('pro-theme')}` : null,
                     '', `📝 Besoin : ${value('pro-besoin')}`].filter(line => line !== null).join('\n');
-                window.open(window.SiteCommon.whatsappUrl(message), '_blank', 'noopener');
+                /* Même principe qu'avant : le message est prérempli, et c'est la personne
+                   qui décide d'envoyer. Rien ne part sans son geste. */
+                const adresse = window.SiteCommon.emailContact();
+                window.location.href = 'mailto:' + adresse
+                    + '?subject=' + encodeURIComponent('Demande de formation pour une organisation')
+                    + '&body=' + encodeURIComponent(message);
             });
             form.querySelectorAll('input, textarea').forEach(field => field.addEventListener('input', () => showError(field.id, '')));
         })();

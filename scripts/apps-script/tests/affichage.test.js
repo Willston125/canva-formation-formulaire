@@ -374,6 +374,54 @@ verifier('l’en-tête passe à la ligne sous 900 px',
 verifier('la règle qui en dépend est toujours là',
   /\.entete__actions \{ width: 100%; margin-left: 0; order: 3; \}/.test(petitEcran.slice(0, 900)), true);
 
+// --- 20. WhatsApp ne paraît QUE dans le parcours d'inscription ---
+
+/* Ailleurs — accueil, entreprises, mentions légales, pied de page — c'est
+   l'adresse email qui est proposée. Le numéro WhatsApp, lui, suit le pays du
+   candidat, et n'a de sens qu'au moment où il s'inscrit. */
+const HORS_INSCRIPTION = ['index.html', 'entreprises/index.html', 'mentions-legales/index.html'];
+const DANS_INSCRIPTION = ['inscription/index.html'].concat(fiches.map(f => 'formations/' + f + '/index.html'));
+
+const compte = (f, motif) => (lire(f).match(motif) || []).length;
+
+const fuites = HORS_INSCRIPTION.filter(f =>
+  compte(f, /data-whatsapp-(message|affiche|tel)/g) > 0 || compte(f, /wa\.me\//g) > 0);
+verifier('aucun WhatsApp hors du parcours d’inscription', fuites, []);
+
+const muettes = DANS_INSCRIPTION.filter(f => compte(f, /data-whatsapp-message/g) === 0);
+verifier('le parcours d’inscription garde bien WhatsApp', muettes, []);
+
+/* Et il y affiche le numéro : c'est là que le candidat doit le lire. */
+const sansNumero = DANS_INSCRIPTION.filter(f => compte(f, /data-whatsapp-affiche/g) === 0);
+verifier('le numéro du pays s’affiche à l’inscription', sansNumero, []);
+
+// --- 21. L'adresse email est déclarée, affichée et modifiable ---
+
+verifier('le site déclare une adresse de contact',
+  /contactEmail: '[^']+@[^']+'/.test(donneesSite), true);
+verifier('le site sait poser les liens email',
+  /function initLiensEmail\(\)/.test(commun) && /\[data-email-sujet\]/.test(commun), true);
+verifier('l’adresse se change depuis les réglages',
+  /cle: 'contactEmail'/.test(admin), true);
+
+/* Chaque lien email doit porter un sujet : un mailto nu ouvre un message vide,
+   et on ne sait plus d'où vient la personne. */
+const sansSujet = HORS_INSCRIPTION.concat(DANS_INSCRIPTION).filter(f => {
+  const liens = (lire(f).match(/<a[^>]*href="mailto:[^>]*>/g) || []);
+  return liens.some(l => l.indexOf('data-email-sujet') < 0);
+});
+verifier('chaque lien email annonce son sujet', sansSujet, []);
+
+/* La bulle flottante ouvrait WhatsApp : elle ouvre l'email, elle ne peut plus
+   en porter les couleurs. Et sur le vert de marque, le texte est SOMBRE. */
+const accueil2 = lire('index.html');
+verifier('la bulle ne se fait plus passer pour WhatsApp',
+  /25D366|whatsapp-float/.test(accueil2), false);
+const bulle = /<a[^>]*id="contact-float"[\s\S]{0,700}?<\/a>/.exec(accueil2);
+verifier('la bulle est repérée', !!bulle, true);
+verifier('la bulle porte le vert de marque et une icône sombre',
+  bulle ? /bg-\[#CBFD00\]/.test(bulle[0]) && /text-\[#050709\]/.test(bulle[0]) : false, true);
+
 // ---------------------------------- BILAN ----------------------------------
 resultats.forEach(l => console.log(l));
 const echecs = resultats.filter(l => l.indexOf('ÉCHEC') === 0).length;

@@ -704,6 +704,31 @@
        Le numéro écrit en toutes lettres dans les pages suit lui aussi le
        réglage : sans cela, en changer un dans le tableau de bord en laissait
        d'autres périmés sur le site, et un candidat appelait dans le vide. */
+    /** Adresse de contact publique du site. */
+    function emailContact() {
+        return String(CONTACT.contactEmail || '').trim();
+    }
+
+    /**
+     * Voie de contact publique : l'email, partout sauf à l'inscription.
+     *
+     * WhatsApp ne paraît plus que dans le parcours d'inscription, où le numéro
+     * suit le pays du candidat. Ailleurs — accueil, entreprises, mentions
+     * légales, pied de page — on propose l'adresse, une seule pour tout le
+     * monde. Elle se change depuis le tableau de bord, comme le reste.
+     */
+    function initLiensEmail() {
+        const adresse = emailContact();
+        document.querySelectorAll('[data-email-sujet]').forEach(lien => {
+            if (!adresse) { lien.removeAttribute('href'); return; }
+            const sujet = lien.dataset.emailSujet;
+            lien.href = `mailto:${adresse}` + (sujet ? `?subject=${encodeURIComponent(sujet)}` : '');
+        });
+        if (adresse) {
+            document.querySelectorAll('[data-email-affiche]').forEach(el => { el.textContent = adresse; });
+        }
+    }
+
     function initWhatsappLinks() {
         document.querySelectorAll('[data-whatsapp-message]').forEach(link => {
             link.href = whatsappUrl(link.dataset.whatsappMessage);
@@ -728,6 +753,7 @@
         upcomingSessions,
         nextOpenSession,
         whatsappUrl,
+        emailContact,
         formatPrice,
         sessionState,
         refreshPlaces,
@@ -771,6 +797,7 @@
     document.addEventListener('impactali:pays', () => {
         // Le contact joignable change avec le pays : liens et numéros affichés suivent
         initWhatsappLinks();
+        initLiensEmail();
         const banner = document.getElementById('session-banner');
         if (!banner) return;
         banner.classList.add('hidden');
@@ -778,7 +805,7 @@
     });
 
     // Contact modifié depuis le tableau de bord : liens et numéros affichés suivent
-    document.addEventListener('impactali:catalogue', initWhatsappLinks);
+    document.addEventListener('impactali:catalogue', function () { initWhatsappLinks(); initLiensEmail(); });
 
     /**
      * Choix du pays, atteignable depuis n'importe quelle page.

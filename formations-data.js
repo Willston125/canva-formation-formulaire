@@ -658,5 +658,9 @@ window.SITE_ENDPOINTS = Object.freeze({
 window.SITE_CONTACT = Object.freeze({
   whatsappNumber: '25377145306',
   whatsappDisplay: '+253 77 14 53 06',
-  contactName: 'Ali William'
+  contactName: 'Ali William',
+  /* Voie de contact publique du site. WhatsApp ne paraît plus qu'au moment de
+     l'inscription, avec le numéro du pays du candidat : partout ailleurs, c'est
+     cette adresse qui est proposée. Elle se change depuis le tableau de bord. */
+  contactEmail: 'infos@impactali.site'
 });

@@ -3194,7 +3194,7 @@ a:focus-visible {
   .site-footer { padding-bottom: 110px; }
   .site-footer__inner { flex-direction: column; align-items: flex-start; }
   .mobile-cta { display: block; }
-  #whatsapp-float { bottom: 88px; }
+  #contact-float { bottom: 88px; }
   .fiche-hero { padding: 28px 0 40px; }
   .fiche-facts { grid-template-columns: 1fr; }
   .fiche-hero__actions .button { width: 100%; }
@@ -4184,7 +4184,7 @@ a:focus-visible {
   .session-banner,
   .site-header,
   .mobile-cta,
-  #whatsapp-float,
+  #contact-float,
   #hamster-overlay,
   .skip-link,
   .breadcrumb,
