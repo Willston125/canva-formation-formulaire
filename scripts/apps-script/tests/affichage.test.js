@@ -312,6 +312,20 @@ verifier('le compteur est rendu dans les deux issues',
 verifier('et pris une seule fois',
   (admin.match(/etat\.envoisImage\+\+;/g) || []).length, 1);
 
+// --- 16. Une affiche de réalisation garde son format d'origine ---
+
+/* La grille de l'accueil montre les réalisations en 4/3, mais par recadrage
+   CSS — réversible. Imposer ce cadre À L'ENVOI rognait l'affiche pour de bon,
+   alors que le survol et la visionneuse promettent de la montrer entière. */
+const formatPortfolio = /portfolio: \{ largeur: (\d+), hauteur: (null|\d+)/.exec(admin);
+verifier('le format des réalisations est bien déclaré', !!formatPortfolio, true);
+verifier('une réalisation n’est pas rognée à l’envoi',
+  formatPortfolio ? formatPortfolio[2] : null, 'null');
+
+/* La promesse doit exister quelque part, sinon ce contrôle ne défend rien. */
+verifier('le survol montre bien l’affiche entière',
+  /object-fit: contain/.test(style), true);
+
 // ---------------------------------- BILAN ----------------------------------
 resultats.forEach(l => console.log(l));
 const echecs = resultats.filter(l => l.indexOf('ÉCHEC') === 0).length;
