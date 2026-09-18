@@ -215,17 +215,25 @@
       demarrer();
     }).catch(function (err) {
       attente(bouton, false);
-      etat.motDePasse = '';
-      try { localStorage.removeItem(CLE_MDP); sessionStorage.removeItem(CLE_MDP); } catch (e) { }
+      /* Une coupure de réseau, ou un script pas encore republié, ne rend pas le
+         mot de passe faux. L'oublier obligeait à le retaper — et, en ouverture
+         silencieuse, sans le moindre message : une seconde de connexion perdue
+         suffisait. On ne l'oublie donc que si le serveur l'a vraiment refusé. */
+      var refuse = !!(err && err.authentification === false);
+      if (refuse) {
+        etat.motDePasse = '';
+        try { localStorage.removeItem(CLE_MDP); sessionStorage.removeItem(CLE_MDP); } catch (e) { }
+      }
       if (silencieux) {
-        // Session mémorisée devenue invalide : on redonne simplement la main
+        // On redonne la main sur le formulaire
         $('#form-connexion').addEventListener('submit', function (e) {
           e.preventDefault();
           etat.motDePasse = $('#mot-de-passe').value;
           connecter(false);
         });
-        // Un script obsolète n'est pas un mot de passe erroné : il faut le dire
-        if (!err || !err.apiObsolete) return;
+        /* Un mot de passe devenu invalide se passe de commentaire : le champ est
+           là, il suffit de le retaper. Tout le reste doit s'expliquer. */
+        if (refuse) return;
       }
       erreur.textContent = messageLisible(err);
       erreur.hidden = false;
@@ -1183,7 +1191,11 @@
       liste.map(function (i) {
         return [
           '<div class="cellule-titre">' + echapper([i.nom, i.prenom].filter(Boolean).join(' ')) + '</div>'
-          + '<div class="cellule-sous">' + echapper((i.countryCode || '') + ' ' + (i.telephone || ''))
+          /* `countryCode` n'est pas une colonne de la feuille : il valait donc
+             toujours undefined, et le numéro s'affichait sans son indicatif.
+             Entre un numéro comorien à 7 chiffres et un djiboutien à 8, on ne
+             savait plus qui rappeler. `telephoneInternational`, lui, est écrit. */
+          + '<div class="cellule-sous">' + echapper(i.telephoneInternational || i.telephone || '—')
           + (i.email ? ' · ' + echapper(i.email) : '') + '</div>',
           '<div>' + echapper(i.formationTitle || i.formationId || '—') + '</div>'
           + (i.sessionLabel ? '<div class="cellule-sous">' + echapper(i.sessionLabel) + '</div>' : ''),

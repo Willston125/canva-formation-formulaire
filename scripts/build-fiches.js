@@ -78,8 +78,33 @@ function sectionProgramme(f) {
   return `<section class="fiche-block reveal-on-scroll" id="programme-section" aria-labelledby="programme-title">${interieur}</section>`;
 }
 
+/**
+ * Prérequis génériques — vrais pour toute formation, sans inventer de modalité.
+ *
+ * Deux oublis vivaient ici. La liste portait la classe `fiche-prerequisites`,
+ * absente de la feuille de style : cinq fiches sur six affichaient donc des
+ * puces de navigateur au milieu d'une page soignée. Et le bloc ne portait aucun
+ * `data-texte` : les champs « Fiche formation » du tableau de bord ne
+ * changeaient qu'une seule fiche, celle du gabarit.
+ */
 function genericPrerequisites() {
-  return `<section class="fiche-block reveal-on-scroll" id="prerequis-section" aria-labelledby="prerequis-title"><div class="glass-card rounded-2xl sm:rounded-3xl p-6 sm:p-8"><h2 id="prerequis-title" class="text-xl font-extrabold text-white font-headline">Prérequis</h2><ul class="fiche-prerequisites"><li>Aucun niveau avancé n’est requis.</li><li>Un ordinateur portable est recommandé pour pratiquer dans de bonnes conditions.</li><li>Les modalités précises seront confirmées avec la prochaine session.</li></ul></div></section>`;
+  const ligne = (n, icone, texte) =>
+    `<li data-texte-html="fiche.prerequis.${n}" data-texte-groupe="Fiche formation" `
+    + `data-texte-libelle="Prérequis ${n}"><span class="material-symbols-outlined" aria-hidden="true">`
+    + `${icone}</span>${texte}</li>`;
+
+  return `<section class="fiche-block reveal-on-scroll" id="prerequis-section" aria-labelledby="prerequis-title">`
+    + `<div class="glass-card rounded-2xl sm:rounded-3xl p-6 sm:p-8">`
+    + `<div class="flex items-center gap-3 mb-5">`
+    + `<span class="material-symbols-outlined text-[#CBFD00] text-2xl" aria-hidden="true">checklist</span>`
+    + `<h2 class="text-lg sm:text-xl font-extrabold text-[#FFFFFF] font-headline" id="prerequis-title" `
+    + `data-texte="fiche.prerequis.titre" data-texte-groupe="Fiche formation" `
+    + `data-texte-libelle="Titre « Prérequis »">Prérequis</h2></div>`
+    + `<ul class="prerequis-list">`
+    + ligne(1, 'school', 'Aucun niveau avancé n’est requis.')
+    + ligne(2, 'laptop_mac', 'Un ordinateur portable est recommandé pour pratiquer dans de bonnes conditions.')
+    + ligne(3, 'event_available', 'Les modalités précises seront confirmées avec la prochaine session.')
+    + `</ul></div></section>`;
 }
 
 function genericTrainer(f) {

@@ -104,7 +104,10 @@
       + '<p class="eyebrow">PROGRAMME</p>'
       + '<h2 id="programme-title" class="text-xl sm:text-2xl font-extrabold text-white font-headline">Ce que vous allez apprendre</h2>'
       + '<p class="text-[#94A3B8] mt-2">Un parcours pratique centré sur des compétences directement applicables.</p>'
-      + '<ul class="fiche-prerequisites mt-6">' + items + '</ul></div>';
+      /* « fiche-prerequisites » n'existe pas dans la feuille de style : cette
+         liste s'affichait avec les puces du navigateur. « prerequis-list » est
+         la classe réelle, et elle attend justement une icône par ligne. */
+      + '<ul class="prerequis-list mt-6">' + items + '</ul></div>';
   }
 
   /** Questions fréquentes propres à la formation. Même dépliant que le programme. */

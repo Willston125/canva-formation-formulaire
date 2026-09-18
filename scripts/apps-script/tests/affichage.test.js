@@ -79,6 +79,57 @@ verifier('supprimer la dernière réalisation est refusé',
 verifier('le site retombe bien sur son fichier quand la base n’a aucune réalisation',
   /if \(Array\.isArray\(donnees\.portfolio\) && donnees\.portfolio\.length\) \{/.test(commun), true);
 
+// --- 5. Un texte de fiche doit changer TOUTES les fiches ---
+
+/* Le générateur remplace les blocs « Prérequis » et « Votre formateur » par une
+   version générique sur toutes les fiches sauf celle du gabarit. Cette version
+   ne portait aucun `data-texte` : les champs « Fiche formation » du tableau de
+   bord ne changeaient qu'une fiche sur six. Elle portait aussi une classe
+   absente de la feuille de style, d'où des puces de navigateur au milieu d'une
+   page soignée. */
+const fiches = fs.readdirSync(path.join(RACINE, 'formations'))
+  .filter(d => d !== '_template' && fs.existsSync(path.join(RACINE, 'formations', d, 'index.html')));
+
+const clesDe = f => [...new Set((fs.readFileSync(path.join(RACINE, 'formations', f, 'index.html'), 'utf8')
+  .match(/data-texte(?:-html)?="[^"]+"/g) || []))].sort();
+
+verifier('les six fiches sont bien générées', fiches.length, 6);
+
+/* Deux clés restent propres au gabarit, et on le dit plutôt que de le masquer.
+   `fiche.prerequis.4` : la version générique ne compte que trois lignes, et en
+   inventer une quatrième serait inventer du contenu.
+   `fiche.formateur.titre` : sur le gabarit c'est un titre (« Votre Formateur »),
+   sur la version générique ce rôle est tenu par un sur-titre en capitales. Leur
+   donner la même clé ferait désigner DEUX textes différents par un seul champ —
+   ce que l'épreuve des textes refuse, à juste titre. Les réunir demanderait de
+   refondre le bloc générique, ce qui dépasse une correction de défaut. */
+const EXCEPTIONS = [
+  'data-texte-html="fiche.prerequis.4"',
+  'data-texte="fiche.formateur.titre"'
+];
+const reference = clesDe('canva-pro').filter(c => EXCEPTIONS.indexOf(c) < 0);
+const manquantes = {};
+fiches.filter(f => f !== 'canva-pro').forEach(f => {
+  const absentes = reference.filter(c => clesDe(f).indexOf(c) < 0);
+  if (absentes.length) manquantes[f] = absentes;
+});
+verifier('chaque fiche expose les mêmes textes modifiables', manquantes, {});
+resultats.push('NOTE  clé propre au gabarit, assumée : ' + JSON.stringify(EXCEPTIONS));
+
+/* Une classe sans règle produit un affichage nu. Celle-ci n'a jamais existé
+   dans la feuille de style. */
+const style = lire('style.css');
+verifier('la classe de liste employée existe dans la feuille de style',
+  style.indexOf('.prerequis-list') >= 0, true);
+const nue = fiches.filter(f =>
+  fs.readFileSync(path.join(RACINE, 'formations', f, 'index.html'), 'utf8').indexOf('fiche-prerequisites') >= 0);
+verifier('aucune fiche n’emploie la classe sans style', nue, []);
+/* On cherche une ÉMISSION — `class="fiche-prerequisites` — et non une simple
+   mention : les commentaires qui expliquent la correction citent le nom. */
+const emet = f => /class="fiche-prerequisites/.test(lire(f));
+verifier('aucun générateur n’émet plus la classe sans style',
+  ['fiche-blocs.js', 'scripts/build-fiches.js'].filter(emet), []);
+
 // ---------------------------------- BILAN ----------------------------------
 resultats.forEach(l => console.log(l));
 const echecs = resultats.filter(l => l.indexOf('ÉCHEC') === 0).length;
