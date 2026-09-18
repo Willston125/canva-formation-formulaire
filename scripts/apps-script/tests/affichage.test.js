@@ -130,6 +130,68 @@ const emet = f => /class="fiche-prerequisites/.test(lire(f));
 verifier('aucun générateur n’émet plus la classe sans style',
   ['fiche-blocs.js', 'scripts/build-fiches.js'].filter(emet), []);
 
+// --- 6. Aucune coordonnée de paiement d'un pays ne doit fuir sur un autre ---
+
+/* La page porte en dur les coordonnées djiboutiennes. N'y écrire que si la
+   valeur existe les laissait donc en place : un candidat comorien voyait le
+   nom, le lieu et le téléphone de Djibouti, et serait venu payer là-bas. */
+const formulaire = lire('script.js');
+
+verifier('une coordonnée absente masque sa case au lieu de garder l’ancienne',
+  /function poserCoordonnee\(el, valeur\) \{[\s\S]*?boite\.style\.display = v \? '' : 'none';/.test(formulaire), true);
+verifier('les coordonnées mobiles passent par là',
+  /poserCoordonnee\(numText, method\?\.number\);/.test(formulaire)
+  && /poserCoordonnee\(account, method\?\.accountName\);/.test(formulaire), true);
+verifier('les coordonnées en espèces aussi',
+  /const set = \(id, value\) => poserCoordonnee\(document\.getElementById\(id\), value\);/.test(formulaire), true);
+
+/* Le moyen « espèces » se reconnaissait à son libellé exact : le renommer
+   depuis le tableau de bord faisait disparaître les instructions de paiement. */
+verifier('le paiement en espèces se reconnaît à sa nature, pas à son libellé',
+  /\} else if \(method \? method\.kind === 'cash' : value === 'Espèces'\) \{/.test(formulaire), true);
+
+/* Le repli sur le libellé ne vaut que pour une donnée ancienne sans `kind` :
+   la nature doit rester déclarée dans les données du site. */
+const donneesSite = lire('formations-data.js');
+verifier('les moyens de paiement déclarent leur nature',
+  /kind: 'cash'/.test(donneesSite) && /kind: 'mobile'/.test(donneesSite), true);
+
+// --- 7. L'aperçu d'un visuel doit pointer où il faut ---
+
+/* Les pages déclarent leurs visuels en relatif. Le tableau de bord vit dans
+   /admin/ : la même adresse y désignait /admin/assets/…, qui n'existe pas.
+   Mesuré : 404 avant, 200 après. */
+verifier('l’adresse d’un visuel est résolue depuis sa page, pas depuis /admin/',
+  /function adresseAbsolue\(src, adressePage\)/.test(admin)
+  && /new URL\(src, window\.location\.origin \+ \(adressePage \|\| '\/'\)\)\.pathname/.test(admin), true);
+verifier('le relevé des visuels sait de quelle page vient chaque adresse',
+  /origine: adresseAbsolue\(el\.getAttribute\('src'\) \|\| '', adressePage\)/.test(admin), true);
+
+/* Le contrôle ne vaut que tant que le site déclare bien des adresses relatives. */
+const accueil = lire('index.html');
+const relatifs = [...accueil.matchAll(/<img[^>]*data-image="([^"]+)"[^>]*>/g)]
+  .filter(m => !/src="(?:https?:|data:|\/)/.test(m[0])).map(m => m[1]);
+verifier('des visuels sont bien déclarés en relatif (sinon ce contrôle ne prouve rien)',
+  relatifs.length > 0, true);
+
+// --- 8. Le téléphone d'un candidat s'affiche avec son indicatif ---
+
+verifier('le tableau de bord affiche le numéro international',
+  /echapper\(i\.telephoneInternational \|\| i\.telephone \|\| '—'\)/.test(admin), true);
+
+const colonnes = lire('scripts/apps-script/impactali-inscriptions.gs');
+const blocColonnes = colonnes.slice(colonnes.indexOf('var COLONNES = ['), colonnes.indexOf('CHAMPS_FORMATION'));
+verifier('« countryCode » n’est toujours pas une colonne : on ne peut donc pas s’y fier',
+  /countryCode/.test(blocColonnes), false);
+verifier('« telephoneInternational », lui, en est une',
+  /telephoneInternational/.test(blocColonnes), true);
+
+// --- 9. Un échec d'ouverture n'efface pas le mot de passe mémorisé ---
+
+verifier('le mot de passe n’est oublié que si le serveur l’a refusé',
+  /var refuse = !!\(err && err\.authentification === false\);/.test(admin)
+  && /if \(refuse\) \{\s*\n\s*etat\.motDePasse = '';/.test(admin), true);
+
 // ---------------------------------- BILAN ----------------------------------
 resultats.forEach(l => console.log(l));
 const echecs = resultats.filter(l => l.indexOf('ÉCHEC') === 0).length;

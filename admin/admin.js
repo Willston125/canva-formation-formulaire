@@ -46,6 +46,21 @@
       .map(function (n) { return n.nodeValue; }).join('');
   }
 
+  /**
+   * Rend absolue l'adresse d'une image relevée sur une page du site.
+   *
+   * Les pages déclarent leurs visuels en relatif — « assets/images/… ». Le
+   * tableau de bord, lui, vit dans /admin/ : la même adresse y désignait
+   * /admin/assets/images/…, qui n'existe pas. Tous les aperçus de visuels non
+   * remplacés étaient donc des images cassées. On résout donc chaque adresse
+   * par rapport à la page où elle a été relevée, et non par rapport à /admin/.
+   */
+  function adresseAbsolue(src, adressePage) {
+    if (!src || /^(?:https?:|data:|\/\/|\/)/.test(src)) return src;
+    try { return new URL(src, window.location.origin + (adressePage || '/')).pathname; }
+    catch (e) { return src; }
+  }
+
   function dateFr(iso) {
     if (!iso) return '';
     var d = new Date(String(iso).length <= 10 ? iso + 'T12:00:00' : iso);
@@ -1666,8 +1681,9 @@
         .then(function (r) { return r.ok ? r.text() : ''; })
         .catch(function () { return ''; });
     })).then(function (contenus) {
-      contenus.forEach(function (html) {
+      contenus.forEach(function (html, rang) {
         if (!html) return;
+        var adressePage = pages[rang];
         var page = new DOMParser().parseFromString(html, 'text/html');
         page.querySelectorAll('[data-image]').forEach(function (el) {
           var cle = el.getAttribute('data-image');
@@ -1678,7 +1694,7 @@
             groupe: el.getAttribute('data-image-groupe') || 'Autres',
             libelle: el.getAttribute('data-image-libelle') || cle,
             format: el.getAttribute('data-image-format') || 'paysage',
-            origine: el.getAttribute('src') || '',
+            origine: adresseAbsolue(el.getAttribute('src') || '', adressePage),
             description: el.getAttribute('alt') || ''
           });
         });

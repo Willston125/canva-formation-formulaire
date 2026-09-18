@@ -459,7 +459,12 @@
         const price = formatPrice(currentPrice());
         document.querySelectorAll('[data-amount]').forEach(el => { el.textContent = price; });
         const cash = currentPaymentMethods().find(method => method.kind === 'cash');
-        const set = (id, value) => { const el = document.getElementById(id); if (el && value) el.textContent = value; };
+        /* N'écrire que si la valeur existe laissait en place ce que contient la
+           page — le nom, le lieu et le téléphone de Djibouti. Un pays sans
+           paiement en espèces, comme les Comores aujourd'hui, les affichait
+           donc quand même : un candidat serait venu payer à la mauvaise
+           adresse. On masque la case plutôt que d'annoncer un lieu faux. */
+        const set = (id, value) => poserCoordonnee(document.getElementById(id), value);
         set('cash-payment-name', cash?.recipient);
         set('cash-payment-place', cash?.place);
         set('cash-payment-phone', cash?.phone);
@@ -1228,10 +1233,17 @@
             const numLabel = document.getElementById('mobile-payment-label');
             const numText = document.getElementById('mobile-payment-number');
             const account = document.getElementById('mobile-payment-account');
-            if (numLabel && method?.numberLabel) numLabel.textContent = method.numberLabel;
-            if (numText && method?.number) numText.textContent = method.number;
-            if (account && method?.accountName) account.textContent = method.accountName;
-        } else if (value === 'Espèces') {
+
+            /* Ces cases portent, dans le HTML de la page, les coordonnées
+               djiboutiennes. N'y écrire que si la valeur existe laissait donc
+               s'afficher le numéro de Djibouti pour un moyen de paiement d'un
+               autre pays qui n'en déclare pas : un candidat aurait payé sur le
+               mauvais compte. On écrit toujours, et on masque la case quand il
+               n'y a rien à dire, plutôt que d'annoncer un renseignement faux. */
+            if (numLabel) numLabel.textContent = method?.numberLabel || 'Numéro';
+            poserCoordonnee(numText, method?.number);
+            poserCoordonnee(account, method?.accountName);
+        } else if (method ? method.kind === 'cash' : value === 'Espèces') {
             hide(telPaiementGroup);
             hide(paymentInfoMobile);
             show(paymentInfoCash);
@@ -1243,6 +1255,15 @@
         }
 
         saveData();
+    }
+
+    /** Une coordonnée de paiement, ou rien du tout — jamais celle d'un autre pays. */
+    function poserCoordonnee(el, valeur) {
+        if (!el) return;
+        const v = String(valeur || '').trim();
+        el.textContent = v || '—';
+        const boite = el.parentElement;
+        if (boite) boite.style.display = v ? '' : 'none';
     }
 
     function show(el) {
