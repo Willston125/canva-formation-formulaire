@@ -537,6 +537,19 @@
   function demanderSuppressionRealisation(id) {
     var r = listeRealisations().filter(function (x) { return x.id === id; })[0];
     if (!r) return;
+
+    /* Une base vide n'efface pas l'accueil : le site retombe alors sur les
+       réalisations de son fichier. Supprimer la DERNIÈRE ferait donc réapparaître
+       toutes celles qu'on croyait supprimées. On refuse plutôt que de produire
+       ce résultat incompréhensible — même règle que pour le dernier pays. */
+    if (listeRealisations().length <= 1) {
+      afficherMessage('#erreur-globale',
+        'C’est la dernière réalisation. En supprimer la dernière ferait réapparaître sur '
+        + 'l’accueil celles d’origine, livrées avec le site. Créez-en une autre d’abord, '
+        + 'ou remplacez le contenu de celle-ci.', 9000);
+      return;
+    }
+
     confirmer('Supprimer « ' + (r.title || 'cette réalisation') + ' » de l’accueil ? Cette action est définitive.',
       function (fini) {
         appeler('admin.portfolio.delete', { id: id }).then(function () {
@@ -2377,6 +2390,11 @@
     $('#confirmation').hidden = false;
     var bouton = $('#confirmation-valider');
     var nouveau = bouton.cloneNode(true); // retire les écouteurs précédents
+    /* `disabled` se reflète en attribut, donc le clone en hérite. Une suppression
+       réussie ne rappelant pas `fini`, le bouton restait désactivé : la DEUXIÈME
+       suppression de la session était muette, et il fallait recharger la page
+       sans jamais savoir pourquoi. */
+    nouveau.disabled = false;
     bouton.parentNode.replaceChild(nouveau, bouton);
     nouveau.addEventListener('click', function () {
       nouveau.disabled = true;

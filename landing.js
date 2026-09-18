@@ -5,9 +5,20 @@
 (function () {
     'use strict';
 
+    /**
+     * Les formations à montrer sur l'accueil.
+     *
+     * Décocher « Visible sur le site » ne retirait la formation de rien : ni du
+     * catalogue, ni du carrousel, ni des filtres par domaine. Le serveur renvoie
+     * bien tout — le tableau de bord a besoin de voir les fiches masquées — mais
+     * c'est au site de trier. La fiche, elle, reste servie : elle y annonce
+     * d'elle-même que les inscriptions sont fermées.
+     */
+    const visibles = liste => (Array.isArray(liste) ? liste : []).filter(f => f && f.active !== false);
+
     /* Réassignable : le catalogue peut être rechargé depuis l'API après une
        modification faite dans le tableau de bord. */
-    let FORMATIONS = Array.isArray(window.FORMATIONS) ? window.FORMATIONS : [];
+    let FORMATIONS = visibles(window.FORMATIONS);
     /* Réassignable : les réalisations se modifient depuis le tableau de bord. */
     let PORTFOLIO = Array.isArray(window.PORTFOLIO) ? window.PORTFOLIO : [];
     const common = window.SiteCommon;
@@ -633,7 +644,7 @@
            a réellement changé, pour ne pas interrompre sa rotation sans raison. */
         document.addEventListener('impactali:catalogue', event => {
             const avant = FORMATIONS.map(f => f.slug).join('|');
-            FORMATIONS = Array.isArray(window.FORMATIONS) ? window.FORMATIONS : [];
+            FORMATIONS = visibles(window.FORMATIONS);
             PORTFOLIO = Array.isArray(window.PORTFOLIO) ? window.PORTFOLIO : PORTFOLIO;
             renderCatalogueGrid();
             renderDomains();

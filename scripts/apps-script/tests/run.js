@@ -15,7 +15,8 @@ const EPREUVES = [
   ['pays.test.js', 'Pays desservis'],
   ['polices.test.js', 'Typographie du site et du tableau de bord'],
   ['mise-a-jour-partielle.test.js', 'Une modification n’efface pas le reste de la ligne'],
-  ['formulaires.test.js', 'Formulaires : cloisonnement et valeurs conservees']
+  ['formulaires.test.js', 'Formulaires : cloisonnement et valeurs conservees'],
+  ['affichage.test.js', 'Ce qui est masque disparait, ce qui est garde s affiche']
 ];
 
 let echecs = 0;

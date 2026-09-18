@@ -194,6 +194,14 @@
         return SESSIONS
             .filter(session => session.startDate && new Date(`${session.startDate}T23:59:59`) >= today)
             .filter(session => !session.pays || !pays || String(session.pays).toUpperCase() === pays.code)
+            /* Masquer une formation doit tout retirer, calendrier compris : ses
+               dates continuaient sinon d'être annoncées sur l'accueil. On ne
+               masque que ce qu'on sait masqué — une session orpheline reste
+               visible plutôt que de disparaître sans explication. */
+            .filter(session => {
+                const f = FORMATIONS.find(x => x.formId === session.formId);
+                return !f || f.active !== false;
+            })
             .map(avecPlacesEnDirect)
             .sort((a, b) => a.startDate.localeCompare(b.startDate));
     }
@@ -427,10 +435,25 @@
         const racine = doc.getElementById('racine');
         racine.innerHTML = html;
 
+        /* Les icônes sont des LIGATURES : c'est la police qui transforme le mot
+           « check_circle » en dessin, et seule cette classe la déclenche. En
+           retirant tous les attributs, on affichait le mot en toutes lettres —
+           dans l'avis des mentions légales et les quatre prérequis d'une fiche.
+           On garde donc cette classe, et l'attribut qui évite aux lecteurs
+           d'écran d'épeler la ligature. Tout le reste part : style, événements,
+           adresses. */
+        const CLASSES_SURES = ['material-symbols-outlined'];
+
         racine.querySelectorAll('*').forEach(el => {
             if (SUPPRIMER.includes(el.tagName)) { el.remove(); return; }
             if (!BALISES.includes(el.tagName)) { el.replaceWith(...el.childNodes); return; }
+            const classes = (el.getAttribute('class') || '').split(/\s+/)
+                .filter(c => CLASSES_SURES.includes(c));
             Array.from(el.attributes).forEach(attr => el.removeAttribute(attr.name));
+            if (classes.length) {
+                el.setAttribute('class', classes.join(' '));
+                el.setAttribute('aria-hidden', 'true');
+            }
         });
         return racine.innerHTML;
     }
