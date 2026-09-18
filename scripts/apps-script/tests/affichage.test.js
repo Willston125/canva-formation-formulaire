@@ -192,6 +192,40 @@ verifier('le mot de passe n’est oublié que si le serveur l’a refusé',
   /var refuse = !!\(err && err\.authentification === false\);/.test(admin)
   && /if \(refuse\) \{\s*\n\s*etat\.motDePasse = '';/.test(admin), true);
 
+// --- 10. Échap ne ferme que la fenêtre du dessus ---
+
+/* Le recadrage s'ouvre par-dessus le panneau et pose son propre écouteur. Les
+   deux répondaient à Échap : on annulait un cadrage, et tout le formulaire en
+   cours disparaissait avec le panneau. */
+verifier('Échap laisse le panneau tranquille quand un recadrage est ouvert',
+  /if \(document\.querySelector\('\.recadrage'\)\) return;/.test(admin), true);
+
+/* Et le recadrage rend le défilement tel qu'il l'a trouvé : le remettre à vide
+   laissait la page glisser derrière un panneau toujours ouvert. */
+verifier('le recadrage rend le défilement tel qu’il l’a trouvé',
+  /var defilementAvant = document\.body\.style\.overflow;/.test(admin)
+  && /document\.body\.style\.overflow = defilementAvant;/.test(admin), true);
+
+// --- 11. Un échec d'enregistrement ne peut pas être muet ---
+
+verifier('une erreur arrivée après la fermeture du panneau s’affiche en pleine page',
+  /if \(\$\('#panneau'\)\.hidden\) \{\s*\n\s*afficherMessage\('#erreur-globale', erreur, 9000\);/.test(admin), true);
+
+/* Le délai d'attente abandonne l'attente, pas la requête : le message ne doit
+   pas laisser croire à un échec certain. */
+verifier('le message de délai dit quoi faire avant de réessayer',
+  /actualisez la page avant de réessayer/.test(admin), true);
+
+// --- 12. Le lien d'une fiche publiée ne se change pas depuis le tableau de bord ---
+
+/* La fiche est un fichier généré puis publié. Changer le lien ne déplace rien :
+   l'ancienne adresse reste servie, la nouvelle n'existe nulle part. */
+verifier('changer le lien d’une fiche publiée est refusé',
+  /if \(valeurs\.hasDetailPage && valeurs\.slug !== donnees\.slug\) \{/.test(admin), true);
+
+/* Le refus n'a de sens que si les fiches sont bien des fichiers du dépôt. */
+verifier('les fiches sont bien des fichiers publiés', fiches.length > 0, true);
+
 // ---------------------------------- BILAN ----------------------------------
 resultats.forEach(l => console.log(l));
 const echecs = resultats.filter(l => l.indexOf('ÉCHEC') === 0).length;

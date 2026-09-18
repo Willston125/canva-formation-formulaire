@@ -124,7 +124,13 @@
     if (!API) return Promise.reject(new Error('Adresse de l’API non configurée dans formations-data.js.'));
     var corps = Object.assign({ action: action, motDePasse: etat.motDePasse }, charge || {});
     var expiration = new Promise(function (_, rejeter) {
-      window.setTimeout(function () { rejeter(new Error('Le serveur met trop de temps à répondre.')); },
+      /* Ce délai abandonne l'ATTENTE, pas la requête : Google a pu écrire quand
+         même. Annoncer un échec sec ferait recommencer une modification déjà
+         passée — on dit donc quoi faire avant de réessayer. */
+      window.setTimeout(function () {
+        rejeter(new Error('Le serveur met trop de temps à répondre. La modification est '
+          + 'peut-être passée quand même : actualisez la page avant de réessayer.'));
+      },
         DELAIS[action] || 30000);
     });
     var envoi = fetch(API, {
@@ -272,6 +278,11 @@
     $$('[data-fermer-confirmation]').forEach(function (b) { b.addEventListener('click', fermerConfirmation); });
     document.addEventListener('keydown', function (e) {
       if (e.key !== 'Escape') return;
+      /* Le recadrage s'ouvre PAR-DESSUS le panneau, et pose son propre écouteur.
+         Les deux répondaient donc à Échap : on annulait un cadrage, et le
+         panneau se fermait avec, emportant tout ce qui venait d'être saisi.
+         Celui du dessus se ferme seul ; nous, on s'abstient. */
+      if (document.querySelector('.recadrage')) return;
       if (!$('#panneau').hidden) fermerPanneau();
       else if (!$('#confirmation').hidden) fermerConfirmation();
     });
@@ -881,7 +892,8 @@
     { cle: 'title', libelle: 'Titre de la formation', type: 'text', requis: true, large: true },
     { cle: 'shortTitle', libelle: 'Titre court', type: 'text', aide: 'Utilisé dans les menus et résumés.' },
     { cle: 'slug', libelle: 'Lien (adresse de la page)', type: 'text', requis: true,
-      aide: 'Minuscules, chiffres et tirets. Le changer casse les liens déjà partagés.' },
+      aide: 'Minuscules, chiffres et tirets. Il se fixe à la création : une fois la fiche '
+        + 'publiée, son adresse est un fichier du site et ne se change plus d’ici.' },
     { cle: 'category', libelle: 'Catégorie', type: 'text' },
     { cle: 'family', libelle: 'Domaine', type: 'text', aide: 'Sert aux filtres du catalogue. Réutilisez un domaine existant pour regrouper.' },
 
@@ -948,6 +960,19 @@
          Les formations déjà publiées conservent leur page. */
       if (f) {
         valeurs.hasDetailPage = donnees.hasDetailPage !== false;
+        /* La fiche est un FICHIER, généré puis publié avec le site. Changer le
+           lien ne déplace rien : l'ancienne adresse resterait servie, et la
+           nouvelle n'existerait nulle part. On refuse, au lieu de rendre la
+           fiche injoignable — la page d'aide annonçait seulement des « liens
+           cassés », ce qui était très en dessous de la vérité. */
+        if (valeurs.hasDetailPage && valeurs.slug !== donnees.slug) {
+          fini('La page de cette formation est publiée à l’adresse /formations/'
+            + donnees.slug + '/. Ce n’est pas un réglage : c’est un fichier du site. '
+            + 'Changer le lien ici rendrait la fiche injoignable, car aucune page '
+            + 'n’existe à la nouvelle adresse. Demandez une régénération du site '
+            + 'pour renommer une fiche déjà publiée.');
+          return;
+        }
         valeurs.href = valeurs.hasDetailPage ? '/formations/' + valeurs.slug + '/' : donnees.href;
       } else {
         valeurs.hasDetailPage = false;
@@ -1397,6 +1422,10 @@
         + '<button type="button" class="bouton bouton--primaire" data-valider>Utiliser ce cadrage</button>'
         + '</div></footer></div>';
       document.body.appendChild(boite);
+      /* Le panneau d'édition verrouille déjà le défilement : le remettre à vide
+         en fermant le recadrage laissait la page glisser derrière un panneau
+         toujours ouvert. On rend donc ce qu'on a trouvé, pas le vide. */
+      var defilementAvant = document.body.style.overflow;
       document.body.style.overflow = 'hidden';
 
       var toile = boite.querySelector('.recadrage__toile');
@@ -1477,7 +1506,7 @@
         window.removeEventListener('mouseup', fin);
         document.removeEventListener('keydown', auClavier);
         boite.remove();
-        document.body.style.overflow = '';
+        document.body.style.overflow = defilementAvant;
         resoudre(resultat);
       }
       function auClavier(e) { if (e.key === 'Escape') fermer(null); }
@@ -1936,10 +1965,16 @@
       attente($('#panneau-valider'), true);
       auValider(lireChamps(champs), function (erreur) {
         attente($('#panneau-valider'), false);
-        if (erreur) {
-          $('#panneau-erreur').textContent = erreur;
-          $('#panneau-erreur').hidden = false;
+        if (!erreur) return;
+        /* Le panneau a pu être fermé entre-temps, ou la vue changée : y écrire
+           rendait l'échec totalement muet, et on repartait en croyant avoir
+           enregistré. On le dit alors en pleine page. */
+        if ($('#panneau').hidden) {
+          afficherMessage('#erreur-globale', erreur, 9000);
+          return;
         }
+        $('#panneau-erreur').textContent = erreur;
+        $('#panneau-erreur').hidden = false;
       });
     };
     $('#panneau-form').addEventListener('submit', validerCourant);
