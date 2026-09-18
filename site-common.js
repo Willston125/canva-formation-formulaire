@@ -134,6 +134,15 @@
         }
         // Une session appartient à un pays : son tarif ne vaut que pour celui-là
         if (objet.pays) return String(objet.pays).toUpperCase() === pays.code && typeof objet.price === 'number' ? objet.price : null;
+
+        /* `price` est le tarif unique d'avant les tarifs par pays. Il ne vaut
+           QUE pour un objet qui n'a aucune table : en sortir un montant parce
+           que le pays demandé se trouve être celui par défaut faisait afficher
+           les 7 500 FDJ djiboutiens en « 7 500 KMF » dès qu'on désignait les
+           Comores par défaut. Personne n'a saisi ce tarif. Un tarif non fixé
+           s'annonce « À confirmer » — jamais converti, jamais recopié. */
+        if (objet.prices && typeof objet.prices === 'object') return null;
+
         const defaut = paysParDefaut();
         if (defaut && defaut.code === pays.code && typeof objet.price === 'number') return objet.price;
         return null;

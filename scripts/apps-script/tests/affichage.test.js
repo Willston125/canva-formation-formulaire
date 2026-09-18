@@ -226,6 +226,44 @@ verifier('changer le lien d’une fiche publiée est refusé',
 /* Le refus n'a de sens que si les fiches sont bien des fichiers du dépôt. */
 verifier('les fiches sont bien des fichiers publiés', fiches.length > 0, true);
 
+// --- 13. Aucun tarif ne doit être inventé en changeant de pays par défaut ---
+
+/* `price` est le tarif unique d'avant les tarifs par pays. En sortir un montant
+   parce que le pays demandé se trouve être celui par défaut faisait afficher les
+   7 500 FDJ djiboutiens en « 7 500 KMF » dès qu'on désignait les Comores par
+   défaut. Mesuré dans le navigateur : ancienne règle « 7500 KMF », nouvelle
+   « À confirmer ». */
+verifier('le tarif hérité ne sert que faute de table de tarifs',
+  /if \(objet\.prices && typeof objet\.prices === 'object'\) return null;/.test(commun), true);
+
+/* Le contrôle ne vaut que tant que les formations ont bien une table, sans quoi
+   la garde serait inerte et ne prouverait rien. */
+const site = { window: {} };
+require('vm').runInNewContext(donneesSite, site);
+
+const sansTable = (site.window.FORMATIONS || [])
+  .filter(f => !f.prices || typeof f.prices !== 'object').map(f => f.formId);
+verifier('chaque formation déclare une table de tarifs', sansTable, []);
+
+/* Et personne n'a saisi de tarif comorien : c'est justement le cas qui
+   fabriquait un montant. */
+const paysDeclares = (site.window.PAYS || []).map(p => p.code);
+const sansTarif = {};
+paysDeclares.forEach(code => {
+  const manquent = (site.window.FORMATIONS || [])
+    .filter(f => typeof (f.prices || {})[code] !== 'number').map(f => f.formId);
+  if (manquent.length) sansTarif[code] = manquent.length + ' formation(s)';
+});
+resultats.push('NOTE  tarifs non fixés, annoncés « À confirmer » : ' + JSON.stringify(sansTarif));
+
+/* Aucune conversion : un tarif se rend tel qu'il a été saisi. Une regex sur le
+   mot « conversion » ne prouverait rien — les commentaires l'emploient. On
+   regarde donc le corps de prixDe : il ne doit y avoir aucun calcul. */
+const corpsPrixDe = commun.slice(commun.indexOf('function prixDe(objet, code)'));
+const finPrixDe = corpsPrixDe.indexOf('\n    }\n');
+const code = corpsPrixDe.slice(0, finPrixDe).replace(/\/\*[\s\S]*?\*\/|\/\/.*/g, '');
+verifier('aucun calcul appliqué à un tarif', /[*\/]\s*(?:taux|[\d.]+)/.test(code), false);
+
 // ---------------------------------- BILAN ----------------------------------
 resultats.forEach(l => console.log(l));
 const echecs = resultats.filter(l => l.indexOf('ÉCHEC') === 0).length;
