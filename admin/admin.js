@@ -1153,10 +1153,11 @@
       { cle: 'duration', libelle: 'Volume', type: 'text', aide: 'Ex. « 12 séances · 24 heures ».' },
 
       { section: 'Lieu et tarif' },
-      { cle: 'pays', libelle: 'Pays', type: 'select', large: true,
+      { cle: 'pays', libelle: 'Pays où se tient la session', type: 'select', large: true,
+        videLibelle: 'Tous les pays — proposée partout',
         optionsObjets: listePays().map(function (p) { return { valeur: p.code, libelle: p.nom + ' (' + p.devise + ')' }; }),
-        aide: 'Une session ne se tient que dans un pays : elle n’est proposée qu’aux candidats de ce pays. '
-          + 'Vide = proposée partout.' },
+        aide: 'Choisissez « Tous les pays » pour la proposer à tout le monde, ou un pays précis '
+          + 'pour ne la montrer qu’aux candidats de ce pays.' },
       { cle: 'location', libelle: 'Lieu', type: 'text', large: true },
       { cle: 'mode', libelle: 'Mode', type: 'select', options: ['Présentiel', 'En ligne', 'Hybride'] },
       { cle: 'price', libelle: 'Tarif de cette session', type: 'number',
@@ -2247,7 +2248,11 @@
         }
 
         html += '<select id="' + id + '">'
-          + (c.requis ? '' : '<option value=""></option>')
+          /* L'option « rien de choisi » portait un libellé VIDE : une ligne blanche
+             en tête de liste, que personne ne lit comme un choix. On ne voyait donc
+             pas qu'on pouvait proposer une session à tous les pays, et il fallait
+             en désigner un. `videLibelle` la nomme quand elle veut dire quelque chose. */
+          + (c.requis ? '' : '<option value="">' + echapper(c.videLibelle || '') + '</option>')
           + options.map(function (o) {
             return '<option value="' + echapper(o.valeur) + '"' + (String(o.valeur) === String(v) ? ' selected' : '')
               + '>' + echapper(o.libelle) + '</option>';
