@@ -90,6 +90,39 @@ const essaisIndicatif = [
 verifier('un indicatif mal saisi est reconnu comme tel',
   essaisIndicatif.filter(([v, valide]) => /^\+\d{1,4}$/.test(v) !== valide).map(([v]) => v), []);
 
+/* ---------------------------------------------------------------------------
+   Marchés ouverts aux formations en ligne
+
+   Douze pays francophones ont été ajoutés pour que les sessions EN LIGNE soient
+   suivables de partout. Chacun ne porte que des FAITS publics : code, devise,
+   indicatif, fuseau. Rien d'autre n'est inventé — ni tarif, ni contact, ni
+   coordonnées de paiement. Ces contrôles gardent cette frontière.
+   --------------------------------------------------------------------------- */
+
+/* L'ordre d'affichage doit être déclaré partout : sans lui, un pays retombe en
+   999 et passe derrière les autres. Les marchés d'origine se sont ainsi
+   retrouvés après douze nouveaux venus. */
+verifier('chaque pays déclare son ordre d’affichage',
+  actifs.filter(p => typeof p.ordre !== 'number').map(p => p.code), []);
+verifier('aucun ordre en double',
+  actifs.map(p => p.ordre).filter((o, i, t) => t.indexOf(o) !== i), []);
+
+const parOrdre = actifs.slice().sort((a, b) => a.ordre - b.ordre);
+verifier('le pays par défaut ouvre la liste', parOrdre[0].defaut === true, true);
+
+/* Une devise et un indicatif sont indispensables : sans devise aucun tarif n'est
+   lisible, sans indicatif aucun numéro n'est joignable. */
+verifier('chaque pays a une devise de trois lettres',
+  actifs.filter(p => !/^[A-Z]{3}$/.test(String(p.devise || ''))).map(p => p.code), []);
+
+/* Un tarif ne s'invente pas : un pays sans montant saisi doit rester sans
+   montant, pour que le site annonce « À confirmer » plutôt qu'un prix faux. */
+const avecTarif = (site.window.FORMATIONS || []).flatMap(f => Object.entries(f.prices || {}))
+  .filter(([, v]) => typeof v === 'number').map(([code]) => code);
+console.log('Tarifs réellement saisis pour : ' + ([...new Set(avecTarif)].join(', ') || 'aucun pays'));
+console.log('Pays sans tarif, annoncés « À confirmer » : '
+  + actifs.filter(p => !avecTarif.includes(p.code)).map(p => p.code).join(', '));
+
 console.log('Pays desservis : ' + actifs.map(p => p.code + ' (' + p.devise + ')').join(', '));
 console.log(resultats.join('\n'));
 const echecs = resultats.filter(x => x.startsWith('ÉCHEC')).length;

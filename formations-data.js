@@ -582,6 +582,8 @@ window.PAYS = Object.freeze([
   Object.freeze({
     code: 'DJ',
     nom: 'Djibouti',
+    // Marche d'origine : en tete de liste, avant les marches ouverts ensuite
+    ordre: 0,
     devise: 'FDJ',
     indicatif: '+253',
     motifTelephone: '^(77|67)\\d{6}$',
@@ -613,6 +615,7 @@ window.PAYS = Object.freeze([
        le dit franchement au lieu d'afficher des montants djiboutiens. */
     code: 'KM',
     nom: 'Comores',
+    ordre: 1,
     devise: 'KMF',
     indicatif: '+269',
     motifTelephone: '^\\d{7}$',
@@ -628,7 +631,59 @@ window.PAYS = Object.freeze([
     fuseaux: Object.freeze(['Indian/Comoro']),
     regions: Object.freeze(['KM']),
     paymentMethods: Object.freeze([])
-  })
+  }),
+
+  /* ---------------------------------------------------------------------------
+     MARCHÉS FRANCOPHONES OUVERTS AUX FORMATIONS EN LIGNE
+
+     Chacun ne porte QUE des faits publics : code ISO, devise, indicatif,
+     fuseaux horaires, code de région. Rien d'autre n'est inventé —
+     ni tarif, ni numéro de contact, ni coordonnées de paiement.
+
+     Conséquences, voulues et visibles :
+      · sans tarif saisi, le site annonce « À confirmer » plutôt qu'un montant ;
+      · sans contact propre, le numéro général du site s'affiche ;
+      · sans moyen de paiement, le formulaire le dit et renvoie vers le contact.
+
+     Le format des numéros est laissé LIBRE (chiffres uniquement) : un motif
+     approximatif refuserait des numéros valables, et les plans de numérotation
+     bougent d'un pays à l'autre. À resserrer depuis le tableau de bord, pays
+     par pays, le jour où l'un d'eux s'ouvre vraiment.
+     --------------------------------------------------------------------------- */
+  ...[
+    ['FR', 'France', 'EUR', '+33', ['Europe/Paris']],
+    ['SN', 'Sénégal', 'XOF', '+221', ['Africa/Dakar']],
+    ['CI', 'Côte d’Ivoire', 'XOF', '+225', ['Africa/Abidjan']],
+    ['CM', 'Cameroun', 'XAF', '+237', ['Africa/Douala']],
+    ['MG', 'Madagascar', 'MGA', '+261', ['Indian/Antananarivo']],
+    ['MA', 'Maroc', 'MAD', '+212', ['Africa/Casablanca']],
+    ['BJ', 'Bénin', 'XOF', '+229', ['Africa/Porto-Novo']],
+    ['TG', 'Togo', 'XOF', '+228', ['Africa/Lome']],
+    ['GA', 'Gabon', 'XAF', '+241', ['Africa/Libreville']],
+    ['CD', 'République démocratique du Congo', 'CDF', '+243', ['Africa/Kinshasa', 'Africa/Lubumbashi']],
+    ['TN', 'Tunisie', 'TND', '+216', ['Africa/Tunis']],
+    ['ML', 'Mali', 'XOF', '+223', ['Africa/Bamako']]
+  ].map(([code, nom, devise, indicatif, fuseaux], rang) => Object.freeze({
+    code: code,
+    nom: nom,
+    devise: devise,
+    indicatif: indicatif,
+    // Vide = chiffres uniquement : on n'invente pas un plan de numérotation
+    motifTelephone: '',
+    aideTelephone: 'Entrez votre numéro sans l’indicatif, en chiffres uniquement.',
+    exempleTelephone: '',
+    longueurTelephone: null,
+    defaut: false,
+    active: true,
+    // Vide = le contact général du site s'affiche pour ces visiteurs
+    whatsappNumber: '',
+    whatsappDisplay: '',
+    fuseaux: Object.freeze(fuseaux),
+    regions: Object.freeze([code]),
+    // Vide = le formulaire annonce que le règlement en ligne n'est pas ouvert ici
+    paymentMethods: Object.freeze([]),
+    ordre: 2 + rang
+  }))
 ]);
 
 /**

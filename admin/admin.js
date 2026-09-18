@@ -1197,12 +1197,22 @@
       { section: 'Lieu et tarif' },
       { cle: 'pays', libelle: 'Pays où cette session est proposée', type: 'paysCases', large: true,
         aide: 'Cochez les pays dont les candidats verront cette session. Plusieurs sont '
-          + 'possibles. Aucune case cochée = proposée partout, y compris dans un pays '
-          + 'que vous ajouteriez plus tard.' },
-      { cle: 'location', libelle: 'Lieu', type: 'text', large: true },
-      { cle: 'mode', libelle: 'Mode', type: 'select', options: ['Présentiel', 'En ligne', 'Hybride'] },
+          + 'possibles. Aucune case cochée = proposée PARTOUT, y compris dans un pays '
+          + 'ajouté plus tard — c’est le réglage d’une session EN LIGNE. Pour une '
+          + 'session en présentiel, ne cochez que le pays où elle se tient : ailleurs, '
+          + 'un candidat s’inscrirait pour une salle qu’il ne peut pas rejoindre.' },
+      { cle: 'location', libelle: 'Lieu ou plateforme', type: 'text', large: true,
+        exemple: 'Saalam Tower, 5ème étage — ou : Google Meet',
+        aide: 'En présentiel, l’adresse exacte. En ligne, la plateforme employée. '
+          + 'C’est écrit tel quel sur la fiche, à côté du mode.' },
+      { cle: 'mode', libelle: 'Mode', type: 'select', options: ['Présentiel', 'En ligne', 'Hybride'],
+        aide: 'Une session EN LIGNE peut être suivie depuis n’importe quel pays : laissez '
+          + 'alors toutes les cases ci-dessous décochées. Une session en PRÉSENTIEL se '
+          + 'limite au pays où elle se tient.' },
       { cle: 'price', libelle: 'Tarif de cette session', type: 'number',
-        aide: 'Dans la devise du pays ci-dessus. Vide = le tarif de la formation s’applique.' },
+        aide: 'Un seul montant, donc une seule devise : il ne s’applique QUE si la session '
+          + 'est réservée à un seul pays. Ouverte à plusieurs, c’est le tarif de la '
+          + 'formation — saisi pays par pays — qui s’applique. Vide = idem.' },
 
       { section: 'Places et inscriptions' },
       { cle: 'placesTotal', libelle: 'Nombre de places', type: 'number',

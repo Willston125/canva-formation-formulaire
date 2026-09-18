@@ -50,9 +50,12 @@ const envoi = {
 appelsSheets.total = 0;
 const importe = poste({ action: 'admin.importer', donnees: envoi });
 const coutImport = appelsSheets.total;
-verifier('import : formations', importe.formations, 6);
-verifier('import : sessions', importe.sessions, 6);
-verifier('import : pays', importe.pays, 2);
+/* Les comptes se lisent dans le FICHIER, pas en dur : ouvrir un marché de plus
+   ne doit pas faire échouer l'amorçage. Ce qu'on éprouve, c'est que tout ce qui
+   est envoyé arrive — pas qu'il y en ait un nombre précis. */
+verifier('import : formations', importe.formations, site.window.FORMATIONS.length);
+verifier('import : sessions', importe.sessions, site.window.SESSIONS.length);
+verifier('import : pays', importe.pays, site.window.PAYS.length);
 verifier('import : realisations', importe.portfolio, site.window.PORTFOLIO.length);
 /* Chaque operation Sheets est un aller-retour chez Google (~300 ms a froid).
    Au-dela d'une trentaine, l'amorcage depassait le delai d'attente du
