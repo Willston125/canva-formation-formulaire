@@ -456,6 +456,37 @@ verifier('la carte montre bien le formateur, pas l’affiche', photosFausses, []
 verifier('la photo du formateur se remplace depuis le tableau de bord',
   fiches.filter(f => lire('formations/' + f + '/index.html').indexOf('data-image="fiche.formateur.photo"') < 0), []);
 
+// --- 23. Les prérequis appartiennent à la formation, pas au site ---
+
+/* Ils étaient un texte UNIQUE partagé par les six fiches : « un compte Canva
+   gratuit suffit » s'affichait sur Photo & Vidéo. Chaque formation porte
+   maintenant les siens, comme son programme et sa FAQ — même chaîne complète :
+   colonne au serveur, champ au tableau de bord, rendu au build ET à l'exécution. */
+const blocs = lire('fiche-blocs.js');
+verifier('le module des blocs sait rendre des prérequis',
+  /prerequisInterieur: prerequisInterieur/.test(blocs) && /aDesPrerequis: function/.test(blocs), true);
+
+const gs = lire('scripts/apps-script/impactali-inscriptions.gs');
+verifier('le serveur déclare la colonne', /\['prerequis', 'json'\]/.test(gs), true);
+verifier('le tableau de bord la propose', /cle: 'prerequis'/.test(admin), true);
+
+const generateur = lire('scripts/build-fiches.js');
+verifier('le générateur préfère les prérequis de la formation',
+  /if \(BLOCS\.aDesPrerequis\(f\)\) \{/.test(generateur), true);
+verifier('et retombe sur les communs pour une fiche générée',
+  /\} else if \(f\.slug !== 'canva-pro'\) \{/.test(generateur), true);
+
+verifier('la fiche les réactualise sans régénération',
+  /remplir\('prerequis-section', blocs\.aDesPrerequis\?\.\(formation\)/.test(formulaire), true);
+
+/* Une colonne ajoutée au serveur oblige à republier : la version doit changer
+   des DEUX côtés, sinon le tableau de bord ne saura pas le dire. */
+const versionGs = /var VERSION = '([^']+)'/.exec(gs);
+const versionSite = /versionScript: '([^']+)'/.exec(donneesSite);
+verifier('le script et le site annoncent la même version',
+  versionGs && versionSite ? versionGs[1] === versionSite[1] : false, true);
+resultats.push('NOTE  version attendue en production : ' + (versionGs ? versionGs[1] : '?'));
+
 // ---------------------------------- BILAN ----------------------------------
 resultats.forEach(l => console.log(l));
 const echecs = resultats.filter(l => l.indexOf('ÉCHEC') === 0).length;

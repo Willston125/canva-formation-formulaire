@@ -132,11 +132,43 @@
       + '<div class="space-y-3">' + items + '</div>';
   }
 
+  /** Prérequis saisis pour CETTE formation, une ligne par exigence. */
+  function lirePrerequis(formation) {
+    var brut = formation && formation.prerequis;
+    if (!Array.isArray(brut)) return [];
+    return brut.map(function (p) { return String(p == null ? '' : p).trim(); }).filter(Boolean);
+  }
+
+  /**
+   * Prérequis propres à la formation.
+   *
+   * Ils étaient un texte UNIQUE, partagé par les six fiches : ce qui vaut pour
+   * Canva Pro — « un compte Canva gratuit suffit » — n'a aucun sens pour Photo
+   * & Vidéo. Chaque formation porte désormais les siens, comme son programme et
+   * sa FAQ. Tant qu'aucun n'est saisi, la fiche garde ceux de son HTML.
+   */
+  function prerequisInterieur(formation) {
+    var lignes = lirePrerequis(formation);
+    if (!lignes.length) return '';
+    var items = lignes.map(function (ligne) {
+      return '<li><span class="material-symbols-outlined" aria-hidden="true">check_circle</span>'
+        + echapper(ligne) + '</li>';
+    }).join('');
+    return '<div class="glass-card rounded-2xl sm:rounded-3xl p-6 sm:p-8">'
+      + '<div class="flex items-center gap-3 mb-5">'
+      + '<span class="material-symbols-outlined text-[#CBFD00] text-2xl" aria-hidden="true">checklist</span>'
+      + '<h2 class="text-lg sm:text-xl font-extrabold text-[#FFFFFF] font-headline" id="prerequis-title">'
+      + 'Prérequis</h2></div>'
+      + '<ul class="prerequis-list">' + items + '</ul></div>';
+  }
+
   racine.FicheBlocs = {
     programmeInterieur: programmeInterieur,
     programmeSimpleInterieur: programmeSimpleInterieur,
     faqInterieur: faqInterieur,
+    prerequisInterieur: prerequisInterieur,
     aUnProgramme: function (formation) { return !!lireProgramme(formation); },
-    aUneFaq: function (formation) { return lireFaq(formation).length > 0; }
+    aUneFaq: function (formation) { return lireFaq(formation).length > 0; },
+    aDesPrerequis: function (formation) { return lirePrerequis(formation).length > 0; }
   };
 })(typeof window !== 'undefined' ? window : this);

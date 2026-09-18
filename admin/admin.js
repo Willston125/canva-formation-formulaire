@@ -952,6 +952,10 @@
     { cle: 'learnings', libelle: 'Ce que l’on apprend', type: 'lignes', large: true, aide: 'Un acquis par ligne, deux ou trois suffisent. Repris sur la carte du catalogue.' },
     { cle: 'objectives', libelle: 'Objectifs proposés au candidat', type: 'objectifs', large: true,
       aide: 'Un objectif par ligne, proposé à l’étape 2 du formulaire. Vide = liste commune.' },
+    { cle: 'prerequis', libelle: 'Prérequis de cette formation', type: 'lignes', large: true,
+      aide: 'Un prérequis par ligne, sur la fiche. Ils étaient autrefois communs aux six '
+        + 'formations — ce qui vaut pour Canva Pro n’a aucun sens pour Photo & Vidéo. '
+        + 'Vide = les prérequis communs s’affichent.' },
 
     { section: 'Informations pratiques' },
     { cle: 'duration', libelle: 'Durée', type: 'text', aide: 'Ex. « 12 séances ». Laisser « À confirmer » si inconnue.' },

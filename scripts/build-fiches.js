@@ -78,6 +78,12 @@ function sectionProgramme(f) {
   return `<section class="fiche-block reveal-on-scroll" id="programme-section" aria-labelledby="programme-title">${interieur}</section>`;
 }
 
+/** Prérequis saisis pour cette formation, dans leur section. */
+function sectionPrerequis(f) {
+  return '<section class="fiche-block reveal-on-scroll" id="prerequis-section" aria-labelledby="prerequis-title">'
+    + BLOCS.prerequisInterieur(f) + '</section>';
+}
+
 /**
  * Prérequis génériques — vrais pour toute formation, sans inventer de modalité.
  *
@@ -238,8 +244,18 @@ function render(template, f) {
   html = replace(html, /<section[^>]*id="programme-section"[\s\S]*?<\/section>/i, sectionProgramme(f), 'programme');
   html = replace(html, /<section[^>]*id="faq-section"[\s\S]*?<\/section>/i, sectionFaq(f), 'FAQ');
 
+  /* Prérequis : ceux saisis pour CETTE formation l'emportent, sur toutes les
+     fiches — y compris celle du gabarit. Sans rien de saisi, une fiche générée
+     reçoit les prérequis communs, et le gabarit garde les siens, écrits à la
+     main pour Canva Pro. */
+  const ZONE_PREREQUIS = /<section[^>]*id="prerequis-section"[\s\S]*?<\/section>/i;
+  if (BLOCS.aDesPrerequis(f)) {
+    html = replace(html, ZONE_PREREQUIS, () => sectionPrerequis(f), 'prérequis');
+  } else if (f.slug !== 'canva-pro') {
+    html = replace(html, ZONE_PREREQUIS, () => genericPrerequisites(), 'prérequis');
+  }
+
   if (f.slug !== 'canva-pro') {
-    html = replace(html, /<section[^>]*id="prerequis-section"[\s\S]*?<\/section>/i, genericPrerequisites(), 'prérequis');
     html = replace(html, /<section[^>]*id="formateur-section"[\s\S]*?<\/section>/i, () => genericTrainer(f, template), 'formateur');
     html = html
       .replace(/Canva Pro &amp; Création de contenu/g, esc(f.title))

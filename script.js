@@ -349,6 +349,10 @@
             ? blocs.programmeInterieur(formation)
             : blocs.programmeSimpleInterieur(formation));
         remplir('faq-section', blocs.aUneFaq(formation) ? blocs.faqInterieur(formation) : '');
+        /* Prérequis propres à la formation. Sans rien de saisi, on laisse la
+           page tranquille : elle porte déjà ceux de son HTML. */
+        remplir('prerequis-section', blocs.aDesPrerequis?.(formation)
+            ? blocs.prerequisInterieur(formation) : '');
     }
 
     // ====== INFORMATIONS DE SESSION SUR LA FICHE ======
