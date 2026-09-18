@@ -17,7 +17,11 @@
   --bordure-forte: rgba(203, 253, 0, 0.28);
   --texte: #F6F5EF;
   --texte-doux: #9CA6B2;
-  --texte-faible: #667080;
+  /* Mesuré : l'ancien #667080 donnait 3,56 et 3,27 sur les deux fonds, sous le
+     seuil AA de 4,5. Il sert pourtant à du texte normal — messages d'erreur
+     d'envoi d'image, coordonnées des candidats. Éclairci du minimum qui passe,
+     teinte conservée : 4,95 et 4,55. */
+  --texte-faible: #7B889B;
   --danger: #F87171;
   --danger-fond: rgba(127, 29, 29, 0.22);
   --succes: #34D399;

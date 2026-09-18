@@ -264,6 +264,41 @@ const finPrixDe = corpsPrixDe.indexOf('\n    }\n');
 const code = corpsPrixDe.slice(0, finPrixDe).replace(/\/\*[\s\S]*?\*\/|\/\/.*/g, '');
 verifier('aucun calcul appliqué à un tarif', /[*\/]\s*(?:taux|[\d.]+)/.test(code), false);
 
+// --- 14. Le texte du tableau de bord doit rester lisible ---
+
+/* Mesuré : --texte-faible donnait 3,56 et 3,27 sur les deux fonds, sous le
+   seuil AA de 4,5 — alors qu'il sert à du texte normal (messages d'erreur
+   d'envoi d'image, coordonnées des candidats). */
+const css = lire('admin/admin.css');
+const variable = nom => (new RegExp('--' + nom + ':\\s*(#[0-9A-Fa-f]{6})').exec(css) || [])[1];
+
+const canal = c => { const v = c / 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
+const luminance = hex => {
+  const n = parseInt(hex.replace('#', ''), 16);
+  return 0.2126 * canal((n >> 16) & 255) + 0.7152 * canal((n >> 8) & 255) + 0.0722 * canal(n & 255);
+};
+const contraste = (a, b) => {
+  const [x, y] = [luminance(a), luminance(b)].sort((p, q) => q - p);
+  return (x + 0.05) / (y + 0.05);
+};
+
+const fonds = ['surface-2', 'surface-3'].map(variable).filter(Boolean);
+const textes = ['texte', 'texte-doux', 'texte-faible'].map(n => [n, variable(n)]).filter(p => p[1]);
+
+verifier('les couleurs du tableau de bord sont bien lues',
+  fonds.length === 2 && textes.length === 3, true);
+
+const souslesSeuil = [];
+textes.forEach(([nom, couleur]) => {
+  fonds.forEach(fond => {
+    const r = contraste(couleur, fond);
+    if (r < 4.5) souslesSeuil.push(nom + ' sur ' + fond + ' = ' + r.toFixed(2));
+  });
+});
+verifier('chaque couleur de texte atteint le seuil AA (4,5)', souslesSeuil, []);
+resultats.push('NOTE  contrastes mesurés : '
+  + textes.map(([n, c]) => n + ' ' + Math.min(...fonds.map(f => contraste(c, f))).toFixed(2)).join(' · '));
+
 // ---------------------------------- BILAN ----------------------------------
 resultats.forEach(l => console.log(l));
 const echecs = resultats.filter(l => l.indexOf('ÉCHEC') === 0).length;

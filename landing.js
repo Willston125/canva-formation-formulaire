@@ -79,8 +79,16 @@
         const variant = options.variant || 'default';
         const accessible = options.accessible !== false;
         const showLearnings = variant === 'default' || variant === 'featured';
+        /* La catégorie n'est pas un champ obligatoire du tableau de bord. Une
+           formation créée sans catégorie NI promesse NI description faisait ici
+           « null.toLowerCase() » : le rendu du catalogue s'interrompait, et
+           l'accueil restait figé sur les données précédentes, sans rien dire.
+           Faute de catégorie, on se passe simplement de la nommer. */
         const promise = isKnown(formation.promise) ? formation.promise
-            : (isKnown(formation.shortDescription) ? formation.shortDescription : `Une formation ${formation.category.toLowerCase()} orientée pratique.`);
+            : (isKnown(formation.shortDescription) ? formation.shortDescription
+                : (isKnown(formation.category)
+                    ? `Une formation ${formation.category.toLowerCase()} orientée pratique.`
+                    : 'Une formation orientée pratique.'));
         const ctaLabel = formation.hasDetailPage ? 'Voir la formation' : 'Découvrir la formation';
         const focusAttrs = accessible ? '' : 'tabindex="-1" aria-hidden="true"';
         const link = formation.hasDetailPage
@@ -95,7 +103,7 @@
                 <div class="course-card__badges">${cardBadges(formation)}</div>
             </div>
             <div class="course-card__body">
-                <span class="course-card__category">${escapeHtml(formation.category)}</span>
+                <span class="course-card__category">${escapeHtml(formation.category || '')}</span>
                 <h3 class="course-card__title">${escapeHtml(formation.title)}</h3>
                 <p class="course-card__promise">${escapeHtml(promise)}</p>
                 ${cardMeta(formation)}
@@ -401,9 +409,9 @@
 
         const mediaCategory = document.getElementById('training-dialog-media-category');
         const mediaPromise = document.getElementById('training-dialog-media-promise');
-        if (mediaCategory) mediaCategory.textContent = formation.category;
+        if (mediaCategory) mediaCategory.textContent = formation.category || '';
         if (mediaPromise) mediaPromise.textContent = formation.promise || '';
-        document.getElementById('training-dialog-category').textContent = formation.category;
+        document.getElementById('training-dialog-category').textContent = formation.category || '';
         document.getElementById('training-dialog-title').textContent = formation.title;
         document.getElementById('training-dialog-description').textContent = formation.shortDescription;
 
