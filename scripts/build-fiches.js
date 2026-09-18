@@ -112,28 +112,37 @@ function genericPrerequisites() {
 }
 
 /**
- * Bloc « Votre formateur » générique — même squelette que le gabarit.
+ * Bloc « Votre formateur », DÉRIVÉ de celui du gabarit.
  *
- * Il portait un sur-titre « VOTRE FORMATEUR » et un titre au nom du formateur,
- * là où le gabarit met un titre « Votre Formateur » et le nom en dessous. La
- * clé `fiche.formateur.titre` aurait donc désigné deux textes différents selon
- * la fiche, ce que l'épreuve des textes refuse. On aligne la structure : le
- * titre devient le même mot, porte la même clé, et le nom passe en dessous.
- * La carte photo animée du gabarit n'est pas reprise — elle est propre à la
- * fiche Canva Pro, et son texte ne se modifie pas depuis le tableau de bord.
+ * Il était autrefois réécrit à la main, en version appauvrie : pas de carte
+ * photo animée, pas d'étiquettes. Les cinq autres fiches avaient donc un
+ * formateur plus terne que celui de Canva Pro, sans raison — c'est le même
+ * homme. On repart maintenant du bloc du gabarit et on ne remplace que ce qui
+ * est propre à sa formation : le badge et la phrase de présentation. La carte
+ * ne peut plus diverger, puisqu'elle n'est écrite qu'à un seul endroit.
  */
-function genericTrainer(f) {
-  return `<section class="fiche-block reveal-on-scroll" id="formateur-section" aria-labelledby="formateur-title">`
-    + `<div class="glass-card rounded-2xl sm:rounded-3xl shadow-xl shadow-black/20 border border-white/40 p-6 sm:p-8">`
-    + `<div class="flex items-center gap-2 mb-3">`
-    + `<span class="material-symbols-outlined text-[#CBFD00] text-2xl" style="font-variation-settings: 'FILL' 1;" aria-hidden="true">verified</span>`
-    + `<h2 class="text-xl sm:text-2xl font-extrabold text-[#FFFFFF] font-headline" id="formateur-title" `
-    + `data-texte="fiche.formateur.titre" data-texte-groupe="Fiche formation" `
-    + `data-texte-libelle="Titre « Votre formateur »">Votre Formateur</h2></div>`
-    + `<p class="font-bold text-[#FFFFFF] font-headline mb-3">Ali William</p>`
-    + `<p class="text-sm sm:text-base text-[#E5E5E5] leading-relaxed">Expert en communication multimédia, réalisateur et stratège digital, `
-    + `Ali William transmet pour la formation « ${esc(f.title)} » une méthode pratique issue de son expérience de terrain.</p>`
-    + `</div></section>`;
+function genericTrainer(f, template) {
+  const debut = template.indexOf('<section class="fiche-block reveal-on-scroll" id="formateur-section"');
+  if (debut < 0) throw new Error('Bloc formateur introuvable dans le template');
+  let bloc = template.slice(debut, template.indexOf('</section>', debut) + '</section>'.length);
+
+  /* Le badge nomme la formation, comme « CANVA PRO » sur le gabarit : premier
+     mot en plein, le reste en retrait. */
+  const nom = String(f.shortTitle || f.title || '').toUpperCase();
+  const mots = nom.split(/\s+/).filter(Boolean);
+  const badge = mots.length > 1
+    ? `${esc(mots[0])} <span class="text-[#050709]/60">${esc(mots.slice(1).join(' '))}</span>`
+    : esc(nom);
+  bloc = bloc.replace(/(<small[^>]*class="badge[^"]*"[^>]*>)[\s\S]*?(<\/small>)/,
+    (_, ouvre, ferme) => ouvre + badge + ferme);
+
+  // La présentation parle de CETTE formation
+  bloc = bloc.replace(/(<p class="text-sm sm:text-base text-\[#E5E5E5\] leading-relaxed mb-5">)[\s\S]*?(<\/p>)/,
+    (_, ouvre, ferme) => ouvre + 'Expert en communication multimédia, réalisateur et stratège digital, '
+      + `Ali William transmet pour la formation « ${esc(f.title)} » une méthode pratique issue de `
+      + 'son expérience de terrain.' + ferme);
+
+  return bloc;
 }
 
 /**
@@ -202,7 +211,14 @@ function render(template, f) {
   // `lead` autorise un HTML léger (mise en gras) ; sans lui, la description courte échappée.
   html = replace(html, /<p class="fiche-hero__lead">[\s\S]*?<\/p>/i, `<p class="fiche-hero__lead">${f.lead || esc(f.shortDescription)}</p>`, 'accroche');
   html = replace(html, /<dl class="fiche-facts"[\s\S]*?<\/dl>/i, facts(f), 'informations clés');
-  html = html.replaceAll('/assets/images/formation canva (2).jpg', f.poster || f.image);
+  /* Ce fichier sert à DEUX choses dans le gabarit : l'affiche de la formation,
+     et la photo du formateur dans sa carte. Les remplacer toutes les deux par
+     l'image de la formation mettrait son affiche sous le nom du formateur. On
+     ne vise donc que les affiches, reconnaissables à leur texte de remplacement. */
+  html = html.replace(/<img([^>]*?)src="\/assets\/images\/formation canva \(2\)\.jpg"([^>]*?)>/g,
+    (balise, avant, apres) => /alt="Affiche/.test(avant + apres)
+      ? `<img${avant}src="${esc(f.poster || f.image)}"${apres}>`
+      : balise);
   html = html.replace(/alt="Affiche de la formation Canva Pro[^"]*"/g, `alt="${esc(`Affiche de la formation ${f.title}`)}"`);
   html = replace(html, /(<strong id="selected-training-title">)[\s\S]*?(<\/strong>)/i, `$1${esc(f.title)}$2`, 'formation sélectionnée');
   html = replace(html, /(<small id="selected-training-meta">)[\s\S]*?(<\/small>)/i, `$1${esc(metaShort(f))}$2`, 'métadonnées du formulaire');
@@ -224,7 +240,7 @@ function render(template, f) {
 
   if (f.slug !== 'canva-pro') {
     html = replace(html, /<section[^>]*id="prerequis-section"[\s\S]*?<\/section>/i, genericPrerequisites(), 'prérequis');
-    html = replace(html, /<section[^>]*id="formateur-section"[\s\S]*?<\/section>/i, genericTrainer(f), 'formateur');
+    html = replace(html, /<section[^>]*id="formateur-section"[\s\S]*?<\/section>/i, () => genericTrainer(f, template), 'formateur');
     html = html
       .replace(/Canva Pro &amp; Création de contenu/g, esc(f.title))
       .replace(/Canva Pro & Création de contenu/g, esc(f.title));

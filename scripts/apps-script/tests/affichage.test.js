@@ -422,6 +422,40 @@ verifier('la bulle est repérée', !!bulle, true);
 verifier('la bulle porte le vert de marque et une icône sombre',
   bulle ? /bg-\[#CBFD00\]/.test(bulle[0]) && /text-\[#050709\]/.test(bulle[0]) : false, true);
 
+// --- 22. Les six fiches ont le même formateur, pas une version appauvrie ---
+
+/* Le bloc « Votre formateur » était réécrit à la main pour les cinq autres
+   fiches, sans la carte photo animée ni les étiquettes : le même homme y
+   paraissait plus terne, sans raison. Il se dérive maintenant du gabarit, et
+   seul le badge change — il nomme la formation. */
+const sansCarte = fiches.filter(f =>
+  lire('formations/' + f + '/index.html').indexOf('class="card shrink-0"') < 0);
+verifier('chaque fiche porte la carte du formateur', sansCarte, []);
+
+const badges = {};
+fiches.forEach(f => {
+  const m = /<small[^>]*class="badge[^"]*"[^>]*>([\s\S]*?)<\/small>/
+    .exec(lire('formations/' + f + '/index.html'));
+  badges[f] = m ? m[1].replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim() : null;
+});
+verifier('chaque badge nomme SA formation',
+  Object.entries(badges).filter(([, b]) => !b || b === 'CANVA PRO' && badges['canva-pro'] !== b).map(([f]) => f), []);
+verifier('aucun badge n’est vide', Object.entries(badges).filter(([, b]) => !b).map(([f]) => f), []);
+resultats.push('NOTE  badges : ' + Object.values(badges).join(' · '));
+
+/* La photo du formateur ne doit PAS être remplacée par l'affiche de la
+   formation : le gabarit sert le même fichier aux deux usages, et un
+   remplacement aveugle mettait l'affiche sous le nom du formateur. */
+const photosFausses = fiches.filter(f => {
+  const h = lire('formations/' + f + '/index.html');
+  const img = /<img[^>]*alt="Ali William"[^>]*>/.exec(h);
+  return !img || !/formation canva \(2\)\.jpg/.test(img[0]);
+});
+verifier('la carte montre bien le formateur, pas l’affiche', photosFausses, []);
+
+verifier('la photo du formateur se remplace depuis le tableau de bord',
+  fiches.filter(f => lire('formations/' + f + '/index.html').indexOf('data-image="fiche.formateur.photo"') < 0), []);
+
 // ---------------------------------- BILAN ----------------------------------
 resultats.forEach(l => console.log(l));
 const echecs = resultats.filter(l => l.indexOf('ÉCHEC') === 0).length;
