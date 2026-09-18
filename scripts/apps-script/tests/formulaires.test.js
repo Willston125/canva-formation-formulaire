@@ -266,6 +266,28 @@ verifier('un intitulé de numéro sans aucune lettre est refusé',
 verifier('le champ dit ce qu’on attend de lui',
   /libelle: 'Petit titre au-dessus du numéro'/.test(src), true);
 
+// --- 9. Un champ qui n'édite qu'une partie ne doit pas perdre le reste ---
+
+/* Le champ « Objectifs » n'édite QUE les libellés, une ligne chacun. Les relire
+   reconstruisait des objets neufs : toutes les icônes retombaient sur
+   « check_circle », et `value` — le texte réellement consigné dans la feuille
+   des inscriptions — devenait le libellé. Mesuré en modifiant la seule
+   promesse d'une formation : les cinq objectifs perdaient icône et valeur. */
+verifier('la lecture des objectifs pose bien une icône par défaut',
+  /return \{ icon: 'check_circle', label: l, value: l \};/.test(src), true);
+verifier('mais l’enregistrement rend son icône et sa valeur à un libellé inchangé',
+  /return ancien \? \{ icon: ancien\.icon \|\| o\.icon, label: o\.label, value: ancien\.value \|\| o\.value \} : o;/.test(src), true);
+
+/* Le contrôle ne vaut que si les objectifs portent vraiment des icônes et des
+   valeurs distinctes du libellé — sinon il ne protégerait rien. */
+const site = { window: {} };
+require('vm').runInNewContext(fs.readFileSync(path.resolve(__dirname, '..', '..', '..', 'formations-data.js'), 'utf8'), site);
+const objectifs = (site.window.FORMATIONS || []).flatMap(f => f.objectives || []);
+verifier('des objectifs portent une icône autre que « check_circle »',
+  objectifs.some(o => o.icon && o.icon !== 'check_circle'), true);
+verifier('et une valeur différente de leur libellé',
+  objectifs.some(o => o.value && o.value !== o.label), true);
+
 // ---------------------------------- BILAN ----------------------------------
 resultats.forEach(l => console.log(l));
 const echecs = resultats.filter(l => l.indexOf('ÉCHEC') === 0).length;

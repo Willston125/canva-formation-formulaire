@@ -1005,6 +1005,22 @@
     ouvrirPanneau(f ? 'Modifier la formation' : 'Nouvelle formation', CHAMPS_FORMATION, donnees, function (valeurs, fini) {
       valeurs.id = donnees.id;
       valeurs.formId = donnees.formId || valeurs.slug;
+
+      /* Le champ « Objectifs » n'édite QUE les libellés, une ligne chacun. Les
+         relire reconstruisait des objets neufs : l'icône retombait sur
+         « check_circle » pour tous, et `value` — le texte réellement consigné
+         dans la feuille des inscriptions — devenait le libellé. « Graphiste
+         freelance » aurait ainsi enregistré « Graphiste freelance » au lieu de
+         « Travailler comme Graphiste freelance ». On rend à chaque libellé
+         inchangé son icône et sa valeur d'origine. */
+      if (Array.isArray(valeurs.objectives)) {
+        var anciens = Array.isArray(donnees.objectives) ? donnees.objectives : [];
+        valeurs.objectives = valeurs.objectives.map(function (o) {
+          var ancien = anciens.filter(function (x) { return x && x.label === o.label; })[0];
+          return ancien ? { icon: ancien.icon || o.icon, label: o.label, value: ancien.value || o.value } : o;
+        });
+      }
+
       /* `price` reste le tarif du pays par défaut : les pages déjà générées et
          tout ce qui a été écrit avant les tarifs multi-pays le lisent encore. */
       var reference = paysDefaut();
