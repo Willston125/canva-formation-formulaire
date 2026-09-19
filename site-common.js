@@ -134,6 +134,45 @@
     }
 
     /**
+     * Réglages propres à un pays dans une session : mode, lieu, tarif.
+     *
+     * Une même session se tient en présentiel à Djibouti et en ligne ailleurs ;
+     * son lieu n'a de sens que là où elle est physique, et son tarif change de
+     * montant ET de devise d'un pays à l'autre. Un seul jeu de valeurs pour
+     * tous les pays affichait donc « Saalam Tower » à un candidat comorien qui
+     * suit la formation depuis chez lui.
+     *
+     * Rend toujours un objet, jamais `null` : l'appelant lit ses champs sans
+     * avoir à se garder. Une colonne absente — toute session créée avant elle —
+     * rend simplement un objet vide, et les valeurs de la session font foi.
+     */
+    function reglagesDuPays(session, code) {
+        const table = session && session.parPays;
+        if (!table || typeof table !== 'object' || Array.isArray(table)) return {};
+        const cible = String(code || '').toUpperCase();
+        const trouve = Object.keys(table).find(c => String(c).toUpperCase() === cible);
+        const valeur = trouve ? table[trouve] : null;
+        return (valeur && typeof valeur === 'object' && !Array.isArray(valeur)) ? valeur : {};
+    }
+
+    /** Mode d'une session dans ce pays : le sien s'il est réglé, celui de la session sinon. */
+    function modeDeSession(session, code) {
+        const propre = reglagesDuPays(session, code).mode;
+        return (typeof propre === 'string' && propre.trim()) ? propre.trim() : ((session && session.mode) || '');
+    }
+
+    /**
+     * Lieu d'une session dans ce pays.
+     * Une session EN LIGNE n'a pas de lieu : en annoncer un — fût-ce celui de la
+     * session — enverrait un candidat à une adresse où personne ne l'attend.
+     */
+    function lieuDeSession(session, code) {
+        if (/^en ligne$/i.test(modeDeSession(session, code))) return '';
+        const propre = reglagesDuPays(session, code).lieu;
+        return (typeof propre === 'string' && propre.trim()) ? propre.trim() : ((session && session.location) || '');
+    }
+
+    /**
      * Tarif d'une formation (ou d'une session) dans le pays demandé.
      * `prices` donne le montant pays par pays ; `price` reste le tarif du pays
      * par défaut, pour les données antérieures aux tarifs multi-pays et pour les
@@ -145,6 +184,12 @@
         if (!objet) return null;
         const pays = trouverPays(code) || paysActif();
         if (!pays) return null;
+        /* Tarif réglé POUR CE PAYS dans la session : c'est le plus précis, il
+           passe avant celui de la formation. Il porte déjà la devise du pays,
+           puisqu'il a été saisi en face de lui — rien n'est converti. */
+        const duPays = reglagesDuPays(objet, pays.code).tarif;
+        if (typeof duPays === 'number' && isFinite(duPays)) return duPays;
+
         const table = objet.prices;
         if (table && typeof table === 'object') {
             const valeur = table[pays.code];
@@ -930,6 +975,11 @@
         whatsappUrl,
         emailContact,
         formatPrice,
+        /* Mode et lieu se résolvent PAR PAYS : la fiche et le formulaire doivent
+           passer par là plutôt que de lire session.mode ou session.location, qui
+           ne sont que le repli. */
+        modeDeSession,
+        lieuDeSession,
         sessionState,
         refreshPlaces,
         paysDisponibles,

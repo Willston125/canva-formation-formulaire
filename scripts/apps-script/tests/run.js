@@ -25,7 +25,8 @@ const EPREUVES = [
   ['cadrage-affichage.test.js', 'Le cadrage s applique aux seules images remplacees'],
   ['rapports-visuels.test.js', 'Chaque emplacement annonce son rapport reel'],
   ['envoi-non-destructif.test.js', 'L envoi conserve la photo entiere'],
-  ['catalogue-annonce.test.js', 'Une modification du tableau de bord atteint la page']
+  ['catalogue-annonce.test.js', 'Une modification du tableau de bord atteint la page'],
+  ['session-par-pays.test.js', 'Mode, lieu et tarif propres a chaque pays']
 ];
 
 let echecs = 0;

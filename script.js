@@ -90,6 +90,14 @@
      * Tarif applicable : celui de la session quand elle en fixe un pour ce pays,
      * sinon celui de la formation. `null` signifie « non communiqué », jamais 0.
      */
+    /* Mode et lieu d'une session DANS LE PAYS du candidat. Le repli sur les
+       champs de la session couvre les sessions créées avant la colonne par
+       pays, et le cas d'un script Google resté en version précédente. */
+    const sessionMode = (s) => (common && common.modeDeSession)
+        ? common.modeDeSession(s, currentPays()?.code) : (s?.mode || '');
+    const sessionLieu = (s) => (common && common.lieuDeSession)
+        ? common.lieuDeSession(s, currentPays()?.code) : (s?.location || '');
+
     const currentPrice = () => {
         if (!common) return null;
         const duSession = common.prixDe(activeSession());
@@ -265,8 +273,14 @@
                 : `À partir du ${formatSessionDate(s.startDate)}`;
             lignes.push(['event', dates]);
             if (s.schedule) lignes.push(['schedule', s.schedule]);
-            if (s.location) lignes.push(['location_on', s.location]);
-            if (s.mode) lignes.push(['co_present', s.mode]);
+            /* Mode et lieu se résolvent POUR LE PAYS du candidat : une même
+               session se tient en présentiel ici et en ligne ailleurs. Lire
+               s.location directement annonçait « Saalam Tower » à un Comorien
+               qui suit la formation depuis chez lui. */
+            const lieu = sessionLieu(s);
+            const mode = sessionMode(s);
+            if (lieu) lignes.push(['location_on', lieu]);
+            if (mode) lignes.push(['co_present', mode]);
         } else if (selectedFormation?.mode && !/^à confirmer$/i.test(selectedFormation.mode)) {
             lignes.push(['co_present', selectedFormation.mode]);
         }
@@ -370,7 +384,7 @@
         const s = displaySession;
         set('fiche-next-session', s ? [formatSessionDate(s.startDate), s.schedule].filter(Boolean).join(' · ') : '');
         set('fiche-schedule', s?.schedule || '');
-        set('fiche-location', s?.location || '');
+        set('fiche-location', s ? sessionLieu(s) : '');
         const priceEl = document.getElementById('fiche-price');
         if (priceEl) priceEl.textContent = formatPrice(currentPrice());
     }

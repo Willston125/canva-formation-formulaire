@@ -75,7 +75,7 @@
  * déploiement n'a pas été publiée, et Google sert encore l'ancien code.
  * C'est l'erreur la plus fréquente, et la plus difficile à diagnostiquer.
  */
-var VERSION = '2026-09-19-cadrage-visuels';
+var VERSION = '2026-09-20-session-par-pays';
 
 /** Classeur. Vide = le classeur auquel ce script est rattaché (cas normal). */
 var ID_CLASSEUR = '';
@@ -171,7 +171,14 @@ var CHAMPS_SESSION = [
   ['id', 'texte'], ['formId', 'texte'], ['startDate', 'texte'], ['endDate', 'texte'],
   ['schedule', 'texte'], ['duration', 'texte'], ['location', 'texte'], ['mode', 'texte'],
   ['price', 'num'], ['placesTotal', 'num'], ['placesAvailable', 'num'],
-  ['registrationOpen', 'bool'], ['currency', 'texte'], ['pays', 'texte']
+  ['registrationOpen', 'bool'], ['currency', 'texte'], ['pays', 'texte'],
+  /* Mode, lieu et tarif PROPRES À CHAQUE PAYS coché, quand ils diffèrent :
+     { "DJ": { "mode": "Présentiel", "lieu": "Saalam Tower", "tarif": 7500 } }.
+     Une même session peut se tenir en présentiel ici et en ligne ailleurs, à
+     un tarif qui n'est pas le même et dans une autre devise. Les champs
+     `mode`, `location` et `price` de la session restent le repli : sans eux,
+     une session créée avant cette colonne perdrait lieu et mode d'un coup. */
+  ['parPays', 'json']
 ];
 
 /**

@@ -756,3 +756,40 @@ select.statut:focus { outline: none; border-color: var(--brand); }
     min-height: 44px;
   }
 }
+
+/* Réglages par pays d'une session.
+
+   Une même session se tient en présentiel ici et en ligne ailleurs, à un tarif
+   qui change de montant et de devise. Ses trois champs ne s'ouvrent que pour un
+   pays coché : les afficher tous ferait un mur de champs dès qu'on dessert
+   plusieurs marchés, pour des valeurs qui restent le plus souvent celles de la
+   session. */
+.pays-reglages {
+  display: grid;
+  gap: 10px;
+}
+
+.pays-reglage {
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.pays-reglage__champs {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) minmax(0, 1fr);
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.pays-reglage__champs .champ__libelle {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.62);
+}
+
+@media (max-width: 720px) {
+  .pays-reglage__champs { grid-template-columns: 1fr; }
+}

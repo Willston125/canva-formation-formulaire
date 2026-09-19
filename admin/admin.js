@@ -1231,7 +1231,12 @@
           + 'possibles. Aucune case cochée = proposée PARTOUT, y compris dans un pays '
           + 'ajouté plus tard — c’est le réglage d’une session EN LIGNE. Pour une '
           + 'session en présentiel, ne cochez que le pays où elle se tient : ailleurs, '
-          + 'un candidat s’inscrirait pour une salle qu’il ne peut pas rejoindre.' },
+          + 'un candidat s’inscrirait pour une salle qu’il ne peut pas rejoindre. '
+          + 'Chaque pays coché ouvre son mode, son lieu et son tarif : laissés vides, '
+          + 'ils reprennent ceux de la session.' },
+    /* Ce champ n'affiche rien : les réglages par pays se saisissent dans le bloc
+       des cases ci-dessus, et il ne fait que les récolter à l'enregistrement. */
+    { cle: 'parPays', type: 'paysReglages' },
       { cle: 'location', libelle: 'Lieu ou plateforme', type: 'text', large: true,
         exemple: 'Saalam Tower, 5ème étage — ou : Google Meet',
         aide: 'En présentiel, l’adresse exacte. En ligne, la plateforme employée. '
@@ -2251,6 +2256,14 @@
     champs.forEach(function (c) {
       if (c.type === 'image') activerChampImage(c.cle, c.format);
 
+      /* Les réglages d'un pays ne s'ouvrent que lorsqu'il est coché : les
+         afficher tous ferait un mur de champs dès qu'on dessert plusieurs
+         marchés, pour des valeurs qui restent le plus souvent celles de la
+         session. Et le lieu disparaît quand le mode est « En ligne » : une
+         session en ligne n'a pas d'adresse, et en annoncer une enverrait un
+         candidat là où personne ne l'attend. */
+      if (c.type === 'paysCases') activerReglagesPays(c.cle);
+
       if (c.type === 'programme') {
         rendreProgramme(c.cle, donnees[c.cle] ? JSON.parse(JSON.stringify(donnees[c.cle])) : null);
         var ajouterModule = document.querySelector('[data-ajouter-module="' + c.cle + '"]');
@@ -2343,6 +2356,10 @@
         return;
       }
 
+      /* Rien à dessiner : ses valeurs sont saisies dans le bloc des cases pays,
+         et relues de là à l'enregistrement. */
+      if (c.type === 'paysReglages') return;
+
       /* Tarifs par pays : une case par pays, dans SA devise. Rien n'est converti,
          et un montant laissé vide veut dire « pas encore fixé », pas « gratuit ». */
       if (c.type === 'tarifs') {
@@ -2415,12 +2432,43 @@
            pays par pays sans rouvrir un menu déroulant. */
         var coches = codesPays(v);
         var listeP = listePays();
-        html += '<div class="grille-champs" data-pays-cases="' + echapper(c.cle) + '">'
+        /* Chaque pays coché ouvre SES propres réglages : une même session se
+           tient en présentiel à Djibouti et en ligne ailleurs, à un tarif qui
+           change de montant ET de devise. Un seul mode et un seul lieu pour
+           tous annonçaient « Saalam Tower » à un candidat comorien qui suit la
+           formation depuis chez lui. Laissés vides, ces champs reprennent ceux
+           de la session — rien n'est donc obligatoire. */
+        var detail = (donnees && donnees.parPays && typeof donnees.parPays === 'object'
+          && !Array.isArray(donnees.parPays)) ? donnees.parPays : {};
+        html += '<div class="pays-reglages" data-pays-cases="' + echapper(c.cle) + '">'
           + (listeP.length
             ? listeP.map(function (p) {
-              return '<label class="case"><input type="checkbox" data-pays-case="'
-                + echapper(p.code) + '"' + (coches.indexOf(p.code) >= 0 ? ' checked' : '') + '>'
-                + '<span>' + echapper(p.nom) + ' (' + echapper(p.devise) + ')</span></label>';
+              var d = detail[p.code] || {};
+              var coche = coches.indexOf(p.code) >= 0;
+              var enLigne = /^en ligne$/i.test(String(d.mode || ''));
+              return '<div class="pays-reglage" data-pays-ligne="' + echapper(p.code) + '">'
+                + '<label class="case"><input type="checkbox" data-pays-case="'
+                + echapper(p.code) + '"' + (coche ? ' checked' : '') + '>'
+                + '<span>' + echapper(p.nom) + ' (' + echapper(p.devise) + ')</span></label>'
+                + '<div class="pays-reglage__champs"' + (coche ? '' : ' hidden') + '>'
+                + '<label class="champ"><span class="champ__libelle">Mode</span>'
+                + '<select data-pays-mode="' + echapper(p.code) + '">'
+                + ['', 'Présentiel', 'En ligne', 'Hybride', 'À confirmer'].map(function (m) {
+                  return '<option value="' + echapper(m) + '"'
+                    + (String(d.mode || '') === m ? ' selected' : '') + '>'
+                    + (m || 'Comme la session') + '</option>';
+                }).join('')
+                + '</select></label>'
+                + '<label class="champ" data-pays-lieu-champ="' + echapper(p.code) + '"'
+                + (enLigne ? ' hidden' : '') + '><span class="champ__libelle">Lieu</span>'
+                + '<input type="text" data-pays-lieu="' + echapper(p.code) + '" value="'
+                + echapper(d.lieu || '') + '" placeholder="Comme la session"></label>'
+                + '<label class="champ"><span class="champ__libelle">Tarif ('
+                + echapper(p.devise) + ')</span>'
+                + '<input type="number" min="0" step="1" data-pays-tarif="' + echapper(p.code)
+                + '" value="' + echapper(typeof d.tarif === 'number' ? d.tarif : '')
+                + '" placeholder="Tarif de la formation"></label>'
+                + '</div></div>';
             }).join('')
             : '<p class="champ__aide">Aucun pays enregistré : créez-en un dans la rubrique Pays.</p>')
           + '</div>';
@@ -2474,6 +2522,9 @@
     form = form || FORM_PANNEAU;
     var racine = form.racine();
     if (c.type === 'paysCases') return lirePaysCases(c.cle, racine);
+    /* Les réglages par pays vivent dans le MÊME bloc que les cases : ce champ
+       n'affiche rien, il ne fait que récolter ce que l'autre a rendu. */
+    if (c.type === 'paysReglages') return lirePaysReglages(racine);
     if (c.type === 'tarifs') return lireTarifs(c.cle, racine);
     if (c.type === 'paiements') return lirePaiements(c.cle, racine);
     if (c.type === 'programme') return lireProgrammeChamp(c.cle, racine);
@@ -2520,6 +2571,62 @@
       .filter(function (e) { return e.checked; })
       .map(function (e) { return e.dataset.paysCase; })
       .join(',');
+  }
+
+  /**
+   * Réglages par pays saisis dans le même bloc que les cases.
+   *
+   * Seuls les pays COCHÉS sont retenus : décocher un pays doit emporter ses
+   * réglages, sans quoi un lieu resterait attaché à un pays où la session n'est
+   * plus proposée, et ressortirait le jour où on le recoche.
+   *
+   * Et seuls les champs RENSEIGNÉS sont enregistrés : un champ vide veut dire
+   * « comme la session », pas « vide ». Écrire la chaîne vide effacerait le
+   * repli au lieu de le laisser jouer.
+   */
+  /** Ouvre les réglages d'un pays quand on le coche, et masque le lieu en ligne. */
+  function activerReglagesPays(cle) {
+    var boite = document.querySelector('[data-pays-cases="' + cle + '"]');
+    if (!boite) return;
+    boite.querySelectorAll('[data-pays-ligne]').forEach(function (ligne) {
+      var code = ligne.dataset.paysLigne;
+      var case_ = ligne.querySelector('[data-pays-case]');
+      var champs = ligne.querySelector('.pays-reglage__champs');
+      var mode = ligne.querySelector('[data-pays-mode]');
+      var champLieu = ligne.querySelector('[data-pays-lieu-champ="' + code + '"]');
+      if (!case_ || !champs) return;
+
+      case_.addEventListener('change', function () { champs.hidden = !case_.checked; });
+      if (mode && champLieu) {
+        mode.addEventListener('change', function () {
+          champLieu.hidden = /^en ligne$/i.test(mode.value);
+        });
+      }
+    });
+  }
+
+  function lirePaysReglages(racine) {
+    var boite = (racine || document).querySelector('[data-pays-cases]');
+    if (!boite) return undefined;
+    var out = {};
+    Array.prototype.slice.call(boite.querySelectorAll('[data-pays-case]')).forEach(function (case_) {
+      if (!case_.checked) return;
+      var code = case_.dataset.paysCase;
+      var ligne = boite.querySelector('[data-pays-ligne="' + code + '"]');
+      if (!ligne) return;
+      var mode = (ligne.querySelector('[data-pays-mode]') || {}).value || '';
+      var lieu = (ligne.querySelector('[data-pays-lieu]') || {}).value || '';
+      var tarif = (ligne.querySelector('[data-pays-tarif]') || {}).value;
+      var reglage = {};
+      if (String(mode).trim()) reglage.mode = String(mode).trim();
+      if (String(lieu).trim()) reglage.lieu = String(lieu).trim();
+      if (String(tarif).trim() !== '') {
+        var n = Number(tarif);
+        if (!isNaN(n) && isFinite(n) && n >= 0) reglage.tarif = n;
+      }
+      if (Object.keys(reglage).length) out[code] = reglage;
+    });
+    return out;
   }
 
   /** Tarifs saisis : { DJ: 7500, KM: null }. `null` = non fixé, jamais 0. */
