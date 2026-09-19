@@ -294,6 +294,13 @@ function render(template, f) {
       `$1fiche.${esc(f.formId)}.formateur.photo$2`);
     html = html.replace(/(data-image-libelle=")Photo du formateur(")/,
       `$1Photo du formateur · ${esc(f.shortTitle || f.title)}$2`);
+  } else {
+    /* La page générique porte la clé commune, et c'est elle qui apparaît dans le
+       tableau de bord à côté des six photos par formation. Un libellé nu ne
+       disait pas son rôle : on l'aurait prise pour une septième fiche, alors
+       qu'elle sert de repli à toutes. */
+    html = html.replace(/(data-image-libelle=")Photo du formateur(")/,
+      `$1Photo du formateur · toutes les fiches$2`);
   }
   // Bouton WhatsApp flottant : message propre à la formation, pour toutes les fiches.
   html = replace(html, /(<a href="https:\/\/wa\.me\/[^"]*") data-whatsapp-float/,

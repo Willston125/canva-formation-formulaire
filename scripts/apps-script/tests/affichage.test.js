@@ -500,6 +500,20 @@ verifier('des fiches sont bien inspectées', fiches.length >= 6, true);
 verifier('la page d’inscription garde la clé commune',
   lire('inscription/index.html').indexOf('data-image="fiche.formateur.photo"') >= 0, true);
 
+/* Et son libellé dit son rôle. Dans le tableau de bord, elle apparaît juste
+   au-dessus des six photos par formation : un libellé nu la ferait prendre pour
+   une septième fiche, alors qu'elle sert de repli à toutes. */
+verifier('et son libellé annonce qu’elle vaut pour toutes les fiches',
+  lire('inscription/index.html')
+    .indexOf('data-image-libelle="Photo du formateur · toutes les fiches"') >= 0, true);
+
+/* Contre-contrôle : ce libellé ne doit PAS se retrouver sur une fiche, qui a le
+   sien. Sans cela, le contrôle ci-dessus passerait même si toutes les pages
+   portaient le même texte. */
+verifier('et aucune fiche ne reprend ce libellé',
+  fiches.filter(f => lire('formations/' + f + '/index.html')
+    .indexOf('Photo du formateur · toutes les fiches') >= 0), []);
+
 // --- 23. Les prérequis appartiennent à la formation, pas au site ---
 
 /* Ils étaient un texte UNIQUE partagé par les six fiches : « un compte Canva
