@@ -219,6 +219,7 @@
   }
 
   function initConnexion() {
+    restaurerChoixRester();
     var memorise = '';
     try { memorise = localStorage.getItem(CLE_MDP) || sessionStorage.getItem(CLE_MDP) || ''; } catch (e) { }
     if (memorise) {
@@ -240,13 +241,87 @@
    * et enverrait un email parasite. On préfère refuser et le dire clairement.
    * En cas d'injoignabilité, on laisse passer : l'envoi rapportera lui-même l'échec.
    */
+  /** Un contrôle d'API réussi vaut pour toute la session du navigateur. */
+  var CLE_API_VUE = 'impactali_api_verifiee';
+
+  /** Le choix « rester connecté », qui doit survivre à la fermeture du navigateur. */
+  var CLE_RESTER = 'impactali_admin_rester';
+
+  /**
+   * Range la phrase de passe là où l'utilisateur l'a demandé.
+   *
+   * La case « Rester connecté » n'était NI mémorisée NI restaurée : elle
+   * repartait décochée à chaque visite. Après une ouverture automatique, cet
+   * enregistrement redescendait donc la phrase de localStorage vers le stockage
+   * de session — effacé à la fermeture du navigateur. On la retapait le
+   * lendemain en croyant que la case ne servait à rien.
+   *
+   * L'ancienne place est toujours effacée : deux stockages qui se contredisent
+   * finissent par rendre la valeur périmée.
+   */
+  function memoriserMotDePasse(phrase) {
+    var case_ = $('#rester-connecte');
+    var durable = !!(case_ && case_.checked);
+    try {
+      localStorage.setItem(CLE_RESTER, durable ? '1' : '0');
+      (durable ? localStorage : sessionStorage).setItem(CLE_MDP, phrase);
+      (durable ? sessionStorage : localStorage).removeItem(CLE_MDP);
+    } catch (e) { /* stockage refusé : la session en cours reste ouverte */ }
+  }
+
+  /** Remet la case dans l'état choisi la dernière fois. */
+  function restaurerChoixRester() {
+    var case_ = $('#rester-connecte');
+    if (!case_) return;
+    try {
+      var garde = localStorage.getItem(CLE_RESTER);
+      /* Jamais répondu : on coche. Une phrase déjà rangée dans localStorage
+         vient forcément d'un « rester connecté », et la décocher la
+         reléguerait au premier enregistrement venu. */
+      case_.checked = garde === null ? true : garde === '1';
+    } catch (e) { /* stockage refusé : on laisse la case telle quelle */ }
+  }
+
+  /**
+   * Ce contrôle interrogeait `action=catalogue` : une lecture COMPLÈTE du
+   * classeur — six onglets, seize kilo-octets, quatre à cinq secondes — juste
+   * pour savoir si le script connaît l'administration. Et la commande de
+   * connexion qui suit relit le même catalogue. On attendait donc deux fois
+   * la même chose, et l'écran restait sur « Vérification… » une dizaine de
+   * secondes avant de s'ouvrir.
+   *
+   * `action=version` répond la même information en 129 octets. Le verdict est
+   * retenu pour la session : un aller-retour, une fois, pas à chaque connexion.
+   *
+   * Un délai d'attente le borne enfin. Sans lui, une requête qui n'aboutissait
+   * jamais laissait le bouton sur « Vérification… » indéfiniment, sans message
+   * ni moyen de réessayer. Passé ce délai on laisse passer : c'est l'envoi
+   * suivant qui rapportera l'échec, avec son propre message.
+   */
   function verifierApi() {
     if (!API) return Promise.resolve(true);
-    var cible = API + (API.indexOf('?') >= 0 ? '&' : '?') + 'action=catalogue';
-    return fetch(cible, { method: 'GET' })
+    try { if (sessionStorage.getItem(CLE_API_VUE) === '1') return Promise.resolve(true); }
+    catch (e) { /* stockage refusé : on interroge */ }
+
+    var cible = API + (API.indexOf('?') >= 0 ? '&' : '?') + 'action=version';
+    var essai = fetch(cible, { method: 'GET' })
       .then(function (r) { return r.ok ? r.json() : null; })
-      .then(function (d) { return !(d && d.erreur && !d.formations); })
+      .then(function (d) {
+        /* Un script d'avant l'administration ne connaît pas cette action et
+           répond « action inconnue » : pas de version, donc pas d'API. */
+        var connue = !!(d && d.version);
+        if (connue) { try { sessionStorage.setItem(CLE_API_VUE, '1'); } catch (e) { } }
+        /* La réponse est gardée : le bandeau d'état du script la demandait une
+           seconde fois, juste après, pour exactement la même information. */
+        if (d) etat.etatScript = d;
+        return connue;
+      })
       .catch(function () { return true; });
+
+    var abandon = new Promise(function (resoudre) {
+      window.setTimeout(function () { resoudre(true); }, 8000);
+    });
+    return Promise.race([essai, abandon]);
   }
 
   function connecter(silencieux) {
@@ -264,10 +339,11 @@
       }
       return appeler('admin.login', {});
     }).then(function () {
-      try {
-        var durable = $('#rester-connecte') && $('#rester-connecte').checked;
-        (durable ? localStorage : sessionStorage).setItem(CLE_MDP, etat.motDePasse);
-      } catch (e) { }
+      memoriserMotDePasse(etat.motDePasse);
+      /* `appeler` a déjà rangé le catalogue rendu par la connexion. On le note
+         ici plutôt que de tester `etat.catalogue`, qui part d'un objet vide
+         mais non nul : le tester rendrait toujours vrai, même sans réponse. */
+      etat.catalogueDeConnexion = true;
       $('#connexion').hidden = true;
       $('#app').hidden = false;
       demarrer();
@@ -327,7 +403,9 @@
     if (importer) importer.addEventListener('click', importerCatalogueDuSite);
 
     afficherEtatDuScript();
-    rafraichirTout();
+    /* Le catalogue est arrivé avec la réponse de connexion : inutile de le
+       redemander pour ouvrir l'écran. */
+    rafraichirTout(etat.catalogueDeConnexion === true);
   }
 
   /**
@@ -338,8 +416,13 @@
   function afficherEtatDuScript() {
     var pied = $('#etat-script');
     if (!pied || !API) return;
-    fetch(API + (API.indexOf('?') >= 0 ? '&' : '?') + 'action=version', { method: 'GET' })
-      .then(function (r) { return r.ok ? r.json() : null; })
+    /* La vérification d'API vient d'interroger cette même adresse : on reprend
+       sa réponse plutôt que de la redemander. Deux allers-retours chez Google
+       pour la même information, c'est deux secondes et demie de plus sur un
+       écran qui met déjà du temps à s'ouvrir. */
+    var dejaLu = etat.etatScript ? Promise.resolve(etat.etatScript) : null;
+    (dejaLu || fetch(API + (API.indexOf('?') >= 0 ? '&' : '?') + 'action=version', { method: 'GET' })
+      .then(function (r) { return r.ok ? r.json() : null; }))
       .then(function (d) {
         if (!d || !d.version) {
           pied.innerHTML = '<span class="etiquette etiquette--alerte">Script à mettre à jour</span>';
@@ -376,8 +459,17 @@
       .catch(function () { /* diagnostic indisponible : sans conséquence */ });
   }
 
-  function rafraichirTout() {
-    return appeler('admin.catalogue', {})
+  /**
+   * @param {boolean} catalogueFrais le catalogue vient d'arriver, ne le redemande pas
+   *
+   * `admin.login` rend DÉJÀ le catalogue, et cette fonction le redemandait
+   * aussitôt : une lecture complète du classeur de plus — six onglets, cinq
+   * secondes — pour des données vieilles d'un instant. Avec la vérification
+   * d'API et le bandeau d'état, l'ouverture comptait cinq allers-retours chez
+   * Google, dont trois pour le même catalogue.
+   */
+  function rafraichirTout(catalogueFrais) {
+    return (catalogueFrais ? Promise.resolve() : appeler('admin.catalogue', {}))
       .then(function () { return appeler('admin.inscriptions', {}); })
       .then(function (d) { etat.inscriptions = d.inscriptions || []; })
       .catch(function (err) { afficherMessage('#erreur-globale', messageLisible(err)); })

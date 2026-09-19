@@ -26,7 +26,8 @@ const EPREUVES = [
   ['rapports-visuels.test.js', 'Chaque emplacement annonce son rapport reel'],
   ['envoi-non-destructif.test.js', 'L envoi conserve la photo entiere'],
   ['catalogue-annonce.test.js', 'Une modification du tableau de bord atteint la page'],
-  ['session-par-pays.test.js', 'Mode, lieu et tarif propres a chaque pays']
+  ['session-par-pays.test.js', 'Mode, lieu et tarif propres a chaque pays'],
+  ['connexion-admin.test.js', 'Ouverture du tableau de bord sans attente inutile']
 ];
 
 let echecs = 0;
