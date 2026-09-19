@@ -31,15 +31,14 @@
 
    1. Ouvrir le projet Apps Script rattaché au classeur des inscriptions.
    2. Remplacer tout le contenu par ce fichier.
-   3. MOT DE PASSE DU TABLEAU DE BORD — à faire UNE SEULE FOIS.
-      ⚙ Paramètres du projet → Propriétés du script → Ajouter une propriété :
-         nom    MOT_DE_PASSE_ADMIN
-         valeur votre phrase de passe
-      Rangé là, il SURVIT au remplacement de ce fichier : les mises à jour
-      suivantes ne l'effacent plus, et il n'y a plus rien à retaper.
-      (La constante MOT_DE_PASSE_ADMIN plus bas reste acceptée, mais elle est
-      écrasée à chaque mise à jour du script — d'où l'oubli, et le tableau de
-      bord qui refuse soudain d'ouvrir.)
+   3. MOT DE PASSE DU TABLEAU DE BORD — une seule ligne, en haut du fichier.
+      Chercher MOT_DE_PASSE_ADMIN plus bas et écrire votre phrase entre les
+      guillemets. C'est tout : rien à ouvrir dans les réglages, rien à cocher.
+      Ce qui est écrit LÀ fait loi, et vous pouvez le relire à tout moment.
+      Le script en garde une copie de son côté : si une mise à jour vous fait
+      recoller un fichier où la ligne est restée sur sa valeur d'usine, la
+      phrase précédente continue de fonctionner. Vous ne pouvez donc plus vous
+      enfermer dehors.
    4. DÉCLARER LES PERMISSIONS — étape indispensable dès qu'on ajoute un
       service Google à un projet déjà autorisé : Apps Script conserve sinon les
       anciennes permissions et n'en redemande jamais, ce qui produit une erreur
@@ -76,7 +75,7 @@
  * déploiement n'a pas été publiée, et Google sert encore l'ancien code.
  * C'est l'erreur la plus fréquente, et la plus difficile à diagnostiquer.
  */
-var VERSION = '2026-09-18-motdepasse';
+var VERSION = '2026-09-19-mot-de-passe-visible';
 
 /** Classeur. Vide = le classeur auquel ce script est rattaché (cas normal). */
 var ID_CLASSEUR = '';
@@ -98,12 +97,23 @@ var EMAIL_PRO = 'infos@impactali.site';
 var NOM_EXPEDITEUR = 'Inscriptions IMPACTALI';
 
 /**
- * MOT DE PASSE DU TABLEAU DE BORD.
- * À changer impérativement. Il protège l'accès à /admin : modification du
- * catalogue, des tarifs, et consultation des coordonnées des candidats.
- * Choisissez une phrase longue, propre à ce site, jamais réutilisée ailleurs.
+ * MOT DE PASSE DU TABLEAU DE BORD — écrivez-le ici, entre les guillemets.
+ *
+ * C'est le seul endroit à renseigner, et il est sous vos yeux : si l'accès est
+ * refusé un jour, il suffit de relire cette ligne. Il protège /admin —
+ * modification du catalogue, des tarifs, et consultation des coordonnées des
+ * candidats. Choisissez une phrase longue, propre à ce site, jamais réutilisée
+ * ailleurs, en lettres, chiffres et tirets.
+ *
+ * Évitez d'y coller du texte venu d'un traitement de texte : il apporte des
+ * caractères qui ne se voient pas (espace insécable, apostrophe courbe) et
+ * qu'il faudrait ensuite retaper à l'identique. Tapez-la au clavier.
  */
 var MOT_DE_PASSE_ADMIN = 'CHANGEZ-MOI-avant-de-deployer';
+
+/* C'est la SEULE ligne de ce fichier à renseigner. Tout le reste fonctionne
+   sans être touché — en particulier, ne recopiez votre phrase nulle part
+   ailleurs : le script s'en charge. */
 
 /**
  * Statuts qui occupent une place dans le décompte affiché sur le site.
@@ -304,31 +314,75 @@ function commandeAdmin(d) {
   }
 }
 
-/** Comparaison à durée constante, pour ne rien révéler par le temps de réponse. */
 /**
- * Mot de passe du tableau de bord.
+ * Mot de passe attendu par le tableau de bord.
  *
- * Il est cherché D'ABORD dans les propriétés du script, où il survit au
- * remplacement du code : mettre à jour ce fichier ne l'efface pas. Sans
- * propriété, on retombe sur la constante ci-dessus — mais il faut alors la
- * retaper à CHAQUE mise à jour, et l'oublier ferme l'administration.
+ * CE QUI EST ÉCRIT DANS LE FICHIER FAIT LOI. C'était l'inverse auparavant : une
+ * phrase rangée dans les propriétés du script l'emportait sur la ligne visible,
+ * et lorsque les deux différaient — une espace en trop suffisait — plus rien
+ * n'ouvrait l'administration, sans qu'aucun écran ne permette de voir laquelle
+ * était en cause. On ne peut plus s'enfermer dehors : la réponse est lisible en
+ * haut de ce fichier.
  *
- * Pour ne plus jamais avoir à y penser : dans l'éditeur Apps Script,
- * ⚙ Paramètres du projet → Propriétés du script → Ajouter une propriété,
- * nom « MOT_DE_PASSE_ADMIN », valeur votre phrase de passe.
+ * Le script garde malgré tout une copie de la phrase de son côté. Elle ne sert
+ * que si la ligne visible est restée sur sa valeur d'usine — le cas d'une mise
+ * à jour recollée sans avoir repris le mot de passe. La dernière phrase connue
+ * prend alors le relais, au lieu de fermer la porte.
+ *
+ * Les espaces de début et de fin sont retirées des deux côtés : elles ne se
+ * voient nulle part, et c'est par elles que tout est arrivé.
  */
 function motDePasseAdmin() {
+  var duFichier = String(MOT_DE_PASSE_ADMIN || '').trim();
+
+  if (!motDePasseNonRenseigne(duFichier)) {
+    memoriserMotDePasse(duFichier);
+    return duFichier;
+  }
+
   try {
-    var enregistre = PropertiesService.getScriptProperties().getProperty('MOT_DE_PASSE_ADMIN');
-    if (enregistre) return String(enregistre);
-  } catch (e) { /* propriétés indisponibles : la constante fait foi */ }
-  return String(MOT_DE_PASSE_ADMIN || '');
+    var copie = PropertiesService.getScriptProperties().getProperty(CLE_MOT_DE_PASSE);
+    if (copie) return String(copie).trim();
+  } catch (e) { /* propriétés indisponibles : il ne reste que le fichier */ }
+
+  return '';
 }
 
+/**
+ * La ligne du haut est-elle restée telle qu'elle est livrée ?
+ *
+ * On reconnaît le texte livré à son début, « CHANGEZ-MOI », plutôt qu'en le
+ * comparant à une seconde constante. Cette seconde constante existait, juste
+ * sous la ligne à renseigner : on y recopiait sa phrase en croyant bien faire,
+ * le script concluait que rien n'était configuré, et l'accès restait fermé.
+ * Un repère qui ne ressemble pas à un mot de passe ne s'attrape pas ainsi.
+ */
+function motDePasseNonRenseigne(valeur) {
+  return !valeur || String(valeur).indexOf('CHANGEZ-MOI') === 0;
+}
+
+/** Nom sous lequel le script garde sa copie de secours du mot de passe. */
+var CLE_MOT_DE_PASSE = 'MOT_DE_PASSE_ADMIN';
+
+/**
+ * Range une copie de la phrase, pour qu'une mise à jour du fichier ne puisse
+ * pas fermer l'administration. On n'écrit que si la valeur a changé : une
+ * écriture à chaque appel coûterait un aller-retour inutile sur chaque requête.
+ */
+function memoriserMotDePasse(phrase) {
+  try {
+    var proprietes = PropertiesService.getScriptProperties();
+    if (proprietes.getProperty(CLE_MOT_DE_PASSE) !== phrase) {
+      proprietes.setProperty(CLE_MOT_DE_PASSE, phrase);
+    }
+  } catch (e) { /* propriétés indisponibles : le fichier suffit */ }
+}
+
+/** Comparaison à durée constante, pour ne rien révéler par le temps de réponse. */
 function verifierMotDePasse(saisi) {
   var attendu = motDePasseAdmin();
-  saisi = String(saisi || '');
-  if (!attendu || attendu === 'CHANGEZ-MOI-avant-de-deployer') {
+  saisi = String(saisi || '').trim();
+  if (motDePasseNonRenseigne(attendu)) {
     // Mot de passe non configuré : on refuse plutôt que d'ouvrir l'administration
     return false;
   }
@@ -1050,7 +1104,9 @@ function etatDuScript() {
     version: VERSION,
     drive: drive,
     driveDetail: detail,
-    motDePasseConfigure: motDePasseAdmin() !== 'CHANGEZ-MOI-avant-de-deployer' && !!motDePasseAdmin(),
+    /* motDePasseAdmin() ne rend jamais la valeur d'usine : elle vaut « rien de
+       configuré », et l'administration reste alors fermée. */
+    motDePasseConfigure: !!motDePasseAdmin(),
     email: EMAIL_PRO
   };
 }

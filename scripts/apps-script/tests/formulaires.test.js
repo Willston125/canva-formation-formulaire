@@ -288,6 +288,16 @@ verifier('des objectifs portent une icône autre que « check_circle »',
 verifier('et une valeur différente de leur libellé',
   objectifs.some(o => o.value && o.value !== o.label), true);
 
+/* La phrase de passe part nettoyée de ses espaces de bord.
+   Un copier-coller en emporte presque toujours une ; le champ est masqué, donc
+   elle ne se voit pas, et la comparaison échoue sur un caractère invisible. Le
+   tableau de bord refusait alors la bonne phrase. Le script fait le même
+   nettoyage à l'enregistrement : les deux bouts doivent rester d'accord. */
+verifier('la phrase de passe est débarrassée de ses espaces de bord',
+  /return champ \? String\(champ\.value \|\| ''\)\.trim\(\) : '';/.test(src), true);
+verifier('et aucune lecture du champ ne contourne ce nettoyage',
+  (src.match(/\$\('#mot-de-passe'\)/g) || []).length, 1);
+
 // ---------------------------------- BILAN ----------------------------------
 resultats.forEach(l => console.log(l));
 const echecs = resultats.filter(l => l.indexOf('ÉCHEC') === 0).length;

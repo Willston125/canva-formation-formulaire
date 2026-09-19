@@ -187,6 +187,20 @@
 
   // ----------------------------- CONNEXION -------------------------------
 
+  /**
+   * Phrase de passe telle qu'elle part au serveur.
+   *
+   * Les espaces de début et de fin sont retirées. Un copier-coller en emporte
+   * presque toujours une, un champ masqué ne la montre pas, et la comparaison
+   * échoue alors sur un caractère que personne ne voit : le tableau de bord
+   * refuse la bonne phrase, sans rien avoir à se reprocher. Le script fait le
+   * même nettoyage à l'enregistrement, les deux bouts restent donc d'accord.
+   */
+  function motDePasseSaisi() {
+    var champ = $('#mot-de-passe');
+    return champ ? String(champ.value || '').trim() : '';
+  }
+
   function initConnexion() {
     var memorise = '';
     try { memorise = localStorage.getItem(CLE_MDP) || sessionStorage.getItem(CLE_MDP) || ''; } catch (e) { }
@@ -197,7 +211,7 @@
     }
     $('#form-connexion').addEventListener('submit', function (e) {
       e.preventDefault();
-      etat.motDePasse = $('#mot-de-passe').value;
+      etat.motDePasse = motDePasseSaisi();
       connecter(false);
     });
   }
@@ -255,7 +269,7 @@
         // On redonne la main sur le formulaire
         $('#form-connexion').addEventListener('submit', function (e) {
           e.preventDefault();
-          etat.motDePasse = $('#mot-de-passe').value;
+          etat.motDePasse = motDePasseSaisi();
           connecter(false);
         });
         /* Un mot de passe devenu invalide se passe de commentaire : le champ est
