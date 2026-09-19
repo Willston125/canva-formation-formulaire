@@ -434,19 +434,122 @@
     }
 
     /**
+     * Traduit un cadrage de visuel en propriétés de style, ou rend null.
+     *
+     * POURQUOI null plutôt qu'un objet neutre : la feuille de style met en scène
+     * chaque emplacement pour la photo livrée avec le design — la bannière est
+     * décalée et agrandie, la section méthode cadre ses visuels au rang. Rendre
+     * un cadrage « par défaut » écraserait cette mise en scène sur des images
+     * que personne n'a remplacées, et les abîmerait toutes d'un coup. Seul le
+     * null dit à l'appelant de ne RIEN poser.
+     *
+     * POURQUOI les bornes sont refaites ici : le script Google borne déjà à
+     * l'écriture, mais la feuille Google se modifie à la main et le catalogue est
+     * servi tel quel. Une position hors de 0–100 sortirait la photo de son cadre,
+     * un zoom au-delà de 250 n'en laisserait qu'un détail méconnaissable.
+     *
+     * POURQUOI un zoom de 100 ne pose AUCUNE transformation : « scale(1) » n'est
+     * pas neutre — une transformation crée un contexte d'empilement et fait
+     * repasser l'image par la composition, ce qui peut en adoucir le rendu.
+     *
+     * POURQUOI le centre comme origine : la feuille de style ancre chaque
+     * agrandissement sur un point CHOISI pour la photo d'origine (18% 60% sur la
+     * bannière, 20% 58% ailleurs) — le visage, une ligne de force. Le zoom réglé
+     * depuis le tableau de bord porte sur une AUTRE image, dont on ne sait rien
+     * ici : reprendre l'ancien point de fuite agrandirait la nouvelle photo vers
+     * un endroit qui n'a plus de sens. Le centre est le seul ancrage défendable
+     * sans connaître le sujet, et c'est celui que la position x/y déplace.
+     */
+    function cadrageEnStyle(cadrage) {
+        if (!cadrage || typeof cadrage !== 'object') return null;
+
+        /* null et la chaîne vide sont écartés AVANT toute conversion :
+           Number(null) vaut zéro, et une mesure absente passerait pour une photo
+           collée en haut à gauche. */
+        const borner = (valeur, mini, maxi) => {
+            if (valeur === '' || valeur === null || valeur === undefined) return null;
+            const n = Number(valeur);
+            if (!isFinite(n)) return null;
+            return Math.round(Math.min(maxi, Math.max(mini, n)));
+        };
+
+        const x = borner(cadrage.x, 0, 100);
+        const y = borner(cadrage.y, 0, 100);
+        const zoom = borner(cadrage.zoom, 100, 250);
+        /* Un cadrage partiel est rejeté EN ENTIER : garder ce qui se lit
+           déplacerait la photo sur un axe et pas sur l'autre, sans qu'aucun
+           écran ne dise pourquoi. */
+        if (x === null || y === null || zoom === null) return null;
+
+        return {
+            objectPosition: `${x}% ${y}%`,
+            transform: zoom === 100 ? 'none' : `scale(${zoom / 100})`,
+            transformOrigin: 'center'
+        };
+    }
+
+    /**
      * Applique les visuels remplacés depuis le tableau de bord.
      * Même principe que les textes : chaque image remplaçable porte `data-image`
      * dans le HTML, et une valeur absente laisse le visuel d'origine en place.
      * C'est ainsi qu'on annule un remplacement — en vidant simplement le champ.
+     *
+     * Le cadrage accompagne l'adresse et ne vaut que pour une image
+     * EFFECTIVEMENT remplacée : sans remplacement, la mise en scène d'origine
+     * reste intacte.
      */
-    function appliquerImages(images) {
+    function appliquerImages(images, cadrages) {
         if (!images || typeof images !== 'object') return false;
+        /* Un script Google encore dans sa version précédente ne renvoie aucun
+           cadrage : les visuels doivent continuer de s'afficher sans lui. */
+        cadrages = cadrages && typeof cadrages === 'object' ? cadrages : {};
         let change = false;
 
         document.querySelectorAll('[data-image]').forEach(el => {
             const valeur = images[el.dataset.image];
             if (typeof valeur !== 'string' || !valeur.trim()) return;
             const adresse = normaliserImage(valeur.trim(), 1400);
+
+            /* Le cadrage est posé AVANT le retour anticipé ci-dessous : celui-ci
+               sort quand l'adresse n'a pas changé, et une photo dont seul le
+               réglage a bougé ne serait alors jamais recadrée. */
+            const style = cadrageEnStyle(cadrages[el.dataset.image]);
+            if (style && (el.style.objectPosition !== style.objectPosition
+                || el.style.transform !== style.transform
+                || el.style.transformOrigin !== style.transformOrigin)) {
+                /* Style EN LIGNE et non une classe : la valeur est PROPRE À
+                   CHAQUE IMAGE et ne tiendrait pas dans une classe statique. Et
+                   la feuille de style cadre certains visuels AU RANG
+                   (.method-step:nth-child(2) img) : un sélecteur au rang
+                   l'emporterait sur une classe, et la photo remplacée garderait
+                   le cadrage taillé pour celle d'origine.
+
+                   CE QUE CELA COÛTE, EN TOUTE CONNAISSANCE DE CAUSE : la section
+                   méthode agrandit ses visuels au survol (.method-step:hover
+                   img). Un transform en ligne l'emporte sur cette règle — y
+                   compris « none » —, donc une carte recadrée perd son animation
+                   quand ses voisines la gardent. Une photo bien cadrée en
+                   permanence vaut mieux qu'un mouvement au passage de la souris. */
+                el.style.objectPosition = style.objectPosition;
+                el.style.transform = style.transform;
+                el.style.transformOrigin = style.transformOrigin;
+                change = true;
+            } else if (!style && (el.style.objectPosition || el.style.transform || el.style.transformOrigin)) {
+                /* RETIRER un cadrage doit le retirer POUR DE BON. refreshPlaces
+                   applique deux fois dans la même page : le cache sessionStorage
+                   d'abord, le réseau ensuite. Un cadrage présent au cache et
+                   absent du réseau — une cellule vidée à la main — resterait
+                   collé jusqu'au prochain rechargement, et le bouton
+                   « Réinitialiser » du futur écran de réglage ne réinitialiserait
+                   rien. La chaîne vide retire la déclaration en ligne et rend la
+                   main à la feuille de style, qui remet le visuel dans sa mise en
+                   scène d'origine. */
+                el.style.objectPosition = '';
+                el.style.transform = '';
+                el.style.transformOrigin = '';
+                change = true;
+            }
+
             if (el.getAttribute('src') === adresse) return;
             el.setAttribute('src', adresse);
             /* Les dimensions d'origine décrivaient l'ancienne image : les garder
@@ -512,7 +615,7 @@
             // Les textes sont indépendants du catalogue : ils s'appliquent même
             // si aucune formation n'a encore été importée.
             const textesChanges = appliquerTextes(donnees && donnees.textes);
-            const imagesChangees = appliquerImages(donnees && donnees.images);
+            const imagesChangees = appliquerImages(donnees && donnees.images, donnees && donnees.cadrages);
             const catalogueChange = appliquerCatalogue(donnees);
             const placesChangees = appliquerReleve(donnees && donnees.places ? donnees.places : donnees);
             return textesChanges || imagesChangees || catalogueChange || placesChangees;
