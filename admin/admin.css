@@ -723,6 +723,75 @@ select.statut:focus { outline: none; border-color: var(--brand); }
   accent-color: var(--brand);
 }
 
+/* --------------------- RÉGLAGE DU CADRAGE D'UN VISUEL -------------------- */
+
+/* L'aperçu prend la forme RÉELLE de l'emplacement sur le site. Cette forme est
+   posée en ligne, d'après le `data-image-ratio` de la page : elle change d'un
+   visuel à l'autre — 19/20 pour la bannière, 12/7 pour la méthode — et ne
+   tiendrait donc pas dans une règle unique. Régler un cadrage dans un cadre
+   d'une autre forme revient à le régler pour une autre page. */
+.cadrage {
+  display: grid;
+  gap: 10px;
+  margin-top: 10px;
+  padding: 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--bordure);
+  border-radius: 12px;
+}
+
+/* `hidden` ne fait que PROPOSER display:none : la règle ci-dessus l'emporte, et
+   le bloc resterait affiché sous un visuel où aucune photo n'est posée — un
+   aperçu vide qu'on essaierait de régler. */
+.cadrage[hidden] { display: none; }
+
+.cadrage__titre {
+  margin: 0;
+  color: var(--texte-doux);
+  font-size: 0.8rem;
+}
+
+.cadrage__scene {
+  position: relative;
+  width: 100%;
+  max-width: 260px;
+  overflow: hidden;
+  background: var(--surface-3);
+  border: 1px solid var(--bordure);
+  border-radius: 10px;
+}
+
+/* La photo se SAISIT : sans ce curseur rien ne dit qu'on peut la déplacer, et
+   l'aperçu passe pour une vignette figée. `touch-action: none` laisse le doigt
+   déplacer la photo au lieu de faire défiler la page — sans lui, le réglage est
+   impossible sur téléphone. */
+.cadrage__photo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  cursor: grab;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.cadrage__photo:active { cursor: grabbing; }
+
+.cadrage__aide {
+  margin: 0;
+  color: var(--texte-faible);
+  font-size: 0.76rem;
+  line-height: 1.5;
+}
+
+.cadrage__actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.cadrage input[type="range"] {
+  width: 100%;
+  max-width: 260px;
+  accent-color: var(--brand);
+}
+
 /* Un visuel remplaçable du site, dans la rubrique « Visuels du site » */
 .visuel { margin-bottom: 18px; }
 .visuel:last-child { margin-bottom: 0; }
