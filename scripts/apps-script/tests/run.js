@@ -19,7 +19,12 @@ const EPREUVES = [
   ['affichage.test.js', 'Ce qui est masque disparait, ce qui est garde s affiche'],
   ['motdepasse.test.js', 'Le mot de passe survit a une mise a jour du script'],
   ['echappement.test.js', 'Echappement HTML valable aussi dans un attribut'],
-  ['inscription-publique.test.js', 'Garde-fous du formulaire ouvert a tous']
+  ['inscription-publique.test.js', 'Garde-fous du formulaire ouvert a tous'],
+  ['filtres-photo.test.js', 'Aucune regle ne recolore une photo'],
+  ['cadrage-visuels.test.js', 'Cadrage range a cote de l adresse du visuel'],
+  ['cadrage-affichage.test.js', 'Le cadrage s applique aux seules images remplacees'],
+  ['rapports-visuels.test.js', 'Chaque emplacement annonce son rapport reel'],
+  ['envoi-non-destructif.test.js', 'L envoi conserve la photo entiere']
 ];
 
 let echecs = 0;

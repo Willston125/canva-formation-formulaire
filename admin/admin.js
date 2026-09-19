@@ -1435,25 +1435,87 @@
 
   // -------------------------------- IMAGES --------------------------------
 
-  /* Formats attendus par le site. Le navigateur redimensionne à ces mesures
-     avant l'envoi : ce qui part pèse quelques centaines de kilooctets, jamais
-     les huit mégaoctets d'une photo de téléphone. */
+  /* Formats attendus par le site. Le navigateur borne la largeur avant l'envoi :
+     ce qui part pèse quelques centaines de kilooctets, jamais les huit
+     mégaoctets d'une photo de téléphone.
+
+     AUCUN format n'impose plus de hauteur, et ce n'est pas un oubli. Une
+     hauteur imposée rognait la photo À L'ENVOI, définitivement. Or un cadrage
+     {x, y, zoom} est désormais rangé à côté de l'adresse du visuel et appliqué
+     à l'affichage : les deux se CUMULERAIENT — la photo partirait deux fois
+     plus loin que demandé, et le fichier étant déjà amputé, aucun réglage
+     ultérieur ne la ramènerait. Il faudrait renvoyer la photo.
+
+     Ce que chaque emplacement montre réellement se règle donc côté CSS, de
+     façon réversible, et se rejoue sur tous les écrans — y compris ceux où
+     l'emplacement change de forme. */
   var FORMATS_IMAGE = {
-    image: { largeur: 760, hauteur: 950, libelle: 'portrait 760 × 950' },
-    poster: { largeur: 1000, hauteur: null, libelle: 'largeur 1000 px, hauteur libre' },
+    image: { largeur: 760, hauteur: null, libelle: 'largeur 760 px, format d’origine conservé' },
+    poster: { largeur: 1000, hauteur: null, libelle: 'largeur 1000 px, format d’origine conservé' },
     // Logo d'un moyen de paiement : affiché sur environ 48 px de haut, donc petit
-    logo: { largeur: 240, hauteur: null, libelle: 'largeur 240 px, hauteur libre' },
+    logo: { largeur: 240, hauteur: null, libelle: 'largeur 240 px, format d’origine conservé' },
     // Visuels du site : bandeau large, et portrait pour la photo du formateur
-    paysage: { largeur: 1400, hauteur: 788, libelle: 'paysage 1400 × 788' },
-    portrait: { largeur: 900, hauteur: 1125, libelle: 'portrait 900 × 1125' },
-    /* Réalisation : hauteur LIBRE, et c'est essentiel. La grille de l'accueil
-       l'affiche en 4/3, mais par recadrage CSS — réversible, et la partie
-       montrée se règle par « Partie de l'image à privilégier ». Imposer ici un
-       cadre 900 × 675 rognait l'affiche À L'ENVOI, définitivement : le survol
-       et la visionneuse promettaient alors de montrer l'affiche entière dans
-       son format d'origine, ce qui n'existait plus nulle part. */
+    paysage: { largeur: 1400, hauteur: null, libelle: 'largeur 1400 px, format d’origine conservé' },
+    portrait: { largeur: 900, hauteur: null, libelle: 'largeur 900 px, format d’origine conservé' },
+    // Emplacement quasiment carré — la bannière de l'accueil, 570 × 600 px
+    carre: { largeur: 1200, hauteur: null, libelle: 'largeur 1200 px, format d’origine conservé' },
+    /* Réalisation : la grille de l'accueil l'affiche en 4/3, mais par recadrage
+       CSS. Le survol et la visionneuse, eux, promettent l'affiche ENTIÈRE dans
+       son format d'origine — une promesse qu'un rognage à l'envoi rendait
+       intenable, puisque l'affiche entière n'existait alors plus nulle part. */
     portfolio: { largeur: 1000, hauteur: null, libelle: 'largeur 1000 px, format d’origine conservé' }
   };
+
+  /**
+   * Bornes d'une mesure de cadrage. Refaites ici comme le script Google et
+   * site-common.js les refont chacun de leur côté : une position hors de 0–100
+   * sortirait la photo de son cadre, un agrandissement sous 100 laisserait du
+   * vide autour d'elle, et au-delà de 250 il n'en resterait qu'un détail
+   * méconnaissable.
+   */
+  function bornerCadrage(valeur, mini, maxi) {
+    return Math.round(Math.min(maxi, Math.max(mini, valeur)));
+  }
+
+  /**
+   * Lit un rapport écrit en fraction, « 19/20 », et rend un nombre.
+   *
+   * C'est la forme qu'ont les attributs `data-image-ratio` du site : une
+   * fraction se relit et se corrige, « 0.95 » ne dit plus d'où il vient. Ce qui
+   * ne se lit pas est ÉCARTÉ et non deviné — un rapport à moitié compris
+   * donnerait un cadre faux sans qu'aucun écran ne dise pourquoi.
+   */
+  function lireRapport(brut) {
+    if (typeof brut !== 'string') return null;
+    var morceaux = brut.split('/');
+    if (morceaux.length !== 2) return null;
+    var l = Number(morceaux[0]);
+    var h = Number(morceaux[1]);
+    if (!isFinite(l) || !isFinite(h) || l <= 0 || h <= 0) return null;
+    return l / h;
+  }
+
+  /**
+   * Forme du cadre montré par la fenêtre de recadrage.
+   *
+   * Le repli sur le rapport de la PHOTO est un pis-aller, pas un choix :
+   * maintenant qu'aucun format n'impose de hauteur, le cadre épouse l'image,
+   * rien ne dépasse, et déplacer ou agrandir ne change plus rien à ce qui part.
+   * La fenêtre devient décorative et fait croire à un réglage.
+   *
+   * Le rapport de l'EMPLACEMENT, lui, donne un cadre qui correspond au trou où
+   * la photo tombera. Il l'emporte donc dès qu'il est fourni.
+   *
+   * ATTENTION : personne ne le fournit encore. Le paramètre traverse
+   * `preparerImage` et `choisirCadrage`, mais `activerChampImage` ne le lit pas
+   * dans le HTML — c'est la tâche suivante. En attendant, la fenêtre se comporte
+   * exactement comme aujourd'hui.
+   */
+  function rapportDuCadre(f, bitmap, rapport) {
+    var impose = lireRapport(rapport);
+    if (impose) return impose;
+    return f.hauteur ? f.largeur / f.hauteur : bitmap.width / bitmap.height;
+  }
 
   /**
    * Prépare un fichier choisi par l'utilisateur : orientation redressée,
@@ -1461,7 +1523,7 @@
    * `imageOrientation: 'from-image'` est indispensable : sans lui, les photos
    * prises au téléphone arrivent couchées.
    */
-  function preparerImage(fichier, format) {
+  function preparerImage(fichier, format, rapport) {
     // Les photos d'iPhone sont souvent en HEIC : le navigateur ne sait pas les lire
     if (/\.hei[cf]$/i.test(fichier.name) || /image\/hei[cf]/i.test(fichier.type)) {
       return Promise.reject(new Error(
@@ -1494,9 +1556,9 @@
     return createImageBitmap(fichier, options)
       .catch(function () { throw new Error('Image illisible. Essayez un JPEG ou un PNG.'); })
       .then(function (bitmap) {
-        // On montre l'image et on laisse choisir la partie à garder
-        return choisirCadrage(bitmap, format).then(function (zone) {
-          if (!zone) {
+        // On montre l'image et on laisse choisir la partie à mettre en avant
+        return choisirCadrage(bitmap, format, rapport).then(function (cadrage) {
+          if (!cadrage) {
             bitmap.close && bitmap.close();
             var renonce = new Error('Recadrage annulé.');
             renonce.annule = true;
@@ -1504,21 +1566,35 @@
           }
 
           var f = FORMATS_IMAGE[format] || FORMATS_IMAGE.poster;
-          /* Cadre imposé : la sortie a exactement les mesures du format.
-             Hauteur libre : on garde le rapport choisi, largeur bornée. */
-          var largeur = f.hauteur ? f.largeur : Math.round(Math.min(f.largeur, zone.largeur));
-          var hauteur = f.hauteur ? f.hauteur : Math.round(largeur * zone.hauteur / zone.largeur);
+          /* La photo part ENTIÈRE : on ne borne que la largeur, et la hauteur
+             suit le rapport d'origine. Rogner ici graverait le cadrage dans le
+             fichier, alors qu'il est déjà rangé à côté de l'adresse et appliqué
+             à l'affichage — les deux se cumuleraient, et la partie coupée ne
+             reviendrait qu'en renvoyant la photo.
+             `Math.min` et non `f.largeur` seul : agrandir une petite photo à la
+             largeur du format ne lui rendrait aucun détail, et alourdirait
+             l'envoi pour du flou. */
+          var largeur = Math.round(Math.min(f.largeur, bitmap.width));
+          var hauteur = Math.round(largeur * bitmap.height / bitmap.width);
 
           var toile = document.createElement('canvas');
           toile.width = largeur;
           toile.height = hauteur;
           var ctx = toile.getContext('2d');
           ctx.imageSmoothingQuality = 'high';
-          ctx.drawImage(bitmap, zone.x, zone.y, zone.largeur, zone.hauteur, 0, 0, largeur, hauteur);
+          ctx.drawImage(bitmap, 0, 0, largeur, hauteur);
           bitmap.close && bitmap.close();
 
           return encoder(toile, 'image/webp', 0.82)
-            .catch(function () { return encoder(toile, 'image/jpeg', 0.85); });
+            .catch(function () { return encoder(toile, 'image/jpeg', 0.85); })
+            .then(function (prete) {
+              /* Le cadrage est ACCROCHÉ sur l'objet rendu par `encoder`, pas
+                 emballé autour : `activerChampImage` lit prete.poids,
+                 prete.base64 et prete.type. Un emballage casserait ces trois
+                 lectures d'un coup, et l'envoi partirait sans image. */
+              prete.cadrage = cadrage;
+              return prete;
+            });
         });
       });
   }
@@ -1531,15 +1607,21 @@
    * Le recadrage automatique prenait le centre de la photo : pratique, mais
    * faux dès que le sujet est ailleurs — un visage en haut du cadre se
    * retrouvait coupé au front. On montre donc l'image entière et on laisse
-   * déplacer et agrandir le cadre. Ce qui part est exactement ce qui est vu.
+   * déplacer et agrandir le cadre.
    *
-   * @returns {Promise<{x:number,y:number,largeur:number,hauteur:number}|null>}
-   *          la zone retenue dans les coordonnées de l'image, ou null si on renonce
+   * Ce qui en sort n'est PAS une zone de pixels. L'emplacement de la photo du
+   * formateur passe de 4/5 à 5/4 sous 1023 px : une zone découpée pour l'un
+   * serait fausse sur l'autre, et le même visiteur verrait deux cadrages selon
+   * la largeur de son écran. Des proportions, elles, se rejouent partout — et
+   * se reprennent plus tard sans avoir à renvoyer la photo.
+   *
+   * @returns {Promise<{x:number,y:number,zoom:number}|null>} le cadrage en
+   *          pourcentages, ou null si on renonce
    */
-  function choisirCadrage(bitmap, format) {
+  function choisirCadrage(bitmap, format, rapport) {
     return new Promise(function (resoudre) {
       var f = FORMATS_IMAGE[format] || FORMATS_IMAGE.poster;
-      var rapport = f.hauteur ? f.largeur / f.hauteur : bitmap.width / bitmap.height;
+      var rapportCadre = rapportDuCadre(f, bitmap, rapport);
 
       var boite = document.createElement('div');
       boite.className = 'recadrage';
@@ -1552,7 +1634,11 @@
         + '<p class="recadrage__aide">Faites glisser l’image pour la déplacer, et réglez '
         + 'l’agrandissement ci-dessous. Seule la partie nette sera conservée.</p>'
         + '<label class="champ"><span class="champ__label">Agrandissement</span>'
-        + '<input type="range" class="recadrage__zoom" min="100" max="400" value="100"></label>'
+        /* Les bornes du curseur sont EXACTEMENT celles que le code applique
+           plus bas, et que le script Google enregistre. Il montait à 400 : on y
+           voyait un cadrage serré, et le site en posait un autre, ramené à 250.
+           Une interface ne doit pas proposer un réglage qu'elle ne tiendra pas. */
+        + '<input type="range" class="recadrage__zoom" min="100" max="250" value="100"></label>'
         + '<footer class="panneau__pied"><div class="panneau__boutons">'
         + '<button type="button" class="bouton bouton--discret" data-annuler>Annuler</button>'
         + '<button type="button" class="bouton bouton--primaire" data-valider>Utiliser ce cadrage</button>'
@@ -1572,10 +1658,10 @@
       /* Le cadre occupe la scène ; l'image se déplace derrière lui. `echelle`
          est le rapport entre pixels affichés et pixels de l'image. */
       var largeurScene = Math.min(560, window.innerWidth - 80);
-      var hauteurScene = Math.round(largeurScene / rapport);
+      var hauteurScene = Math.round(largeurScene / rapportCadre);
       if (hauteurScene > window.innerHeight - 320) {
         hauteurScene = window.innerHeight - 320;
-        largeurScene = Math.round(hauteurScene * rapport);
+        largeurScene = Math.round(hauteurScene * rapportCadre);
       }
       toile.width = largeurScene;
       toile.height = hauteurScene;
@@ -1652,11 +1738,16 @@
       boite.querySelector('.recadrage__fond').addEventListener('click', function () { fermer(null); });
       boite.querySelector('[data-valider]').addEventListener('click', function () {
         borner();
+        /* Ce qui remonte, ce sont des PROPORTIONS : le point de l'image amené au
+           centre du cadre, et l'agrandissement rapporté à celui qui remplit
+           tout juste le cadre. Une zone de pixels aurait été juste à une taille
+           d'écran et fausse à l'autre — la photo du formateur passe de 4/5 à
+           5/4 sous 1023 px. Ces trois nombres se rejouent sur n'importe quel
+           écran, et se corrigent plus tard sans renvoyer la photo. */
         fermer({
-          x: centreX - largeurScene / (2 * echelle),
-          y: centreY - hauteurScene / (2 * echelle),
-          largeur: largeurScene / echelle,
-          hauteur: hauteurScene / echelle
+          x: bornerCadrage(Math.round(centreX / bitmap.width * 100), 0, 100),
+          y: bornerCadrage(Math.round(centreY / bitmap.height * 100), 0, 100),
+          zoom: bornerCadrage(Math.round(echelle / echelleMin * 100), 100, 250)
         });
       });
 

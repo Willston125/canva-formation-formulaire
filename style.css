@@ -1475,8 +1475,6 @@ a:focus-visible {
   object-position: 14% 50%;
   transform: scale(1.24);
   transform-origin: 18% 60%;
-  /* Le liseré vert néon de la photo d'origine passe en orange chaleureux */
-  filter: saturate(0.95) contrast(1.06) brightness(0.9);
 }
 
 .landing-hero__visual::after {
@@ -1915,7 +1913,6 @@ a:focus-visible {
   object-fit: cover;
   object-position: 30% 50%;
   border-radius: 15px;
-  filter: saturate(0.85) contrast(1.02);
   transition: transform 500ms ease;
 }
 
@@ -1978,7 +1975,6 @@ a:focus-visible {
   height: 100%;
   min-height: 520px;
   object-fit: cover;
-  filter: saturate(0.82) brightness(0.72);
 }
 
 .training-dialog__content {
@@ -2575,7 +2571,6 @@ a:focus-visible {
   object-position: 14% 50%;
   transform: scale(1.35);
   transform-origin: 20% 58%;
-  filter: saturate(0.95) contrast(1.06) brightness(0.9);
 }
 
 .trainer__photo figcaption {
@@ -3683,7 +3678,6 @@ a:focus-visible {
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 18px;
   box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
-  filter: none;
   transform: rotate(-3deg);
 }
 
@@ -3847,7 +3841,6 @@ a:focus-visible {
   border-radius: 0;
   box-shadow: none;
   transform: none;
-  filter: saturate(0.9) contrast(1.05) brightness(0.86);
 }
 
 .training-dialog__media::after {
