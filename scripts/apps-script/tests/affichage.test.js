@@ -599,13 +599,22 @@ verifier('le serveur détecte un pays cité parmi d’autres',
 
 // --- 26. Audit avant lancement : polices, liens, cibles tactiles ---
 
-/* Aucune face italique n'est chargée : demander un `font: italic` fait
-   fabriquer au navigateur un faux penché. Seule la signature du hero était
-   dans ce cas. Elle ne doit plus réclamer d'italique. (`style` et `generateur`
-   sont déjà lus plus haut dans ce fichier.) */
-const sig = /\.hero-signature\s*\{[\s\S]*?\}/.exec(style);
-verifier('la signature du hero ne réclame plus d’italique',
-  sig ? /font:\s*italic/.test(sig[0]) : true, false);
+/* Aucune face italique n'est chargée : demander un italique fait fabriquer au
+   navigateur un faux penché, mécaniquement incliné.
+ *
+ * Le contrôle ne visait qu'une seule règle, `.hero-signature`, avec un repli à
+ * `true` si elle n'existait pas — or « pas de règle » veut dire « pas
+ * d'italique », donc `false`. Le jour où cette signature a été retirée du
+ * bandeau, il est tombé sans qu'aucun italique soit revenu. On regarde
+ * maintenant TOUTE la feuille : le contrat n'a jamais porté sur cette règle-là,
+ * mais sur le site entier. */
+const italiques = (style.match(/font(-style)?:[^;]*italic[^;]*/g) || []);
+verifier('aucune règle ne réclame d’italique', italiques, []);
+
+/* Contre-contrôle : la recherche doit savoir reconnaître un italique, sinon
+   elle passerait aussi sur une feuille qui en regorge. */
+verifier('et le contrôle sait en repérer un',
+  ('  font: italic 500 1rem/1.5 serif;'.match(/font(-style)?:[^;]*italic[^;]*/g) || []).length, 1);
 
 /* Tous les titres du site sont en Plus Jakarta Sans. Les h2 du pied faisaient
    exception, seuls titres en Inter. */

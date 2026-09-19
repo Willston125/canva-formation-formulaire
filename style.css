@@ -1477,145 +1477,17 @@ a:focus-visible {
   transform-origin: 18% 60%;
 }
 
-.landing-hero__visual::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-  background:
-    linear-gradient(90deg, #07111c 0%, rgba(7, 17, 28, 0.45) 14%, transparent 40%),
-    linear-gradient(0deg, #061019 0%, #061019 12%, rgba(6, 16, 25, 0.82) 22%, transparent 48%),
-    linear-gradient(180deg, rgba(5, 6, 8, 0.78) 0%, transparent 24%),
-    linear-gradient(270deg, rgba(5, 6, 8, 0.5) 0%, transparent 30%);
-}
+/* Quatre dégradés sombres couvraient ici la photo du bandeau, sur ses quatre
+   bords — jusqu'à 78 % d'opacité en haut, et un aplat opaque sur les douze
+   premiers pour cent du bas. Ils avaient été réglés pour la photo livrée avec
+   le design ; toute autre photo y perdait ses bords, et l'on ne comprenait pas
+   pourquoi un sujet placé là disparaissait. La photo est désormais seule. */
 
-.studio-light {
-  position: absolute;
-  z-index: 3;
-  right: 6%;
-  top: 30%;
-  width: 66px;
-  height: 66px;
-  border-radius: 50%;
-  background: radial-gradient(circle, #fff8da 0 14%, var(--color-primary) 18% 34%, rgba(203, 253, 0, 0.14) 58%, transparent 70%);
-  filter: blur(1px);
-  box-shadow: 0 0 60px rgba(203, 253, 0, 0.38);
-}
-
-.studio-panel {
-  position: absolute;
-  z-index: 3;
-  color: rgba(255, 255, 255, 0.86);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 14px;
-  background: rgba(11, 18, 32, 0.72);
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(6px);
-}
-
-.studio-panel--timeline {
-  left: 5%;
-  bottom: 21%;
-  width: 190px;
-  padding: 11px 13px 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-}
-
-.studio-panel__label {
-  font: 700 0.58rem/1 'Inter', system-ui, -apple-system, sans-serif;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--color-muted);
-}
-
-.studio-panel__track {
-  display: flex;
-  gap: 4px;
-  height: 10px;
-}
-
-.studio-panel__track i {
-  display: block;
-  height: 100%;
-  border-radius: 3px;
-  background: #2f78a6;
-}
-
-.studio-panel__track:first-of-type i:nth-child(1) { flex: 3; background: var(--color-primary); }
-.studio-panel__track:first-of-type i:nth-child(2) { flex: 2; }
-.studio-panel__track:first-of-type i:nth-child(3) { flex: 4; background: #1b3550; }
-.studio-panel__track:last-of-type i:nth-child(1) { flex: 5; background: #1b3550; }
-.studio-panel__track:last-of-type i:nth-child(2) { flex: 2; background: var(--color-primary-light); }
-
-.studio-panel--camera {
-  right: 6%;
-  bottom: 30%;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 9px 12px;
-  font: 800 0.6rem/1 'Inter', system-ui, -apple-system, sans-serif;
-  letter-spacing: 0.1em;
-}
-
-.studio-panel--camera .material-symbols-outlined {
-  font-size: 18px;
-  color: var(--color-primary-light);
-}
-
-.studio-panel__rec {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.studio-panel__rec::before {
-  content: '';
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: #ef4444;
-  animation: rec-blink 1.6s ease-in-out infinite;
-}
-
-.studio-panel--palette {
-  left: 8%;
-  top: 14%;
-  display: flex;
-  gap: 5px;
-  padding: 7px;
-  border-radius: 999px;
-}
-
-.studio-panel--palette i {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-}
-
-.studio-panel--palette i:nth-child(1) { background: var(--color-primary); }
-.studio-panel--palette i:nth-child(2) { background: var(--color-cream); }
-.studio-panel--palette i:nth-child(3) { background: #2f78a6; }
-.studio-panel--palette i:nth-child(4) { background: var(--color-surface-secondary); border: 1px solid var(--color-border); }
-
-.hero-signature {
-  position: absolute;
-  z-index: 4;
-  top: 12%;
-  right: 6%;
-  margin: 0;
-  color: rgba(255, 255, 255, 0.62);
-  /* Pas d'italique : aucune face italique n'est chargée, et le navigateur en
-     fabriquait un faux, penché mécaniquement — mesuré, seul élément du site
-     dans ce cas. L'inclinaison de -7° porte déjà l'intention. */
-  font: 500 1.2rem/1.5 'Plus Jakarta Sans', system-ui, sans-serif;
-  letter-spacing: 0.02em;
-  transform: rotate(-7deg);
-}
+/* Halo lumineux, trois faux panneaux de studio (timeline, caméra, palette) et
+   signature « Créer / Apprendre / Évoluer » : tout cela se posait PAR-DESSUS
+   la photo du bandeau, aux emplacements calculés pour celle livrée avec le
+   design. Une autre photo s'y retrouvait masquée par endroits, sans que rien
+   ne le laisse deviner. Retiré : la photo occupe son cadre, seule. */
 
 /* ---------- Catalogue (section incurvée blanc cassé) ---------- */
 .catalogue {
@@ -2323,7 +2195,6 @@ a:focus-visible {
   .landing-hero__layout { grid-template-columns: minmax(0, 0.95fr) minmax(340px, 1.05fr); gap: 26px; }
   .landing-hero__visual { min-height: 520px; }
   .landing-hero h1 { font-size: clamp(2.4rem, 5vw, 3.6rem); }
-  .studio-panel--timeline { width: 168px; }
   .training-card { flex-basis: clamp(236px, 32vw, 290px); }
   .method__steps { gap: 12px; }
   .method-step__copy { min-height: 166px; }
@@ -2346,16 +2217,6 @@ a:focus-visible {
   .hero-benefits { justify-content: center; }
   .landing-hero__visual { min-height: 440px; margin-top: 8px; border-radius: 24px; }
   .landing-hero__visual img { object-position: 22% 50%; transform: scale(1.26); transform-origin: 30% 62%; }
-  .landing-hero__visual::after {
-    background:
-      linear-gradient(0deg, #061019 0%, #061019 12%, rgba(6, 16, 25, 0.82) 22%, transparent 48%),
-      linear-gradient(180deg, rgba(5, 6, 8, 0.7) 0%, transparent 24%);
-  }
-  .hero-signature { top: 9%; right: 6%; font-size: 1rem; }
-  .studio-panel--timeline { left: 4%; bottom: 8%; width: 156px; }
-  .studio-panel--camera { right: 4%; bottom: 10%; }
-  .studio-panel--palette { left: 4%; top: 6%; }
-  .studio-light { top: 22%; right: 12%; width: 54px; height: 54px; }
   .catalogue { margin-top: -70px; padding-top: 104px; border-radius: 50% 50% 0 0 / 58px 58px 0 0; }
   .catalogue__heading { margin-top: 10px; }
   .training-carousel { padding-inline: 12px; padding-bottom: 32px; }
@@ -2406,7 +2267,6 @@ a:focus-visible {
   .carousel-track,
   .training-card { transition-duration: 1ms; }
   .training-card { transform: none; opacity: 1; }
-  .studio-panel__rec::before { animation: none; }
   .has-js .reveal-on-scroll { opacity: 1; transform: none; transition: none; }
   .landing-hero__copy,
   .landing-hero__visual { animation: none; }
