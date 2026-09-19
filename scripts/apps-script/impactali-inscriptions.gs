@@ -394,7 +394,7 @@ function commandeAdmin(d) {
       case 'admin.portfolio.delete': return repondre(supprimerRealisation(d.id), null);
       case 'admin.reglages.save':    return repondre(enregistrerReglages(d.donnees), null);
       case 'admin.textes.save':      return repondre(enregistrerTextes(d.donnees), null);
-      case 'admin.images.save':      return repondre(enregistrerImages(d.donnees), null);
+      case 'admin.images.save':      return repondre(enregistrerImages(d.donnees, d.cadrages), null);
       case 'admin.inscriptions':     return repondre({ ok: true, inscriptions: lireInscriptions(d.formationId) }, null);
       case 'admin.inscription.statut': return repondre(changerStatut(d.ligne, d.statut), null);
       case 'admin.image.upload':     return repondre(televerserImage(d.donnees), null);
@@ -496,6 +496,11 @@ function verifierMotDePasse(saisi) {
  * Le site n'a ainsi qu'un seul appel à faire au chargement.
  */
 function lireCatalogue() {
+  /* L'onglet Images est lu UNE fois, puis partagé : l'adresse et le cadrage
+     vivent sur la même ligne, et lireCatalogue est rappelé après chaque
+     écriture du tableau de bord. Deux lectures y coûtaient un aller-retour
+     réseau de plus à chaque commande, pour la même feuille. */
+  var grilleImages = onglet(F_IMAGES).getDataRange().getValues();
   return {
     formations: lireTable(F_FORMATIONS, CHAMPS_FORMATION).sort(function (a, b) {
       return (typeof a.ordre === 'number' ? a.ordre : 999) - (typeof b.ordre === 'number' ? b.ordre : 999);
@@ -509,7 +514,8 @@ function lireCatalogue() {
     }),
     reglages: lireReglages(),
     textes: lireTextes(),
-    images: lireImages(),
+    images: lireImages(grilleImages),
+    cadrages: lireCadrages(grilleImages),
     places: compterInscrits(),
     maj: new Date().toISOString()
   };
@@ -926,9 +932,6 @@ function supprimerRealisation(id) {
 /** Réglages du site : paires clé / valeur, valeur JSON autorisée. */
 function lireReglages() { return lirePaires(F_REGLAGES); }
 
-/** Visuels du site remplaces depuis le tableau de bord (cle -> adresse). */
-function lireImages() { return lirePaires(F_IMAGES); }
-
 /** Textes de l'accueil modifiés depuis le tableau de bord. */
 function lireTextes() { return lirePaires(F_TEXTES); }
 
@@ -979,16 +982,6 @@ function enregistrerTextes(donnees) {
 }
 
 /**
- * Visuels du site. Une valeur vide REMET l'image d'origine, exactement comme
- * pour les textes : la ligne est effacée et la page réaffiche ce que son HTML
- * contient. C'est le moyen d'annuler un remplacement sans rien reverser.
- */
-function enregistrerImages(donnees) {
-  ecrirePaires(F_IMAGES, donnees, 'Visuels invalides.');
-  return { ok: true, catalogue: lireCatalogue() };
-}
-
-/**
  * Écriture générique dans un onglet « clé / valeur ».
  * Une lecture, une écriture : les textes de l'accueil se comptent par dizaines,
  * et les traiter un par un coûtait autant d'allers-retours que de clés.
@@ -1026,6 +1019,174 @@ function ecrirePaires(nom, donnees, messageErreur) {
   var anciennes = Math.max(0, grille.length - 1);
   if (anciennes) feuille.getRange(2, 1, anciennes, 2).clearContent();
   if (corps.length) feuille.getRange(2, 1, corps.length, 2).setValues(corps);
+}
+
+// --------------------------- VISUELS DU SITE -----------------------------
+
+/* ---------------------------------------------------------------------------
+   POURQUOI L'ONGLET IMAGES NE PASSE PLUS PAR lirePaires / ecrirePaires
+
+   Une photo remplacée depuis le tableau de bord ne s'affichait pas comme celle
+   livrée avec le design : chaque emplacement du site impose un cadrage taillé
+   pour la photo d'origine, et la nouvelle arrivait décapitée ou de travers.
+   Recadrer le fichier lui-même serait sans retour — le réglage ne se reprendrait
+   plus sans renvoyer la photo. Position et zoom sont donc rangés À CÔTÉ de
+   l'adresse, dans une TROISIÈME colonne.
+
+   lirePaires et ecrirePaires servent aussi Textes et Reglages, qui n'ont que
+   deux colonnes et n'ont rien demandé. Les élargir leur aurait fait porter ce
+   risque ; l'onglet Images a donc sa propre lecture et sa propre écriture.
+   --------------------------------------------------------------------------- */
+
+/** Bornes du cadrage, hors desquelles la photo n'est plus montrable. */
+var CADRAGE_POSITION_MIN = 0;
+var CADRAGE_POSITION_MAX = 100;
+var CADRAGE_ZOOM_MIN = 100;
+var CADRAGE_ZOOM_MAX = 250;
+
+/**
+ * Visuels du site remplaces depuis le tableau de bord (cle -> adresse).
+ *
+ * `grille` est la feuille déjà lue, que lireCatalogue partage avec lireCadrages :
+ * chaque opération Sheets est un aller-retour réseau, et lireCatalogue est
+ * rappelé après CHAQUE écriture du tableau de bord. Sans ce partage, l'onglet
+ * était lu deux fois par appel. Le paramètre reste facultatif pour que la
+ * fonction s'appelle encore seule.
+ */
+function lireImages(grille) {
+  if (!grille) grille = onglet(F_IMAGES).getDataRange().getValues();
+  var o = {};
+  for (var i = 1; i < grille.length; i++) {
+    var cle = String(grille[i][0] || '').trim();
+    if (!cle) continue;
+    var adresse = grille[i][1];
+    if (adresse === '' || adresse === null || adresse === undefined) continue;
+    o[cle] = String(adresse);
+  }
+  return o;
+}
+
+/**
+ * Cadrage de chaque visuel (cle -> {x, y, zoom}), lu dans la TROISIÈME colonne.
+ *
+ * Un classeur déjà en service n'a que deux colonnes : la cellule est alors
+ * absente, et la clé n'apparaît simplement pas. Sans cela, toute installation
+ * existante aurait cessé de servir ses visuels du jour au lendemain.
+ *
+ * `grille` est la feuille déjà lue, partagée avec lireImages — voir cette
+ * dernière. Cette boucle reste SÉPARÉE de la sienne à dessein : les deux ne
+ * s'accordent pas sur ce qu'est une ligne valable, lireImages écartant les
+ * adresses vides là où le cadrage ne les regarde pas. Les fondre trancherait
+ * cette question au passage, sans qu'aucun contrôle ne la couvre.
+ */
+function lireCadrages(grille) {
+  if (!grille) grille = onglet(F_IMAGES).getDataRange().getValues();
+  var o = {};
+  for (var i = 1; i < grille.length; i++) {
+    var cle = String(grille[i][0] || '').trim();
+    if (!cle) continue;
+    var cadrage = normaliserCadrage(grille[i][2]);
+    if (cadrage) o[cle] = cadrage;
+  }
+  return o;
+}
+
+/**
+ * Ramène un cadrage à une forme sûre, ou rend null s'il n'en est pas un.
+ *
+ * Le brut arrive soit du tableau de bord (objet), soit de la cellule (chaîne
+ * JSON). Il vient d'une requête : rien ne garantit qu'il sorte du réglage prévu.
+ * Un zoom sous 100 laisserait du vide autour de la photo, au-delà de 250 il ne
+ * resterait qu'un détail méconnaissable, et une position hors de 0–100 sortirait
+ * la photo du cadre. Ce qui dépasse est ramené dans ses bornes ; ce qui ne se
+ * lit pas est écarté, car un cadrage à moitié faux déplacerait la photo sans
+ * qu'aucun écran ne dise pourquoi.
+ */
+function normaliserCadrage(brut) {
+  if (brut === '' || brut === null || brut === undefined) return null;
+  if (typeof brut === 'string') {
+    var texte = brut.trim();
+    if (!texte) return null;
+    try { brut = JSON.parse(texte); } catch (e) { return null; }
+  }
+  if (!brut || typeof brut !== 'object') return null;
+
+  var x = bornerCadrage(brut.x, CADRAGE_POSITION_MIN, CADRAGE_POSITION_MAX);
+  var y = bornerCadrage(brut.y, CADRAGE_POSITION_MIN, CADRAGE_POSITION_MAX);
+  var zoom = bornerCadrage(brut.zoom, CADRAGE_ZOOM_MIN, CADRAGE_ZOOM_MAX);
+  if (x === null || y === null || zoom === null) return null;
+  return { x: x, y: y, zoom: zoom };
+}
+
+/**
+ * Une mesure du cadrage, ramenée dans ses bornes, ou null si ce n'en est pas une.
+ * null et la chaîne vide sont écartés avant toute conversion : Number(null) vaut
+ * zéro, et un cadrage absent serait alors passé pour un cadrage collé en haut à
+ * gauche.
+ */
+function bornerCadrage(valeur, mini, maxi) {
+  if (valeur === '' || valeur === null || valeur === undefined) return null;
+  var n = Number(valeur);
+  if (isNaN(n) || !isFinite(n)) return null;
+  return Math.round(Math.min(maxi, Math.max(mini, n)));
+}
+
+/**
+ * Visuels du site : adresse et cadrage écrits ENSEMBLE, en une seule passe.
+ *
+ * Une adresse vide REMET l'image d'origine : la ligne entière disparaît, cadrage
+ * compris, et la page réaffiche ce que son HTML contient. Le vide porte sur
+ * l'ADRESSE et non sur l'objet reçu — sans quoi « retirer le remplacement »
+ * laisserait une ligne tenue par son seul cadrage, qui ne recadre plus rien et
+ * que plus aucune commande ne viendrait jamais effacer.
+ *
+ * ATTENTION, LA CHARGE FAIT AUTORITÉ : un cadrage que `cadrages` ne renvoie pas
+ * est EFFACÉ, et non conservé — contrairement à ecrireLigne, où une colonne non
+ * mentionnée garde sa valeur. Tout appelant doit donc renvoyer les cadrages
+ * qu'il veut garder. Le tableau de bord n'envoie aujourd'hui que `donnees` :
+ * un cadrage posé à la main dans la feuille disparaîtrait au premier
+ * « Enregistrer les visuels ». C'est sans effet tant que rien ne règle de
+ * cadrage, mais l'interface de réglage devra les joindre à chaque envoi.
+ */
+function enregistrerImages(donnees, cadrages) {
+  if (!donnees || typeof donnees !== 'object') throw new Error('Visuels invalides.');
+  if (!cadrages || typeof cadrages !== 'object') cadrages = {};
+
+  var feuille = onglet(F_IMAGES);
+  assurerEntetes(feuille, ['cle', 'valeur', 'cadrage']);
+
+  var grille = feuille.getDataRange().getValues();
+  var ordre = [], table = {};
+  for (var i = 1; i < grille.length; i++) {
+    var existante = String(grille[i][0] || '').trim();
+    if (!existante) continue;
+    if (!Object.prototype.hasOwnProperty.call(table, existante)) ordre.push(existante);
+    table[existante] = [grille[i][1], grille[i][2]];
+  }
+
+  Object.keys(donnees).forEach(function (cle) {
+    var adresse = donnees[cle];
+    if (adresse === null || adresse === undefined || String(adresse).trim() === '') {
+      delete table[cle];
+      return;
+    }
+    if (!Object.prototype.hasOwnProperty.call(table, cle)) ordre.push(cle);
+    var cadrage = normaliserCadrage(cadrages[cle]);
+    table[cle] = [
+      forcerTexte(typeof adresse === 'string' ? adresse : JSON.stringify(adresse)),
+      cadrage ? forcerTexte(JSON.stringify(cadrage)) : ''
+    ];
+  });
+
+  var corps = ordre
+    .filter(function (cle) { return Object.prototype.hasOwnProperty.call(table, cle); })
+    .map(function (cle) { return [cle, table[cle][0], table[cle][1]]; });
+
+  // On efface l'ancien corps avant de réécrire : sinon une clé supprimée subsisterait
+  var anciennes = Math.max(0, grille.length - 1);
+  if (anciennes) feuille.getRange(2, 1, anciennes, 3).clearContent();
+  if (corps.length) feuille.getRange(2, 1, corps.length, 3).setValues(corps);
+  return { ok: true, catalogue: lireCatalogue() };
 }
 
 // ----------------------------- INSCRIPTIONS ------------------------------
