@@ -524,14 +524,28 @@
         let change = false;
 
         document.querySelectorAll('[data-image]').forEach(el => {
-            const valeur = images[el.dataset.image];
+            /* Un emplacement peut désigner un REPLI : la photo du formateur est
+               propre à chaque fiche, mais toutes retombent sur une photo commune
+               tant qu'on ne leur en a pas donné une. On pose ainsi une photo
+               valable partout, puis on n'en surcharge qu'une si besoin — sans
+               avoir à la renvoyer six fois. */
+            const cle = el.dataset.image;
+            const repli = el.dataset.imageRepli;
+            const propre = images[cle];
+            const valeur = (typeof propre === 'string' && propre.trim())
+                ? propre
+                : (repli && repli !== cle ? images[repli] : undefined);
             if (typeof valeur !== 'string' || !valeur.trim()) return;
             const adresse = normaliserImage(valeur.trim(), 1400);
 
             /* Le cadrage est posé AVANT le retour anticipé ci-dessous : celui-ci
                sort quand l'adresse n'a pas changé, et une photo dont seul le
                réglage a bougé ne serait alors jamais recadrée. */
-            const style = cadrageEnStyle(cadrages[el.dataset.image]);
+            /* Le cadrage suit la photo : une fiche qui reprend la photo commune
+               doit reprendre le cadrage réglé pour elle, sinon la même image
+               s'afficherait cadrée ici et pas là. */
+            const cadreCle = (typeof propre === 'string' && propre.trim()) ? cle : (repli || cle);
+            const style = cadrageEnStyle(cadrages[cadreCle]);
             if (style && (el.style.objectPosition !== style.objectPosition
                 || el.style.transform !== style.transform
                 || el.style.transformOrigin !== style.transformOrigin)) {

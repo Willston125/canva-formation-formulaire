@@ -203,6 +203,24 @@ const posRetour = corps.indexOf('getAttribute(\'src\') === adresse');
 verifier('et le pose AVANT le retour anticipé sur adresse inchangée',
   posCadrage !== -1 && posRetour !== -1 && posCadrage < posRetour, true);
 
+/* Le REPLI : chaque fiche porte sa propre clé de photo de formateur, mais
+   retombe sur la photo commune tant qu'on ne lui en a pas donné une. Sans cette
+   lecture, poser une photo valable partout obligerait à la renvoyer six fois —
+   et les six fiches garderaient celle livrée avec le design. */
+verifier('appliquerImages lit le repli déclaré par l’emplacement',
+  corps.indexOf('dataset.imageRepli') !== -1, true);
+
+/* Et le cadrage doit suivre la photo : une fiche qui reprend la photo commune
+   reprend le cadrage réglé pour elle, sinon la même image s'afficherait cadrée
+   ici et pas là. */
+verifier('et le cadrage suit la photo effectivement retenue',
+  corps.indexOf('cadrageEnStyle(cadrages[cadreCle])') !== -1, true);
+
+/* Contre-contrôle : une clé propre l'emporte toujours sur le repli. Sans cette
+   priorité, surcharger une fiche seule deviendrait impossible. */
+verifier('mais une photo propre l’emporte sur le repli',
+  /propre[\s\S]{0,120}\?[\s\S]{0,40}propre[\s\S]{0,80}repli/.test(corps), true);
+
 // ---------------------------------- BILAN ----------------------------------
 resultats.forEach(l => console.log(l));
 const echecs = resultats.filter(l => l.indexOf('ÉCHEC') === 0).length;

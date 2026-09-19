@@ -1950,9 +1950,15 @@
   function chargerVisuelsDuSite() {
     if (etat.visuelsDeclares) return Promise.resolve(etat.visuelsDeclares);
 
-    var pages = ['/', '/entreprises/'];
-    var premiere = (etat.catalogue.formations || []).filter(function (f) { return f.hasDetailPage !== false; })[0];
-    pages.push(premiere ? premiere.href : '/formations/canva-pro/');
+    /* TOUTES les fiches sont lues, plus seulement la première.
+       Chaque formation porte désormais sa propre clé de photo de formateur : ne
+       lire qu'une fiche ne montrait que la sienne, et les cinq autres restaient
+       invisibles depuis cet écran — donc irremplaçables. */
+    var pages = ['/', '/entreprises/', '/inscription/'];
+    (etat.catalogue.formations || [])
+      .filter(function (f) { return f.hasDetailPage !== false && f.href; })
+      .forEach(function (f) { if (pages.indexOf(f.href) < 0) pages.push(f.href); });
+    if (pages.length <= 3) pages.push('/formations/canva-pro/');
 
     var vues = {};
     var liste = [];

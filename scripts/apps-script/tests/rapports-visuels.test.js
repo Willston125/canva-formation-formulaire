@@ -32,8 +32,17 @@ const RAPPORTS_ATTENDUS = {
   'accueil.methode.2': '12/7',
   'accueil.methode.3': '12/7',
   'accueil.formateur.photo': '4/5',
+  /* La page d'inscription générique et le gabarit gardent la clé commune ; elle
+     sert aussi de repli aux fiches, qui portent chacune la leur. */
   'fiche.formateur.photo': '3/4'
 };
+
+/* Chaque fiche a sa propre clé de photo de formateur, dans le même emplacement
+   — donc le même rapport. Elles partageaient une clé unique : une photo envoyée
+   depuis le tableau de bord s'appliquait aux six à la fois. */
+const FICHES = ['canva-pro', 'community-management', 'identite-visuelle',
+  'photo-video', 'marketing-digital', 'ia-appliquee'];
+FICHES.forEach(slug => { RAPPORTS_ATTENDUS['fiche.' + slug + '.formateur.photo'] = '3/4'; });
 
 const GABARIT = 'formations/_template/fiche.html';
 
@@ -142,11 +151,35 @@ verifier('une même clé ne déclare pas deux rapports différents',
   [...parCle.entries()].filter(([, v]) => v.size > 1)
     .map(([c, v]) => c + ' : ' + [...v.entries()].map(([r, f]) => r + ' (' + f + ')').join(' | ')), []);
 
-/* Contre-contrôle du précédent : une divergence ne peut se voir que si la clé
+/* Contre-contrôle du précédent : une divergence ne peut se voir que si une clé
    est réellement relevée dans PLUSIEURS fichiers. Si l'extraction n'en trouvait
-   qu'un seul exemplaire, le contrôle ci-dessus passerait toujours. */
-verifier('et cette clé partagée est bien relevée dans les huit fichiers',
-  occurrences.filter(o => o.cle === 'fiche.formateur.photo').length, 8);
+   qu'un seul exemplaire, le contrôle ci-dessus passerait toujours.
+   La clé commune reste partagée par le gabarit et la page d'inscription. */
+verifier('la clé commune est relevée dans le gabarit et la page d’inscription',
+  occurrences.filter(o => o.cle === 'fiche.formateur.photo').map(o => o.fichier).sort(),
+  [GABARIT, 'inscription/index.html'].sort());
+
+/* Et chaque fiche déclare la sienne, une seule fois. Deux fiches qui
+   partageraient encore une clé ramèneraient le défaut qu'on vient de corriger :
+   une photo envoyée pour l'une s'appliquerait à l'autre. */
+verifier('chaque fiche déclare sa propre clé, une seule fois',
+  FICHES.filter(slug =>
+    occurrences.filter(o => o.cle === 'fiche.' + slug + '.formateur.photo').length !== 1), []);
+
+/* Et le repli est déclaré partout : sans lui, une fiche sans photo propre
+   n'afficherait plus la photo commune posée pour toutes. */
+/* Seuls les emplacements DES FICHES ont un repli. La photo du formateur de
+   l'accueil (`accueil.formateur.photo`) est un emplacement à part, unique à sa
+   page : elle n'a personne sur qui retomber, et n'en a pas besoin. */
+verifier('chaque emplacement de formateur DES FICHES déclare son repli',
+  occurrences.filter(o => /^fiche\..*formateur\.photo$/.test(o.cle)
+    && lireAttribut(o.balise, 'data-image-repli') !== 'fiche.formateur.photo')
+    .map(o => o.fichier + ' → ' + o.cle), []);
+
+/* Contre-contrôle : sans lui, le contrôle ci-dessus passerait si plus aucune
+   clé ne commençait par « fiche. ». */
+verifier('des emplacements de fiche sont bien inspectés',
+  occurrences.filter(o => /^fiche\..*formateur\.photo$/.test(o.cle)).length, 8);
 
 // --- 5. Le gabarit, source des sept fiches ---
 /* Corriger les fiches sans corriger le gabarit tiendrait jusqu'au prochain

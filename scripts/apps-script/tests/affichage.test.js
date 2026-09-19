@@ -477,8 +477,28 @@ const photosFausses = fiches.filter(f => {
 });
 verifier('la carte montre bien le formateur, pas l’affiche', photosFausses, []);
 
-verifier('la photo du formateur se remplace depuis le tableau de bord',
-  fiches.filter(f => lire('formations/' + f + '/index.html').indexOf('data-image="fiche.formateur.photo"') < 0), []);
+/* Chaque fiche porte SA PROPRE clé de photo de formateur.
+   Elles partageaient toutes « fiche.formateur.photo » : une photo envoyée
+   depuis le tableau de bord s'appliquait aux six à la fois, et rien ne
+   permettait d'en distinguer une. Chacune déclare en plus un repli sur la clé
+   commune, pour qu'une photo valable partout reste possible sans la renvoyer
+   six fois. */
+verifier('chaque fiche porte sa propre clé de photo de formateur',
+  fiches.filter(f => lire('formations/' + f + '/index.html')
+    .indexOf('data-image="fiche.' + f + '.formateur.photo"') < 0), []);
+
+verifier('et chacune retombe sur la photo commune à défaut',
+  fiches.filter(f => lire('formations/' + f + '/index.html')
+    .indexOf('data-image-repli="fiche.formateur.photo"') < 0), []);
+
+/* Contre-contrôle : sans lui, les deux contrôles ci-dessus passeraient sur une
+   liste de fiches vide si `fiches` cessait d'être alimentée. */
+verifier('des fiches sont bien inspectées', fiches.length >= 6, true);
+
+/* La page d'inscription générique ne parle d'aucune formation : elle garde la
+   clé commune, qui sert aussi de repli aux fiches. */
+verifier('la page d’inscription garde la clé commune',
+  lire('inscription/index.html').indexOf('data-image="fiche.formateur.photo"') >= 0, true);
 
 // --- 23. Les prérequis appartiennent à la formation, pas au site ---
 

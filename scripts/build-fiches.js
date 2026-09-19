@@ -224,6 +224,7 @@ function render(template, f) {
   html = html.replaceAll('/formations/canva-pro/#inscription', `${chemin}#inscription`);
   html = html.replace(/(<main id="inscription" data-formation-id=")[^"]+/, `$1${esc(f.formId)}`);
   html = html.replace(/(<input type="hidden" id="formation" name="formation" value=")[^"]+/, `$1${esc(f.formId)}`);
+
   html = replace(html, /<span aria-current="page">[\s\S]*?<\/span>/i, `<span aria-current="page">${esc(f.shortTitle || f.title)}</span>`, 'fil d’Ariane');
   html = replace(html, /<p class="eyebrow">FICHE FORMATION[\s\S]*?<\/p>/i, `<p class="eyebrow">FICHE FORMATION · ${esc(f.category.toUpperCase())}</p>`, 'catégorie');
   html = replace(html, /<h1 id="fiche-title">[\s\S]*?<\/h1>/i, `<h1 id="fiche-title">${esc(f.title)}</h1>`, 'titre');
@@ -274,6 +275,25 @@ function render(template, f) {
       .replace(/Canva Pro &amp; Création de contenu/g, esc(f.title))
       .replace(/Canva Pro & Création de contenu/g, esc(f.title));
     html = html.replaceAll('/formations/canva-pro/', chemin);
+  }
+
+  /* UNE CLÉ DE VISUEL PAR FICHE, pour que chaque formation puisse porter sa
+     propre photo de formateur. Elles partageaient toutes `fiche.formateur.photo` :
+     une photo envoyée depuis le tableau de bord s'appliquait aux six fiches à la
+     fois, et rien ne permettait d'en distinguer une.
+
+     La page générique garde la clé commune : elle ne parle d'aucune formation en
+     particulier. Et c'est cette même clé que chaque fiche déclare en repli — on
+     pose donc une photo valable partout, puis on n'en surcharge qu'une si besoin.
+
+     Ce remplacement vient APRÈS `genericTrainer` : ce dernier reconstruit le bloc
+     formateur depuis le gabarit, et le faisait plus haut, il remettait la clé
+     commune sur les cinq fiches autres que Canva Pro. */
+  if (f.formId) {
+    html = html.replace(/(data-image=")fiche\.formateur\.photo(")/,
+      `$1fiche.${esc(f.formId)}.formateur.photo$2`);
+    html = html.replace(/(data-image-libelle=")Photo du formateur(")/,
+      `$1Photo du formateur · ${esc(f.shortTitle || f.title)}$2`);
   }
   // Bouton WhatsApp flottant : message propre à la formation, pour toutes les fiches.
   html = replace(html, /(<a href="https:\/\/wa\.me\/[^"]*") data-whatsapp-float/,
