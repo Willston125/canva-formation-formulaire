@@ -328,7 +328,25 @@
             window.SITE_CONTACT = CONTACT;
         }
         placesEnDirect.clear();
-        document.dispatchEvent(new CustomEvent('impactali:catalogue'));
+
+        /* L'annonce est DIFFÉRÉE d'un tour de boucle, et ce détail décide si une
+           modification du tableau de bord se voit ou non.
+         *
+         * `refreshPlaces` applique le catalogue SYNCHRONEMENT quand le cache de
+         * session est encore chaud, et il le fait depuis le gestionnaire
+         * DOMContentLoaded de ce fichier. Or site-common.js est chargé avant
+         * script.js : la fiche n'a pas encore posé son écouteur, et l'annonce
+         * partait dans le vide. Au premier chargement le cache est froid, la
+         * réponse arrive du réseau, tout fonctionne ; au rechargement suivant,
+         * dans la minute, la fiche gardait le tarif d'avant.
+         *
+         * Concrètement : un tarif comorien saisi dans le tableau de bord
+         * s'affichait « À confirmer » à tout visiteur revenu sur la page.
+         * Les données, elles, sont bien posées tout de suite — seul l'avis
+         * attend que tous les gestionnaires du chargement soient en place. */
+        window.setTimeout(() => {
+            document.dispatchEvent(new CustomEvent('impactali:catalogue'));
+        }, 0);
         return true;
     }
 
