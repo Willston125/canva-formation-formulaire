@@ -251,10 +251,34 @@ resultats.push('NOTE  tarifs non fixés, annoncés « À confirmer » : ' + JSON
 
 /* Aucune conversion : un tarif se rend tel qu'il a été saisi. Une regex sur le
    mot « conversion » ne prouverait rien — les commentaires l'emploient. On
-   regarde donc le corps de prixDe : il ne doit y avoir aucun calcul. */
-const corpsPrixDe = commun.slice(commun.indexOf('function prixDe(objet, code)'));
-const finPrixDe = corpsPrixDe.indexOf('\n    }\n');
-const code = corpsPrixDe.slice(0, finPrixDe).replace(/\/\*[\s\S]*?\*\/|\/\/.*/g, '');
+   regarde donc le corps de prixDe : il ne doit y avoir aucun calcul.
+ *
+ * La fin de la fonction se cherche en COMPTANT LES ACCOLADES, et non par le
+ * repère « \n    }\n » qui servait avant. Ce repère supposait des fins de ligne
+ * Unix : le jour où git a réécrit le fichier en CRLF, il a cessé de matcher,
+ * la tranche est passée de 1 944 à 26 325 caractères, et la garde s'est mise à
+ * inspecter du code qui n'a rien à voir avec un tarif — une division dans le
+ * calcul d'un zoom l'a fait crier. Une garde qui déborde finit par accuser à
+ * tort, puis par être désarmée : elle ne doit lire QUE ce qu'elle annonce. */
+function corpsDeLaFonction(source, entete) {
+  const debut = source.indexOf(entete);
+  if (debut < 0) throw new Error('fonction introuvable : ' + entete);
+  let profondeur = 0;
+  for (let j = source.indexOf('{', debut); j < source.length; j++) {
+    if (source[j] === '{') profondeur++;
+    else if (source[j] === '}') {
+      profondeur--;
+      if (!profondeur) return source.slice(debut, j + 1);
+    }
+  }
+  throw new Error('accolade de fin introuvable : ' + entete);
+}
+
+const corpsPrixDe = corpsDeLaFonction(commun, 'function prixDe(objet, code)');
+const code = corpsPrixDe.replace(/\/\*[\s\S]*?\*\/|\/\/.*/g, '');
+/* Le découpage doit rester serré : au-delà, c'est qu'il a débordé sur les
+   fonctions voisines, et la garde ne prouverait plus rien de prixDe. */
+verifier('la garde ne lit que le corps de prixDe', code.length < 4000, true);
 verifier('aucun calcul appliqué à un tarif', /[*\/]\s*(?:taux|[\d.]+)/.test(code), false);
 
 // --- 14. Le texte du tableau de bord doit rester lisible ---
