@@ -1669,10 +1669,15 @@ ${data.prenom}`;
     }
 
     // ====== UTILITIES ======
+    /* Échappement pour insertion dans du HTML, contenu comme ATTRIBUT.
+       Les moyens de paiement du catalogue sont posés dans data-value="…" et
+       dans src="…" : le détour par textContent n'échappait pas les guillemets,
+       et un libellé en contenant cassait le bouton. `null` y devenait en outre
+       le mot « null » affiché tel quel. */
     function escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
+        return String(text === null || text === undefined ? '' : text)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     }
 
     // ====== START ======

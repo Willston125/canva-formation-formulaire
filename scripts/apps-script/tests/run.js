@@ -17,7 +17,9 @@ const EPREUVES = [
   ['mise-a-jour-partielle.test.js', 'Une modification n’efface pas le reste de la ligne'],
   ['formulaires.test.js', 'Formulaires : cloisonnement et valeurs conservees'],
   ['affichage.test.js', 'Ce qui est masque disparait, ce qui est garde s affiche'],
-  ['motdepasse.test.js', 'Le mot de passe survit a une mise a jour du script']
+  ['motdepasse.test.js', 'Le mot de passe survit a une mise a jour du script'],
+  ['echappement.test.js', 'Echappement HTML valable aussi dans un attribut'],
+  ['inscription-publique.test.js', 'Garde-fous du formulaire ouvert a tous']
 ];
 
 let echecs = 0;

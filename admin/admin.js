@@ -32,10 +32,27 @@
   var $ = function (sel) { return document.querySelector(sel); };
   var $$ = function (sel) { return Array.prototype.slice.call(document.querySelectorAll(sel)); };
 
+  /**
+   * Échappement pour insertion dans du HTML, CONTENU COMME ATTRIBUT.
+   *
+   * L'ancienne version passait par textContent puis innerHTML. Ce détour
+   * n'échappe PAS les guillemets : une valeur posée dans value="…" pouvait
+   * refermer l'attribut et en ouvrir d'autres. Deux conséquences.
+   *
+   * D'abord un défaut d'usage courant : un titre contenant un guillemet droit
+   * cassait le formulaire de modification, et le champ revenait tronqué.
+   *
+   * Ensuite une faille : le statut d'une inscription est repris tel quel dans
+   * <option value="…">, et le statut arrive par le formulaire public, que
+   * n'importe qui peut appeler. On pouvait donc glisser des attributs dans la
+   * page de l'administrateur depuis l'extérieur.
+   *
+   * On échappe ici explicitement, sans dépendre du comportement du navigateur.
+   */
   function echapper(v) {
-    var d = document.createElement('div');
-    d.textContent = v === null || v === undefined ? '' : String(v);
-    return d.innerHTML;
+    return String(v === null || v === undefined ? '' : v)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   }
 
   /**

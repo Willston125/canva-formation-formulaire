@@ -190,10 +190,14 @@
         return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
     }
 
+    /* Échappement pour insertion dans du HTML, contenu comme ATTRIBUT.
+       Le détour par textContent puis innerHTML n'échappait pas les guillemets :
+       une valeur du catalogue posée dans value="…" pouvait refermer l'attribut.
+       On échappe explicitement, sans dépendre du comportement du navigateur. */
     function escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text === null || text === undefined ? '' : String(text);
-        return div.innerHTML;
+        return String(text === null || text === undefined ? '' : text)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     }
 
     function findFormation(key) {
@@ -649,7 +653,15 @@
         const banner = document.getElementById('session-banner');
         if (!banner) return;
 
-        const session = nextOpenSession();
+        /* Sur une fiche, c'est LA session de cette formation qui doit s'afficher.
+           Le bandeau annonçait la prochaine session du site, toutes formations
+           confondues : sur la fiche Community Management, il proposait Canva Pro
+           et emmenait le visiteur AILLEURS, au moment précis où il lisait la
+           formation qui l'intéressait. Une fiche sans session ouverte retombe
+           sur la prochaine du site, qui reste une information utile. */
+        const formationDeLaPage = document.querySelector('[data-formation-id]');
+        const idDeLaPage = formationDeLaPage ? formationDeLaPage.dataset.formationId : '';
+        const session = (idDeLaPage && nextOpenSession(idDeLaPage)) || nextOpenSession();
         if (!session) return;
 
         const formation = findFormation(session.formId);
