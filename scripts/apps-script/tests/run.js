@@ -22,7 +22,8 @@ const EPREUVES = [
   ['inscription-publique.test.js', 'Garde-fous du formulaire ouvert a tous'],
   ['filtres-photo.test.js', 'Aucune regle ne recolore une photo'],
   ['cadrage-visuels.test.js', 'Cadrage range a cote de l adresse du visuel'],
-  ['cadrage-affichage.test.js', 'Le cadrage s applique aux seules images remplacees']
+  ['cadrage-affichage.test.js', 'Le cadrage s applique aux seules images remplacees'],
+  ['rapports-visuels.test.js', 'Chaque emplacement annonce son rapport reel']
 ];
 
 let echecs = 0;

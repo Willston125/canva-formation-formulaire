@@ -1446,6 +1446,12 @@
     // Visuels du site : bandeau large, et portrait pour la photo du formateur
     paysage: { largeur: 1400, hauteur: 788, libelle: 'paysage 1400 × 788' },
     portrait: { largeur: 900, hauteur: 1125, libelle: 'portrait 900 × 1125' },
+    /* Emplacement quasiment carré — la bannière de l'accueil, 570 × 600 px. La
+       hauteur reste LIBRE, et ce n'est pas un oubli : imposer un cadre rognerait
+       la photo À L'ENVOI, définitivement, alors que l'emplacement la recadre
+       déjà côté CSS, lui de façon réversible et réglable. Rogner deux fois pour
+       deux formes différentes est précisément le défaut que « carre » corrige. */
+    carre: { largeur: 1200, hauteur: null, libelle: 'largeur 1200 px, format d’origine conservé' },
     /* Réalisation : hauteur LIBRE, et c'est essentiel. La grille de l'accueil
        l'affiche en 4/3, mais par recadrage CSS — réversible, et la partie
        montrée se règle par « Partie de l'image à privilégier ». Imposer ici un
