@@ -47,7 +47,7 @@ bac.doPost({ postData: { contents: JSON.stringify({
   nom: 'NOUVEAU', prenom: 'Comorien', telephone: '3212345', telephoneInternational: '+2693212345',
   age: 28, profession: 'Étudiant', niveau: 'Jamais', objectifs: 'Test', motivation: 'Essai',
   modePaiement: 'Holo', telPaiement: '3212345', montant: 25000, currency: 'KMF',
-  pays: 'Comores', paysCode: 'KM', countryCode: '+269', statut: 'Nouveau', source: 'Site'
+  pays: 'Comores', paysCode: 'KM', countryCode: '+269', statut: 'Confirmé', source: 'Site'
 }) } });
 
 const grille = inscriptions.getDataRange().getValues();
@@ -71,7 +71,7 @@ verifier('nouvelle ligne : pays', lire(2, 'pays'), 'Comores');
 verifier('nouvelle ligne : paysCode', lire(2, 'paysCode'), 'KM');
 verifier('nouvelle ligne : devise', lire(2, 'currency'), 'KMF');
 verifier('nouvelle ligne : montant', lire(2, 'montant'), 25000);
-verifier('nouvelle ligne : statut non décalé', lire(2, 'statut'), 'Nouveau');
+verifier('nouvelle ligne : statut non décalé', lire(2, 'statut'), 'Confirmé');
 verifier('nouvelle ligne : session', lire(2, 'sessionId'), 'canva-pro-2027-03-km');
 
 // -------------------------- 2. TARIFS PAR PAYS ---------------------------

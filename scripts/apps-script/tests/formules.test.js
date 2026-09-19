@@ -53,7 +53,7 @@ bac.doPost({ postData: { contents: JSON.stringify({
   dateInscription: '2026-09-16', formationId: 'canva-pro', sessionId: 's1',
   nom: 'TEST', prenom: 'Formule', telephone: '3212345',
   telephoneInternational: '+2693212345', countryCode: '+269',
-  pays: 'Comores', paysCode: 'KM', montant: 25000, currency: 'KMF', statut: 'Nouveau'
+  pays: 'Comores', paysCode: 'KM', montant: 25000, currency: 'KMF', statut: 'Confirmé'
 }) } });
 const insc = JSON.parse(bac.doPost({ postData: { contents: JSON.stringify({
   action: 'admin.inscriptions', motDePasse: 'motdepasse-de-test' }) } })._t).inscriptions[0];

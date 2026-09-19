@@ -75,7 +75,7 @@
  * déploiement n'a pas été publiée, et Google sert encore l'ancien code.
  * C'est l'erreur la plus fréquente, et la plus difficile à diagnostiquer.
  */
-var VERSION = '2026-09-19-mot-de-passe-visible';
+var VERSION = '2026-09-19-inscription-protegee';
 
 /** Classeur. Vide = le classeur auquel ce script est rattaché (cas normal). */
 var ID_CLASSEUR = '';
@@ -234,6 +234,12 @@ function doPost(e) {
     if (!e || !e.postData || !e.postData.contents) {
       return repondre({ ok: false, erreur: 'requête vide' }, null);
     }
+    /* Une inscription pèse environ un kilo-octet, et la plus lourde des
+       commandes du tableau de bord — l'envoi d'une image — reste sous le
+       million. Au-delà, c'est qu'on cherche à gonfler la feuille. */
+    if (e.postData.contents.length > 1500000) {
+      return repondre({ ok: false, erreur: 'Requête trop volumineuse.' }, null);
+    }
     var d = JSON.parse(e.postData.contents);
 
     if (!d.action) return recevoirInscription(d);
@@ -246,10 +252,100 @@ function doPost(e) {
 
 // --------------------------- FORMULAIRE PUBLIC ---------------------------
 
+/* ---------------------------------------------------------------------------
+   GARDE-FOUS DE L'INSCRIPTION PUBLIQUE
+
+   L'adresse du script est publique : elle figure dans formations-data.js, que
+   tout visiteur peut lire. N'importe qui peut donc appeler ce point d'entrée
+   sans passer par le formulaire. Sans garde-fou, cela permettait d'écrire des
+   lignes arbitraires, de faire croire qu'une session était pleine, et d'épuiser
+   le quota d'emails de Google — auquel cas les VRAIES inscriptions n'auraient
+   plus donné lieu à aucune alerte.
+
+   On refuse le moins possible : une inscription incomplète est une inscription
+   perdue. Ce qui dépasse est donc tronqué, pas rejeté. Seul l'essentiel absent
+   fait refuser.
+   --------------------------------------------------------------------------- */
+
+/** Statuts qu'une inscription peut porter en arrivant. Le reste est ramené au premier. */
+var STATUTS_ACCEPTES = ['En attente', 'Confirmé', 'Payé', 'Annulé'];
+
+/** Longueur retenue par champ. Au-delà, on tronque : la ligne reste lisible. */
+var LONGUEUR_CHAMP = 300;
+var LONGUEUR_CHAMP_LIBRE = 2000;
+var CHAMPS_LIBRES = ['motivation', 'objectifs', 'professionDetail'];
+
+/** Alertes email par jour. Au-delà, on enregistre toujours, mais sans prévenir. */
+var ALERTES_PAR_JOUR = 60;
+
+function inscriptionIncomplete(d) {
+  var nom = String(d.nom || '').trim() + String(d.prenom || '').trim();
+  var tel = String(d.telephoneInternational || d.telephone || '').replace(/\D/g, '');
+  if (!nom) return 'Le nom est obligatoire.';
+  if (tel.length < 6) return 'Un numéro de téléphone est obligatoire.';
+  if (!String(d.formationId || '').trim()) return 'La formation est obligatoire.';
+  return '';
+}
+
+/** Ramène chaque champ à une forme sûre, sans jamais perdre l'inscription. */
+function assainirInscription(d) {
+  var propre = {};
+  Object.keys(d).forEach(function (cle) {
+    var v = d[cle];
+    if (typeof v !== 'string') { propre[cle] = v; return; }
+    var max = CHAMPS_LIBRES.indexOf(cle) >= 0 ? LONGUEUR_CHAMP_LIBRE : LONGUEUR_CHAMP;
+    propre[cle] = v.trim().slice(0, max);
+  });
+
+  /* Le statut est repris tel quel dans la liste déroulante du tableau de bord :
+     il ne doit venir que de la liste connue, jamais de la requête. */
+  if (STATUTS_ACCEPTES.indexOf(propre.statut) < 0) propre.statut = STATUTS_ACCEPTES[0];
+
+  // Un montant doit être un nombre, sinon les totaux du tableau de bord mentent
+  if (propre.montant !== undefined && propre.montant !== '') {
+    var montant = Number(propre.montant);
+    propre.montant = isNaN(montant) ? '' : montant;
+  }
+  if (propre.age !== undefined && propre.age !== '') {
+    var age = Number(propre.age);
+    propre.age = isNaN(age) || age < 0 || age > 120 ? '' : age;
+  }
+  return propre;
+}
+
+/**
+ * Le quota d'envoi de Google est journalier et partagé par tout le projet.
+ * L'épuiser, c'est perdre les alertes des inscriptions suivantes — les vraies.
+ * On s'arrête donc avant, en le disant une fois.
+ */
+function alerteAutorisee() {
+  try {
+    var proprietes = PropertiesService.getScriptProperties();
+    var aujourdhui = Utilities.formatDate(new Date(), 'Etc/GMT', 'yyyy-MM-dd');
+    var brut = String(proprietes.getProperty('ALERTES_DU_JOUR') || '');
+    var parts = brut.split('|');
+    var compte = parts[0] === aujourdhui ? Number(parts[1]) || 0 : 0;
+    if (compte >= ALERTES_PAR_JOUR) return false;
+    proprietes.setProperty('ALERTES_DU_JOUR', aujourdhui + '|' + (compte + 1));
+    if (compte + 1 === ALERTES_PAR_JOUR) {
+      Logger.log('Plafond d’alertes atteint pour aujourd’hui : les inscriptions '
+        + 'continuent d’être enregistrées, sans email.');
+    }
+    return true;
+  } catch (e) {
+    return true; // propriétés indisponibles : on préfère l'alerte au silence
+  }
+}
+
 function recevoirInscription(d) {
+  var manque = inscriptionIncomplete(d);
+  if (manque) return repondre({ ok: false, erreur: manque }, null);
+
+  d = assainirInscription(d);
   enregistrer(d);
   // Une alerte email qui échoue ne doit jamais faire perdre l'inscription
-  try { envoyerAlerte(d); } catch (err) { Logger.log('Alerte email : ' + err); }
+  try { if (alerteAutorisee()) envoyerAlerte(d); }
+  catch (err) { Logger.log('Alerte email : ' + err); }
   return repondre({ ok: true }, null);
 }
 

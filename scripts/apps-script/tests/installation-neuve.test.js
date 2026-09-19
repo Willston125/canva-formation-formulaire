@@ -103,7 +103,7 @@ bac.doPost({ postData: { contents: JSON.stringify({
   age: 27, profession: 'Étudiant', niveau: 'Jamais', objectifs: 'Freelance',
   motivation: 'Essai', modePaiement: 'Waafi Mobile Money', telPaiement: '77112233',
   montant: 7500, currency: 'FDJ', pays: 'Djibouti', paysCode: 'DJ', countryCode: '+253',
-  statut: 'Nouveau', source: 'Site'
+  statut: 'Confirmé', source: 'Site'
 }) } });
 const apres = JSON.parse(bac.doGet({ parameter: { action: 'catalogue' } })._t);
 verifier('inscription comptée', apres.places, { 'canva-pro-2026-11': 1 });
