@@ -19,7 +19,8 @@ const EPREUVES = [
   ['affichage.test.js', 'Ce qui est masque disparait, ce qui est garde s affiche'],
   ['motdepasse.test.js', 'Le mot de passe survit a une mise a jour du script'],
   ['echappement.test.js', 'Echappement HTML valable aussi dans un attribut'],
-  ['inscription-publique.test.js', 'Garde-fous du formulaire ouvert a tous']
+  ['inscription-publique.test.js', 'Garde-fous du formulaire ouvert a tous'],
+  ['filtres-photo.test.js', 'Aucune regle ne recolore une photo']
 ];
 
 let echecs = 0;
