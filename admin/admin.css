@@ -735,3 +735,24 @@ select.statut:focus { outline: none; border-color: var(--brand); }
   color: var(--texte);
   font-size: 0.88rem;
 }
+
+/* Cibles tactiles du tableau de bord.
+
+   Sur téléphone, « Modifier » et « Supprimer » mesuraient 32 px de haut et se
+   touchaient presque : on visait l'un et on ouvrait la confirmation de l'autre.
+   Rien n'était détruit — chaque suppression demande confirmation — mais la
+   manipulation devenait pénible là où elle sert le plus, en déplacement.
+   44 px est la hauteur au-dessous de laquelle un doigt cesse d'être précis. */
+@media (pointer: coarse), (max-width: 560px) {
+  .bouton--petit {
+    min-height: 44px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+
+  .onglet,
+  .barre__lien,
+  .entete__menu {
+    min-height: 44px;
+  }
+}
