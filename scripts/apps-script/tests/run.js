@@ -24,7 +24,8 @@ const EPREUVES = [
   ['cadrage-visuels.test.js', 'Cadrage range a cote de l adresse du visuel'],
   ['cadrage-affichage.test.js', 'Le cadrage s applique aux seules images remplacees'],
   ['rapports-visuels.test.js', 'Chaque emplacement annonce son rapport reel'],
-  ['envoi-non-destructif.test.js', 'L envoi conserve la photo entiere']
+  ['envoi-non-destructif.test.js', 'L envoi conserve la photo entiere'],
+  ['reglage-cadrage-admin.test.js', 'Reglage du cadrage dans un apercu au rapport reel']
 ];
 
 let echecs = 0;

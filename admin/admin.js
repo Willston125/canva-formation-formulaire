@@ -1478,6 +1478,91 @@
   }
 
   /**
+   * Une mesure de cadrage relue depuis une valeur quelconque.
+   *
+   * La chaîne vide, null et undefined sont écartés AVANT toute conversion :
+   * Number(null) vaut zéro, et une mesure absente passerait pour une photo
+   * collée dans le coin haut gauche — un cadrage que personne n'a demandé.
+   */
+  function mesureCadrage(valeur, mini, maxi) {
+    if (valeur === '' || valeur === null || valeur === undefined) return null;
+    var n = Number(valeur);
+    if (!isFinite(n)) return null;
+    return bornerCadrage(n, mini, maxi);
+  }
+
+  /**
+   * Un cadrage relu et borné, ou null.
+   *
+   * Un cadrage PARTIEL est rejeté en entier : garder ce qui se lit déplacerait
+   * la photo sur un axe et pas sur l'autre, sans qu'aucun écran ne dise
+   * pourquoi. Le null, lui, dit à l'appelant de ne rien poser du tout — et non
+   * de poser un cadrage neutre, qui écraserait la mise en scène d'origine.
+   */
+  function cadrageValide(brut) {
+    if (!brut || typeof brut !== 'object') return null;
+    var x = mesureCadrage(brut.x, 0, 100);
+    var y = mesureCadrage(brut.y, 0, 100);
+    var zoom = mesureCadrage(brut.zoom, 100, 250);
+    if (x === null || y === null || zoom === null) return null;
+    return { x: x, y: y, zoom: zoom };
+  }
+
+  /**
+   * Le cadrage neutre : photo centrée, aucun agrandissement.
+   *
+   * Une FONCTION et non une constante partagée : l'écran de réglage en pose un
+   * par visuel, et un objet unique circulant partout finirait modifié par le
+   * réglage d'un visuel puis retrouvé, déjà décalé, sous le suivant.
+   */
+  function cadrageParDefaut() {
+    return { x: 50, y: 50, zoom: 100 };
+  }
+
+  /**
+   * Le cadrage traduit en style, COMME LE SITE LE FAIT.
+   *
+   * Ces trois lignes sont l'exacte contrepartie de `cadrageEnStyle` dans
+   * site-common.js, et le doublon est assumé : l'aperçu de réglage doit montrer
+   * ce que le visiteur verra, au pixel près. La moindre divergence — un
+   * arrondi, une origine de transformation — se paierait par un cadrage réglé à
+   * l'écran et un autre sur le site, sans que rien ne le signale. Une épreuve
+   * exécute les deux versions côte à côte pour les tenir d'accord.
+   */
+  function styleCadrage(brut) {
+    var c = cadrageValide(brut);
+    if (!c) return null;
+    return {
+      objectPosition: c.x + '% ' + c.y + '%',
+      transform: c.zoom === 100 ? 'none' : 'scale(' + (c.zoom / 100) + ')',
+      transformOrigin: 'center'
+    };
+  }
+
+  /**
+   * Déplacement de la photo dans l'aperçu, en proportions.
+   *
+   * Le déplacement est rapporté à la TAILLE DE L'APERÇU : traîner la photo
+   * d'une largeur d'aperçu la parcourt tout entière, que l'aperçu fasse 260 px
+   * sur un téléphone ou 640 px sur un grand écran. Compté en pixels, le même
+   * geste aurait donné deux réglages différents selon l'écran, et le cadrage
+   * serait devenu impraticable là où l'aperçu est petit.
+   *
+   * Un aperçu sans mesure — masqué, donc mesuré à zéro — rendrait des NaN qui
+   * traverseraient tout jusqu'à la feuille Google : on rend alors le cadrage
+   * inchangé.
+   */
+  function deplacerCadrage(cadrage, dx, dy, largeur, hauteur) {
+    var c = cadrageValide(cadrage) || cadrageParDefaut();
+    if (!largeur || !hauteur) return c;
+    return {
+      x: bornerCadrage(c.x - dx / largeur * 100, 0, 100),
+      y: bornerCadrage(c.y - dy / hauteur * 100, 0, 100),
+      zoom: c.zoom
+    };
+  }
+
+  /**
    * Lit un rapport écrit en fraction, « 19/20 », et rend un nombre.
    *
    * C'est la forme qu'ont les attributs `data-image-ratio` du site : une
@@ -1495,6 +1580,28 @@
     return l / h;
   }
 
+  /* Forme donnée à l'aperçu quand l'emplacement n'annonce aucun rapport.
+     C'est un pis-aller assumé : sans hauteur, l'aperçu se réduirait à un trait
+     et on croirait le réglage absent. Ce qu'on y voit n'est alors PAS ce que le
+     visiteur verra — c'est `data-image-ratio` qui manque sur l'emplacement du
+     site, et c'est là qu'il faut l'ajouter. */
+  var FORME_APERCU_DEFAUT = '4 / 3';
+
+  /**
+   * Rapport écrit en fraction → valeur d'`aspect-ratio` pour l'aperçu.
+   *
+   * La fraction est RECONSTRUITE à partir de ses deux nombres, jamais recopiée.
+   * Elle vient d'un attribut relevé sur une page du site et finit dans un
+   * attribut `style` : recopiée telle quelle, « 19/20; background:url(…) » y
+   * serait une déclaration de plus, écrite depuis une page que le tableau de
+   * bord se contente de lire.
+   */
+  function formeApercu(rapport) {
+    if (lireRapport(rapport) === null) return FORME_APERCU_DEFAUT;
+    var morceaux = rapport.split('/');
+    return Number(morceaux[0]) + ' / ' + Number(morceaux[1]);
+  }
+
   /**
    * Forme du cadre montré par la fenêtre de recadrage.
    *
@@ -1506,10 +1613,10 @@
    * Le rapport de l'EMPLACEMENT, lui, donne un cadre qui correspond au trou où
    * la photo tombera. Il l'emporte donc dès qu'il est fourni.
    *
-   * ATTENTION : personne ne le fournit encore. Le paramètre traverse
-   * `preparerImage` et `choisirCadrage`, mais `activerChampImage` ne le lit pas
-   * dans le HTML — c'est la tâche suivante. En attendant, la fenêtre se comporte
-   * exactement comme aujourd'hui.
+   * Le rapport vient du `data-image-ratio` relevé sur la page, transmis par
+   * `activerChampImage`. Les champs image qui ne correspondent à aucun
+   * emplacement du site — le logo d'un moyen de paiement, le visuel d'une
+   * fiche — n'en ont pas, et retombent sur le rapport de la photo.
    */
   function rapportDuCadre(f, bitmap, rapport) {
     var impose = lireRapport(rapport);
@@ -1825,8 +1932,16 @@
     });
   }
 
-  /** Câble un champ image : choix du fichier, aperçu, envoi, retrait. */
-  function activerChampImage(cle, format) {
+  /**
+   * Câble un champ image : choix du fichier, aperçu, envoi, retrait.
+   *
+   * `rapport` est la forme réelle de l'emplacement sur le site, « 19/20 ». Il
+   * sert deux fois : la fenêtre de recadrage en fait son cadre — sans lui le
+   * cadre épouse la photo et ne montre pas le trou où elle tombera —, et
+   * l'aperçu de réglage prend la même forme. Les champs image sans emplacement
+   * déclaré n'en ont pas et gardent le comportement d'avant.
+   */
+  function activerChampImage(cle, format, rapport) {
     var zone = document.getElementById('image-' + cle);
     if (!zone) return;
     var champ = document.getElementById('champ-' + cle);
@@ -1834,6 +1949,9 @@
     var etatEl = zone.querySelector('.image__etat');
     var apercu = zone.querySelector('.image__apercu');
     var retirer = zone.querySelector('[data-retirer]');
+    /* Rendu nul pour tous les champs image qui n'ont pas de bloc de réglage :
+       seuls les visuels du site en portent un. */
+    var reglage = activerBlocCadrage(cle);
 
     var rafraichir = function () {
       var url = champ.value.trim();
@@ -1848,6 +1966,10 @@
       aRetirer(champ.value.trim());
       champ.value = '';
       rafraichir();
+      /* Le réglage disparaît avec la photo : un aperçu resté là montrerait une
+         image qui ne sera plus posée, et laisserait croire qu'on règle encore
+         quelque chose. */
+      if (reglage) reglage.masquer();
       etatEl.textContent = 'Visuel retiré. Enregistrez pour valider.';
     });
 
@@ -1858,9 +1980,15 @@
       etatEl.textContent = 'Préparation de l’image…';
       entree.disabled = true;
       etat.envoisImage++;
+      /* Le cadrage choisi dans la fenêtre est mis de côté ICI : il arrive avec
+         l'image préparée, et l'adresse qui lui donne un sujet n'arrive qu'à la
+         réponse de l'envoi, dans une autre portée. Sans cette variable, le
+         réglage fait dans la fenêtre était purement et simplement jeté. */
+      var cadrageChoisi = null;
 
-      preparerImage(fichier, format)
+      preparerImage(fichier, format, rapport)
         .then(function (prete) {
+          cadrageChoisi = prete.cadrage;
           etatEl.textContent = 'Envoi (' + Math.round(prete.poids / 1024) + ' Ko)…';
           return appeler('admin.image.upload', {
             donnees: {
@@ -1874,6 +2002,10 @@
           // Elle est sur Drive, mais rien ne la référence encore : à effacer si on renonce
           if (etat.imagesPosees.indexOf(reponse.url) < 0) etat.imagesPosees.push(reponse.url);
           rafraichir();
+          /* Après l'envoi seulement : avant, l'aperçu n'aurait aucune adresse à
+             montrer. Le cadrage choisi dans la fenêtre est reporté tel quel,
+             pour que l'écran reprenne le réglage là où on l'a laissé. */
+          if (reglage) reglage.montrer(reponse.url, cadrageChoisi);
           etatEl.textContent = 'Image envoyée. Enregistrez pour l’appliquer.';
           etat.envoisImage--;
           entree.disabled = false;
@@ -1974,6 +2106,11 @@
             groupe: el.getAttribute('data-image-groupe') || 'Autres',
             libelle: el.getAttribute('data-image-libelle') || cle,
             format: el.getAttribute('data-image-format') || 'paysage',
+            /* La forme RÉELLE de l'emplacement, « 19/20 ». `format` dit la
+               photo attendue, pas le trou où elle tombe : la bannière s'annonce
+               « paysage » et occupe un carré. Régler un cadrage dans un cadre
+               d'une autre forme revient à le régler pour une autre page. */
+            rapport: el.getAttribute('data-image-ratio') || '',
             origine: adresseAbsolue(el.getAttribute('src') || '', adressePage),
             description: el.getAttribute('alt') || ''
           });
@@ -1983,6 +2120,171 @@
       etat.visuelsDeclares = liste;
       return liste;
     });
+  }
+
+  // ------------------- RÉGLAGE DU CADRAGE D'UN VISUEL --------------------
+
+  /**
+   * L'écran de réglage d'un visuel : la photo dans un aperçu qui a la forme
+   * RÉELLE de son emplacement, un agrandissement, et le retour au cadrage
+   * neutre.
+   *
+   * IL EST TOUJOURS RENDU, et seulement masqué tant qu'aucune photo n'est
+   * posée. Ne le créer qu'après enregistrement aurait imposé de publier sur le
+   * site un cadrage qu'on n'a pas encore vu, puis de recommencer s'il ne
+   * convient pas — chaque essai passant par une mise en ligne. Rendu d'emblée,
+   * il apparaît dès l'envoi de la photo et se règle avant d'enregistrer.
+   *
+   * Le cadrage vit dans un champ caché DU BLOC, et non dans une variable :
+   * `rendreVisuels` redessine toute la liste après chaque enregistrement, et
+   * une variable aurait survécu à des blocs détruits pour en décrire d'autres.
+   */
+  function blocCadrage(cle, rapport, photo, cadrage) {
+    var c = cadrageValide(cadrage) || cadrageParDefaut();
+    var style = styleCadrage(c);
+    return '<div class="cadrage" id="cadrage-' + echapper(cle) + '"' + (photo ? '' : ' hidden') + '>'
+      + '<p class="cadrage__titre">Cadrage sur le site</p>'
+      + '<div class="cadrage__scene" style="aspect-ratio: ' + formeApercu(rapport) + '">'
+      /* Pas d'attribut `src` vide quand aucune photo n'est posée : un src vide
+         fait recharger la page elle-même comme si c'était une image. */
+      + '<img class="cadrage__photo" alt="" draggable="false"'
+      + (photo ? ' src="' + echapper(photo) + '"' : '')
+      + ' style="object-position: ' + style.objectPosition + '; transform: ' + style.transform
+      + '; transform-origin: ' + style.transformOrigin + '"></div>'
+      + '<p class="cadrage__aide">L’aperçu a la forme exacte de l’emplacement sur le site. '
+      + 'Faites glisser la photo pour choisir ce qui reste visible.</p>'
+      + '<label class="champ"><span class="champ__label">Agrandissement</span>'
+      /* Les bornes sont celles que le code applique et que le script Google
+         enregistre. Un curseur plus large montrerait un cadrage que le site
+         ramènerait ensuite à 250 : on réglerait une chose et on en verrait une
+         autre. Une épreuve tient ces quatre écritures d'accord. */
+      + '<input type="range" class="cadrage__zoom" min="100" max="250" value="' + c.zoom + '"></label>'
+      + '<div class="cadrage__actions">'
+      + '<button type="button" class="bouton bouton--discret bouton--petit" data-cadrage-defaut>'
+      + 'Réinitialiser</button></div>'
+      + '<input type="hidden" class="cadrage__valeur" value="' + echapper(JSON.stringify(c)) + '">'
+      + '</div>';
+  }
+
+  /** Le cadrage réglé dans un bloc, ou null s'il n'y en a pas. */
+  function cadrageDuBloc(cle) {
+    var bloc = document.getElementById('cadrage-' + cle);
+    var champ = bloc && bloc.querySelector('.cadrage__valeur');
+    if (!champ) return null;
+    try {
+      return cadrageValide(JSON.parse(champ.value));
+    } catch (e) {
+      /* Illisible, donc écarté : un cadrage à moitié compris déplacerait la
+         photo sans que rien ne dise pourquoi. */
+      return null;
+    }
+  }
+
+  /** Câble un bloc de réglage. Rend null quand le champ image n'en a pas. */
+  function activerBlocCadrage(cle) {
+    var bloc = document.getElementById('cadrage-' + cle);
+    if (!bloc) return null;
+    var scene = bloc.querySelector('.cadrage__scene');
+    var image = bloc.querySelector('.cadrage__photo');
+    var zoom = bloc.querySelector('.cadrage__zoom');
+    var valeur = bloc.querySelector('.cadrage__valeur');
+    var courant = cadrageDuBloc(cle) || cadrageParDefaut();
+
+    function poser(c) {
+      courant = cadrageValide(c) || cadrageParDefaut();
+      valeur.value = JSON.stringify(courant);
+      zoom.value = String(courant.zoom);
+      var style = styleCadrage(courant);
+      image.style.objectPosition = style.objectPosition;
+      image.style.transform = style.transform;
+      image.style.transformOrigin = style.transformOrigin;
+    }
+
+    zoom.addEventListener('input', function () {
+      poser({ x: courant.x, y: courant.y, zoom: Number(zoom.value) });
+    });
+
+    bloc.querySelector('[data-cadrage-defaut]').addEventListener('click', function () {
+      poser(cadrageParDefaut());
+    });
+
+    var glisse = false, departX = 0, departY = 0;
+    var bouge = function (e) {
+      if (!glisse) return;
+      var p = e.touches ? e.touches[0] : e;
+      var boite = scene.getBoundingClientRect();
+      poser(deplacerCadrage(courant, p.clientX - departX, p.clientY - departY,
+        boite.width, boite.height));
+      departX = p.clientX;
+      departY = p.clientY;
+      e.preventDefault();
+    };
+    var fin = function () {
+      if (!glisse) return;
+      glisse = false;
+      window.removeEventListener('mousemove', bouge);
+      window.removeEventListener('mouseup', fin);
+    };
+    var debut = function (e) {
+      var p = e.touches ? e.touches[0] : e;
+      glisse = true;
+      departX = p.clientX;
+      departY = p.clientY;
+      /* Posés sur `window` le temps du geste SEULEMENT : la souris sort
+         volontiers de l'aperçu en cours de déplacement, mais des écouteurs
+         laissés là survivraient à la liste, que `rendreVisuels` redessine à
+         chaque enregistrement — ils s'accumuleraient et déplaceraient des
+         photos qui ne sont plus à l'écran. */
+      if (!e.touches) {
+        window.addEventListener('mousemove', bouge);
+        window.addEventListener('mouseup', fin);
+      }
+      e.preventDefault();
+    };
+
+    image.addEventListener('mousedown', debut);
+    image.addEventListener('touchstart', debut, { passive: false });
+    image.addEventListener('touchmove', bouge, { passive: false });
+    image.addEventListener('touchend', fin);
+
+    return {
+      montrer: function (url, cadrage) {
+        image.src = url;
+        bloc.hidden = false;
+        poser(cadrage);
+      },
+      masquer: function () {
+        bloc.hidden = true;
+        image.removeAttribute('src');
+        poser(cadrageParDefaut());
+      }
+    };
+  }
+
+  /**
+   * Ce qui part à l'enregistrement des visuels.
+   *
+   * LA CHARGE FAIT AUTORITÉ côté script Google : un cadrage que `cadrages` ne
+   * renvoie pas est EFFACÉ de la feuille, et non conservé. Le bouton n'envoyait
+   * que `donnees` : chaque « Enregistrer les visuels » aurait donc effacé tous
+   * les cadrages en silence, y compris ceux qu'on venait de régler.
+   *
+   * Un visuel revenu à son image d'origine ne part avec AUCUN cadrage : sa
+   * ligne disparaît, et un cadrage orphelin n'aurait plus rien à cadrer.
+   */
+  function chargeVisuels(declares, lire) {
+    var donnees = {};
+    var cadrages = {};
+    declares.forEach(function (v) {
+      var fiche = lire(v.cle);
+      if (!fiche) return;
+      var valeur = String(fiche.valeur === null || fiche.valeur === undefined ? '' : fiche.valeur).trim();
+      var remplace = !!valeur && valeur !== v.origine;
+      donnees[v.cle] = remplace ? valeur : '';
+      var cadrage = remplace ? cadrageValide(fiche.cadrage) : null;
+      if (cadrage) cadrages[v.cle] = cadrage;
+    });
+    return { donnees: donnees, cadrages: cadrages };
   }
 
   function rendreVisuels() {
@@ -1997,6 +2299,7 @@
     }
 
     var enregistres = etat.catalogue.images || {};
+    var cadragesEnregistres = etat.catalogue.cadrages || {};
     var groupes = [];
     etat.visuelsDeclares.forEach(function (v) {
       var g = groupes.filter(function (x) { return x.nom === v.groupe; })[0];
@@ -2017,6 +2320,10 @@
               + champImage('visuel-' + v.cle, '', valeur || v.origine,
                 (valeur ? '' : 'Visuel d’origine du site. ')
                 + 'Format ' + echapper(v.format) + '. ' + echapper(v.description))
+              /* Le cadrage n'est posé que sur une image REMPLACÉE : le visuel
+                 d'origine est déjà mis en scène par la feuille de style, et lui
+                 imposer un cadrage neutre l'abîmerait sans rien demander. */
+              + blocCadrage('visuel-' + v.cle, v.rapport, valeur, cadragesEnregistres[v.cle])
               + '</div>';
           }).join('')
           + '</div>';
@@ -2027,23 +2334,25 @@
       + '<span class="btn-attente" hidden><span class="rondelle"></span>Enregistrement…</span></button></div>'
       + '<p class="message message--erreur" id="erreur-visuels" role="alert" hidden></p></div>';
 
-    etat.visuelsDeclares.forEach(function (v) { activerChampImage('visuel-' + v.cle, v.format); });
+    etat.visuelsDeclares.forEach(function (v) {
+      activerChampImage('visuel-' + v.cle, v.format, v.rapport);
+    });
 
     $('#btn-visuels').addEventListener('click', function () {
       var bouton = $('#btn-visuels');
       var erreur = $('#erreur-visuels');
       erreur.hidden = true;
       attente(bouton, true);
-      var donnees = {};
-      etat.visuelsDeclares.forEach(function (v) {
-        var champ = document.getElementById('champ-visuel-' + v.cle);
-        if (!champ) return;
-        var valeur = champ.value.trim();
-        /* Un champ revenu au visuel d'origine n'est pas un remplacement :
-           on efface la ligne, et la page réaffiche ce que son HTML contient. */
-        donnees[v.cle] = (valeur && valeur !== v.origine) ? valeur : '';
+      /* Adresses et cadrages partent ENSEMBLE : le script Google réécrit la
+         feuille d'après ce qu'il reçoit, et un cadrage laissé de côté serait
+         effacé. Un champ revenu au visuel d'origine n'est pas un remplacement :
+         sa ligne s'efface, et la page réaffiche ce que son HTML contient. */
+      var charge = chargeVisuels(etat.visuelsDeclares, function (cle) {
+        var champ = document.getElementById('champ-visuel-' + cle);
+        if (!champ) return null;
+        return { valeur: champ.value, cadrage: cadrageDuBloc('visuel-' + cle) };
       });
-      appeler('admin.images.save', { donnees: donnees }).then(function () {
+      appeler('admin.images.save', charge).then(function () {
         attente(bouton, false);
         viderCorbeilleImages();
         afficherMessage('#succes-globale', 'Visuels enregistrés. Ils apparaissent sur le site dans la minute.', 6000);
