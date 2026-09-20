@@ -209,6 +209,20 @@ function objectives(f) {
   return list.map((item, i) => `<label class="checkbox-card${i === list.length - 1 && list.length % 2 ? ' md:col-span-2' : ''}"><input type="checkbox" name="objectifs" value="${esc(item.value || item.label)}" class="checkbox-input"><span class="material-symbols-outlined text-lg text-primary/60 group-hover:text-primary">${esc(item.icon)}</span><span class="text-sm text-white font-bold">${esc(item.label)}</span></label>`).join('');
 }
 
+/* L'IMAGE DE PARTAGE EST LA MÊME POUR TOUT LE SITE, et elle est déjà au format
+   des cartes de lien : 1200 × 630.
+ *
+ * Auparavant chaque fiche déclarait SON visuel, un portrait de 760 × 950, tout
+ * en annonçant 1200 × 630 dans les balises voisines. Facebook obéit à ce qui est
+ * déclaré : il découpait une bande au milieu et jetait 58 % de la hauteur. Le
+ * titre du visuel disparaissait, et il ne restait qu'un fragment sans en-tête.
+ * Constaté sur une vraie publication, pas déduit.
+ *
+ * Une image par fiche redeviendra possible le jour où les cinq visuels seront
+ * préparés à ce format-là. En attendant, une seule image juste vaut mieux que
+ * six images coupées. */
+const IMAGE_PARTAGE = `${SITE_URL}/assets/images/partage-impactali.jpg`;
+
 function render(template, f) {
   let html = template;
   /* La page d'inscription générique vit à /inscription/, pas sous /formations/.
@@ -223,11 +237,11 @@ function render(template, f) {
   html = setMeta(html, 'property="og:url"', url);
   html = setMeta(html, 'property="og:title"', `${f.title} — Fiche formation & inscription`);
   html = setMeta(html, 'property="og:description"', f.shortDescription);
-  html = setMeta(html, 'property="og:image"', absolue(f.image));
+  html = setMeta(html, 'property="og:image"', IMAGE_PARTAGE);
   html = setMeta(html, 'property="twitter:url"', url);
   html = setMeta(html, 'property="twitter:title"', `${f.title} — Fiche formation & inscription`);
   html = setMeta(html, 'property="twitter:description"', f.shortDescription);
-  html = setMeta(html, 'property="twitter:image"', absolue(f.image));
+  html = setMeta(html, 'property="twitter:image"', IMAGE_PARTAGE);
   html = html.replace(/<link rel="canonical" href="[^"]+">/i, `<link rel="canonical" href="${url}">`);
   html = html.replaceAll('data-register-formation="canva-pro"', `data-register-formation="${esc(f.formId)}"`);
   html = html.replaceAll('/formations/canva-pro/#inscription', `${chemin}#inscription`);
