@@ -255,6 +255,41 @@
             .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     }
 
+    /**
+     * Les domaines du pied de page.
+     *
+     * La colonne existe dans les dix pages du site, mais seul landing.js la
+     * remplissait — et landing.js n'est chargé que sur l'accueil. Les neuf
+     * autres pages affichaient donc un intitulé « DOMAINES » au-dessus du vide.
+     * Le pied est le même partout : il doit se remplir partout, donc ici.
+     *
+     * Le lien ne pouvait pas marcher ailleurs non plus : il pointait sur
+     * « #catalogue », un fragment qui n'existe que sur l'accueil. Il porte
+     * maintenant une vraie adresse, et le domaine en paramètre. Sur l'accueil,
+     * landing.js intercepte le clic et filtre sur place sans recharger.
+     */
+    function renderDomainesPied() {
+        const pied = document.getElementById('pied-domaines-liens');
+        if (!pied) return;
+        const colonne = pied.closest('.site-footer__col');
+
+        const noms = [];
+        for (const formation of FORMATIONS) {
+            if (!formation || !formation.family || formation.active === false) continue;
+            if (noms.indexOf(formation.family) < 0) noms.push(formation.family);
+        }
+
+        /* Un intitulé au-dessus du vide, c'est le défaut qu'on corrige : sans
+           domaine à annoncer, la colonne disparaît. `hidden` ne suffirait pas,
+           la feuille de style pose « display: flex » sur cette colonne. */
+        if (colonne) colonne.style.display = noms.length ? '' : 'none';
+        if (!noms.length) { pied.innerHTML = ''; return; }
+
+        pied.innerHTML = noms.map(nom =>
+            `<a href="/?domaine=${encodeURIComponent(nom)}#catalogue" data-domain-link="${escapeHtml(nom)}">${escapeHtml(nom)}</a>`
+        ).join('');
+    }
+
     function findFormation(key) {
         if (!key) return null;
         return FORMATIONS.find(item => item.formId === key || item.slug === key || item.id === key) || null;
@@ -1174,6 +1209,9 @@
         initScrollReveals();
         initWhatsappLinks();
         initReplisImages();
+        /* Le pied est le même sur toutes les pages : ses domaines s’y remplissent
+           donc ici, et non dans landing.js qui ne sert que l’accueil. */
+        renderDomainesPied();
         // Les pages s'affichent avec les valeurs du fichier ; le relevé réel arrive ensuite
         // et déclenche « impactali:places », que chaque page écoute pour se corriger.
         refreshPlaces();
@@ -1216,6 +1254,9 @@
     document.addEventListener('impactali:catalogue', function () {
         initWhatsappLinks();
         initLiensEmail();
+        /* Les domaines du pied sortent des formations : un domaine ajouté ou
+           retiré depuis le tableau de bord doit s’y voir sans republier. */
+        renderDomainesPied();
         const banner = document.getElementById('session-banner');
         if (!banner) return;
         banner.classList.add('hidden');

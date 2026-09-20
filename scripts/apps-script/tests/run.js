@@ -39,7 +39,8 @@ const EPREUVES = [
   ['photo-retiree.test.js', 'Une photo retiree rend celle d origine'],
   ['places-source-unique.test.js', 'Les places se deduisent toujours des inscrits'],
   ['sync-formations.test.js', 'Alignement des formations du fichier sur la feuille'],
-  ['page-introuvable.test.js', 'Une adresse inconnue repond introuvable']
+  ['page-introuvable.test.js', 'Une adresse inconnue repond introuvable'],
+  ['pied-domaines.test.js', 'Les domaines du pied se remplissent sur toutes les pages']
 ];
 
 /* La liste ci-dessus est écrite à la main : une épreuve ajoutée dans le dossier

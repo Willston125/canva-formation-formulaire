@@ -136,8 +136,7 @@
 
     /** Applique le filtre du catalogue correspondant au domaine, puis y amène. */
     function ouvrirDomaine(nom, defiler) {
-        const chip = document.querySelector(`.filter-chip[data-family="${CSS.escape(nom)}"]`);
-        if (chip) chip.click();
+        appliquerFiltre(nom);
         if (defiler) document.getElementById('catalogue')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
@@ -163,21 +162,64 @@
             });
         }
 
-        if (pied) {
-            pied.innerHTML = liste.map(({ nom }) =>
-                `<a href="#catalogue" data-domain-link="${escapeHtml(nom)}">${escapeHtml(nom)}</a>`).join('');
+        /* LE PIED N'EST PLUS ÉCRIT ICI. Il est le même sur les dix pages du
+           site, et landing.js n'est chargé que sur l'accueil : les neuf autres
+           affichaient un intitulé « DOMAINES » au-dessus du vide. C'est
+           site-common.js, chargé partout, qui le remplit désormais.
+           Reste à intercepter le clic : le lien porte une vraie adresse pour
+           les autres pages, mais ici on filtre sur place, sans recharger. */
+        if (pied && !pied.dataset.ecoute) {
+            pied.dataset.ecoute = 'oui';
             pied.addEventListener('click', event => {
                 const lien = event.target.closest('[data-domain-link]');
-                if (lien) ouvrirDomaine(lien.dataset.domainLink, false);
+                if (!lien) return;
+                event.preventDefault();
+                ouvrirDomaine(lien.dataset.domainLink, true);
             });
         }
     }
 
     // ---------- Grille catalogue + filtres par domaine (générés depuis les données) ----------
-    function renderCatalogueGrid() {
+    /* Le domaine choisi survit aux reconstructions de la grille.
+     *
+     * Elle est refaite à l'arrivée du catalogue, à celle du relevé des places
+     * et à chaque changement de pays. Le filtre retombait donc sur « Toutes »
+     * une seconde après le clic, et le lien « /?domaine=… » venu d'une autre
+     * page n'avait aucun effet visible. */
+    let domaineChoisi = 'Toutes';
+
+    /** Montre les formations du domaine demandé, et le dit aux lecteurs d'écran. */
+    function appliquerFiltre(famille) {
         const grid = document.getElementById('catalogue-grid');
         const filters = document.getElementById('catalogue-filters');
         const live = document.getElementById('catalogue-grid-live');
+        if (!grid || !filters) return;
+
+        /* Un domaine INCONNU masquerait toutes les cartes : c'est le cas d'une
+           adresse partagée avant qu'il ne soit retiré du catalogue. On montre
+           tout plutôt qu'une page vide. */
+        const connu = filters.querySelector(`.filter-chip[data-family="${CSS.escape(String(famille || ''))}"]`);
+        const retenue = connu ? famille : 'Toutes';
+        domaineChoisi = retenue;
+
+        filters.querySelectorAll('.filter-chip').forEach(chip =>
+            chip.setAttribute('aria-pressed', String(chip.dataset.family === retenue)));
+
+        let visibles = 0;
+        grid.querySelectorAll('.course-card').forEach(card => {
+            const garde = retenue === 'Toutes' || card.dataset.family === retenue;
+            card.classList.toggle('is-hidden', !garde);
+            if (garde) { visibles += 1; card.classList.add('is-visible'); }
+        });
+        if (live) {
+            live.textContent = `${visibles} formation${visibles > 1 ? 's' : ''} affichée${visibles > 1 ? 's' : ''}`
+                + (retenue === 'Toutes' ? '' : ` dans ${retenue}`);
+        }
+    }
+
+    function renderCatalogueGrid() {
+        const grid = document.getElementById('catalogue-grid');
+        const filters = document.getElementById('catalogue-filters');
         if (!grid || !FORMATIONS.length) return;
 
         grid.innerHTML = FORMATIONS.map(formation =>
@@ -185,22 +227,22 @@
 
         if (!filters) return;
         const families = ['Toutes', ...FORMATIONS.map(item => item.family).filter((value, index, all) => value && all.indexOf(value) === index)];
-        filters.innerHTML = families.map((family, index) =>
-            `<button class="filter-chip" type="button" data-family="${escapeHtml(family)}" aria-pressed="${index === 0}">${escapeHtml(family)}</button>`).join('');
+        filters.innerHTML = families.map(family =>
+            `<button class="filter-chip" type="button" data-family="${escapeHtml(family)}" aria-pressed="false">${escapeHtml(family)}</button>`).join('');
 
-        filters.addEventListener('click', event => {
-            const chip = event.target.closest('.filter-chip');
-            if (!chip) return;
-            const family = chip.dataset.family;
-            filters.querySelectorAll('.filter-chip').forEach(item => item.setAttribute('aria-pressed', String(item === chip)));
-            let visible = 0;
-            grid.querySelectorAll('.course-card').forEach(card => {
-                const match = family === 'Toutes' || card.dataset.family === family;
-                card.classList.toggle('is-hidden', !match);
-                if (match) { visible += 1; card.classList.add('is-visible'); }
+        /* L'écoute se pose UNE SEULE FOIS : `filters` survit aux
+           reconstructions, seuls ses enfants sont remplacés. Un écouteur par
+           rendu faisait traiter chaque clic autant de fois qu'il y avait eu de
+           rendus. */
+        if (!filters.dataset.ecoute) {
+            filters.dataset.ecoute = 'oui';
+            filters.addEventListener('click', event => {
+                const chip = event.target.closest('.filter-chip');
+                if (chip) appliquerFiltre(chip.dataset.family);
             });
-            if (live) live.textContent = `${visible} formation${visible > 1 ? 's' : ''} affichée${visible > 1 ? 's' : ''}${family === 'Toutes' ? '' : ` dans ${family}`}`;
-        });
+        }
+
+        appliquerFiltre(domaineChoisi);
     }
 
     // ---------- Carrousel infini, accessible, sans dépendance ----------
@@ -511,6 +553,14 @@
             const outside = event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom;
             if (outside) dialog.close();
         });
+
+        /* Lien profond : /?domaine=<nom> applique le filtre du catalogue.
+           C'est ce que portent les liens du pied de page depuis les AUTRES pages :
+           elles n'ont ni le catalogue ni ses filtres, elles amènent donc ici avec
+           le domaine en paramètre. Sans cette lecture, le visiteur arriverait sur
+           le catalogue entier, sans rien de filtré. */
+        const domaine = new URLSearchParams(window.location.search).get('domaine');
+        if (domaine) ouvrirDomaine(domaine, false);
 
         // Lien profond : /?fiche=slug ouvre l'aperçu rapide.
         // Toutes les formations ont désormais une page dédiée, mais les anciens liens
