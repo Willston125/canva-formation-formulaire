@@ -290,6 +290,34 @@
         ).join('');
     }
 
+    function lienSur(url) {
+        const brut = String(url === null || url === undefined ? '' : url);
+        /* Les blancs et les caractères de contrôle sont IGNORÉS par le navigateur
+           quand il lit un schéma : un saut de ligne glissé au milieu de
+           « javascript: » ne l'empêche pas de s'exécuter. On les retire donc
+           avant d'examiner la valeur, sinon le filtre se contourne d'un retour
+           chariot. Comparaison par code, sans expression régulière : les
+           caractères visés ne s'écrivent pas lisiblement dans un motif. */
+        const nu = brut.split('').filter(function (c) {
+            const code = c.charCodeAt(0);
+            return code > 32 && code !== 160 && code !== 8232 && code !== 8233;
+        }).join('');
+        if (!nu) return '';
+
+        // Une ancre, ou un chemin de CE site.
+        if (nu.charAt(0) === '#') return brut.trim();
+        /* « //ailleurs » est refusé : sans schéma, il emmène quand même sur un
+           autre site, en héritant du protocole de la page. */
+        if (nu.charAt(0) === '/' && nu.charAt(1) !== '/') return brut.trim();
+        if (nu.slice(0, 2) === './' || nu.slice(0, 3) === '../') return brut.trim();
+
+        // Ou une adresse explicite, et seulement en http(s).
+        const bas = nu.toLowerCase();
+        if (bas.indexOf('http://') === 0 || bas.indexOf('https://') === 0) return brut.trim();
+
+        return '';
+    }
+
     function findFormation(key) {
         if (!key) return null;
         return FORMATIONS.find(item => item.formId === key || item.slug === key || item.id === key) || null;
@@ -1176,6 +1204,9 @@
         whatsappUrl,
         emailContact,
         formatPrice,
+        /* Filtre de schema : une adresse venue de la feuille ne doit jamais
+           pouvoir devenir un lien qui execute du code au clic. */
+        lienSur,
         /* Le tamis à balises des textes du tableau de bord. La fiche s en sert
            pour son accroche, qui accepte une mise en gras : un contenu venu de
            la feuille ne doit pas pouvoir exécuter de script. */

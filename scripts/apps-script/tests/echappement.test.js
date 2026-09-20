@@ -124,6 +124,58 @@ ECHAPPEURS.forEach(([fichier, nom]) => {
     /textContent/.test(corps) && /innerHTML/.test(corps), false);
 });
 
+// ------------------- LE SCHÉMA D'UN LIEN, PAS SEULEMENT SA FORME -------------------
+
+/* escapeHtml fait bien son travail : il empêche une valeur de REFERMER un
+   attribut. Mais il ne regarde pas le SCHÉMA, et l'adresse d'une formation ou
+   d'une réalisation est un champ texte libre de la feuille. Un « javascript: »
+   posé là devenait un lien qui exécute du code au clic, sur toutes les pages où
+   la carte paraît. Il faut donc, en plus, une liste blanche de schémas. */
+const communSource = fs.readFileSync(path.join(RACINE, 'site-common.js'), 'utf8');
+let lienSur = null;
+try {
+  const bacLien = {};
+  vm.createContext(bacLien);
+  vm.runInContext(extraire(communSource, 'lienSur') + '\nglobalThis.__l = lienSur;', bacLien);
+  lienSur = bacLien.__l;
+} catch (e) { /* absente : les contrôles ci-dessous le diront */ }
+
+verifier('site-common.js expose un filtre de schéma', typeof lienSur, 'function');
+
+if (typeof lienSur === 'function') {
+  // Ce qui doit passer : les adresses réelles du site.
+  verifier('un chemin absolu passe', lienSur('/formations/canva-pro/'), '/formations/canva-pro/');
+  verifier('une ancre passe', lienSur('/#catalogue'), '/#catalogue');
+  verifier('une adresse https passe',
+    lienSur('https://www.impactali.site/entreprises/'), 'https://www.impactali.site/entreprises/');
+  verifier('un lien WhatsApp passe', lienSur('https://wa.me/2693804648'), 'https://wa.me/2693804648');
+
+  // Ce qui doit tomber.
+  verifier('javascript: est refusé', lienSur('javascript:alert(1)'), '');
+  verifier('même écrit en majuscules', lienSur('JavaScript:alert(1)'), '');
+  /* Les caractères de contrôle et les espaces sont ignorés par le navigateur
+     quand il lit un schéma : « java\nscript: » s'exécute. */
+  verifier('même coupé par un saut de ligne', lienSur('java\nscript:alert(1)'), '');
+  verifier('même précédé d’espaces', lienSur('  javascript:alert(1)'), '');
+  verifier('data: est refusé', lienSur('data:text/html,<script>alert(1)</script>'), '');
+  verifier('vbscript: est refusé', lienSur('vbscript:msgbox(1)'), '');
+  /* Une adresse sans schéma explicite, « //ailleurs.test », emmène sur un autre
+     site en héritant du protocole. Ce n'est pas une adresse de ce site. */
+  verifier('le double slash est refusé', lienSur('//ailleurs.test/piege'), '');
+  verifier('une valeur vide rend une chaîne vide', lienSur(''), '');
+  verifier('une valeur absente aussi', lienSur(null), '');
+}
+
+/* Et il doit être RÉELLEMENT POSÉ là où la feuille fournit l'adresse. Un filtre
+   écrit mais jamais appelé ne protège personne. */
+const landingSource = fs.readFileSync(path.join(RACINE, 'landing.js'), 'utf8');
+verifier('l’accueil filtre l’adresse d’une formation',
+  /lienSur\(formation\.href\)/.test(landingSource), true);
+verifier('et celle d’une réalisation',
+  /lienSur\(item\.href\)/.test(landingSource), true);
+verifier('plus aucune adresse de la feuille n’est posée sans filtre',
+  /href="\$\{escapeHtml\((?:formation|item)\.href\)\}/.test(landingSource), false);
+
 // ---------------------------------- BILAN ----------------------------------
 resultats.forEach(l => console.log(l));
 const echecs = resultats.filter(l => l.indexOf('ÉCHEC') === 0).length;

@@ -75,7 +75,7 @@
  * déploiement n'a pas été publiée, et Google sert encore l'ancien code.
  * C'est l'erreur la plus fréquente, et la plus difficile à diagnostiquer.
  */
-var VERSION = '2026-09-20-pays-ferme';
+var VERSION = '2026-09-20-formulaire-borne';
 
 /** Classeur. Vide = le classeur auquel ce script est rattaché (cas normal). */
 var ID_CLASSEUR = '';
@@ -117,9 +117,35 @@ var MOT_DE_PASSE_ADMIN = 'CHANGEZ-MOI-avant-de-deployer';
 
 /**
  * Statuts qui occupent une place dans le décompte affiché sur le site.
- * null = toutes les inscriptions comptent, y compris celles en attente.
+ *
+ * SEULES LES INSCRIPTIONS VALIDÉES PAR LE PROPRIÉTAIRE occupent une place.
+ * Auparavant la valeur était `null`, donc TOUTE ligne comptait, « En attente »
+ * comprise. Or le formulaire est ouvert à tous : vingt requêtes anonymes
+ * suffisaient alors à faire afficher « session complète », et le formulaire ne
+ * devenait pas grisé — il disparaissait de la page. Une centaine de requêtes
+ * fermaient les inscriptions de tout le site, sans compte ni mot de passe.
+ *
+ * Contrepartie assumée, décidée par le propriétaire : une inscription en
+ * attente ne réserve plus de place. C'est le passage à « Confirmé » ou
+ * « Payé », depuis le tableau de bord, qui en occupe une.
+ *
+ * Ces valeurs DOIVENT appartenir à STATUTS_ACCEPTES : une faute d'accent ne
+ * ferait plus jamais compter personne, sans le moindre signe. Une épreuve le
+ * vérifie.
  */
-var STATUTS_COMPTES = null;
+var STATUTS_COMPTES = ['Confirmé', 'Payé'];
+
+/**
+ * Inscriptions écrites par jour, toutes sources confondues.
+ *
+ * Même garde-fou que ALERTES_PAR_JOUR, et pour la même raison : le formulaire
+ * est ouvert à tous, sans compte ni mot de passe. Sans plafond, une boucle de
+ * vingt lignes noie la feuille de milliers de fausses candidatures et rend les
+ * vraies introuvables. Le chiffre est très au-dessus de la plus forte journée
+ * réelle — il ne doit jamais refuser un vrai candidat — et très en dessous de
+ * ce qu'une boucle produit en une minute.
+ */
+var INSCRIPTIONS_PAR_JOUR = 150;
 
 /* Colonnes de l'onglet Inscriptions : [en-tête, clé envoyée par le site]. */
 var COLONNES = [
@@ -294,6 +320,80 @@ function inscriptionIncomplete(d) {
   return '';
 }
 
+/**
+ * L'inscription désigne-t-elle une formation et une session qui EXISTENT ?
+ *
+ * Le formulaire est ouvert à tous, et le catalogue public donne l'identifiant de
+ * chaque session ainsi que sa capacité : il n'y avait donc rien à deviner pour
+ * remplir n'importe quelle session. On refuse ici ce qu'on peut prouver faux.
+ *
+ * ON NE REFUSE QUE CE QU'ON PEUT PROUVER. Une table vide — classeur neuf,
+ * onglet pas encore créé — ne fait rejeter personne : mieux vaut accepter une
+ * inscription de trop que fermer le formulaire d'un site qui vient d'être
+ * installé. Rend un message, ou la chaîne vide quand tout va bien.
+ */
+function inscriptionInventee(d) {
+  var formationId = String(d.formationId || '').trim();
+
+  var formations = lireTable(F_FORMATIONS, CHAMPS_FORMATION);
+  if (formations.length) {
+    var connue = false;
+    for (var i = 0; i < formations.length; i++) {
+      if (String(formations[i].formId || '').trim() === formationId) connue = true;
+    }
+    if (!connue) return 'Cette formation n’existe pas.';
+  }
+
+  /* Une inscription SANS session reste permise : plusieurs formations acceptent
+     qu'on se manifeste avant l'annonce des dates. */
+  var sessionId = String(d.sessionId || '').trim();
+  if (!sessionId) return '';
+
+  var sessions = lireTable(F_SESSIONS, CHAMPS_SESSION);
+  if (!sessions.length) return '';
+  var laSession = null;
+  for (var j = 0; j < sessions.length; j++) {
+    if (String(sessions[j].id || '').trim() === sessionId) laSession = sessions[j];
+  }
+  if (!laSession) return 'Cette session n’existe pas.';
+  /* Une session qui appartient à une AUTRE formation : c'est par là qu'on
+     remplirait la session du voisin en restant formellement valide. */
+  if (String(laSession.formId || '').trim() !== formationId) {
+    return 'Cette session n’appartient pas à cette formation.';
+  }
+  return '';
+}
+
+/**
+ * Le plafond d'écritures du jour est-il atteint ?
+ *
+ * Copie du mécanisme de alerteAutorisee, qui existait déjà pour les emails et
+ * fonctionne : un seul compteur dans les propriétés du script, au format
+ * « AAAA-MM-JJ|compte ». Aucune lecture de feuille, donc aucun coût pour le
+ * candidat.
+ *
+ * EN CAS DE PANNE DES PROPRIÉTÉS, ON LAISSE PASSER. Perdre une vraie
+ * candidature est plus grave que d'en laisser entrer une de trop.
+ */
+function ecritureAutorisee() {
+  try {
+    var proprietes = PropertiesService.getScriptProperties();
+    var aujourdhui = Utilities.formatDate(new Date(), 'Etc/GMT', 'yyyy-MM-dd');
+    var brut = String(proprietes.getProperty('INSCRIPTIONS_DU_JOUR') || '');
+    var parts = brut.split('|');
+    var compte = parts[0] === aujourdhui ? Number(parts[1]) || 0 : 0;
+    if (compte >= INSCRIPTIONS_PAR_JOUR) return false;
+    proprietes.setProperty('INSCRIPTIONS_DU_JOUR', aujourdhui + '|' + (compte + 1));
+    if (compte + 1 === INSCRIPTIONS_PAR_JOUR) {
+      Logger.log('Plafond d’inscriptions atteint pour aujourd’hui : les envois suivants '
+        + 'sont refusés, avec un message qui renvoie vers ' + EMAIL_PRO + '.');
+    }
+    return true;
+  } catch (e) {
+    return true; // propriétés indisponibles : on préfère l'inscription au refus
+  }
+}
+
 /** Ramène chaque champ à une forme sûre, sans jamais perdre l'inscription. */
 function assainirInscription(d) {
   var propre = {};
@@ -347,6 +447,21 @@ function alerteAutorisee() {
 function recevoirInscription(d) {
   var manque = inscriptionIncomplete(d);
   if (manque) return repondre({ ok: false, erreur: manque }, null);
+
+  /* Ce qui ne correspond à rien de réel est refusé AVANT d'être écrit. Sans
+     cela, on pouvait remplir n'importe quelle session en devinant son
+     identifiant — et il n'y avait rien à deviner, le catalogue public les
+     donne tous, avec leur capacité. */
+  var inventee = inscriptionInventee(d);
+  if (inventee) return repondre({ ok: false, erreur: inventee }, null);
+
+  /* Puis seulement, on consomme une place du plafond du jour : une charge
+     invalide ne doit pas épuiser le quota des vrais candidats. */
+  if (!ecritureAutorisee()) {
+    return repondre({ ok: false, erreur: 'Nous recevons un nombre inhabituel d’inscriptions '
+      + 'aujourd’hui et ne pouvons pas enregistrer la vôtre pour l’instant. Écrivez-nous à '
+      + EMAIL_PRO + ' : votre place sera notée à la main.' }, null);
+  }
 
   d = assainirInscription(d);
   enregistrer(d);

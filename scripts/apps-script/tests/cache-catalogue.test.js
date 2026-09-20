@@ -16,7 +16,7 @@
 
 const path = require('path');
 process.env.GS_SOURCE = path.resolve(__dirname, '..', 'impactali-inscriptions.gs');
-const { bac, creerFeuille, appelsSheets } = require('./emulateur.js');
+const { bac, creerFeuille, appelsSheets, classeur } = require('./emulateur.js');
 
 const resultats = [];
 const verifier = (libelle, obtenu, attendu) => {
@@ -73,8 +73,21 @@ const inscrire = (nom, courriel) => bac.doPost({
   }
 });
 inscrire('Essai Cache', 'essai-cache@exemple.test');
+
+/* UNE INSCRIPTION FRAÎCHE N'OCCUPE PLUS DE PLACE : elle arrive « En attente »,
+   et seuls les statuts de STATUTS_COMPTES en prennent une. C'est ce qui empêche
+   un inconnu de fermer une session en postant vingt formulaires. On valide donc
+   la ligne À LA MAIN dans la feuille — surtout pas par une commande du tableau
+   de bord, qui jetterait le cache et ferait passer ce contrôle pour une raison
+   qui n'a rien à voir avec le recomptage. */
+const feuilleInscriptions = classeur.feuilles['Inscriptions'];
+const grille = feuilleInscriptions.getDataRange().getValues();
+const colonneStatut = grille[0].map(v => String(v).trim()).indexOf('statut');
+verifier('la colonne du statut est bien là', colonneStatut >= 0, true);
+feuilleInscriptions.getRange(grille.length, colonneStatut + 1).setValue('Confirmé');
+
 const apresInscription = catalogueDuSite();
-verifier('une inscription se voit tout de suite, malgré le cache',
+verifier('une inscription validée se voit tout de suite, malgré le cache',
   JSON.stringify(apresInscription.places) !== placesAvant, true);
 
 /* Et le catalogue reste servi : recompter les places ne doit pas avoir vidé

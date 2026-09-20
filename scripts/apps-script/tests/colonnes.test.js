@@ -93,8 +93,18 @@ verifier('relecture prices', JSON.stringify(reponse.catalogue.formations[0].pric
 // ------------------------- 3. COMPTEUR DE PLACES -------------------------
 
 const places = JSON.parse(bac.doGet({ parameter: { action: 'places' } })._t);
-verifier('comptage session historique', places.sessions['canva-pro-2026-11'], 1);
-verifier('comptage session comorienne', places.sessions['canva-pro-2027-03-km'], 1);
+
+/* SEULE UNE INSCRIPTION VALIDÉE OCCUPE UNE PLACE. La ligne ancienne porte le
+   statut « Nouveau », hérité d'une version antérieure du formulaire : il ne
+   figure pas parmi les statuts qui comptent, elle n'occupe donc plus de place.
+   C'est voulu, et c'est ce qui empêche un inconnu de fermer une session en
+   postant vingt formulaires — le formulaire public est ouvert à tous. */
+verifier('une ligne au statut inconnu n’occupe pas de place',
+  places.sessions['canva-pro-2026-11'], undefined);
+/* Contre-contrôle : sans lui, un décompte cassé qui ne compterait plus RIEN
+   passerait ici sans être vu. La ligne comorienne, elle, est « Confirmé ». */
+verifier('une inscription confirmée en occupe bien une',
+  places.sessions['canva-pro-2027-03-km'], 1);
 
 console.log(resultats.join('\n'));
 console.log(resultats.some(r => r.startsWith('ÉCHEC')) ? '\n>>> DES TESTS ONT ÉCHOUÉ' : '\n>>> Tout est conforme');

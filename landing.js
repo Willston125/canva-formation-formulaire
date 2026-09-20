@@ -92,7 +92,7 @@
         const ctaLabel = formation.hasDetailPage ? 'Voir la formation' : 'Découvrir la formation';
         const focusAttrs = accessible ? '' : 'tabindex="-1" aria-hidden="true"';
         const link = formation.hasDetailPage
-            ? `<a class="course-card__link" href="${escapeHtml(formation.href)}" aria-label="${escapeHtml(ctaLabel)} ${escapeHtml(formation.title)}" ${focusAttrs}></a>`
+            ? `<a class="course-card__link" href="${escapeHtml(common.lienSur(formation.href))}" aria-label="${escapeHtml(ctaLabel)} ${escapeHtml(formation.title)}" ${focusAttrs}></a>`
             : `<button class="course-card__link" type="button" data-open-training="${escapeHtml(formation.slug)}" aria-label="${escapeHtml(ctaLabel)} ${escapeHtml(formation.title)}" ${focusAttrs}></button>`;
         const classes = ['course-card', `course-card--${variant}`, formation.featured && variant !== 'dark' ? 'course-card--featured' : '', options.extraClass || '']
             .filter(Boolean).join(' ');
@@ -523,7 +523,7 @@
         actions.innerHTML = registration.state === 'open'
             ? `<a class="button button--primary" href="${escapeHtml(registrationHref(formation, registration.session?.id))}">S’inscrire à cette formation<span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a>
                ${formation.hasDetailPage
-                   ? `<a class="button button--secondary" href="${escapeHtml(formation.href)}">Voir la fiche formation</a>`
+                   ? `<a class="button button--secondary" href="${escapeHtml(common.lienSur(formation.href))}">Voir la fiche formation</a>`
                    : `<a class="button button--secondary" href="${escapeHtml(common.whatsappUrl(questionMessage))}" target="_blank" rel="noopener noreferrer">Poser une question<span class="material-symbols-outlined" aria-hidden="true">chat</span></a>`}`
             : `<a class="button button--primary" href="${escapeHtml(common.whatsappUrl(askMessage))}" target="_blank" rel="noopener noreferrer">Être informé(e) de l’ouverture<span class="material-symbols-outlined" aria-hidden="true">notifications</span></a>
                <button class="button button--secondary" type="button" data-dialog-close data-scroll-to="#catalogue">Voir les autres formations</button>`;
@@ -662,7 +662,7 @@
                lien, pour que le clavier et les lecteurs d'écran le comprennent.
                Un lien externe déclaré l'emporte : il mène au projet publié. */
             if (item.href && !video) {
-                return `<a class="${classes.join(' ')}" href="${escapeHtml(item.href)}" target="_blank" rel="noopener noreferrer">${inner}</a>`;
+                return `<a class="${classes.join(' ')}" href="${escapeHtml(common.lienSur(item.href))}" target="_blank" rel="noopener noreferrer">${inner}</a>`;
             }
             if (!visuel) return `<article class="${classes.join(' ')}">${inner}</article>`;
             return `<button type="button" class="${classes.join(' ')}" data-realisation="${i}"
