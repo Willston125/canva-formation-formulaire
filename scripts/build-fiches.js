@@ -7,7 +7,7 @@ const vm = require('vm');
 
 const ROOT = path.resolve(__dirname, '..');
 const TEMPLATE = path.join(ROOT, 'formations', '_template', 'fiche.html');
-const SITE_URL = 'https://canva-formation-formulaire.vercel.app';
+const SITE_URL = 'https://www.impactali.site';
 const sandbox = { window: {} };
 vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'formations-data.js'), 'utf8'), sandbox);
 vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'fiche-blocs.js'), 'utf8'), sandbox);

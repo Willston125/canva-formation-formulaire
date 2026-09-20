@@ -29,7 +29,8 @@ const EPREUVES = [
   ['session-par-pays.test.js', 'Mode, lieu et tarif propres a chaque pays'],
   ['connexion-admin.test.js', 'Ouverture du tableau de bord sans attente inutile'],
   ['reglage-cadrage-admin.test.js', 'Reglage du cadrage dans un apercu au rapport reel'],
-  ['apparence-tot.test.js', 'Apparence rejouee avant le premier affichage']
+  ['apparence-tot.test.js', 'Apparence rejouee avant le premier affichage'],
+  ['adresse-du-site.test.js', 'Toutes les pages nomment la meme adresse']
 ];
 
 /* La liste ci-dessus est écrite à la main : une épreuve ajoutée dans le dossier
