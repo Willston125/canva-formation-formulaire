@@ -11,7 +11,9 @@ const KEEP_SUBSETS = ['latin', 'latin-ext'];
  * Liste des icônes : relevée dans les sources (HTML générés + scripts), jamais figée
  * dans un fichier temporaire — toute icône ajoutée est ainsi embarquée à la régénération.
  */
-function collectIcons() {
+/** Les fichiers où un nom d'icône peut être écrit. Partagée : le relevé et son
+    contrôle doivent regarder exactement les mêmes sources. */
+function fichiersSources() {
   const fichiers = [
     'index.html', 'entreprises/index.html', 'mentions-legales/index.html',
     'formations/_template/fiche.html', 'script.js', 'site-common.js', 'landing.js',
@@ -28,7 +30,11 @@ function collectIcons() {
     const page = path.join('formations', dossier, 'index.html');
     if (fs.existsSync(page)) fichiers.push(page);
   }
+  return fichiers;
+}
 
+function collectIcons() {
+  const fichiers = fichiersSources();
   const noms = new Set();
   /* Toutes les façons dont un nom d'icône entre dans une page. Il en manquait
      une : `vide('inbox', …)`, l'aide du tableau de bord qui construit un état
@@ -41,7 +47,15 @@ function collectIcons() {
     // textContent = 'nom', icon: 'nom', icone: 'nom' (clef française des modules)
     /(?:textContent|icon|icone)\s*[:=]\s*['"]([a-z][a-z0-9_]{2,})['"]/g,
     // vide('nom', 'message') : l'icône est le premier argument
-    /\bvide\(\s*['"]([a-z][a-z0-9_]{2,})['"]/g
+    /\bvide\(\s*['"]([a-z][a-z0-9_]{2,})['"]/g,
+    /* Tableaux [icône, libellé] : la forme des métadonnées d'une carte et des
+       informations d'une fiche — `items.push(['view_module', '4 modules'])`.
+       `view_module` n'apparaissait nulle part ailleurs, et s'affichait en
+       toutes lettres sur la carte de Canva Pro.
+       Ce motif attrape aussi quelques premiers éléments qui ne sont pas des
+       icônes — « nom », « blue ». Sans conséquence : Google ignore
+       silencieusement un nom qu'il ne connaît pas, vérifié. */
+    /\[\s*['"]([a-z][a-z0-9_]{2,})['"]\s*,/g
   ];
 
   /* Tables qui associent une icône à autre chose que le mot « icon ».
@@ -85,6 +99,58 @@ function collectIcons() {
 const ICONES = collectIcons();
 const ICONS = ICONES.join(',');
 console.log(`  ${ICONES.length} icônes relevées dans les sources`);
+
+/**
+ * Signale les noms d'icônes ÉCRITS quelque part mais non relevés.
+ *
+ * Quatre fois déjà, une nouvelle façon d'écrire un nom d'icône a échappé aux
+ * motifs ci-dessus, et le mot s'est affiché en toutes lettres sur le site :
+ * « INBOX » dans l'administration, « PALETTE » et « SMART_TOY » sur l'accueil,
+ * « VIEW_MODULE » sur une carte. Chaque fois, un motif de plus — et l'attente
+ * du suivant.
+ *
+ * Ce contrôle prend le problème par l'autre bout : il compare TOUS les mots
+ * écrits en littéral à la liste officielle des 6 000 icônes, et nomme ceux qui
+ * y figurent sans avoir été relevés.
+ *
+ * Il AVERTIT, il ne bloque pas. Beaucoup de mots ordinaires sont aussi des noms
+ * d'icônes — « title », « password », « function », « transform » — et en faire
+ * une erreur ferait échouer la construction pour rien, trois fois par semaine.
+ * La liste ci-dessous écarte ceux qu'on a déjà reconnus comme tels.
+ */
+const MOTS_ORDINAIRES = new Set([
+  'title', 'eyebrow', 'portrait', 'input', 'password', 'circle', 'navigation',
+  'step', 'source', 'email', 'conditions', 'spoke', 'draft', 'target',
+  'smartphone', 'start', 'mobile', 'script', 'height', 'class', 'cable',
+  'select', 'transform', 'resize', 'function', 'vignette', 'category', 'image',
+  'code', 'mode', 'label', 'place', 'phone'
+]);
+
+async function signalerIconesOubliees(fichiers) {
+  let officiels;
+  try {
+    const t = await fetch('https://fonts.google.com/metadata/icons?incomplete=true&key=material_symbols')
+      .then(r => r.text());
+    officiels = new Set((JSON.parse(t.replace(/^\)\]\}'\s*/, '')).icons || []).map(i => i.name));
+  } catch (e) {
+    console.log('  (liste officielle des icônes injoignable, contrôle passé : ' + e.message + ')');
+    return;
+  }
+
+  const connus = new Set(ICONES);
+  const suspects = new Map();
+  for (const f of fichiers) {
+    if (!fs.existsSync(f)) continue;
+    for (const m of fs.readFileSync(f, 'utf8').matchAll(/['"]([a-z][a-z0-9_]{2,})['"]/g)) {
+      if (officiels.has(m[1]) && !connus.has(m[1]) && !MOTS_ORDINAIRES.has(m[1])
+        && !suspects.has(m[1])) suspects.set(m[1], f);
+    }
+  }
+  if (!suspects.size) return;
+  console.log('  ⚠ noms d’icônes écrits mais NON relevés — ils s’afficheraient en toutes lettres :');
+  for (const [nom, f] of suspects) console.log(`      ${nom.padEnd(24)} ${f}`);
+  console.log('    Ajoutez un motif dans collectIcons, ou le mot à MOTS_ORDINAIRES si ce n’est pas une icône.');
+}
 
 const SOURCES = [
   {
@@ -201,5 +267,6 @@ function parseFaces(css) {
     console.log('  ⚠ relancez « npm run build:fiches » : le gabarit a changé');
   }
 
+  await signalerIconesOubliees(fichiersSources());
   console.log(`Total : ${(total / 1024).toFixed(1)} Ko`);
 })().catch(e => { console.error('ÉCHEC :', e.message); process.exit(1); });

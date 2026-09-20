@@ -155,7 +155,11 @@ const SOURCES_ICONES = [
 const MOTIFS_ICONES = [
   /material-symbols-outlined[^>]*>\s*([a-z0-9_]+)\s*</g,
   /(?:textContent|icon|icone)\s*[:=]\s*['"]([a-z][a-z0-9_]{2,})['"]/g,
-  /\bvide\(\s*['"]([a-z][a-z0-9_]{2,})['"]/g
+  /\bvide\(\s*['"]([a-z][a-z0-9_]{2,})['"]/g,
+  /* Tableaux [icône, libellé] — `items.push(['view_module', '4 modules'])`.
+     C'est la quatrième forme à avoir échappé au relevé : « VIEW_MODULE »
+     s'affichait en toutes lettres sur la carte de Canva Pro. */
+  /\[\s*['"]([a-z][a-z0-9_]{2,})['"]\s*,/g
 ];
 
 const employees = new Set(['menu', 'close', 'expand_more', 'arrow_forward', 'arrow_back']);
@@ -173,7 +177,10 @@ for (const source of SOURCES_ICONES) {
 const relevees = new Set();
 {
   const src = lire('scripts/fetch-fonts.js');
-  const corps = src.slice(src.indexOf('function collectIcons'), src.indexOf('const ICONES ='));
+  /* On part de `fichiersSources` et non de `collectIcons` : la liste des
+     fichiers a été sortie dans sa propre fonction, et un découpage qui
+     commencerait au relevé laisserait cette aide derrière lui. */
+  const corps = src.slice(src.indexOf('function fichiersSources'), src.indexOf('const ICONES ='));
   const collecter = new Function('fs', 'path', corps + '; return collectIcons();');
   const depart = process.cwd();
   process.chdir(RACINE);
@@ -214,6 +221,38 @@ verifier('des tables d’icônes sont bien trouvées', tablesIcones.length >= 1,
 verifier('et toutes leurs icônes entrent dans le sous-ensemble',
   tablesIcones.flatMap(t => t.valeurs.filter(v => !relevees.has(v))
     .map(v => t.source + ' → ' + t.nom + '.' + v)), []);
+
+// --- 8. Les icônes déjà tombées en panne, nommées une par une ---------------
+
+/* Les contrôles ci-dessus relèvent les icônes avec des expressions régulières.
+ * Le générateur aussi. Quand les deux partagent une lacune, ils se taisent
+ * ensemble — c'est arrivé quatre fois, et chaque fois un mot s'est affiché en
+ * toutes lettres sur le site.
+ *
+ * Cette liste-ci n'est produite par aucun motif : elle est écrite à la main.
+ * Si le relevé se casse d'une cinquième façon, ce contrôle-ci tient encore,
+ * parce qu'il ne dépend d'aucune façon de lire les sources. */
+const ICONES_DEJA_TOMBEES = [
+  'inbox',        // écran d'accueil du tableau de bord
+  'palette',      // carte « Design & Contenu » de l'accueil
+  'smart_toy',    // carte « Intelligence artificielle » de l'accueil
+  'view_module',  // « 4 modules » sur la carte de Canva Pro
+  'event', 'schedule', 'location_on', 'payments', 'group' // métadonnées des cartes
+];
+verifier('les icônes déjà tombées en panne sont toutes relevées',
+  ICONES_DEJA_TOMBEES.filter(n => !relevees.has(n)), []);
+
+// --- 9. Le filet de sécurité du générateur est bien branché -----------------
+
+/* Ajouter un motif de plus à chaque panne, c'est attendre la suivante. Le
+   générateur compare donc aussi TOUS les mots écrits en littéral à la liste
+   officielle des icônes de Google, et nomme ceux qu'il n'a pas relevés.
+   Ce contrôle vérifie que ce filet existe ET qu'il est appelé — déclaré sans
+   être appelé, il ne servirait à rien. */
+verifier('le filet « icônes oubliées » est déclaré',
+  /async function signalerIconesOubliees/.test(collecteur), true);
+verifier('et il est bien appelé par la construction',
+  /await signalerIconesOubliees\(/.test(collecteur), true);
 
 console.log('Tables d’icônes lues : '
   + tablesIcones.map(t => t.nom + ' (' + t.valeurs.length + ')').join(', '));
