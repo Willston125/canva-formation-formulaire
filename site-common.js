@@ -645,6 +645,15 @@
                ceux-ci sortent quand rien n'a changé, et une photo déjà en place
                ne serait alors jamais retenue — donc jamais rejouée au
                chargement suivant, et le clignotement reviendrait. */
+            /* Normalisé UNE SEULE FOIS, ici : la mémoire d'apparence et la pose
+               ci-dessous doivent écrire exactement la même valeur, sinon le
+               bloc d'en-tête poserait au chargement suivant un cadrage
+               différent de celui que le site vient de calculer. */
+            const cadrageVoulu = style
+                ? (style.transform === 'none' ? 'scale(1)' : style.transform) : '';
+            const origineVoulue = style ? style.transformOrigin : '';
+            const positionVoulue = style ? style.objectPosition : '';
+
             apparence[cle] = {
                 src: adresse,
                 /* Le bloc d'en-tête précharge les visuels retenus. Il ne doit
@@ -654,43 +663,49 @@
                    la photo de la méthode pèse à elle seule 137 Ko et se
                    trouve loin sous la ligne de flottaison. */
                 differee: el.loading === 'lazy',
-                objectPosition: style ? style.objectPosition : '',
-                transform: style ? style.transform : '',
-                transformOrigin: style ? style.transformOrigin : ''
+                objectPosition: positionVoulue,
+                transform: cadrageVoulu,
+                transformOrigin: origineVoulue
             };
-            if (style && (el.style.objectPosition !== style.objectPosition
-                || el.style.transform !== style.transform
-                || el.style.transformOrigin !== style.transformOrigin)) {
-                /* Style EN LIGNE et non une classe : la valeur est PROPRE À
-                   CHAQUE IMAGE et ne tiendrait pas dans une classe statique. Et
-                   la feuille de style cadre certains visuels AU RANG
-                   (.method-step:nth-child(2) img) : un sélecteur au rang
-                   l'emporterait sur une classe, et la photo remplacée garderait
-                   le cadrage taillé pour celle d'origine.
-
-                   CE QUE CELA COÛTE, EN TOUTE CONNAISSANCE DE CAUSE : la section
-                   méthode agrandit ses visuels au survol (.method-step:hover
-                   img). Un transform en ligne l'emporte sur cette règle — y
-                   compris « none » —, donc une carte recadrée perd son animation
-                   quand ses voisines la gardent. Une photo bien cadrée en
-                   permanence vaut mieux qu'un mouvement au passage de la souris. */
-                el.style.objectPosition = style.objectPosition;
-                el.style.transform = style.transform;
-                el.style.transformOrigin = style.transformOrigin;
-                change = true;
-            } else if (!style && (el.style.objectPosition || el.style.transform || el.style.transformOrigin)) {
+            /* LE CADRAGE PASSE PAR DES VARIABLES, PAS PAR `transform` EN LIGNE.
+             *
+             * Une déclaration en ligne l'emporte sur toute la feuille de style,
+             * y compris sur `.method-step:hover img { transform: scale(1.02) }`.
+             * La carte dont on venait de remplacer la photo perdait donc son
+             * agrandissement au survol, quand ses deux voisines le gardaient.
+             * Et le cas le plus fréquent était le pire : un cadrage neutre
+             * posait `transform: none`, qui ne change rien à l'œil et tuait
+             * l'animation pour rien.
+             *
+             * La feuille de style compose désormais les deux elle-même :
+             *     transform: var(--cadrage, scale(1)) scale(1.02);
+             *
+             * LA VALEUR DE REPLI N'EST JAMAIS `none` : « none scale(1.02) »
+             * n'est pas du CSS valide, et toute la déclaration serait rejetée.
+             * On écrit donc l'identité `scale(1)`, qui se compose sans effet.
+             *
+             * `object-position` reste EN LIGNE : il n'est pas animé, et la
+             * feuille cadre certains visuels AU RANG
+             * (.method-step:nth-child(2) img) — un sélecteur au rang
+             * l'emporterait sur une classe, et la photo remplacée garderait le
+             * cadrage taillé pour celle d'origine. */
+            if (el.style.getPropertyValue('--cadrage') !== cadrageVoulu
+                || el.style.getPropertyValue('--cadrage-origine') !== origineVoulue
+                || el.style.objectPosition !== positionVoulue) {
                 /* RETIRER un cadrage doit le retirer POUR DE BON. refreshPlaces
-                   applique deux fois dans la même page : le cache sessionStorage
-                   d'abord, le réseau ensuite. Un cadrage présent au cache et
-                   absent du réseau — une cellule vidée à la main — resterait
-                   collé jusqu'au prochain rechargement, et le bouton
-                   « Réinitialiser » du futur écran de réglage ne réinitialiserait
-                   rien. La chaîne vide retire la déclaration en ligne et rend la
-                   main à la feuille de style, qui remet le visuel dans sa mise en
-                   scène d'origine. */
-                el.style.objectPosition = '';
-                el.style.transform = '';
-                el.style.transformOrigin = '';
+                   applique deux fois dans la même page : le cache d'abord, le
+                   réseau ensuite. Un cadrage présent au cache et absent du
+                   réseau — une cellule vidée à la main — resterait collé
+                   jusqu'au prochain rechargement. Une valeur vide retire donc
+                   la déclaration et rend la main à la feuille de style, qui
+                   remet le visuel dans sa mise en scène d'origine. */
+                const poser = (nom, valeur) => {
+                    if (valeur) el.style.setProperty(nom, valeur);
+                    else el.style.removeProperty(nom);
+                };
+                poser('--cadrage', cadrageVoulu);
+                poser('--cadrage-origine', origineVoulue);
+                el.style.objectPosition = positionVoulue;
                 change = true;
             }
 

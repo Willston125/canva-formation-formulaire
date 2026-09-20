@@ -173,20 +173,37 @@ verifier('appliquerImages regarde le cadrage reçu au lieu de l’ignorer',
    Le style est posé en ligne, non par une classe : la valeur est propre à chaque
    image, et la feuille de style cadre certains visuels au rang
    (.method-step:nth-child(2) img), sélecteur qui l'emporterait sur une classe. */
-verifier('et l’écrit vraiment, en style en ligne, sur les trois propriétés',
-  corps.indexOf('el.style.objectPosition = style.objectPosition') !== -1
-  && corps.indexOf('el.style.transform = style.transform') !== -1
-  && corps.indexOf('el.style.transformOrigin = style.transformOrigin') !== -1, true);
+verifier('et l’écrit vraiment : position en ligne, cadrage en variables',
+  corps.indexOf('el.style.objectPosition = positionVoulue') !== -1
+  && corps.indexOf("poser('--cadrage', cadrageVoulu)") !== -1
+  && corps.indexOf("poser('--cadrage-origine', origineVoulue)") !== -1, true);
+
+/* LE CADRAGE NE DOIT PLUS PASSER PAR `transform` EN LIGNE.
+ *
+ * Une déclaration en ligne l'emporte sur toute la feuille de style, donc aussi
+ * sur `.method-step:hover img { transform: … }`. La carte dont on venait de
+ * remplacer la photo perdait son agrandissement au survol quand ses voisines
+ * le gardaient — et le cas le plus fréquent était le pire : un cadrage neutre
+ * posait `transform: none`, qui ne change rien à l'œil et tuait l'animation
+ * pour rien. */
+verifier('et ne pose plus aucun transform en ligne',
+  /el\.style\.transform\s*=/.test(corps), false);
 
 /* RETIRER un cadrage doit le retirer pour de bon : refreshPlaces applique deux
    fois dans la même page, le cache d'abord, le réseau ensuite. Sans branche
    d'effacement, un cadrage présent au cache et absent du réseau resterait collé
-   jusqu'au rechargement — et le bouton « Réinitialiser » à venir ne
-   réinitialiserait rien. */
-verifier('et efface le style en ligne quand le cadrage a disparu',
-  corps.indexOf("el.style.objectPosition = ''") !== -1
-  && corps.indexOf("el.style.transform = ''") !== -1
-  && corps.indexOf("el.style.transformOrigin = ''") !== -1, true);
+   jusqu'au rechargement — et le bouton « Réinitialiser » ne réinitialiserait
+   rien. */
+verifier('et efface le réglage quand le cadrage a disparu',
+  corps.indexOf('el.style.removeProperty(nom)') !== -1
+  && /const cadrageVoulu = style[\s\S]{0,120}: '';/.test(corps), true);
+
+/* La valeur de repli n'est JAMAIS `none` : la feuille de style la compose avec
+   l'animation — « var(--cadrage, …) scale(1.02) » — et « none scale(1.02) »
+   n'est pas du CSS valide ; la déclaration entière serait rejetée et la photo
+   s'afficherait sans son cadrage. */
+verifier('un cadrage neutre vaut l’identité, jamais « none »',
+  corps.indexOf("style.transform === 'none' ? 'scale(1)'") !== -1, true);
 
 /* Un script Google resté dans sa version précédente ne renvoie AUCUN cadrage.
    Sans cette garde, la première lecture de `cadrages[...]` lèverait un TypeError
@@ -220,6 +237,42 @@ verifier('et le cadrage suit la photo effectivement retenue',
    priorité, surcharger une fiche seule deviendrait impossible. */
 verifier('mais une photo propre l’emporte sur le repli',
   /propre[\s\S]{0,120}\?[\s\S]{0,40}propre[\s\S]{0,80}repli/.test(corps), true);
+
+// --- 8. La feuille de style COMPOSE le cadrage au lieu de l'écraser --------
+
+/* Le cadrage arrive par la variable `--cadrage`. Toute règle qui transforme
+ * une image pilotée doit donc la reprendre, sinon elle l'écrase — c'est
+ * exactement ce qui est arrivé : la carte de la section méthode dont on venait
+ * de remplacer la photo perdait son agrandissement au survol. */
+const feuille = fs.readFileSync(path.join(RACINE, 'style.css'), 'utf8');
+
+verifier('la règle de base existe et reprend la variable',
+  /\[data-image\]\s*\{[^}]*transform:\s*var\(--cadrage/.test(feuille), true);
+
+/* La valeur de repli n'est JAMAIS `none` : elle est composée avec l'animation
+   — « var(--cadrage, …) scale(1.02) » — et « none scale(1.02) » n'est pas du
+   CSS valide. La déclaration entière serait rejetée, et la photo s'afficherait
+   sans cadrage du tout. */
+verifier('aucun repli « none », qui rendrait la composition invalide',
+  feuille.indexOf('var(--cadrage, none)'), -1);
+
+/* Chaque règle qui transforme une IMAGE doit reprendre la variable, sauf dans
+ * les contextes dont on a vérifié qu'ils ne portent aucune image pilotée.
+ * La liste est une liste d'EXCEPTIONS, pas d'inclusions : une règle ajoutée
+ * demain sur une image pilotée tombera ici d'elle-même. */
+const SANS_VISUEL_PILOTE = ['.course-card', '.training-dialog'];
+const reglesImage = [...feuille.matchAll(/([^{}]*\bimg[^{}]*)\{([^}]*transform\s*:[^};]*;[^}]*)\}/g)]
+  .map(m => ({ selecteur: m[1].trim().replace(/\s+/g, ' '), corps: m[2] }))
+  .filter(r => !/^\/\*/.test(r.selecteur))
+  .filter(r => !SANS_VISUEL_PILOTE.some(c => r.selecteur.indexOf(c) >= 0));
+
+/* Contre-contrôle : si plus aucune règle n'était trouvée, le contrôle suivant
+   passerait précisément quand il devrait crier. */
+verifier('des règles transformant une image sont bien trouvées',
+  reglesImage.length >= 2, true);
+
+verifier('et toutes reprennent le cadrage au lieu de l’écraser',
+  reglesImage.filter(r => r.corps.indexOf('var(--cadrage') < 0).map(r => r.selecteur), []);
 
 // ---------------------------------- BILAN ----------------------------------
 resultats.forEach(l => console.log(l));

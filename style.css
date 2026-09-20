@@ -60,6 +60,26 @@ html {
   font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
 }
 
+/* ---------- Cadrage des visuels pilotés depuis le tableau de bord ----------
+ *
+ * Le cadrage réglé pour une photo arrive par la variable `--cadrage`, posée
+ * sur l'image par site-common.js. Il PASSAIT autrefois par un `transform` en
+ * ligne, qui l'emportait sur toute la feuille : la carte de la section méthode
+ * dont on venait de remplacer la photo perdait son agrandissement au survol,
+ * quand ses voisines le gardaient.
+ *
+ * Toute règle qui anime l'une de ces images doit donc COMPOSER avec la
+ * variable au lieu de l'écraser :
+ *     transform: var(--cadrage, scale(1)) scale(1.02);
+ *
+ * Et la valeur de repli n'est JAMAIS `none` : « none scale(1.02) » n'est pas
+ * du CSS valide, et la déclaration entière serait rejetée. `scale(1)` est
+ * l'identité, elle se compose sans rien changer. */
+[data-image] {
+  transform: var(--cadrage, scale(1));
+  transform-origin: var(--cadrage-origine, 50% 50%);
+}
+
 /* ---------- Glass Card (Bleu Nuit Fumé) ---------- */
 .glass-card {
   background: rgba(20, 33, 61, 0.4); /* #0D1723 transparent */
@@ -1473,8 +1493,8 @@ a:focus-visible {
   height: 100%;
   object-fit: cover;
   object-position: 14% 50%;
-  transform: scale(1.24);
-  transform-origin: 18% 60%;
+  transform: var(--cadrage, scale(1.24));
+  transform-origin: var(--cadrage-origine, 18% 60%);
 }
 
 /* Quatre dégradés sombres couvraient ici la photo du bandeau, sur ses quatre
@@ -1790,7 +1810,7 @@ a:focus-visible {
 
 .method-step:nth-child(2) img { object-position: 50% 8%; }
 .method-step:nth-child(3) img { object-position: 23% 50%; }
-.method-step:hover img { transform: scale(1.02); }
+.method-step:hover img { transform: var(--cadrage, scale(1)) scale(1.02); }
 
 /* ---------- Entreprises ---------- */
 .enterprise-cta {
@@ -2216,7 +2236,7 @@ a:focus-visible {
   .landing-hero__actions,
   .hero-benefits { justify-content: center; }
   .landing-hero__visual { min-height: 440px; margin-top: 8px; border-radius: 24px; }
-  .landing-hero__visual img { object-position: 22% 50%; transform: scale(1.26); transform-origin: 30% 62%; }
+  .landing-hero__visual img { object-position: 22% 50%; transform: var(--cadrage, scale(1.26)); transform-origin: var(--cadrage-origine, 30% 62%); }
   .catalogue { margin-top: -70px; padding-top: 104px; border-radius: 50% 50% 0 0 / 58px 58px 0 0; }
   .catalogue__heading { margin-top: 10px; }
   .training-carousel { padding-inline: 12px; padding-bottom: 32px; }
@@ -2429,8 +2449,8 @@ a:focus-visible {
   height: 100%;
   object-fit: cover;
   object-position: 14% 50%;
-  transform: scale(1.35);
-  transform-origin: 20% 58%;
+  transform: var(--cadrage, scale(1.35));
+  transform-origin: var(--cadrage-origine, 20% 58%);
 }
 
 .trainer__photo figcaption {

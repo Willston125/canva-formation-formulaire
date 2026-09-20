@@ -53,8 +53,15 @@
                 el.removeAttribute('width');
                 el.removeAttribute('height');
                 el.style.objectPosition = v.objectPosition || '';
-                el.style.transform = v.transform || '';
-                el.style.transformOrigin = v.transformOrigin || '';
+                /* Le cadrage passe par des VARIABLES, jamais par « transform »
+                   en ligne : une déclaration en ligne l'emporte sur toute la
+                   feuille de style, y compris sur l'agrandissement au survol
+                   que celle-ci compose avec elle. La carte dont on venait de
+                   remplacer la photo perdait ainsi son animation. */
+                if (v.transform) el.style.setProperty('--cadrage', v.transform);
+                else el.style.removeProperty('--cadrage');
+                if (v.transformOrigin) el.style.setProperty('--cadrage-origine', v.transformOrigin);
+                else el.style.removeProperty('--cadrage-origine');
             };
 
             /* On agit pendant l'analyse du document, au moment où chaque

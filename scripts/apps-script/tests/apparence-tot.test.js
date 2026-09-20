@@ -141,10 +141,23 @@ const MEMOIRE = {
   }
 };
 
+/* Le faux style accepte les VARIABLES CSS en plus des propriétés ordinaires :
+   le cadrage passe par `--cadrage`, posé avec setProperty, et non plus par un
+   `transform` en ligne qui écraserait l'animation au survol. */
+function faireStyle() {
+  const variables = {};
+  return {
+    variables,
+    setProperty(nom, valeur) { variables[nom] = valeur; },
+    removeProperty(nom) { delete variables[nom]; },
+    getPropertyValue(nom) { return nom in variables ? variables[nom] : ''; }
+  };
+}
+
 function faireImage(attrs) {
   const a = Object.assign({}, attrs);
   return {
-    nodeType: 1, style: {}, attrs: a,
+    nodeType: 1, style: faireStyle(), attrs: a,
     getAttribute: n => (n in a ? a[n] : null),
     setAttribute: (n, v) => { a[n] = v; },
     removeAttribute: n => { delete a[n]; },
@@ -195,8 +208,14 @@ verifier('la photo retenue remplace celle du fichier',
 verifier('les dimensions de l’ancienne image sont retirées',
   [hero.attrs.width, hero.attrs.height], [undefined, undefined]);
 
-verifier('le cadrage retenu est posé avec elle',
-  [hero.style.objectPosition, hero.style.transform], ['40% 60%', 'scale(1.3)']);
+/* Le cadrage est posé EN VARIABLES. Un `transform` en ligne l'emporterait sur
+   toute la feuille de style, donc aussi sur l'agrandissement au survol des
+   cartes de la section méthode : celle dont on venait de remplacer la photo
+   perdait son animation quand ses voisines la gardaient. */
+verifier('le cadrage retenu est posé, en variables et non en transform',
+  [hero.style.objectPosition, hero.style.variables['--cadrage'],
+  hero.style.variables['--cadrage-origine'], hero.style.transform],
+  ['40% 60%', 'scale(1.3)', '40% 60%', undefined]);
 
 /* Un emplacement absent de la mémoire ne doit pas être touché : sinon la
    première visite, où la mémoire est vide, effacerait les visuels livrés
