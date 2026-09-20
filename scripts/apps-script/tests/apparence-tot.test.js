@@ -131,7 +131,13 @@ const MEMOIRE = {
       src: 'https://exemple.test/nouvelle-banniere.jpg',
       objectPosition: '40% 60%', transform: 'scale(1.3)', transformOrigin: '40% 60%'
     },
-    'accueil.formateur.photo': { src: 'https://exemple.test/formateur.jpg', objectPosition: '', transform: '', transformOrigin: '' }
+    /* Celle-ci est DIFFÉRÉE : la page ne la charge qu'à l'approche du regard.
+       Le bloc doit corriger son adresse — c'est gratuit — mais surtout ne pas
+       la précharger, sous peine d'annuler ce report. */
+    'accueil.formateur.photo': {
+      src: 'https://exemple.test/formateur.jpg', differee: true,
+      objectPosition: '', transform: '', transformOrigin: ''
+    }
   }
 };
 
@@ -177,7 +183,8 @@ const hero = faireImage({
   width: '851', height: '315'
 });
 const inconnue = faireImage({ 'data-image': 'accueil.methode.2', src: 'assets/illustrations/montage.svg' });
-const joue = jouer(JSON.stringify(MEMOIRE), [hero, inconnue]);
+const differee = faireImage({ 'data-image': 'accueil.formateur.photo', src: 'assets/images/ancien-formateur.jpg' });
+const joue = jouer(JSON.stringify(MEMOIRE), [hero, inconnue, differee]);
 
 verifier('la photo retenue remplace celle du fichier',
   hero.attrs.src, 'https://exemple.test/nouvelle-banniere.jpg');
@@ -200,12 +207,23 @@ verifier('un visuel inconnu de la mémoire est laissé intact',
 /* Le préchargement lance le téléchargement sans attendre l'analyse de la
    balise <img> : c'est lui qui supprime l'attente, le remplacement de src ne
    fait qu'éviter d'afficher l'ancienne. */
-verifier('chaque photo retenue est préchargée', joue.liens.length, 2);
 verifier('et le préchargement demande bien une image',
   joue.liens.every(l => l.rel === 'preload' && l.as === 'image'), true);
-verifier('vers l’adresse retenue',
-  joue.liens.map(l => l.href).sort(),
-  ['https://exemple.test/formateur.jpg', 'https://exemple.test/nouvelle-banniere.jpg']);
+
+/* SEULES les photos affichées d'emblée sont préchargées.
+ *
+ * Elles l'étaient toutes, au début : sur l'accueil, cela ramenait 222 Ko au
+ * premier chargement là où 50 suffisent — la photo de la méthode pèse à elle
+ * seule 137 Ko et se trouve loin sous la ligne de flottaison. Précharger ce
+ * que la page diffère revient à annuler ce report. */
+verifier('seules les photos affichées d’emblée sont préchargées',
+  joue.liens.map(l => l.href), ['https://exemple.test/nouvelle-banniere.jpg']);
+
+/* Corriger son adresse reste gratuit, et doit continuer : une photo différée
+   dont l'adresse resterait celle du fichier montrerait l'ancienne au moment
+   où le regard l'atteint. */
+verifier('mais leur adresse est tout de même corrigée',
+  differee.attrs.src, 'https://exemple.test/formateur.jpg');
 
 /* L'observation s'arrête à la fin de l'analyse : la laisser courir ferait
    travailler le navigateur à chaque ajout dans la page, pour rien. */

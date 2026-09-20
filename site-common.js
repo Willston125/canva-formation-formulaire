@@ -437,6 +437,30 @@
         return `https://lh3.googleusercontent.com/d/${id}=w${largeur || 1200}-rw`;
     }
 
+    /* Largeur réellement utile à un emplacement, arrondie par paliers.
+     *
+     * Toutes les photos étaient demandées en 1400 px de large, quel que soit
+     * l'endroit : mesuré sur le site publié, le visuel de la méthode s'affiche
+     * 385 px et pesait 137 Ko, la bannière s'affiche 486 px et pesait 50 Ko.
+     * Google sait servir la taille qu'on lui demande — encore faut-il la lui
+     * demander.
+     *
+     * LES PALIERS COMPTENT : sans eux, chaque largeur de fenêtre produirait
+     * une adresse différente, et ni le cache du navigateur ni celui de Google
+     * ne serviraient jamais deux fois la même image. */
+    const PALIERS_LARGEUR = [400, 600, 800, 1000, 1400];
+
+    function largeurUtile(el) {
+        const affichee = el.clientWidth || el.getBoundingClientRect().width || 0;
+        /* Pas encore mis en page : on ne devine pas, on prend le maximum.
+           Une photo trop petite s'afficherait floue, ce qui est pire que
+           lente. */
+        if (!affichee) return PALIERS_LARGEUR[PALIERS_LARGEUR.length - 1];
+        const besoin = affichee * (window.devicePixelRatio || 1);
+        return PALIERS_LARGEUR.find(p => p >= besoin)
+            || PALIERS_LARGEUR[PALIERS_LARGEUR.length - 1];
+    }
+
     function identifiantDrive(url) {
         const t = String(url || '');
         const m = t.match(/googleusercontent\.com\/d\/([A-Za-z0-9_-]{20,})/)
@@ -606,7 +630,7 @@
                 ? propre
                 : (repli && repli !== cle ? images[repli] : undefined);
             if (typeof valeur !== 'string' || !valeur.trim()) return;
-            const adresse = normaliserImage(valeur.trim(), 1400);
+            const adresse = normaliserImage(valeur.trim(), largeurUtile(el));
 
             /* Le cadrage est posé AVANT le retour anticipé ci-dessous : celui-ci
                sort quand l'adresse n'a pas changé, et une photo dont seul le
@@ -623,6 +647,13 @@
                chargement suivant, et le clignotement reviendrait. */
             apparence[cle] = {
                 src: adresse,
+                /* Le bloc d'en-tête précharge les visuels retenus. Il ne doit
+                   précharger QUE ceux qui s'affichent d'emblée : la page
+                   diffère volontairement les autres, et les précharger tous
+                   ramenait 222 Ko au premier chargement là où 50 suffisent —
+                   la photo de la méthode pèse à elle seule 137 Ko et se
+                   trouve loin sous la ligne de flottaison. */
+                differee: el.loading === 'lazy',
                 objectPosition: style ? style.objectPosition : '',
                 transform: style ? style.transform : '',
                 transformOrigin: style ? style.transformOrigin : ''

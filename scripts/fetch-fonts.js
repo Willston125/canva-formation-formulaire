@@ -123,7 +123,9 @@ const MOTS_ORDINAIRES = new Set([
   'step', 'source', 'email', 'conditions', 'spoke', 'draft', 'target',
   'smartphone', 'start', 'mobile', 'script', 'height', 'class', 'cable',
   'select', 'transform', 'resize', 'function', 'vignette', 'category', 'image',
-  'code', 'mode', 'label', 'place', 'phone'
+  'code', 'mode', 'label', 'place', 'phone',
+  /* Noms de BALISES HTML, pas d'icônes : createElement('link'). */
+  'link'
 ]);
 
 async function signalerIconesOubliees(fichiers) {
@@ -168,7 +170,7 @@ const SOURCES = [
   {
     key: 'material-symbols-outlined',
     label: 'Material Symbols Outlined',
-    url: `https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=${ICONS}&display=block`,
+    url: `https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400..700,0..1,0&icon_names=${ICONS}&display=block`,
     subsetFilter: false
   }
 ];
