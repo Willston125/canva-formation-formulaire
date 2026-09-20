@@ -42,6 +42,23 @@ function collectIcons() {
     // vide('nom', 'message') : l'icône est le premier argument
     /\bvide\(\s*['"]([a-z][a-z0-9_]{2,})['"]/g
   ];
+
+  /* Tables qui associent une icône à autre chose que le mot « icon ».
+   *
+   * `ICONES_DOMAINE` de landing.js prend le NOM DU DOMAINE pour clé :
+   *     'Design & Contenu': 'palette',
+   *     'Intelligence artificielle': 'smart_toy'
+   * Aucun motif ci-dessus ne les voyait, et ces deux icônes manquaient au
+   * sous-ensemble. Sur l'accueil, les cartes « Design & Contenu » et
+   * « Intelligence artificielle » affichaient donc PALETTE et SMART_TOY en
+   * toutes lettres, tandis que leurs voisines montraient leur pictogramme —
+   * celles-là se trouvant nommées ailleurs dans une page.
+   *
+   * On relève donc toutes les valeurs des déclarations dont le nom annonce
+   * qu'elles portent des icônes. Le nom de la table fait foi : chercher
+   * n'importe quelle chaîne ressemblant à un nom d'icône ramasserait la moitié
+   * du dépôt. */
+  const TABLES_ICONES = /\b(?:const|let|var)\s+\w*ICONES?\w*\s*=\s*\{([\s\S]*?)\}/g;
   for (const fichier of fichiers) {
     if (!fs.existsSync(fichier)) continue;
     const contenu = fs.readFileSync(fichier, 'utf8');
@@ -49,6 +66,14 @@ function collectIcons() {
       re.lastIndex = 0;
       let m;
       while ((m = re.exec(contenu))) noms.add(m[1]);
+    }
+
+    TABLES_ICONES.lastIndex = 0;
+    let table;
+    while ((table = TABLES_ICONES.exec(contenu))) {
+      const valeurs = /:\s*['"]([a-z][a-z0-9_]{2,})['"]/g;
+      let v;
+      while ((v = valeurs.exec(table[1]))) noms.add(v[1]);
     }
   }
   // Icônes basculées en JS (menu ouvert/fermé, flèches d'accordéon)

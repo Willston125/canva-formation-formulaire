@@ -145,6 +145,41 @@ const relevees = new Set();
 verifier('le générateur relève toutes les icônes employées',
   [...employees].filter(n => !relevees.has(n)).sort(), []);
 
+/* Ce contrôle-ci ne partage AUCUN motif avec le générateur.
+ *
+ * Le relevé ci-dessus se voulait indépendant, mais il recopiait les trois mêmes
+ * expressions régulières : il avait donc exactement le même angle mort, et les
+ * deux se sont tus de concert. `ICONES_DOMAINE` de landing.js prend le nom du
+ * domaine pour clé — 'Design & Contenu': 'palette' — que nul motif ne voyait.
+ * Sur l'accueil, deux cartes affichaient PALETTE et SMART_TOY en toutes
+ * lettres pendant que leurs voisines montraient leur pictogramme.
+ *
+ * On lit donc les tables d'icônes PAR LEUR NOM, sans regex de collecte : si
+ * celle du générateur se casse un jour, ce chemin-ci tient toujours. */
+const tablesIcones = [];
+for (const source of SOURCES_ICONES) {
+  if (!existe(source)) continue;
+  const contenu = lire(source);
+  const re = /\b(?:const|let|var)\s+(\w*ICONES?\w*)\s*=\s*\{([\s\S]*?)\n\s*\};/g;
+  let t;
+  while ((t = re.exec(contenu))) {
+    const valeurs = (t[2].match(/:\s*['"][a-z][a-z0-9_]{2,}['"]/g) || [])
+      .map(v => v.replace(/^.*['"]([a-z][a-z0-9_]{2,})['"]$/, '$1'));
+    if (valeurs.length) tablesIcones.push({ source, nom: t[1], valeurs });
+  }
+}
+
+/* Contre-contrôle : sans lui, le contrôle suivant passerait si plus aucune
+   table n'était trouvée — c'est-à-dire précisément quand il devrait crier. */
+verifier('des tables d’icônes sont bien trouvées', tablesIcones.length >= 1, true);
+
+verifier('et toutes leurs icônes entrent dans le sous-ensemble',
+  tablesIcones.flatMap(t => t.valeurs.filter(v => !relevees.has(v))
+    .map(v => t.source + ' → ' + t.nom + '.' + v)), []);
+
+console.log('Tables d’icônes lues : '
+  + tablesIcones.map(t => t.nom + ' (' + t.valeurs.length + ')').join(', '));
+
 console.log('Icônes : ' + relevees.size + ' dans le sous-ensemble, ' + employees.size + ' employées');
 console.log(resultats.join('\n'));
 const echecs = resultats.filter(x => x.startsWith('ÉCHEC')).length;
