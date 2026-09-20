@@ -75,7 +75,7 @@
  * déploiement n'a pas été publiée, et Google sert encore l'ancien code.
  * C'est l'erreur la plus fréquente, et la plus difficile à diagnostiquer.
  */
-var VERSION = '2026-09-20-coherence-pays-mode';
+var VERSION = '2026-09-20-pays-ferme';
 
 /** Classeur. Vide = le classeur auquel ce script est rattaché (cas normal). */
 var ID_CLASSEUR = '';
@@ -1067,6 +1067,30 @@ function enregistrerPays(p) {
     }
   }
   if (!Array.isArray(p.paymentMethods)) p.paymentMethods = [];
+
+  /* FERMER LE DERNIER PAYS OUVERT revient à supprimer le seul : le site
+     n'aurait plus ni devise, ni format de numéro, ni moyen de paiement, et le
+     formulaire ne proposerait plus aucun choix. La SUPPRESSION est déjà
+     refusée pour cette raison exacte ; la désactivation produisait le même
+     résultat sans rencontrer le moindre garde-fou. */
+  if (p.active === false) {
+    var autresOuverts = lireTable(F_PAYS, CHAMPS_PAYS).filter(function (autre) {
+      return autre.code !== p.code && autre.active !== false;
+    });
+    if (!autresOuverts.length) {
+      throw new Error('C’est le dernier pays proposé : le site n’aurait plus ni devise, ni format '
+        + 'de numéro, ni moyen de paiement. Ouvrez-en un autre avant de fermer celui-ci.');
+    }
+    /* Un pays fermé ne peut pas rester celui par défaut : c'est lui que verrait
+       un visiteur qui n'a rien choisi. On passe la main à un pays ouvert, comme
+       le fait déjà la suppression. */
+    if (!autresOuverts.some(function (autre) { return autre.defaut === true; })) {
+      autresOuverts[0].defaut = true;
+      ecrireLigne(F_PAYS, CHAMPS_PAYS, autresOuverts[0], 'code');
+    }
+    p.defaut = false;
+  }
+
 
   /* Un seul pays par défaut : c'est celui que voit un visiteur qui n'a rien
      choisi. Deux valeurs par défaut rendraient l'affichage imprévisible. */

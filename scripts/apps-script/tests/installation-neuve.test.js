@@ -107,7 +107,17 @@ verifier('pays DJ : moyens de paiement', dj.paymentMethods.map(m => m.value),
   ['Waafi Mobile Money', 'Cacpay', 'Espèces']);
 verifier('pays DJ : numéro Waafi intact', dj.paymentMethods[0].number, '+253 77 55 63 44');
 verifier('pays DJ : lieu des espèces', dj.paymentMethods[2].place, 'Saalam Tower, 5ème étage');
-verifier('pays DJ : par défaut', dj.defaut, true);
+/* Le pays par défaut suit le marché ouvert, et cela change : Djibouti l'était,
+   les Comores le sont depuis qu'on a fermé Djibouti pour ouvrir un marché à la
+   fois. Un littéral ferait donc échouer cette épreuve à chaque décision
+   commerciale. Ce qu'on éprouve, c'est que l'installation REPORTE ce drapeau. */
+const defautDuFichier = site.window.PAYS.find(p => p.defaut === true);
+verifier('un pays par défaut est déclaré dans le fichier', !!defautDuFichier, true);
+verifier('l’installation le reporte',
+  (c.pays.find(p => p.code === (defautDuFichier || {}).code) || {}).defaut, true);
+/* Et un seul : deux valeurs par défaut rendraient l'affichage imprévisible. */
+verifier('un seul pays par défaut après installation',
+  c.pays.filter(p => p.defaut === true).length, 1);
 verifier('pays KM : indicatif intact', km.indicatif, '+269');
 verifier('pays KM : devise', km.devise, 'KMF');
 verifier('pays KM : aucun moyen de paiement', km.paymentMethods, []);

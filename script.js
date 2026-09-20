@@ -440,7 +440,11 @@
             if (!el) return;
             const row = el.closest('[data-session-fact]') || el;
             if (value) { el.textContent = value; row.hidden = false; }
-            else if (row !== el) row.hidden = true;
+            /* La ligne est masquée ET VIDÉE. La garder remplie laissait dans la
+               page l'adresse du pays précédent : invisible, mais prête à
+               ressortir si quoi que ce soit démasquait la ligne. On ne garde
+               pas en réserve une adresse qui n’est pas celle du visiteur. */
+            else if (row !== el) { row.hidden = true; el.textContent = ''; }
             else el.textContent = 'Dates à annoncer';
         };
         // Une session annoncée ou complète reste affichée : seule l'inscription est fermée.

@@ -571,8 +571,12 @@ window.PAYS = Object.freeze([
     aideTelephone: 'Format invalide. Utilisez 77XXXXXX ou 67XXXXXX',
     exempleTelephone: '77XXXXXX',
     longueurTelephone: 8,
-    defaut: true,
-    active: true,
+    /* FERMÉ pour l’instant : le marché comorien s’ouvre seul, les autres
+       suivront. Un pays fermé n’apparaît nulle part — ni dans le sélecteur du
+       formulaire, ni dans les tarifs, ni dans les sessions. Tout le reste de sa
+       fiche est conservé : il se rouvre sans rien ressaisir. */
+    defaut: false,
+    active: false,
     /* Contact propre au pays : un visiteur djiboutien voit un numéro djiboutien.
        Vide = on retombe sur le contact général du site. */
     whatsappNumber: '25377145306',
@@ -603,7 +607,8 @@ window.PAYS = Object.freeze([
     aideTelephone: 'Format invalide. Le numéro comorien compte 7 chiffres',
     exempleTelephone: 'XXXXXXX',
     longueurTelephone: 7,
-    defaut: false,
+    // Seul marché ouvert : c’est donc lui que voit un visiteur qui n’a rien choisi.
+    defaut: true,
     active: true,
     /* Contact sur place : c'est lui que voit un visiteur reconnu comorien, à la
        place du contact général djiboutien. */
@@ -655,7 +660,8 @@ window.PAYS = Object.freeze([
     exempleTelephone: '',
     longueurTelephone: null,
     defaut: false,
-    active: true,
+    // Fermés : ils se rouvriront un par un depuis le tableau de bord.
+    active: false,
     // Vide = le contact général du site s'affiche pour ces visiteurs
     whatsappNumber: '',
     whatsappDisplay: '',
@@ -683,7 +689,7 @@ window.SITE_ENDPOINTS = Object.freeze({
    * donc ce numéro à celui réellement servi, et le dit franchement.
    * Une épreuve du banc d'essai vérifie que les deux restent alignés.
    */
-  versionScript: '2026-09-20-coherence-pays-mode'
+  versionScript: '2026-09-20-pays-ferme'
 });
 
 /**
