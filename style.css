@@ -3122,6 +3122,28 @@ a:focus-visible {
   box-shadow: 0 26px 56px rgba(20, 24, 34, 0.16);
 }
 
+/* La carte s'enfonce sous le doigt.
+ *
+ * Elle se soulevait au survol, mais ne répondait pas au clic : sur mobile, où
+ * il n'y a pas de survol, rien ne signalait que l'appui avait été pris. Un
+ * léger enfoncement donne cette matière-là.
+ *
+ * 0,98 et non 0,95 : la référence dont vient l'idée s'applique à un carré de
+ * 190 px, la nôtre fait 480 px de haut — le même facteur y produirait un
+ * mouvement bien plus ample. Et la durée tombe à 120 ms, car un appui qui met
+ * 300 ms à répondre se ressent comme un retard, pas comme un retour.
+ *
+ * Les cartes du CARROUSEL en sont exclues, et ce n'est pas un oubli : leur
+ * position vient d'une transformation calculée — translation, rotation et
+ * échelle dérivées de leur distance au centre. La remplacer le temps d'un
+ * appui les ferait sauter au centre, perdre leur inclinaison, puis revenir
+ * d'un coup. Leur état de survol, lui, reprend toute la formule pour n'en
+ * changer que six pixels. */
+.course-card:not(.training-card):active {
+  transform: translateY(-2px) scale(0.98);
+  transition-duration: 120ms;
+}
+
 .course-card.is-hidden { display: none; }
 
 .course-card__media {
@@ -3494,7 +3516,8 @@ a:focus-visible {
   .course-card__cta .material-symbols-outlined,
   .filter-chip { transition: none; }
   .course-card:hover,
-  .course-card:focus-within { transform: none; }
+  .course-card:focus-within,
+  .course-card:not(.training-card):active { transform: none; }
   .course-card:hover .course-card__media img { transform: none; }
   .training-card.course-card:hover { transform: none; }
 }

@@ -625,7 +625,42 @@ verifier('les trois boutons « suivant » sont bien là, et annoncent la suite',
 verifier('seule la dernière étape porte un bouton d’engagement',
   pagesFormulaire.filter(p => lire(p).indexOf('Valider mon inscription') < 0), []);
 
-// --- 27. Audit avant lancement : polices, liens, cibles tactiles ---
+// --- 27. La carte répond au doigt, sans emporter le carrousel ---
+
+/* Les cartes se soulevaient au survol mais ne répondaient pas au clic : sur
+   mobile, où il n'y a pas de survol, rien ne signalait que l'appui avait été
+   pris. Un léger enfoncement donne cette matière-là. */
+const regleAppui = /\.course-card:not\(\.training-card\):active\s*\{([^}]*)\}/.exec(style);
+verifier('la carte s’enfonce sous l’appui', !!regleAppui, true);
+verifier('et elle recule sans tourner',
+  regleAppui ? /rotate/i.test(regleAppui[1]) : true, false);
+
+/* L'appui doit répondre PLUS VITE que le survol : à 300 ms, un enfoncement se
+   ressent comme un retard, pas comme un retour. */
+verifier('l’appui répond plus vite que le survol',
+  regleAppui ? /transition-duration:\s*1[0-9]{2}ms/.test(regleAppui[1]) : false, true);
+
+/* LE CARROUSEL EN EST EXCLU, et ce n'est pas un détail. Ses cartes tirent leur
+   position d'une transformation calculée — translation, rotation et échelle
+   dérivées de la distance au centre. Une règle d'appui non qualifiée la
+   remplacerait le temps du clic : la carte sauterait au centre, perdrait son
+   inclinaison, puis reviendrait d'un coup. */
+verifier('le carrousel garde sa transformation calculée',
+  /\.training-card\s*\{[^}]*transform:[^;]*var\(--d/.test(style), true);
+verifier('et la règle d’appui l’exclut nommément',
+  /\.course-card:not\(\.training-card\):active/.test(style), true);
+/* Contre-contrôle : une règle d'appui NON qualifiée ne doit exister nulle part,
+   sinon l'exclusion ci-dessus serait contournée par une seconde déclaration. */
+verifier('aucune règle d’appui ne vise toutes les cartes',
+  /(^|[^)])\.course-card:active/m.test(style), false);
+
+/* Et tout cela se tait quand l'appareil demande moins de mouvement. */
+const blocsMouvementReduit = [...style.matchAll(/@media\s*\(prefers-reduced-motion:\s*reduce\)\s*\{([\s\S]*?)\n\}/g)]
+  .map(m => m[1]).join('\n');
+verifier('l’enfoncement se tait sous « mouvement réduit »',
+  /\.course-card:not\(\.training-card\):active\s*\{\s*transform:\s*none/.test(blocsMouvementReduit), true);
+
+// --- 28. Audit avant lancement : polices, liens, cibles tactiles ---
 
 /* Aucune face italique n'est chargée : demander un italique fait fabriquer au
    navigateur un faux penché, mécaniquement incliné.
