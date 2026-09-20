@@ -597,7 +597,35 @@ verifier('et relit toutes les cases cochées',
 verifier('le serveur détecte un pays cité parmi d’autres',
   /String\(s\.pays \|\| ''\)\.split\(','\)\.some\(function \(c\) \{/.test(gs), true);
 
-// --- 26. Audit avant lancement : polices, liens, cibles tactiles ---
+// --- 26. Un bouton dit ce qu'il fait ---
+
+/* Les trois boutons « suivant » du formulaire portaient tous le libellé de
+   conclusion « Je sécurise ma place ». Le candidat le lisait dès la première
+   étape, croyait conclure, et se retrouvait à l'étape suivante — trois fois de
+   suite. À l'étape 3 il voyait en plus la politique de remboursement sans
+   pouvoir l'accepter : les deux cases obligatoires n'arrivent qu'à l'étape 4.
+   Seul le dernier bouton engage, seul lui doit le dire. */
+const pagesFormulaire = fiches.map(f => 'formations/' + f + '/index.html')
+  .concat(['inscription/index.html', 'formations/_template/fiche.html']);
+
+verifier('aucun bouton « suivant » ne promet de conclure',
+  pagesFormulaire.filter(p => lire(p).indexOf('Je sécurise ma place') >= 0), []);
+
+/* Contre-contrôle : le contrôle ci-dessus passerait aussi si les boutons
+   avaient disparu. On exige donc qu'ils soient là, et qu'ils annoncent la
+   suite plutôt que la fin. */
+verifier('les trois boutons « suivant » sont bien là, et annoncent la suite',
+  pagesFormulaire.filter(p => {
+    const html = lire(p);
+    const nb = (html.match(/<span class="btn-text">Continuer<\/span>/g) || []).length;
+    return nb !== 3;
+  }), []);
+
+/* Et le dernier, lui, engage : c'est le seul qui doit le dire. */
+verifier('seule la dernière étape porte un bouton d’engagement',
+  pagesFormulaire.filter(p => lire(p).indexOf('Valider mon inscription') < 0), []);
+
+// --- 27. Audit avant lancement : polices, liens, cibles tactiles ---
 
 /* Aucune face italique n'est chargée : demander un italique fait fabriquer au
    navigateur un faux penché, mécaniquement incliné.
