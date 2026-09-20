@@ -1125,8 +1125,28 @@
         initSessionBanner();
     });
 
-    // Contact modifié depuis le tableau de bord : liens et numéros affichés suivent
-    document.addEventListener('impactali:catalogue', function () { initWhatsappLinks(); initLiensEmail(); });
+    /* Catalogue modifié depuis le tableau de bord : liens, numéros — ET LA
+     * BANNIÈRE.
+     *
+     * Elle n'était pas reconstruite ici. La page s'affiche d'abord avec les
+     * sessions écrites dans formations-data.js, et la bannière annonçait donc
+     * une date QUI N'EXISTE QUE DANS CE FICHIER : « CANVA PRO · 5 NOVEMBRE
+     * 2026 », alors que la feuille Google portait le 10 octobre. Impossible de
+     * la corriger depuis le tableau de bord, puisque cette date ne s'y trouvait
+     * nulle part.
+     *
+     * On la reconstruit ENTIÈREMENT plutôt que de la masquer — comme au
+     * changement de pays, et pour la même raison : une session peut aussi
+     * APPARAÎTRE quand le catalogue arrive. `initSessionBanner` sort sans rien
+     * faire s'il n'y en a aucune, d'où le masquage préalable. */
+    document.addEventListener('impactali:catalogue', function () {
+        initWhatsappLinks();
+        initLiensEmail();
+        const banner = document.getElementById('session-banner');
+        if (!banner) return;
+        banner.classList.add('hidden');
+        initSessionBanner();
+    });
 
     /**
      * Choix du pays, atteignable depuis n'importe quelle page.

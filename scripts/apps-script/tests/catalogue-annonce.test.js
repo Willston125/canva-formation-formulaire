@@ -88,6 +88,29 @@ verifier('et avant tout appel réseau',
 verifier('un cache périmé est affiché puis vérifié, non ignoré',
   poseDuCache >= 0 && poseDuCache < corpsRefresh.indexOf('DUREE_CACHE'), true);
 
+/* LA BANNIÈRE DOIT SUIVRE LE CATALOGUE.
+ *
+ * La page s'affiche d'abord avec les sessions écrites dans formations-data.js,
+ * puis le catalogue de la feuille arrive. La bannière n'était pas reconstruite
+ * à ce moment : elle annonçait donc « CANVA PRO · 5 NOVEMBRE 2026 », une date
+ * qui n'existe QUE dans le fichier du site — la feuille portait le 10 octobre.
+ * Impossible de la corriger depuis le tableau de bord, puisqu'elle ne s'y
+ * trouvait nulle part. */
+const debutEcouteur = commun.indexOf("addEventListener('impactali:catalogue'");
+const ecouteurCatalogue = debutEcouteur < 0 ? ''
+  : commun.slice(debutEcouteur, commun.indexOf('\n    });', debutEcouteur));
+
+verifier('un écouteur du catalogue est bien trouvé', ecouteurCatalogue.length > 40, true);
+verifier('et il reconstruit la bannière de session',
+  /session-banner/.test(ecouteurCatalogue) && /initSessionBanner\(\)/.test(ecouteurCatalogue), true);
+
+/* En la MASQUANT D'ABORD : initSessionBanner sort sans rien faire quand plus
+   aucune session n'est ouverte, et l'ancienne annonce resterait affichée. */
+verifier('en la masquant d’abord, sinon l’ancienne resterait',
+  ecouteurCatalogue.indexOf("classList.add('hidden')") >= 0
+  && ecouteurCatalogue.indexOf("classList.add('hidden')")
+  < ecouteurCatalogue.indexOf('initSessionBanner()'), true);
+
 /* Le cache doit survivre à la fermeture de l'onglet : dans sessionStorage il
    ne servait qu'à l'intérieur d'une même session de navigation, c'est-à-dire
    jamais entre deux visites — le cas même dont se plaignait l'utilisateur. */
