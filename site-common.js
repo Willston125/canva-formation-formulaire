@@ -259,6 +259,30 @@
     const ENDPOINTS = window.SITE_ENDPOINTS || {};
     const CACHE_PLACES = 'impactali_places';
     const DUREE_CACHE = 60000; // 1 minute : assez pour éviter un appel par page, assez court pour rester juste
+
+    /* MÉMOIRE D'APPARENCE — l'adresse réellement posée sur chaque visuel.
+     *
+     * Un script placé dans l'en-tête des pages la rejoue AVANT le premier
+     * affichage. Sans elle, le navigateur peignait la photo inscrite dans le
+     * fichier HTML — celle d'hier — puis la remplaçait une fois la feuille
+     * Google interrogée : on voyait l'ancienne bannière pendant tout
+     * l'aller-retour, plusieurs secondes quand le cache avait expiré.
+     *
+     * Elle est GLOBALE au site et non propre à une page : la feuille donne la
+     * même photo au même emplacement partout, et l'accueil prépare ainsi les
+     * fiches qu'on n'a pas encore ouvertes. Elle va dans localStorage et non
+     * dans sessionStorage, sinon elle serait perdue en fermant l'onglet —
+     * c'est-à-dire précisément entre deux visites. */
+    const CLE_APPARENCE = 'impactali_apparence';
+
+    function memoriserApparence(images) {
+        if (!images || !Object.keys(images).length) return;
+        try {
+            const avant = JSON.parse(localStorage.getItem(CLE_APPARENCE) || '{}');
+            const fusion = Object.assign({}, avant && avant.images, images);
+            localStorage.setItem(CLE_APPARENCE, JSON.stringify({ images: fusion }));
+        } catch (e) { /* stockage plein ou refusé : le site s'affiche sans */ }
+    }
     const placesEnDirect = new Map();
 
     /** Applique les places restantes connues à une session (sans toucher à l'objet d'origine, figé). */
@@ -567,6 +591,7 @@
            cadrage : les visuels doivent continuer de s'afficher sans lui. */
         cadrages = cadrages && typeof cadrages === 'object' ? cadrages : {};
         let change = false;
+        const apparence = {};
 
         document.querySelectorAll('[data-image]').forEach(el => {
             /* Un emplacement peut désigner un REPLI : la photo du formateur est
@@ -591,6 +616,17 @@
                s'afficherait cadrée ici et pas là. */
             const cadreCle = (typeof propre === 'string' && propre.trim()) ? cle : (repli || cle);
             const style = cadrageEnStyle(cadrages[cadreCle]);
+
+            /* On retient l'apparence AVANT les retours anticipés qui suivent :
+               ceux-ci sortent quand rien n'a changé, et une photo déjà en place
+               ne serait alors jamais retenue — donc jamais rejouée au
+               chargement suivant, et le clignotement reviendrait. */
+            apparence[cle] = {
+                src: adresse,
+                objectPosition: style ? style.objectPosition : '',
+                transform: style ? style.transform : '',
+                transformOrigin: style ? style.transformOrigin : ''
+            };
             if (style && (el.style.objectPosition !== style.objectPosition
                 || el.style.transform !== style.transform
                 || el.style.transformOrigin !== style.transformOrigin)) {
@@ -637,6 +673,7 @@
             change = true;
         });
 
+        memoriserApparence(apparence);
         return change;
     }
 
@@ -700,15 +737,28 @@
 
         if (!force) {
             try {
-                const cache = JSON.parse(sessionStorage.getItem(CACHE_PLACES) || 'null');
+                /* localStorage et non sessionStorage : ce dernier meurt avec
+                   l'onglet, donc précisément entre deux visites — le cache ne
+                   servait qu'à l'intérieur d'une même session de navigation. */
+                const cache = JSON.parse(localStorage.getItem(CACHE_PLACES) || 'null');
                 /* Le tableau de bord pose cet horodatage à chaque enregistrement.
                    Un cache antérieur est périmé, si récent soit-il : sans cela,
                    on modifie une valeur, on actualise le site, et l'ancienne
                    revient pendant une minute. */
                 let modifieLe = 0;
                 try { modifieLe = Number(localStorage.getItem('impactali_maj')) || 0; } catch (e) { }
-                if (cache && Date.now() - cache.horodatage < DUREE_CACHE && cache.horodatage > modifieLe) {
-                    return Promise.resolve(appliquer(cache.releve));
+                if (cache && cache.horodatage > modifieLe) {
+                    /* AFFICHER D'ABORD, VÉRIFIER ENSUITE. Le relevé retenu est
+                       posé tout de suite, même s'il a passé sa minute : il vaut
+                       toujours mieux que les valeurs du fichier, qui datent du
+                       dernier déploiement. Auparavant, un cache expiré était
+                       purement ignoré, et la page affichait ses valeurs
+                       d'origine pendant tout l'aller-retour vers Google.
+                       On n'abrège la suite que si le relevé est encore frais ;
+                       sinon on l'affiche ET on interroge quand même la feuille,
+                       qui corrigera en silence ce qui a bougé. */
+                    const pose = appliquer(cache.releve);
+                    if (Date.now() - cache.horodatage < DUREE_CACHE) return Promise.resolve(pose);
                 }
             } catch (e) { /* cache illisible : on interroge */ }
         }
@@ -730,7 +780,7 @@
             })
             .then(donnees => {
                 try {
-                    sessionStorage.setItem(CACHE_PLACES, JSON.stringify({ horodatage: Date.now(), releve: donnees }));
+                    localStorage.setItem(CACHE_PLACES, JSON.stringify({ horodatage: Date.now(), releve: donnees }));
                 } catch (e) { /* stockage indisponible : sans conséquence */ }
                 return appliquer(donnees);
             })

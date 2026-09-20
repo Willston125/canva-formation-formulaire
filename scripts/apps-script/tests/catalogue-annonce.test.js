@@ -74,8 +74,26 @@ verifier('le motif du report est expliqué sur place',
    branche disparaissait, le report ci-dessus perdrait sa raison d'être — et ce
    contrôle doit alors être relu, pas supprimé. */
 const corpsRefresh = corpsDe(commun, 'function refreshPlaces(force)');
-verifier('le cache de session est bien appliqué sans attendre',
-  /return Promise\.resolve\(appliquer\(cache\.releve\)\);/.test(corpsRefresh), true);
+const poseDuCache = corpsRefresh.indexOf('appliquer(cache.releve)');
+verifier('le cache est bien appliqué sans attendre', poseDuCache >= 0, true);
+verifier('et avant tout appel réseau',
+  poseDuCache >= 0 && poseDuCache < corpsRefresh.indexOf('return interroger('), true);
+
+/* AFFICHER D'ABORD, VÉRIFIER ENSUITE. Un cache périmé était auparavant
+   purement ignoré : la page montrait alors ses valeurs d'origine — la photo
+   du dernier déploiement — pendant tout l'aller-retour vers Google, soit
+   plusieurs secondes. Il est désormais affiché, puis corrigé en silence.
+   On vérifie l'ORDRE : la pose doit précéder l'examen de la fraîcheur. Si
+   quelqu'un remettait le test de durée devant, ce contrôle tomberait. */
+verifier('un cache périmé est affiché puis vérifié, non ignoré',
+  poseDuCache >= 0 && poseDuCache < corpsRefresh.indexOf('DUREE_CACHE'), true);
+
+/* Le cache doit survivre à la fermeture de l'onglet : dans sessionStorage il
+   ne servait qu'à l'intérieur d'une même session de navigation, c'est-à-dire
+   jamais entre deux visites — le cas même dont se plaignait l'utilisateur. */
+verifier('le cache des données survit à la fermeture de l’onglet',
+  /localStorage\.(get|set)Item\(CACHE_PLACES/.test(commun)
+  && !/sessionStorage\.(get|set)Item\(CACHE_PLACES/.test(commun), true);
 
 /* L'écouteur de la fiche doit exister : c'est lui que l'annonce vient réveiller.
    Sans ce contrôle, le report ne servirait personne. */

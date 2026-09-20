@@ -39,6 +39,80 @@
 
     <link rel="canonical" href="https://canva-formation-formulaire.vercel.app/">
     <link rel="stylesheet" href="style.css">
+    <!-- apparence-tot:debut -->
+    <script>
+        /* Rejoue l'apparence retenue au chargement précédent AVANT le premier
+           affichage.
+
+           Sans ce bloc, le navigateur peignait la photo inscrite dans ce
+           fichier — celle du dernier déploiement — puis site-common.js la
+           remplaçait une fois la feuille Google interrogée. On voyait donc
+           l'ancienne bannière pendant tout l'aller-retour : mesuré à près
+           d'une seconde avec un cache chaud, plusieurs secondes sans.
+
+           Ce bloc est recopié tel quel dans chaque page concernée ; une
+           épreuve vérifie que les copies restent identiques. */
+        (function () {
+            'use strict';
+            var memoire;
+            try { memoire = JSON.parse(localStorage.getItem('impactali_apparence') || 'null'); }
+            catch (e) { return; }
+            if (!memoire || !memoire.images) return;
+            var images = memoire.images;
+
+            /* Le préchargement lance le téléchargement immédiatement, sans
+               attendre que la balise <img> soit analysée : la vraie photo est
+               souvent déjà là quand elle arrive. */
+            for (var cle in images) {
+                if (!images[cle] || !images[cle].src) continue;
+                var lien = document.createElement('link');
+                lien.rel = 'preload';
+                lien.as = 'image';
+                lien.href = images[cle].src;
+                document.head.appendChild(lien);
+            }
+
+            var poser = function (el) {
+                var v = images[el.getAttribute('data-image')];
+                if (!v || !v.src || el.getAttribute('src') === v.src) return;
+                el.setAttribute('src', v.src);
+                /* Les dimensions d'origine décrivaient l'ancienne image :
+                   les garder réserverait une place au mauvais rapport. */
+                el.removeAttribute('width');
+                el.removeAttribute('height');
+                el.style.objectPosition = v.objectPosition || '';
+                el.style.transform = v.transform || '';
+                el.style.transformOrigin = v.transformOrigin || '';
+            };
+
+            /* On agit pendant l'analyse du document, au moment où chaque
+               balise apparaît — un écouteur de fin de chargement arriverait
+               après le premier affichage, donc trop tard. */
+            var obs = new MutationObserver(function (lots) {
+                for (var i = 0; i < lots.length; i++) {
+                    var ajouts = lots[i].addedNodes;
+                    for (var j = 0; j < ajouts.length; j++) {
+                        var n = ajouts[j];
+                        if (n.nodeType !== 1) continue;
+                        if (n.hasAttribute('data-image')) poser(n);
+                        var dedans = n.querySelectorAll ? n.querySelectorAll('[data-image]') : [];
+                        for (var k = 0; k < dedans.length; k++) poser(dedans[k]);
+                    }
+                }
+            });
+            obs.observe(document.documentElement, { childList: true, subtree: true });
+
+            /* Filet : ce qui aurait échappé à l'observation est posé à la fin
+               de l'analyse, et l'observation s'arrête là — la laisser courir
+               ferait travailler le navigateur à chaque ajout de la page. */
+            document.addEventListener('DOMContentLoaded', function () {
+                var tous = document.querySelectorAll('[data-image]');
+                for (var i = 0; i < tous.length; i++) poser(tous[i]);
+                obs.disconnect();
+            });
+        })();
+    </script>
+    <!-- apparence-tot:fin -->
 </head>
 
 
