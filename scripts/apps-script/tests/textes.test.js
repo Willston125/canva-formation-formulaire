@@ -79,8 +79,26 @@ for (const page of PAGES_PARCOURUES) {
   }
 }
 verifier('chaque visuel remplaçable porte groupe, libellé et format', visuelsIncomplets, []);
-verifier('aucun visuel déclaré deux fois',
-  visuels.filter((c, i, t) => t.indexOf(c) !== i), []);
+/* Une même clé PEUT revenir : le logo est dans l'en-tête et le pied de chaque
+   page, et il doit changer partout d'un seul envoi. Ce qui est interdit, c'est
+   qu'elle décrive DEUX emplacements différents — le tableau de bord n'en
+   montrerait qu'un, et l'autre changerait à son insu. On compare donc les
+   déclarations, et non le simple fait qu'une clé revienne. */
+const parCleVisuel = new Map();
+for (const page of PAGES_PARCOURUES) {
+  const chemin = path.join(RACINE, page);
+  if (!fs.existsSync(chemin)) continue;
+  for (const m of fs.readFileSync(chemin, 'utf8').matchAll(/<img\b[^>]*data-image="([^"]+)"[^>]*>/g)) {
+    const attribut = nom => (new RegExp('\\b' + nom + '="([^"]*)"').exec(m[0]) || [])[1] || '';
+    const signature = ['groupe', 'libelle', 'format', 'ratio']
+      .map(n => attribut('data-image-' + n)).join(' | ');
+    if (!parCleVisuel.has(m[1])) parCleVisuel.set(m[1], new Set());
+    parCleVisuel.get(m[1]).add(signature);
+  }
+}
+verifier('une même clé ne décrit qu’un seul emplacement',
+  [...parCleVisuel.entries()].filter(([, v]) => v.size > 1)
+    .map(([c, v]) => c + ' : ' + [...v].join('  ≠  ')), []);
 verifier('des visuels sont bien remplaçables', visuels.length >= 5, true);
 
 const formatsConnus = ['paysage', 'portrait', 'image', 'poster', 'logo', 'portfolio'];

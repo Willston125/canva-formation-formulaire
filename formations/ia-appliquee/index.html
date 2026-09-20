@@ -47,6 +47,14 @@
             var poser = function (el) {
                 var v = images[el.getAttribute('data-image')];
                 if (!v || !v.src || el.getAttribute('src') === v.src) return;
+                /* L'ADRESSE D'ORIGINE est retenue avant d'être recouverte :
+                   c'est la seule occasion de la connaître, et c'est elle que
+                   site-common.js rendra le jour où la photo sera retirée du
+                   tableau de bord. Sans elle, le retrait laissait un trou : le
+                   fichier est mis à la corbeille en même temps. */
+                if (!el.hasAttribute('data-image-origine')) {
+                    el.setAttribute('data-image-origine', el.getAttribute('src') || '');
+                }
                 el.setAttribute('src', v.src);
                 /* Les dimensions d'origine décrivaient l'ancienne image :
                    les garder réserverait une place au mauvais rapport. */
@@ -92,89 +100,15 @@
         })();
     </script>
     <!-- apparence-tot:fin -->
-    <!-- apparence-tot:debut -->
-    <script>
-        /* Rejoue l'apparence retenue au chargement précédent AVANT le premier
-           affichage.
-
-           Sans ce bloc, le navigateur peignait la photo inscrite dans ce
-           fichier — celle du dernier déploiement — puis site-common.js la
-           remplaçait une fois la feuille Google interrogée. On voyait donc
-           l'ancienne bannière pendant tout l'aller-retour : mesuré à près
-           d'une seconde avec un cache chaud, plusieurs secondes sans.
-
-           Ce bloc est recopié tel quel dans chaque page concernée ; une
-           épreuve vérifie que les copies restent identiques. */
-        (function () {
-            'use strict';
-            var memoire;
-            try { memoire = JSON.parse(localStorage.getItem('impactali_apparence') || 'null'); }
-            catch (e) { return; }
-            if (!memoire || !memoire.images) return;
-            var images = memoire.images;
-
-            /* Le préchargement lance le téléchargement immédiatement, sans
-               attendre que la balise <img> soit analysée : la vraie photo est
-               souvent déjà là quand elle arrive. */
-            for (var cle in images) {
-                if (!images[cle] || !images[cle].src) continue;
-                var lien = document.createElement('link');
-                lien.rel = 'preload';
-                lien.as = 'image';
-                lien.href = images[cle].src;
-                document.head.appendChild(lien);
-            }
-
-            var poser = function (el) {
-                var v = images[el.getAttribute('data-image')];
-                if (!v || !v.src || el.getAttribute('src') === v.src) return;
-                el.setAttribute('src', v.src);
-                /* Les dimensions d'origine décrivaient l'ancienne image :
-                   les garder réserverait une place au mauvais rapport. */
-                el.removeAttribute('width');
-                el.removeAttribute('height');
-                el.style.objectPosition = v.objectPosition || '';
-                el.style.transform = v.transform || '';
-                el.style.transformOrigin = v.transformOrigin || '';
-            };
-
-            /* On agit pendant l'analyse du document, au moment où chaque
-               balise apparaît — un écouteur de fin de chargement arriverait
-               après le premier affichage, donc trop tard. */
-            var obs = new MutationObserver(function (lots) {
-                for (var i = 0; i < lots.length; i++) {
-                    var ajouts = lots[i].addedNodes;
-                    for (var j = 0; j < ajouts.length; j++) {
-                        var n = ajouts[j];
-                        if (n.nodeType !== 1) continue;
-                        if (n.hasAttribute('data-image')) poser(n);
-                        var dedans = n.querySelectorAll ? n.querySelectorAll('[data-image]') : [];
-                        for (var k = 0; k < dedans.length; k++) poser(dedans[k]);
-                    }
-                }
-            });
-            obs.observe(document.documentElement, { childList: true, subtree: true });
-
-            /* Filet : ce qui aurait échappé à l'observation est posé à la fin
-               de l'analyse, et l'observation s'arrête là — la laisser courir
-               ferait travailler le navigateur à chaque ajout de la page. */
-            document.addEventListener('DOMContentLoaded', function () {
-                var tous = document.querySelectorAll('[data-image]');
-                for (var i = 0; i < tous.length; i++) poser(tous[i]);
-                obs.disconnect();
-            });
-        })();
-    </script>
-    <!-- apparence-tot:fin -->
-    <title>IA appliquée — Fiche formation &amp; inscription | IMPACTALI</title>
-    <meta name="title" content="IA appliquée — Fiche formation &amp; inscription">
+    <title>Création de site web avec iA — Fiche formation &amp; inscription | IMPACTALI</title>
+    <meta name="title" content="Création de site web avec iA — Fiche formation &amp; inscription">
     <meta name="description"
         content="Intégrez les outils d’intelligence artificielle à votre travail quotidien pour produire plus vite, sans perdre en qualité.">
 
     <!-- Open Graph / Facebook / WhatsApp -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://www.impactali.site/formations/ia-appliquee/">
-    <meta property="og:title" content="IA appliquée — Fiche formation &amp; inscription">
+    <meta property="og:title" content="Création de site web avec iA — Fiche formation &amp; inscription">
     <meta property="og:description" content="Intégrez les outils d’intelligence artificielle à votre travail quotidien pour produire plus vite, sans perdre en qualité.">
     <meta property="og:image"
         content="https://www.impactali.site/assets/images/formations/ia-appliquee.webp">
@@ -184,7 +118,7 @@
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:url" content="https://www.impactali.site/formations/ia-appliquee/">
-    <meta property="twitter:title" content="IA appliquée — Fiche formation &amp; inscription">
+    <meta property="twitter:title" content="Création de site web avec iA — Fiche formation &amp; inscription">
     <meta property="twitter:description" content="Intégrez les outils d’intelligence artificielle à votre travail quotidien pour produire plus vite, sans perdre en qualité.">
     <meta property="twitter:image"
         content="https://www.impactali.site/assets/images/formations/ia-appliquee.webp">
@@ -223,7 +157,7 @@
     <header class="site-header" id="site-header">
         <div class="site-header__inner">
             <a class="brand" href="/" aria-label="IMPACTALI — Accueil">
-                <img src="/assets/brand/impactali-logo.webp" alt="IMPACTALI" width="720" height="400" decoding="async">
+                <img data-image="marque.logo" data-image-groupe="Marque" data-image-libelle="Logo IMPACTALI" data-image-format="logo" data-image-ratio="9/5" src="/assets/brand/impactali-logo.webp" alt="IMPACTALI" width="720" height="400" decoding="async">
             </a>
 
             <nav class="desktop-nav" aria-label="Navigation principale">
@@ -267,10 +201,10 @@
                     <span aria-current="page">IA appliquée</span>
                 </nav>
                 <p class="eyebrow">FICHE FORMATION · INTELLIGENCE ARTIFICIELLE</p>
-                <h1 id="fiche-title">IA appliquée</h1>
+                <h1 id="fiche-title">Création de site web avec iA</h1>
                 <p class="fiche-hero__lead">Intégrez les outils d’intelligence artificielle à votre travail quotidien pour produire plus vite, sans perdre en qualité.</p>
 
-                <dl class="fiche-facts" aria-label="Informations clés"><div><dt><span class="material-symbols-outlined" aria-hidden="true">timelapse</span>Durée</dt><dd>12 séances</dd></div><div><dt><span class="material-symbols-outlined" aria-hidden="true">co_present</span>Mode</dt><dd>Présentiel</dd></div><div data-session-fact hidden><dt><span class="material-symbols-outlined" aria-hidden="true">schedule</span>Horaires</dt><dd id="fiche-schedule"></dd></div><div data-session-fact hidden><dt><span class="material-symbols-outlined" aria-hidden="true">location_on</span>Lieu</dt><dd id="fiche-location"></dd></div><div><dt><span class="material-symbols-outlined" aria-hidden="true">payments</span>Participation</dt><dd id="fiche-price">7 500 FDJ</dd></div><div><dt><span class="material-symbols-outlined" aria-hidden="true">event</span>Prochaine session</dt><dd id="fiche-next-session">Dates à annoncer</dd></div></dl>
+                <dl class="fiche-facts" aria-label="Informations clés"><div data-fiche-fact><dt><span class="material-symbols-outlined" aria-hidden="true">timelapse</span>Durée</dt><dd id="fiche-duration">12 séances</dd></div><div data-fiche-fact><dt><span class="material-symbols-outlined" aria-hidden="true">signal_cellular_alt</span>Niveau</dt><dd id="fiche-level">Débutant</dd></div><div data-fiche-fact><dt><span class="material-symbols-outlined" aria-hidden="true">co_present</span>Mode</dt><dd id="fiche-mode">Présentiel</dd></div><div data-session-fact hidden><dt><span class="material-symbols-outlined" aria-hidden="true">schedule</span>Horaires</dt><dd id="fiche-schedule"></dd></div><div data-session-fact hidden><dt><span class="material-symbols-outlined" aria-hidden="true">location_on</span>Lieu</dt><dd id="fiche-location"></dd></div><div><dt><span class="material-symbols-outlined" aria-hidden="true">payments</span>Participation</dt><dd id="fiche-price">7 500 FDJ</dd></div><div><dt><span class="material-symbols-outlined" aria-hidden="true">event</span>Prochaine session</dt><dd id="fiche-next-session">Dates à annoncer</dd></div></dl>
 
                 <div class="fiche-hero__actions">
                     <a class="button button--primary" href="#inscription" data-register-formation="ia-appliquee">
@@ -278,7 +212,7 @@
                         <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
                     </a>
                     <a class="button button--secondary" target="_blank" rel="noopener noreferrer"
-                        data-whatsapp-message="Bonjour, j’ai une question concernant la formation IA appliquée."
+                        data-whatsapp-message="Bonjour, j’ai une question concernant la formation Création de site web avec iA."
                         href="https://wa.me/25377145306">
                         Poser une question
                         <span class="material-symbols-outlined" aria-hidden="true">chat</span>
@@ -295,7 +229,7 @@
             <div class="fiche-hero__aside">
                 <!-- ====== AFFICHE (élément complémentaire, plus en pleine largeur) ====== -->
                 <section class="fiche-poster" id="poster-section" aria-label="Affiche de la formation">
-                    <img src="/assets/images/formations/ia-appliquee.webp" alt="Affiche de la formation IA appliquée"
+                    <img src="https://lh3.googleusercontent.com/d/17HL1MQapb9LBpsnOLGHdz9rrwoP6L68m=w1200-rw" alt="Affiche de la formation Création de site web avec iA"
                         width="1587" height="2245" fetchpriority="high" decoding="async">
                 </section>
 
@@ -374,7 +308,7 @@
                             <h2 class="text-xl sm:text-2xl font-extrabold text-[#FFFFFF] font-headline" id="formateur-title" data-texte="fiche.formateur.titre" data-texte-groupe="Fiche formation" data-texte-libelle="Titre « Votre formateur »">Votre Formateur
                             </h2>
                         </div>
-                        <p class="text-sm sm:text-base text-[#E5E5E5] leading-relaxed mb-5">Expert en communication multimédia, réalisateur et stratège digital, Ali William transmet pour la formation « IA appliquée » une méthode pratique issue de son expérience de terrain.</p>
+                        <p class="text-sm sm:text-base text-[#E5E5E5] leading-relaxed mb-5">Expert en communication multimédia, réalisateur et stratège digital, Ali William transmet pour la formation « Création de site web avec iA » une méthode pratique issue de son expérience de terrain.</p>
                         <div class="flex flex-wrap justify-center md:justify-start gap-2">
                             <span
                                 class="bg-[#CBFD00]/10 text-[#CBFD00] px-3 py-1.5 rounded-full text-xs font-bold border border-[#CBFD00]/20">Design
@@ -517,7 +451,7 @@
                 </div>
                 <h2 class="text-2xl font-bold text-[#FFFFFF] mb-4 font-headline">Vous êtes déjà inscrit !</h2>
                 <p class="text-[#E5E5E5] mb-8 leading-relaxed">Nous avons bien enregistré votre inscription pour la
-                    <strong class="text-primary tracking-wide" id="registered-training-title">IA appliquée</strong>. Merci de votre confiance,
+                    <strong class="text-primary tracking-wide" id="registered-training-title">Création de site web avec iA</strong>. Merci de votre confiance,
                     nous reviendrons vers vous très vite !
                 </p>
                 <div class="flex flex-col sm:flex-row gap-4 justify-center items-center mt-8">
@@ -553,7 +487,7 @@
                     <span class="selected-training-summary__icon material-symbols-outlined" aria-hidden="true">school</span>
                     <div>
                         <span>Vous vous inscrivez à</span>
-                        <strong id="selected-training-title">IA appliquée</strong>
+                        <strong id="selected-training-title">Création de site web avec iA</strong>
                         <small id="selected-training-meta">12 séances · Présentiel</small>
                         <small id="selected-session-meta">Prochaine session : dates à annoncer</small>
                         <!-- Détails de la session (dates, horaires, lieu, mode, tarif) : remplis par script.js -->
@@ -834,7 +768,7 @@
 
                         <div class="space-y-6">
                             <div class="field-group" id="field-niveau">
-                                <label class="field-label">Où en es-tu dans ce domaine ? <span
+                                <label class="field-label">Où en es-tu avec Quel est votre niveau de compréhension du vibecoding ? <span
                                         class="text-primary">*</span></label>
                                 <input type="hidden" id="niveau" name="niveau" required>
                                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3" id="niveau-cards" role="radiogroup"
@@ -846,7 +780,7 @@
                                         <span
                                             class="text-sm font-bold text-[#FFFFFF] font-bold group-hover:text-green-700">Débutant
                                             total</span>
-                                        <span class="text-[11px] text-[#E5E5E5] text-center leading-tight">Je débute complètement</span>
+                                        <span class="text-[11px] text-[#E5E5E5] text-center leading-tight">Je n’ai jamais utilisé Quel est votre niveau de compréhension du vibecoding</span>
                                     </button>
                                     <button type="button"
                                         class="niveau-card flex flex-col items-center gap-1.5 p-5 rounded-2xl border-2 border-[#CBFD00]/20 bg-[#0D1723]/40 hover:border-amber-400 hover:bg-amber-50/50 transition-all duration-200 cursor-pointer group"
@@ -854,7 +788,7 @@
                                         <span class="text-3xl group-hover:scale-110 transition-transform">⚡</span>
                                         <span
                                             class="text-sm font-bold text-[#FFFFFF] font-bold group-hover:text-amber-700">Intermédiaire</span>
-                                        <span class="text-[11px] text-[#E5E5E5] text-center leading-tight">J’ai déjà quelques bases</span>
+                                        <span class="text-[11px] text-[#E5E5E5] text-center leading-tight">J’utilise Quel est votre niveau de compréhension du vibecoding de temps en temps</span>
                                     </button>
                                     <button type="button"
                                         class="niveau-card flex flex-col items-center gap-1.5 p-5 rounded-2xl border-2 border-[#CBFD00]/20 bg-[#0D1723]/40 hover:border-red-400 hover:bg-red-50/50 transition-all duration-200 cursor-pointer group"
@@ -862,7 +796,7 @@
                                         <span class="text-3xl group-hover:scale-110 transition-transform">🔥</span>
                                         <span
                                             class="text-sm font-bold text-[#FFFFFF] font-bold group-hover:text-red-700">Avancé</span>
-                                        <span class="text-[11px] text-[#E5E5E5] text-center leading-tight">Je pratique régulièrement</span>
+                                        <span class="text-[11px] text-[#E5E5E5] text-center leading-tight">J’utilise Quel est votre niveau de compréhension du vibecoding régulièrement</span>
                                     </button>
                                 </div>
                                 <span class="field-error" id="niveau-error" role="alert" aria-live="polite"></span>
@@ -1045,7 +979,7 @@
 
                         <!-- Affiche de la formation -->
                         <div class="mb-6 rounded-2xl overflow-hidden border border-[#CBFD00]/20 shadow-sm">
-                            <img src="/assets/images/formations/ia-appliquee.webp" alt="Affiche de la formation IA appliquée" id="poster-validation"
+                            <img src="https://lh3.googleusercontent.com/d/17HL1MQapb9LBpsnOLGHdz9rrwoP6L68m=w1200-rw" alt="Affiche de la formation Création de site web avec iA" id="poster-validation"
                                 class="w-full h-auto object-cover" loading="lazy">
                         </div>
 
@@ -1177,7 +1111,7 @@
 
             <h2 class="text-2xl font-bold text-[#FFFFFF] mb-2 font-headline">Inscription reçue avec succès !</h2>
             <p class="text-[#E5E5E5] mb-8 leading-relaxed">
-                Merci pour votre inscription à la formation <strong class="text-primary" id="success-training-title">IA appliquée</strong> !
+                Merci pour votre inscription à la formation <strong class="text-primary" id="success-training-title">Création de site web avec iA</strong> !
             </p>
 
             <!-- WhatsApp CTA (prominent) -->
@@ -1220,7 +1154,7 @@
         <div class="landing-shell site-footer__inner">
             <div class="site-footer__brand">
                 <a class="site-footer__logo" href="/" aria-label="IMPACTALI — Accueil">
-                    <img src="/assets/brand/impactali-logo.webp" alt="IMPACTALI" width="720" height="400" loading="lazy" decoding="async">
+                    <img data-image="marque.logo" data-image-groupe="Marque" data-image-libelle="Logo IMPACTALI" data-image-format="logo" data-image-ratio="9/5" src="/assets/brand/impactali-logo.webp" alt="IMPACTALI" width="720" height="400" loading="lazy" decoding="async">
                 </a>
                 <span class="site-footer__baseline">Plateforme de formation &amp; de développement des compétences</span>
                 <span class="site-footer__legal">&copy; 2026 IMPACTALI. Tous droits réservés.</span>
@@ -1228,7 +1162,7 @@
                         <nav class="site-footer__col" aria-labelledby="pied-formations">
                 <h2 id="pied-formations">Formations</h2>
                 <a href="/#catalogue">Tout le catalogue</a>
-                <a href="/formations/ia-appliquee/">IA appliquée</a>
+                <a href="/formations/ia-appliquee/">Création de site web avec iA</a>
                 <a href="/#sessions">Prochaines sessions</a>
             </nav>
             <nav class="site-footer__col" aria-labelledby="pied-domaines">
@@ -1253,7 +1187,7 @@
     </div>
 
     <!-- ====== WHATSAPP FLOATING BUTTON ====== -->
-    <a href="https://wa.me/25377145306" data-whatsapp-message="Bonjour, je suis en train de m’inscrire à la formation IA appliquée mais j’ai une question."
+    <a href="https://wa.me/25377145306" data-whatsapp-message="Bonjour, je suis en train de m’inscrire à la formation Création de site web avec iA mais j’ai une question."
         target="_blank" rel="noopener noreferrer" id="whatsapp-float"
         class="fixed bottom-6 right-6 z-50 w-14 h-14 bg-[#25D366] rounded-full flex items-center justify-center shadow-lg shadow-green-300/40 hover:scale-110 hover:shadow-xl hover:shadow-green-300/50 transition-all duration-300 group"
         aria-label="Besoin d'aide ? Contactez-nous sur WhatsApp">

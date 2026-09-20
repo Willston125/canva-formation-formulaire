@@ -169,7 +169,17 @@
     function lieuDeSession(session, code) {
         if (/^en ligne$/i.test(modeDeSession(session, code))) return '';
         const propre = reglagesDuPays(session, code).lieu;
-        return (typeof propre === 'string' && propre.trim()) ? propre.trim() : ((session && session.location) || '');
+        if (typeof propre === 'string' && propre.trim()) return propre.trim();
+        /* LE LIEU DE LA SESSION EST UNE ADRESSE : elle n'est que dans UN pays.
+           Dès que la session est proposée dans plusieurs, la donner à tous
+           envoyait un candidat comorien à Djibouti — c'est exactement ce que
+           faisaient deux sessions de la feuille. Sans lieu propre à son pays,
+           on n'annonce rien plutôt qu'une adresse d'ailleurs. Même raisonnement
+           que pour le tarif, qui ne passe déjà plus d'un pays à l'autre.
+           Le tableau de bord refuse désormais cette saisie ; ce garde-ci vaut
+           pour les sessions enregistrées avant lui. */
+        if (paysDeSession(session).length > 1) return '';
+        return (session && session.location) || '';
     }
 
     /**
@@ -275,11 +285,26 @@
      * c'est-à-dire précisément entre deux visites. */
     const CLE_APPARENCE = 'impactali_apparence';
 
-    function memoriserApparence(images) {
-        if (!images || !Object.keys(images).length) return;
+    /**
+     * Retient l'apparence posée, et OUBLIE ce qui ne l'est plus.
+     *
+     * La fusion seule ne supprimait jamais rien : une photo retirée depuis le
+     * tableau de bord restait mémorisée, le bloc d'en-tête reposait son adresse
+     * à chaque visite, et comme le fichier Drive part à la corbeille en même
+     * temps, le visiteur déjà venu voyait « Visuel indisponible » là où le site
+     * devait revenir à sa photo d'origine.
+     *
+     * On n'oublie que les clés PRÉSENTES SUR CETTE PAGE (`clesVues`) : la
+     * mémoire est globale au site, et l'accueil prépare des emplacements de
+     * fiches qu'on n'a pas encore ouvertes.
+     */
+    function memoriserApparence(images, clesVues) {
+        if (!images) return;
         try {
             const avant = JSON.parse(localStorage.getItem(CLE_APPARENCE) || '{}');
-            const fusion = Object.assign({}, avant && avant.images, images);
+            const fusion = Object.assign({}, avant && avant.images);
+            (clesVues || []).forEach(cle => { delete fusion[cle]; });
+            Object.assign(fusion, images);
             localStorage.setItem(CLE_APPARENCE, JSON.stringify({ images: fusion }));
         } catch (e) { /* stockage plein ou refusé : le site s'affiche sans */ }
     }
@@ -318,7 +343,20 @@
 
     /**
      * Traduit un relevé { sessionId: nombre d'inscrits } en places restantes.
-     * Une valeur absurde (négative, non numérique) est ignorée plutôt que d'afficher un faux chiffre.
+     *
+     * UNE SEULE SOURCE : le total moins les inscrits. La colonne
+     * `placesAvailable` de la feuille n'est qu'une trace de ce calcul, que le
+     * tableau de bord réécrit à chaque enregistrement.
+     *
+     * Le relevé ne nomme que les sessions ayant AU MOINS UN inscrit : une
+     * session neuve en est absente, et `Number(undefined)` donnait NaN, ce qui
+     * faisait passer la boucle son chemin. La session gardait alors le chiffre
+     * écrit dans la feuille, jusqu'à la première inscription — où il sautait
+     * d'un coup à sa vraie valeur. Absent du relevé veut dire zéro inscrit.
+     *
+     * Une valeur absurde (négative, non numérique) est ignorée plutôt que
+     * d'afficher un faux chiffre. Une session sans total, elle, ne peut rien
+     * déduire : on n'y touche pas.
      */
     function appliquerReleve(releve) {
         const table = releve && typeof releve === 'object' ? (releve.sessions || releve) : null;
@@ -326,7 +364,8 @@
         let change = false;
         for (const session of SESSIONS) {
             if (typeof session.placesTotal !== 'number') continue;
-            const inscrits = Number(table[session.id]);
+            const brut = table[session.id];
+            const inscrits = (brut === undefined || brut === null || brut === '') ? 0 : Number(brut);
             if (!Number.isFinite(inscrits) || inscrits < 0) continue;
             const restantes = Math.max(0, session.placesTotal - inscrits);
             if (placesEnDirect.get(session.id) !== restantes) {
@@ -616,6 +655,9 @@
         cadrages = cadrages && typeof cadrages === 'object' ? cadrages : {};
         let change = false;
         const apparence = {};
+        /* Les clés PRÉSENTES sur cette page : ce sont les seules que la mémoire
+           d’apparence peut légitimement oublier. */
+        const clesVues = [];
 
         document.querySelectorAll('[data-image]').forEach(el => {
             /* Un emplacement peut désigner un REPLI : la photo du formateur est
@@ -625,11 +667,39 @@
                avoir à la renvoyer six fois. */
             const cle = el.dataset.image;
             const repli = el.dataset.imageRepli;
+            clesVues.push(cle);
+            /* L'ADRESSE D'ORIGINE, celle écrite dans le fichier HTML, est
+               retenue avant le premier remplacement : c'est elle qu'il faudra
+               rendre le jour où la photo sera retirée. Le bloc d'en-tête la
+               retient aussi de son côté, puisqu'il remplace avant nous. */
+            if (!el.hasAttribute('data-image-origine')) {
+                el.setAttribute('data-image-origine', el.getAttribute('src') || '');
+            }
             const propre = images[cle];
             const valeur = (typeof propre === 'string' && propre.trim())
                 ? propre
                 : (repli && repli !== cle ? images[repli] : undefined);
-            if (typeof valeur !== 'string' || !valeur.trim()) return;
+            if (typeof valeur !== 'string' || !valeur.trim()) {
+                /* PLUS AUCUNE VALEUR : la photo a été retirée du tableau de
+                   bord, ou son champ vidé. On rend celle du fichier et on
+                   retire le cadrage — puis on laisse la clé sortir de la
+                   mémoire d'apparence, faute de quoi le bloc d'en-tête
+                   reposerait une adresse que plus personne ne sert. */
+                const origine = el.getAttribute('data-image-origine') || '';
+                if (origine && el.getAttribute('src') !== origine) {
+                    el.setAttribute('src', origine);
+                    change = true;
+                }
+                if (el.style.getPropertyValue('--cadrage')
+                    || el.style.getPropertyValue('--cadrage-origine')
+                    || el.style.objectPosition) {
+                    el.style.removeProperty('--cadrage');
+                    el.style.removeProperty('--cadrage-origine');
+                    el.style.objectPosition = '';
+                    change = true;
+                }
+                return;
+            }
             const adresse = normaliserImage(valeur.trim(), largeurUtile(el));
 
             /* Le cadrage est posé AVANT le retour anticipé ci-dessous : celui-ci
@@ -719,7 +789,7 @@
             change = true;
         });
 
-        memoriserApparence(apparence);
+        memoriserApparence(apparence, clesVues);
         return change;
     }
 
@@ -1071,6 +1141,10 @@
         whatsappUrl,
         emailContact,
         formatPrice,
+        /* Le tamis à balises des textes du tableau de bord. La fiche s en sert
+           pour son accroche, qui accepte une mise en gras : un contenu venu de
+           la feuille ne doit pas pouvoir exécuter de script. */
+        assainirHtml: assainir,
         /* Mode et lieu se résolvent PAR PAYS : la fiche et le formulaire doivent
            passer par là plutôt que de lire session.mode ou session.location, qui
            ne sont que le repli. */

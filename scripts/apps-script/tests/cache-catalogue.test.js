@@ -131,6 +131,35 @@ const duree = Number((/var DUREE_CACHE_CATALOGUE = (\d+)/.exec(source) || [])[1]
 verifier('la durée du cache est déclarée', duree > 0, true);
 verifier('et ne dépasse pas cinq minutes', duree <= 300, true);
 
+// --- 6. Une lecture pendant l'écriture ne remet pas l'ancien en cache -------
+
+/* LA COURSE. Le cache n'était jeté qu'AVANT l'écriture. Un visiteur qui
+   demandait le catalogue pendant les une à trois secondes de cette écriture
+   relisait la feuille PAS ENCORE MODIFIÉE et la remettait en cache pour cinq
+   minutes. L'écriture terminée, le site servait donc l'ancien contenu — et
+   d'autant plus souvent qu'il y a du monde, c'est-à-dire précisément quand on
+   corrige quelque chose en campagne.
+   Le site ne prend pas le verrou : rien ne l'empêche de lire au mauvais
+   moment. Le seul remède est de jeter le cache APRÈS l'écriture aussi. */
+const lireAuMauvaisMoment = () => { catalogueDuSite(); };
+bac.__pendantEcriture = lireAuMauvaisMoment;
+
+const avantCourse = catalogueDuSite().textes['course.essai'];
+verifier('le texte de l’essai n’existe pas encore', avantCourse, undefined);
+
+/* On simule le visiteur en lisant JUSTE AVANT de poster : le cache est alors
+   rempli avec l'état d'avant, exactement comme dans la course réelle. */
+catalogueDuSite();
+poste({ action: 'admin.textes.save', donnees: { 'course.essai': 'ÉCRIT PENDANT LA COURSE' } });
+verifier('une modification reste visible malgré une lecture concurrente',
+  catalogueDuSite().textes['course.essai'], 'ÉCRIT PENDANT LA COURSE');
+
+const posePurge = source.indexOf('oublierCatalogue();');
+verifier('le cache est jeté plus d’une fois autour de l’écriture',
+  (source.match(/oublierCatalogue\(\);/g) || []).length >= 2, true);
+verifier('et la seconde fois APRÈS l’écriture, dans le « finally »',
+  source.indexOf('oublierCatalogue();', posePurge + 1) > source.indexOf('} finally {'), true);
+
 console.log(`Accès à la feuille : ${premier.cout} au premier appel, ${second.cout} au second`);
 console.log(resultats.join('\n'));
 const echecs = resultats.filter(x => x.startsWith('ÉCHEC')).length;

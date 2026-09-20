@@ -93,7 +93,10 @@ const fiches = fs.readdirSync(path.join(RACINE, 'formations'))
 const clesDe = f => [...new Set((fs.readFileSync(path.join(RACINE, 'formations', f, 'index.html'), 'utf8')
   .match(/data-texte(?:-html)?="[^"]+"/g) || []))].sort();
 
-verifier('les six fiches sont bien générées', fiches.length, 6);
+/* Le nombre de fiches suit le catalogue, qui se modifie depuis le tableau de
+   bord : on tient un plancher, pas un compte exact. Sans lui, un dossier vide
+   ferait passer en silence tous les contrôles qui suivent. */
+verifier('des fiches sont bien générées', fiches.length >= 5, true);
 
 /* Plus aucune exception : les blocs génériques « Prérequis » et « Votre
    formateur » portent désormais le même squelette que le gabarit, donc les
@@ -106,7 +109,7 @@ fiches.filter(f => f !== 'canva-pro').forEach(f => {
   if (absentes.length) manquantes[f] = absentes;
 });
 verifier('chaque fiche expose TOUS les textes modifiables du gabarit', manquantes, {});
-verifier('le titre « Votre formateur » est sur les six fiches',
+verifier('le titre « Votre formateur » est sur chaque fiche',
   fiches.filter(f => clesDe(f).indexOf('data-texte="fiche.formateur.titre"') < 0), []);
 
 /* Une classe sans règle produit un affichage nu. Celle-ci n'a jamais existé
@@ -492,8 +495,9 @@ verifier('et chacune retombe sur la photo commune à défaut',
     .indexOf('data-image-repli="fiche.formateur.photo"') < 0), []);
 
 /* Contre-contrôle : sans lui, les deux contrôles ci-dessus passeraient sur une
-   liste de fiches vide si `fiches` cessait d'être alimentée. */
-verifier('des fiches sont bien inspectées', fiches.length >= 6, true);
+   liste de fiches vide si `fiches` cessait d'être alimentée. Un plancher, et
+   non un compte exact : le catalogue se modifie depuis le tableau de bord. */
+verifier('des fiches sont bien inspectées', fiches.length >= 5, true);
 
 /* La page d'inscription générique ne parle d'aucune formation : elle garde la
    clé commune, qui sert aussi de repli aux fiches. */
@@ -549,9 +553,19 @@ resultats.push('NOTE  version attendue en production : ' + (versionGs ? versionG
 
 /* Le générateur ne lisait que le FICHIER : une formation créée dans le tableau
    de bord n'y figure pas, et n'aurait donc jamais eu de page — seulement
-   l'inscription générique, sans programme, sans FAQ, sans prérequis. */
-verifier('le générateur sait lire la base',
-  /--depuis-le-site/.test(generateur) && /action=catalogue/.test(generateur), true);
+   l'inscription générique, sans programme, sans FAQ, sans prérequis.
+   Il lit désormais la base PAR DÉFAUT : la commande nue réécrivait sinon les
+   six fiches avec la version du dépôt, ramenant en arrière ce que le
+   gestionnaire venait de corriger. Le fichier reste possible, mais il faut le
+   demander — publier des données périmées doit être un choix. */
+verifier('le générateur lit la base', /action=catalogue/.test(generateur), true);
+verifier('et il la lit par défaut, sans qu’on le demande',
+  /--depuis-le-site/.test(generateur), false);
+verifier('le repli sur le fichier existe, et se demande',
+  /--du-fichier/.test(generateur), true);
+/* Une base injoignable ne doit pas se rabattre en silence sur le fichier. */
+verifier('une base injoignable interrompt la génération',
+  /injoignable/.test(generateur), true);
 /* Une base vide écraserait toutes les fiches par rien. */
 verifier('une base vide interrompt la génération',
   /if \(!liste\.length\) throw new Error/.test(generateur), true);

@@ -75,7 +75,7 @@
  * déploiement n'a pas été publiée, et Google sert encore l'ancien code.
  * C'est l'erreur la plus fréquente, et la plus difficile à diagnostiquer.
  */
-var VERSION = '2026-09-20-catalogue-en-cache';
+var VERSION = '2026-09-20-coherence-pays-mode';
 
 /** Classeur. Vide = le classeur auquel ce script est rattaché (cas normal). */
 var ID_CLASSEUR = '';
@@ -423,6 +423,16 @@ function commandeAdmin(d) {
     Logger.log('commandeAdmin ' + d.action + ' : ' + err);
     return repondre({ ok: false, erreur: String(err) }, null);
   } finally {
+    /* ET DE NOUVEAU APRÈS L'ÉCRITURE. Le jeter seulement avant laissait une
+       course : le site ne prend pas le verrou, et un visiteur qui demandait le
+       catalogue pendant les une à trois secondes de l'écriture relisait la
+       feuille PAS ENCORE MODIFIÉE, puis la remettait en cache pour cinq
+       minutes. L'écriture terminée, le site servait donc l'ancien contenu —
+       d'autant plus souvent qu'il y a du monde, c'est-à-dire précisément quand
+       on corrige quelque chose en pleine campagne.
+       Jeter deux fois ne coûte qu'un recalcul ; ne jeter qu'avant coûte cinq
+       minutes de contenu périmé, sans que rien ne le signale. */
+    if (LECTURES_SEULES.indexOf(d.action) < 0) oublierCatalogue();
     verrou.releaseLock();
   }
 }
@@ -878,6 +888,106 @@ function supprimerFormation(id) {
 
 // ------------------------------- SESSIONS --------------------------------
 
+/* ------------------------ COHÉRENCE ENTRE PAYS ET MODE ------------------------
+ *
+ * Une session « en présentiel » se tient à UNE adresse, donc dans UN pays.
+ * Rien ne l'exigeait, et la feuille le montrait : deux sessions étaient cochées
+ * Djibouti ET Comores, en présentiel, avec pour tout lieu « Saalam Tower, 5ème
+ * étage, Djibouti ». C'est cette adresse-là que lisait un candidat comorien,
+ * sur la fiche comme sur l'accueil.
+ *
+ * Trois règles, vérifiées ICI parce que c'est ici qu'on écrit, et répétées mot
+ * pour mot dans le tableau de bord pour répondre sans aller-retour. Une épreuve
+ * compare les deux verdicts sur les mêmes cas : une règle corrigée d'un seul
+ * côté se verrait aussitôt.
+ *
+ * Rend la liste des reproches. Vide = rien à redire.
+ */
+function reprochesPaysSession(s) {
+  var reproches = [];
+  if (!s) return reproches;
+
+  var surPlace = function (mode) { return /^(pr[ée]sentiel|hybride)$/i.test(String(mode || '').trim()); };
+  var codes = String(s.pays || '').split(',').map(function (c) {
+    return c.trim().toUpperCase();
+  }).filter(Boolean);
+
+  var table = (s.parPays && typeof s.parPays === 'object' && !Array.isArray(s.parPays)) ? s.parPays : {};
+  var reglageDe = function (code) {
+    var trouve = null;
+    Object.keys(table).forEach(function (c) {
+      if (String(c).toUpperCase() === code) trouve = table[c];
+    });
+    return (trouve && typeof trouve === 'object' && !Array.isArray(trouve)) ? trouve : {};
+  };
+  var modeDe = function (code) {
+    var propre = reglageDe(code).mode;
+    return String((typeof propre === 'string' && propre.trim()) ? propre : (s.mode || '')).trim();
+  };
+
+  /* 1. AUCUNE CASE COCHÉE = PROPOSÉE PARTOUT, y compris dans un pays ajouté
+     plus tard. Seule une session qu'on suit de chez soi peut l'être. */
+  if (!codes.length) {
+    if (surPlace(s.mode)) {
+      reproches.push('Cette session est en « ' + String(s.mode).trim() + ' » et n’est cochée dans '
+        + 'aucun pays : elle serait proposée partout, y compris là où personne ne peut s’y rendre. '
+        + 'Cochez le ou les pays où elle se tient, ou passez-la « En ligne ».');
+    }
+    return reproches;
+  }
+
+  codes.forEach(function (code) {
+    var mode = modeDe(code);
+    if (!surPlace(mode)) return;
+    if (String(reglageDe(code).lieu || '').trim()) return;
+
+    /* 2. Un pays sur place veut un lieu. */
+    if (codes.length === 1) {
+      if (!String(s.location || '').trim()) {
+        reproches.push('La session est en « ' + mode + ' » pour ' + code + ' sans aucun lieu. '
+          + 'Indiquez l’adresse dans « Lieu ou plateforme », ou passez ce pays « En ligne ».');
+      }
+      return;
+    }
+    /* 3. Et dès que plusieurs pays sont cochés, il veut LE SIEN : le lieu de la
+       session est une adresse, elle n'est que dans un pays. */
+    reproches.push('La session est en « ' + mode + ' » pour ' + code + ' sans lieu propre à ce '
+      + 'pays : elle reprendrait l’adresse de la session, qui se trouve ailleurs. Indiquez le '
+      + 'lieu de ' + code + ', ou passez ce pays « En ligne ».');
+  });
+
+  return reproches;
+}
+
+/* Un pays EN LIGNE ne garde pas d'adresse, et un pays décoché n'emporte pas ses
+   réglages. Le tableau de bord masque déjà le champ et oublie les cases
+   décochées, mais la valeur partait quand même dans la charge : elle serait
+   ressortie le jour où le pays repasse en présentiel, sans que personne l'ait
+   relue. On ne touche à rien quand la charge ne mentionne pas `parPays` :
+   une modification ne doit toucher que ce qu'on lui confie. */
+function nettoyerParPays(s) {
+  if (!s || !s.parPays || typeof s.parPays !== 'object' || Array.isArray(s.parPays)) return;
+  var coches = String(s.pays || '').split(',').map(function (c) {
+    return c.trim().toUpperCase();
+  }).filter(Boolean);
+  var propre = {};
+  Object.keys(s.parPays).forEach(function (code) {
+    var reglage = s.parPays[code];
+    if (!reglage || typeof reglage !== 'object' || Array.isArray(reglage)) return;
+    var CODE = String(code).toUpperCase();
+    if (coches.length && coches.indexOf(CODE) < 0) return;
+    var garde = {};
+    if (typeof reglage.mode === 'string' && reglage.mode.trim()) garde.mode = reglage.mode.trim();
+    if (typeof reglage.tarif === 'number' && isFinite(reglage.tarif)) garde.tarif = reglage.tarif;
+    var enLigne = /^en ligne$/i.test(garde.mode || String(s.mode || '').trim());
+    if (!enLigne && typeof reglage.lieu === 'string' && reglage.lieu.trim()) {
+      garde.lieu = reglage.lieu.trim();
+    }
+    if (Object.keys(garde).length) propre[CODE] = garde;
+  });
+  s.parPays = propre;
+}
+
 function enregistrerSession(s) {
   if (!s || !s.id) throw new Error('Identifiant de session manquant.');
   if (!s.formId) throw new Error('La session doit être rattachée à une formation.');
@@ -895,6 +1005,10 @@ function enregistrerSession(s) {
       && s.placesAvailable > s.placesTotal) {
     throw new Error('Les places disponibles dépassent le total.');
   }
+  nettoyerParPays(s);
+  var reproches = reprochesPaysSession(s);
+  if (reproches.length) throw new Error(reproches.join(' '));
+
   var r = ecrireLigne(F_SESSIONS, CHAMPS_SESSION, s);
   return { ok: true, cree: r.cree, catalogue: lireCatalogue() };
 }

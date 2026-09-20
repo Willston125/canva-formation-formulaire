@@ -50,19 +50,28 @@ function setMeta(html, selector, value) {
 }
 
 function facts(f) {
-  // [icône, libellé, valeur, id, ligneDeSession]
-  // Les lignes « de session » sont masquées tant qu'aucune session réelle n'est sélectionnée ;
-  // script.js (renderSessionDetails) les remplit et les révèle.
-  const rows = [];
-  if (known(f.duration)) rows.push(['timelapse', 'Durée', [f.duration, typeof f.modules === 'number' ? `${f.modules} modules` : ''].filter(Boolean).join(' · '), '', false]);
-  if (known(f.level)) rows.push(['signal_cellular_alt', 'Niveau', f.level, '', false]);
-  if (known(f.mode)) rows.push(['co_present', 'Mode', f.mode, '', false]);
-  rows.push(['schedule', 'Horaires', '', 'fiche-schedule', true]);
-  rows.push(['location_on', 'Lieu', '', 'fiche-location', true]);
-  rows.push(['payments', 'Participation', price(priceOf(f)), 'fiche-price', false]);
-  rows.push(['event', 'Prochaine session', 'Dates à annoncer', 'fiche-next-session', false]);
-  return `<dl class="fiche-facts" aria-label="Informations clés">${rows.map(([icon, label, value, id, sessionRow]) =>
-    `<div${sessionRow ? ' data-session-fact hidden' : ''}><dt><span class="material-symbols-outlined" aria-hidden="true">${icon}</span>${esc(label)}</dt><dd${id ? ` id="${id}"` : ''}>${esc(value)}</dd></div>`).join('')}</dl>`;
+  // [icône, libellé, valeur, id, genre]
+  //  genre 'session'   : masquée tant qu'aucune session réelle n'est choisie ;
+  //  genre 'formation' : masquée tant que la donnée n'est pas renseignée.
+  // Toutes portent un identifiant : script.js les réécrit depuis le catalogue à
+  // chaque chargement, pour qu'une durée, un niveau ou un mode corrigés dans le
+  // tableau de bord s'affichent sans republier le site. Sans identifiant, ces
+  // trois lignes-là restaient celles du jour de la génération.
+  const duree = [f.duration, typeof f.modules === 'number' ? `${f.modules} modules` : ''].filter(Boolean).join(' · ');
+  const rows = [
+    ['timelapse', 'Durée', known(f.duration) ? duree : '', 'fiche-duration', 'formation'],
+    ['signal_cellular_alt', 'Niveau', known(f.level) ? f.level : '', 'fiche-level', 'formation'],
+    ['co_present', 'Mode', known(f.mode) ? f.mode : '', 'fiche-mode', 'formation'],
+    ['schedule', 'Horaires', '', 'fiche-schedule', 'session'],
+    ['location_on', 'Lieu', '', 'fiche-location', 'session'],
+    ['payments', 'Participation', price(priceOf(f)), 'fiche-price', ''],
+    ['event', 'Prochaine session', 'Dates à annoncer', 'fiche-next-session', '']
+  ];
+  return `<dl class="fiche-facts" aria-label="Informations clés">${rows.map(([icon, label, value, id, genre]) => {
+    const attrs = genre === 'session' ? ' data-session-fact hidden'
+      : genre === 'formation' ? ` data-fiche-fact${value ? '' : ' hidden'}` : '';
+    return `<div${attrs}><dt><span class="material-symbols-outlined" aria-hidden="true">${icon}</span>${esc(label)}</dt><dd id="${id}">${esc(value)}</dd></div>`;
+  }).join('')}</dl>`;
 }
 
 /**
@@ -316,18 +325,33 @@ const template = fs.readFileSync(TEMPLATE, 'utf8');
 /**
  * Les formations dont on génère la fiche.
  *
- * Par défaut celles du fichier. Avec `--depuis-le-site`, celles de la BASE :
- * une formation créée dans le tableau de bord n'existe pas dans le fichier et
- * n'aurait donc jamais sa page — seulement l'inscription générique, sans
- * programme, sans FAQ, sans prérequis. C'est ce qui permet de donner une vraie
- * fiche à chaque nouvelle formation sans toucher au code.
+ * LA BASE D'ABORD. La commande nue lisait le FICHIER : un programme, une FAQ,
+ * un tarif ou une accroche corrigés dans le tableau de bord étaient alors
+ * réécrits avec la version du dépôt, et la publication ramenait en arrière ce
+ * que le gestionnaire venait de saisir. C'est le défaut le plus sournois du
+ * montage, puisque la commande était celle que la documentation recommandait.
+ *
+ * La base est donc la source, et le fichier un repli qu'il faut demander :
+ * publier des données périmées doit être un choix, jamais un défaut. Une base
+ * injoignable ARRÊTE la génération plutôt que de se rabattre en silence.
  */
 async function formationsAGenerer() {
-  if (!process.argv.includes('--depuis-le-site')) return FORMATIONS;
+  if (process.argv.includes('--du-fichier')) {
+    console.log('Catalogue lu dans formations-data.js, à la demande (--du-fichier).');
+    return FORMATIONS;
+  }
 
   const api = (sandbox.window.SITE_ENDPOINTS || {}).registration;
   if (!api) throw new Error('Adresse de l’API absente de formations-data.js');
-  const reponse = await fetch(`${api}?action=catalogue`, { redirect: 'follow' });
+  let reponse;
+  try {
+    reponse = await fetch(`${api}?action=catalogue`, { redirect: 'follow' });
+  } catch (err) {
+    throw new Error(`La base est injoignable (${err.message}). Aucune fiche n’a été régénérée : `
+      + 'les écrire depuis le fichier écraserait ce qui a été saisi dans le tableau de bord. '
+      + 'Relancez quand le réseau revient, ou assumez le fichier avec '
+      + '« npm run build:fiches -- --du-fichier ».');
+  }
   if (!reponse.ok) throw new Error(`L’API a répondu ${reponse.status}`);
   const donnees = await reponse.json();
   const liste = Array.isArray(donnees.formations) ? donnees.formations : [];
@@ -357,6 +381,37 @@ async function principal() {
     console.log('  vers l’inscription générique. Cochez « Elle a sa propre page »');
     console.log('  dans le tableau de bord, une fois le site publié :');
     aPrevenir.forEach(f => console.log('   · ' + (f.title || f.slug) + '  →  /formations/' + f.slug + '/'));
+  }
+
+  /* FICHES ORPHELINES : une page écrite pour une formation que la base ne
+     connaît plus — supprimée ou masquée depuis le tableau de bord. Elle
+     continue d'être servie, et comme son identifiant est introuvable dans le
+     catalogue, le formulaire retombe sur une AUTRE formation : on s'inscrit à
+     l'une en croyant s'inscrire à l'autre.
+     On ne les efface pas d'autorité : supprimer une page publiée est une
+     décision, pas un effet de bord d'une régénération. On les nomme, et
+     « --nettoyer » les retire quand c'est voulu. */
+  const vivantes = new Set(formations.map(f => f.slug).filter(Boolean));
+  const dossier = path.join(ROOT, 'formations');
+  const orphelines = fs.readdirSync(dossier)
+    .filter(d => d !== '_template' && !vivantes.has(d)
+      && fs.existsSync(path.join(dossier, d, 'index.html')));
+
+  if (orphelines.length) {
+    const nettoyer = process.argv.includes('--nettoyer');
+    console.log('\n⚠ ' + orphelines.length + ' fiche(s) sans formation dans la base :');
+    orphelines.forEach(slug => {
+      if (nettoyer) {
+        fs.rmSync(path.join(dossier, slug), { recursive: true, force: true });
+        console.log('   · /formations/' + slug + '/  →  retirée');
+      } else {
+        console.log('   · /formations/' + slug + '/  (toujours servie, et trompeuse)');
+      }
+    });
+    if (!nettoyer) {
+      console.log('  Retirez-les avec « npm run build:fiches -- --nettoyer », ou remettez');
+      console.log('  la formation dans le tableau de bord si la page doit rester.');
+    }
   }
 }
 

@@ -50,142 +50,127 @@ window.FORMATIONS = Object.freeze([
   Object.freeze({
     id: 'formation-canva-pro',
     slug: 'canva-pro',
+    formId: 'canva-pro',
     title: 'Canva Pro & Création de contenu',
     shortTitle: 'Canva Pro',
     category: 'Création de contenu',
     family: 'Design & Contenu',
     promise: 'Créer, captiver, partager.',
     shortDescription: 'Maîtrisez Canva Pro pour concevoir des contenus cohérents, une identité de marque et un portfolio de réalisations publiables.',
+    lead: 'Devenez graphiste, community manager ou créateur de contenu grâce à <strong>12 jours de pratique 100 % concrète</strong>. Un programme intensif en 4 modules pour maîtriser Canva Pro et repartir avec un portfolio validé.',
     image: '/assets/images/formations/canva-pro.webp',
     imageAlt: 'Le formateur en studio face caméra, micro de studio et ordinateur portable sur le bureau',
+    poster: 'https://lh3.googleusercontent.com/d/1sIAeQlIh00dsYNKNQjrGfsXBK71EJdul=w1200-rw',
     duration: '12 jours',
+    modules: 4,
     level: 'Tous niveaux',
+    levelSubject: 'Canva',
     mode: 'Présentiel',
     price: 7500,
-    prices: Object.freeze({ DJ: 7500 }),
-    modules: 4,
+    prices: {"DJ":7500,"KM":15000},
     learnings: [
-      'Créer un Brand Kit et maîtriser l’interface Canva Pro',
-      'Concevoir posts, carrousels et Reels qui captent l’attention',
-      'Vendre une offre de design et trouver ses premiers clients'
+      "Créer un Brand Kit et maîtriser l’interface Canva Pro",
+      "Concevoir posts, carrousels et Reels qui captent l’attention",
+      "Vendre une offre de design et trouver ses premiers clients"
+    ],
+    objectives: [
+      {
+        "icon": "forum",
+        "label": "Devenir Community Manager",
+        "value": "Devenir Community Manager"
+      },
+      {
+        "icon": "brush",
+        "label": "Graphiste freelance",
+        "value": "Travailler comme Graphiste freelance"
+      },
+      {
+        "icon": "business_center",
+        "label": "Contenu pour mon entreprise",
+        "value": "Créer du contenu pour mon entreprise"
+      },
+      {
+        "icon": "swap_horiz",
+        "label": "Changer de carrière",
+        "value": "Changer de carrière"
+      },
+      {
+        "icon": "trending_up",
+        "label": "Améliorer mes compétences actuelles",
+        "value": "Améliorer mes compétences actuelles"
+      }
+    ],
+    programme: {
+      "sousTitre": "12 jours · 24 heures · 4 modules · 3 séances/semaine",
+      "modules": [
+        {
+          "icone": "design_services",
+          "titre": "MODULE 1 · DESIGN & IDENTITÉ",
+          "points": [
+            "Psychologie des couleurs et typographies",
+            "Création d'un Brand Kit pro",
+            "Hiérarchie visuelle et équilibre",
+            "Maîtrise de l'interface Canva Pro"
+          ]
+        },
+        {
+          "icone": "phone_iphone",
+          "titre": "MODULE 2 · CONTENT STRATEGIE",
+          "points": [
+            "Posts et Carrousels irrésistibles",
+            "Storytelling et Copywriting visuel",
+            "Planning éditorial et automatisation",
+            "Audit et optimisation de compte"
+          ]
+        },
+        {
+          "icone": "movie",
+          "titre": "MODULE 3 · VIDÉO & IA",
+          "points": [
+            "Montage Reels et TikTok pro",
+            "Animations et transitions dynamiques",
+            "Studio Magique et IA générative",
+            "Effets spéciaux et trucages photo"
+          ]
+        },
+        {
+          "icone": "rocket_launch",
+          "titre": "MODULE 4 · BUSINESS & FREELANCE",
+          "points": [
+            "Trouver ses premiers clients",
+            "Vendre une offre de Design",
+            "Gestion de projets et Mockups",
+            "Certificat et Lancement pro"
+          ]
+        }
+      ]
+    },
+    faq: [
+      {
+        "question": "Faut-il un ordinateur portable pour participer ?",
+        "reponse": "C'est fortement recommandé pour être à l'aise avec les exercices pratiques et les raccourcis. Cependant, si vous avez une tablette performante ou un grand smartphone, vous pouvez tout de même suivre la formation, l'application Canva étant très bien optimisée sur mobile."
+      },
+      {
+        "question": "Dois-je déjà avoir la version Canva Pro payante ?",
+        "reponse": "Non, pas d'inquiétude ! Venez avec votre compte Canva gratuit. Je vous montrerai comment exploiter l'outil à 100% et vous donnerai toutes les astuces concernant les fonctionnalités \"Pro\" pendant nos sessions."
+      },
+      {
+        "question": "Je suis totalement débutant(e), est-ce fait pour moi ?",
+        "reponse": "Absolument ! La première semaine est consacrée aux \"Fondations du Design\". Nous reprenons les bases pas-à-pas. Que vous n'ayez jamais ouvert l'application ou que vous bricoliez déjà un peu, le programme intensif est conçu pour vous amener au niveau professionnel en 12 jours."
+      }
     ],
     featured: true,
-    nextSession: null,
-    places: null,
     registrationOpen: true,
     active: true,
     allowRegistrationWithoutSession: true,
+    hasDetailPage: true,
     href: '/formations/canva-pro/',
-    hasDetailPage: true,
-    formId: 'canva-pro',
-    poster: '/assets/images/formation canva (2).jpg',
-    lead: 'Devenez graphiste, community manager ou créateur de contenu grâce à <strong>12 jours de pratique 100 % concrète</strong>. Un programme intensif en 4 modules pour maîtriser Canva Pro et repartir avec un portfolio validé.',
-    levelSubject: 'Canva',
-    /* Programme réel, module par module. Repris du gabarit où il était écrit
-       en dur : il se modifie maintenant depuis le tableau de bord, et une
-       formation sans modules retombe sur la liste de ses acquis. */
-    programme: Object.freeze({
-      sousTitre: '12 jours · 24 heures · 4 modules · 3 séances/semaine',
-      modules: Object.freeze([
-      Object.freeze({
-        icone: 'design_services',
-        titre: 'MODULE 1 · DESIGN & IDENTITÉ',
-        points: Object.freeze([
-          'Psychologie des couleurs et typographies',
-          'Création d\'un Brand Kit pro',
-          'Hiérarchie visuelle et équilibre',
-          'Maîtrise de l\'interface Canva Pro'
-        ])
-      }),
-      Object.freeze({
-        icone: 'phone_iphone',
-        titre: 'MODULE 2 · CONTENT STRATEGIE',
-        points: Object.freeze([
-          'Posts et Carrousels irrésistibles',
-          'Storytelling et Copywriting visuel',
-          'Planning éditorial et automatisation',
-          'Audit et optimisation de compte'
-        ])
-      }),
-      Object.freeze({
-        icone: 'movie',
-        titre: 'MODULE 3 · VIDÉO & IA',
-        points: Object.freeze([
-          'Montage Reels et TikTok pro',
-          'Animations et transitions dynamiques',
-          'Studio Magique et IA générative',
-          'Effets spéciaux et trucages photo'
-        ])
-      }),
-      Object.freeze({
-        icone: 'rocket_launch',
-        titre: 'MODULE 4 · BUSINESS & FREELANCE',
-        points: Object.freeze([
-          'Trouver ses premiers clients',
-          'Vendre une offre de Design',
-          'Gestion de projets et Mockups',
-          'Certificat et Lancement pro'
-        ])
-      })
-      ])
-    }),
-    faq: Object.freeze([
-      Object.freeze({
-        question: 'Faut-il un ordinateur portable pour participer ?',
-        reponse: 'C\'est fortement recommandé pour être à l\'aise avec les exercices pratiques et les raccourcis. Cependant, si vous avez une tablette performante ou un grand smartphone, vous pouvez tout de même suivre la formation, l\'application Canva étant très bien optimisée sur mobile.'
-      }),
-      Object.freeze({
-        question: 'Dois-je déjà avoir la version Canva Pro payante ?',
-        reponse: 'Non, pas d\'inquiétude ! Venez avec votre compte Canva gratuit. Je vous montrerai comment exploiter l\'outil à 100% et vous donnerai toutes les astuces concernant les fonctionnalités "Pro" pendant nos sessions.'
-      }),
-      Object.freeze({
-        question: 'Je suis totalement débutant(e), est-ce fait pour moi ?',
-        reponse: 'Absolument ! La première semaine est consacrée aux "Fondations du Design". Nous reprenons les bases pas-à-pas. Que vous n\'ayez jamais ouvert l\'application ou que vous bricoliez déjà un peu, le programme intensif est conçu pour vous amener au niveau professionnel en 12 jours.'
-      })
-    ]),
-    objectives: [
-      { icon: 'forum', label: 'Devenir Community Manager', value: 'Devenir Community Manager' },
-      { icon: 'brush', label: 'Graphiste freelance', value: 'Travailler comme Graphiste freelance' },
-      { icon: 'business_center', label: 'Contenu pour mon entreprise', value: 'Créer du contenu pour mon entreprise' },
-      { icon: 'swap_horiz', label: 'Changer de carrière', value: 'Changer de carrière' },
-      { icon: 'trending_up', label: 'Améliorer mes compétences actuelles', value: 'Améliorer mes compétences actuelles' }
-    ]
-  }),
-  Object.freeze({
-    id: 'formation-community-management',
-    slug: 'community-management',
-    title: 'Community Management',
-    shortTitle: 'Community Management',
-    category: 'Réseaux sociaux',
-    family: 'Communication',
-    promise: 'Créer, engager, faire grandir.',
-    shortDescription: 'Structurez une présence sociale claire, planifiez vos publications et faites grandir une communauté réellement engagée.',
-    image: '/assets/images/formations/community-management.webp',
-    imageAlt: 'Le formateur à son bureau, smartphone affichant un tableau de bord d’audience entouré d’icônes de réseaux sociaux',
-    duration: '12 séances',
-    level: 'À confirmer',
-    mode: 'Présentiel',
-    price: 7500,
-    prices: Object.freeze({ DJ: 7500 }),
-    modules: null,
-    learnings: [
-      'Bâtir une stratégie de présence sur les réseaux',
-      'Produire des contenus qui engagent votre communauté',
-      'Suivre votre croissance et vos résultats'
-    ],
-    featured: false,
-    nextSession: null,
-    places: null,
-    registrationOpen: true,
-    active: true,
-    allowRegistrationWithoutSession: false,
-    href: '/formations/community-management/',
-    hasDetailPage: true,
-    formId: 'community-management'
+    ordre: 0
   }),
   Object.freeze({
     id: 'formation-identite-visuelle',
     slug: 'identite-visuelle',
+    formId: 'identite-visuelle',
     title: 'Graphisme & identité visuelle',
     shortTitle: 'Identité visuelle',
     category: 'Direction artistique',
@@ -194,62 +179,101 @@ window.FORMATIONS = Object.freeze([
     shortDescription: 'Posez les bases d’un univers graphique reconnaissable : charte, typographies, couleurs et déclinaisons sur vos supports.',
     image: '/assets/images/formations/identite-visuelle.webp',
     imageAlt: 'Le formateur à son bureau avec des planches de charte graphique, un nuancier et des ouvrages de design',
+    poster: 'https://lh3.googleusercontent.com/d/1QXK4d9K3D8ScZ5C5-26RaZgJngEl-aGH=w1200-rw',
     duration: '12 séances',
-    level: 'À confirmer',
+    level: 'Débuant',
     mode: 'Présentiel',
     price: 7500,
-    prices: Object.freeze({ DJ: 7500 }),
-    modules: null,
+    prices: {"DJ":7500,"KM":15000},
     learnings: [
-      'Nourrir votre créativité et vos partis pris visuels',
-      'Construire une identité de marque cohérente',
-      'Décliner votre design sur tous vos supports'
+      "Nourrir votre créativité et vos partis pris visuels",
+      "Construire une identité de marque cohérente",
+      "Décliner votre design sur tous vos supports"
     ],
-    featured: false,
-    nextSession: null,
-    places: null,
+    programme: {
+      "sousTitre": "Création de logo - Création d'affiche - Charte graphique - Retouche photo",
+      "modules": []
+    },
+    featured: true,
     registrationOpen: true,
     active: true,
     allowRegistrationWithoutSession: false,
-    href: '/formations/identite-visuelle/',
     hasDetailPage: true,
-    formId: 'identite-visuelle'
+    href: '/formations/identite-visuelle/',
+    ordre: 2
   }),
   Object.freeze({
     id: 'formation-photo-video',
     slug: 'photo-video',
-    title: 'Photo & Vidéo',
-    shortTitle: 'Photo & Vidéo',
-    category: 'Photo & Vidéo',
+    formId: 'photo-video',
+    title: 'Réalisation et Montage vidéo',
+    shortTitle: 'Réalisation et Montage',
+    category: 'Réalisation et Montage',
     family: 'Photo & Vidéo',
     promise: 'Filmer, monter, sublimer.',
     shortDescription: 'Cadrez, éclairez et montez des images nettes, du tournage jusqu’à la livraison d’une vidéo aboutie.',
     image: '/assets/images/formations/photo-video.webp',
     imageAlt: 'Le formateur debout en studio, appareil photo en main, optiques et clap posés sur le bureau',
-    duration: '12 séances',
-    level: 'À confirmer',
+    poster: 'https://lh3.googleusercontent.com/d/13TQE9TmQpYLNIho62OWA38iu1GxQq5Rc=w1200-rw',
+    duration: '1 Mois',
+    level: 'Débutant',
     mode: 'Présentiel',
     price: 7500,
-    prices: Object.freeze({ DJ: 7500 }),
-    modules: null,
+    prices: {"DJ":7500,"KM":15000},
     learnings: [
-      'Préparer et mener un tournage',
-      'Monter vos séquences avec du rythme',
-      'Livrer des images de qualité professionnelle'
+      "Préparer et mener un tournage",
+      "Monter vos séquences avec du rythme",
+      "Livrer des images de qualité professionnelle"
     ],
-    featured: false,
-    nextSession: null,
-    places: null,
+    programme: {
+      "sousTitre": "Réalisation de vidéo - Scenarisation - Découpage technique - Cadrage - Tournage - Montage",
+      "modules": []
+    },
+    featured: true,
     registrationOpen: true,
     active: true,
     allowRegistrationWithoutSession: false,
-    href: '/formations/photo-video/',
     hasDetailPage: true,
-    formId: 'photo-video'
+    href: '/formations/photo-video/',
+    ordre: 3
+  }),
+  Object.freeze({
+    id: 'formation-ia-appliquee',
+    slug: 'ia-appliquee',
+    formId: 'ia-appliquee',
+    title: 'Création de site web avec iA',
+    shortTitle: 'IA appliquée',
+    category: 'Intelligence artificielle',
+    family: 'Intelligence artificielle',
+    promise: 'Automatiser, créer, accélérer.',
+    shortDescription: 'Intégrez les outils d’intelligence artificielle à votre travail quotidien pour produire plus vite, sans perdre en qualité.',
+    image: '/assets/images/formations/ia-appliquee.webp',
+    imageAlt: 'Le formateur à son bureau devant un ordinateur portable, interfaces d’outils d’intelligence artificielle affichées',
+    poster: 'https://lh3.googleusercontent.com/d/17HL1MQapb9LBpsnOLGHdz9rrwoP6L68m=w1200-rw',
+    duration: '12 séances',
+    level: 'Débutant',
+    levelSubject: 'Quel est votre niveau de compréhension du vibecoding',
+    mode: 'Présentiel',
+    price: 7500,
+    prices: {"DJ":7500,"KM":15000},
+    learnings: [
+      "Prendre en main les principaux outils d’IA",
+      "Gagner du temps sur vos tâches répétitives",
+      "Automatiser vos flux de production"
+    ],
+    programme: {"sousTitre":"12","modules":[]},
+    featured: true,
+    registrationOpen: true,
+    active: true,
+    allowRegistrationWithoutSession: false,
+    hasDetailPage: true,
+    href: '/formations/ia-appliquee/',
+    ordre: 3
   }),
   Object.freeze({
     id: 'formation-marketing-digital',
     slug: 'marketing-digital',
+    formId: 'marketing-digital',
     title: 'Marketing digital',
     shortTitle: 'Marketing digital',
     category: 'Marketing digital',
@@ -258,58 +282,25 @@ window.FORMATIONS = Object.freeze([
     shortDescription: 'Construisez des campagnes qui attirent une audience, la convertissent en clients et font grandir votre activité.',
     image: '/assets/images/formations/marketing-digital.webp',
     imageAlt: 'Le formateur en costume à son bureau, ordinateur portable ouvert et courbe de croissance affichée derrière lui',
+    poster: 'https://lh3.googleusercontent.com/d/1Dl0nQspP87BbMAhhbgHGUeiA2w4qCA7K=w1200-rw',
     duration: '12 séances',
-    level: 'À confirmer',
+    level: 'Débutant',
     mode: 'Présentiel',
     price: 7500,
-    prices: Object.freeze({ DJ: 7500 }),
-    modules: null,
+    prices: {"DJ":7500,"KM":15000},
     learnings: [
-      'Définir une stratégie digitale claire',
-      'Lancer des campagnes qui convertissent',
-      'Mesurer et améliorer vos résultats'
+      "Définir une stratégie digitale claire",
+      "Lancer des campagnes qui convertissent",
+      "Mesurer et améliorer vos résultats"
     ],
+    programme: {"sousTitre":"","modules":[]},
     featured: false,
-    nextSession: null,
-    places: null,
     registrationOpen: true,
     active: true,
     allowRegistrationWithoutSession: false,
+    hasDetailPage: true,
     href: '/formations/marketing-digital/',
-    hasDetailPage: true,
-    formId: 'marketing-digital'
-  }),
-  Object.freeze({
-    id: 'formation-ia-appliquee',
-    slug: 'ia-appliquee',
-    title: 'IA appliquée',
-    shortTitle: 'IA appliquée',
-    category: 'Intelligence artificielle',
-    family: 'Intelligence artificielle',
-    promise: 'Automatiser, créer, accélérer.',
-    shortDescription: 'Intégrez les outils d’intelligence artificielle à votre travail quotidien pour produire plus vite, sans perdre en qualité.',
-    image: '/assets/images/formations/ia-appliquee.webp',
-    imageAlt: 'Le formateur à son bureau devant un ordinateur portable, interfaces d’outils d’intelligence artificielle affichées',
-    duration: '12 séances',
-    level: 'À confirmer',
-    mode: 'Présentiel',
-    price: 7500,
-    prices: Object.freeze({ DJ: 7500 }),
-    modules: null,
-    learnings: [
-      'Prendre en main les principaux outils d’IA',
-      'Gagner du temps sur vos tâches répétitives',
-      'Automatiser vos flux de production'
-    ],
-    featured: false,
-    nextSession: null,
-    places: null,
-    registrationOpen: true,
-    active: true,
-    allowRegistrationWithoutSession: false,
-    href: '/formations/ia-appliquee/',
-    hasDetailPage: true,
-    formId: 'ia-appliquee'
+    ordre: 4
   })
 ]);
 
@@ -382,12 +373,12 @@ window.SESSIONS = Object.freeze([
     duration: '15 séances · 24 heures',
     location: 'American corner - Ifere',
     mode: 'Présentiel',
-    pays: 'KM',
+    pays: 'DJ,KM',
     price: 15000,
     placesTotal: 20,
     placesAvailable: 20,
     registrationOpen: true,
-    parPays: {"KM":{"mode":"Présentiel","lieu":"American corner","tarif":15000}}
+    parPays: {"DJ":{"mode":"En ligne","tarif":7500},"KM":{"mode":"Présentiel","lieu":"American corner","tarif":15000}}
   }),
   Object.freeze({
     id: 'marketing-digital-2026-11',
@@ -396,28 +387,30 @@ window.SESSIONS = Object.freeze([
     endDate: '2026-12-16',
     schedule: 'Mercredi et samedi · 18h – 20h',
     duration: '12 séances · 24 heures',
-    location: 'Saalam Tower, 5ème étage, Djibouti',
+    location: 'American corner - Ifere',
     mode: 'Présentiel',
-    pays: 'DJ,KM',
-    price: 7500,
+    pays: 'KM',
+    price: 15000,
     placesTotal: 20,
     placesAvailable: 20,
-    registrationOpen: true
+    registrationOpen: true,
+    parPays: {"KM":{"lieu":"American corner","tarif":15000}}
   }),
   Object.freeze({
     id: 'photo-video-2027-01',
     formId: 'photo-video',
-    startDate: '2027-01-07',
-    endDate: '2027-02-15',
+    startDate: '2026-10-19',
+    endDate: '2026-11-01',
     schedule: 'Lundi et jeudi · 18h – 20h',
     duration: '12 séances · 24 heures',
-    location: 'Saalam Tower, 5ème étage, Djibouti',
+    location: 'American corner - Ifere',
     mode: 'Présentiel',
-    pays: 'DJ,KM',
-    price: 7500,
+    pays: 'KM',
+    price: 15000,
     placesTotal: 20,
     placesAvailable: 20,
-    registrationOpen: true
+    registrationOpen: true,
+    parPays: {"KM":{"mode":"Présentiel","lieu":"American corner","tarif":15000}}
   }),
   Object.freeze({
     id: 'identite-visuelle-2027-01',
@@ -690,7 +683,7 @@ window.SITE_ENDPOINTS = Object.freeze({
    * donc ce numéro à celui réellement servi, et le dit franchement.
    * Une épreuve du banc d'essai vérifie que les deux restent alignés.
    */
-  versionScript: '2026-09-20-catalogue-en-cache'
+  versionScript: '2026-09-20-coherence-pays-mode'
 });
 
 /**

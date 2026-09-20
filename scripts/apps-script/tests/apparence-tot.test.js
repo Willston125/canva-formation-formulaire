@@ -105,7 +105,11 @@ const corpsImages = (() => {
 })();
 verifier('le corps de appliquerImages est bien retrouvé', corpsImages.length > 500, true);
 
-verifier('l’apparence obtenue est mémorisée', /memoriserApparence\(apparence\)/.test(corpsImages), true);
+/* La mémoire reçoit AUSSI les clés vues sur la page : ce sont les seules
+   qu'elle puisse légitimement oublier quand la photo est retirée du tableau de
+   bord. Voir photo-retiree.test.js, qui exécute ce retrait. */
+verifier('l’apparence obtenue est mémorisée',
+  /memoriserApparence\(apparence, clesVues\)/.test(corpsImages), true);
 
 /* Elle doit être retenue AVANT les retours anticipés : ceux-ci sortent quand
    rien n'a changé, et une photo déjà en place ne serait alors jamais retenue —

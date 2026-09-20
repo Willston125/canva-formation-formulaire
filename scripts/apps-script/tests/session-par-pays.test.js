@@ -46,6 +46,9 @@ function corpsDe(source, entete) {
 const bac = {};
 vm.createContext(bac);
 vm.runInContext([
+  /* lieuDeSession se garde d’annoncer l’adresse d’un pays dans un autre : il a
+     donc besoin de savoir combien de pays porte la session. */
+  corpsDe(commun, 'function paysDeSession(session)'),
   corpsDe(commun, 'function reglagesDuPays(session, code)'),
   corpsDe(commun, 'function modeDeSession(session, code)'),
   corpsDe(commun, 'function lieuDeSession(session, code)'),

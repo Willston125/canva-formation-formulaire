@@ -1350,6 +1350,83 @@
     ];
   }
 
+  /* ---------------------- COHÉRENCE ENTRE PAYS ET MODE ----------------------
+   *
+   * Copie mot pour mot de la règle du script Google (`reprochesPaysSession`).
+   * Elle est tenue des deux côtés : ici pour répondre tout de suite, là-bas
+   * parce que c'est là qu'on écrit. Une épreuve les fait tourner sur les mêmes
+   * cas et compare les verdicts — une règle corrigée d'un seul côté se voit.
+   *
+   * Ce qu'elle empêche : deux sessions de la feuille étaient cochées Djibouti
+   * ET Comores, en présentiel, avec pour tout lieu « Saalam Tower, 5ème étage,
+   * Djibouti ». Un candidat comorien lisait cette adresse-là.
+   */
+  function reprochesPaysSession(s) {
+    var reproches = [];
+    if (!s) return reproches;
+
+    var surPlace = function (mode) { return /^(pr[ée]sentiel|hybride)$/i.test(String(mode || '').trim()); };
+    var codes = String(s.pays || '').split(',').map(function (c) {
+      return c.trim().toUpperCase();
+    }).filter(Boolean);
+
+    var table = (s.parPays && typeof s.parPays === 'object' && !Array.isArray(s.parPays)) ? s.parPays : {};
+    var reglageDe = function (code) {
+      var trouve = null;
+      Object.keys(table).forEach(function (c) {
+        if (String(c).toUpperCase() === code) trouve = table[c];
+      });
+      return (trouve && typeof trouve === 'object' && !Array.isArray(trouve)) ? trouve : {};
+    };
+    var modeDe = function (code) {
+      var propre = reglageDe(code).mode;
+      return String((typeof propre === 'string' && propre.trim()) ? propre : (s.mode || '')).trim();
+    };
+
+    /* 1. AUCUNE CASE COCHÉE = PROPOSÉE PARTOUT, y compris dans un pays ajouté
+       plus tard. Seule une session qu'on suit de chez soi peut l'être. */
+    if (!codes.length) {
+      if (surPlace(s.mode)) {
+        reproches.push('Cette session est en « ' + String(s.mode).trim() + ' » et n’est cochée dans '
+          + 'aucun pays : elle serait proposée partout, y compris là où personne ne peut s’y rendre. '
+          + 'Cochez le ou les pays où elle se tient, ou passez-la « En ligne ».');
+      }
+      return reproches;
+    }
+
+    codes.forEach(function (code) {
+      var mode = modeDe(code);
+      if (!surPlace(mode)) return;
+      if (String(reglageDe(code).lieu || '').trim()) return;
+
+      /* 2. Un pays sur place veut un lieu. */
+      if (codes.length === 1) {
+        if (!String(s.location || '').trim()) {
+          reproches.push('La session est en « ' + mode + ' » pour ' + code + ' sans aucun lieu. '
+            + 'Indiquez l’adresse dans « Lieu ou plateforme », ou passez ce pays « En ligne ».');
+        }
+        return;
+      }
+      /* 3. Et dès que plusieurs pays sont cochés, il veut LE SIEN : le lieu de la
+         session est une adresse, elle n'est que dans un pays. */
+      reproches.push('La session est en « ' + mode + ' » pour ' + code + ' sans lieu propre à ce '
+        + 'pays : elle reprendrait l’adresse de la session, qui se trouve ailleurs. Indiquez le '
+        + 'lieu de ' + code + ', ou passez ce pays « En ligne ».');
+    });
+
+    return reproches;
+  }
+
+  /** Le nom du pays plutôt que son code, quand on le connaît : « KM » ne parle à personne. */
+  function avecNomsDePays(message) {
+    (etat.catalogue.pays || []).forEach(function (p) {
+      if (!p || !p.code || !p.nom) return;
+      message = message.split(' ' + p.code + ' ').join(' ' + p.nom + ' ')
+        .split(' ' + p.code + ',').join(' ' + p.nom + ',');
+    });
+    return message;
+  }
+
   function ouvrirSession(id) {
     var formations = etat.catalogue.formations || [];
     if (!formations.length) {
@@ -1371,6 +1448,13 @@
       } else {
         valeurs.placesAvailable = null;
       }
+      /* La règle est vérifiée AVANT l’envoi : le panneau reste ouvert, avec la
+         saisie intacte et le reproche sous les yeux. Le script Google la tient
+         aussi, mais un aller-retour pour s’entendre dire ce qu’on pouvait
+         savoir sur place fait perdre la saisie de vue. */
+      var reproches = reprochesPaysSession(valeurs);
+      if (reproches.length) { fini(avecNomsDePays(reproches.join(' '))); return; }
+
       appeler('admin.session.save', { donnees: valeurs }).then(function (d) {
         fermerPanneau();
         afficherMessage('#succes-globale', d.cree ? 'Session créée.' : 'Session mise à jour.', 5000);

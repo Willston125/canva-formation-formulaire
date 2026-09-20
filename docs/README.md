@@ -53,12 +53,39 @@ les protège, mais toute nouvelle écriture doit passer par les mêmes fonctions
 ## Commandes
 
 ```bash
-npm run sync:sessions  # réaligne les sessions du fichier sur la feuille
-npm run test:api       # le banc d’essai : 26 suites
-npm run build:fiches   # régénère les fiches depuis le gabarit
-npm run build:css      # recompile Tailwind
-npm run build:fonts    # reconstruit les polices auto-hébergées
+npm run sync             # réaligne formations ET sessions sur la feuille
+npm run sync:formations  # les formations seules
+npm run sync:sessions    # les sessions seules
+npm run test:api         # le banc d’essai : 32 suites
+npm run build:fiches     # régénère les fiches, depuis la BASE
+npm run build:css        # recompile Tailwind
+npm run build:fonts      # reconstruit les polices auto-hébergées
 ```
+
+**`npm run sync` avant toute publication.** `formations-data.js` porte une copie
+du catalogue : c'est elle qui s'affiche pendant la seconde où l'API n'a pas
+encore répondu, elle qui sert de repli quand la feuille est injoignable, et elle
+que lit `build:fiches -- --du-fichier`. Sans réalignement, l'accueil montrait une
+carte fantôme — une formation retirée du tableau de bord que le fichier annonçait
+encore. Les deux scripts refusent d'écrire une liste vide ou une réponse
+incomplète, et ne suppriment jamais de page : ils signalent celles restées en
+place.
+
+**`build:fiches` lit la base, pas le fichier.** C'est ce qui a changé le
+20 septembre 2026 : la commande nue lisait `formations-data.js`, et republiait
+donc les fiches avec la version du dépôt — un programme, une FAQ ou une
+accroche corrigés dans le tableau de bord étaient ramenés en arrière, par la
+commande même que cette page recommandait.
+
+Deux options, à ne sortir qu'à bon escient :
+
+```bash
+npm run build:fiches -- --du-fichier   # repli assumé : publie les données du dépôt
+npm run build:fiches -- --nettoyer     # retire les fiches sans formation dans la base
+```
+
+Une base injoignable **arrête** la génération. Se rabattre sur le fichier
+écraserait ce qui a été saisi depuis le tableau de bord, et rien ne le dirait.
 
 Le banc d'essai exécute le **vrai** script Apps Script dans un bac à sable, avec
 les services Google simulés. Chaque contrôle qu'il porte a été prouvé en

@@ -47,6 +47,14 @@
             var poser = function (el) {
                 var v = images[el.getAttribute('data-image')];
                 if (!v || !v.src || el.getAttribute('src') === v.src) return;
+                /* L'ADRESSE D'ORIGINE est retenue avant d'être recouverte :
+                   c'est la seule occasion de la connaître, et c'est elle que
+                   site-common.js rendra le jour où la photo sera retirée du
+                   tableau de bord. Sans elle, le retrait laissait un trou : le
+                   fichier est mis à la corbeille en même temps. */
+                if (!el.hasAttribute('data-image-origine')) {
+                    el.setAttribute('data-image-origine', el.getAttribute('src') || '');
+                }
                 el.setAttribute('src', v.src);
                 /* Les dimensions d'origine décrivaient l'ancienne image :
                    les garder réserverait une place au mauvais rapport. */
@@ -62,80 +70,6 @@
                 else el.style.removeProperty('--cadrage');
                 if (v.transformOrigin) el.style.setProperty('--cadrage-origine', v.transformOrigin);
                 else el.style.removeProperty('--cadrage-origine');
-            };
-
-            /* On agit pendant l'analyse du document, au moment où chaque
-               balise apparaît — un écouteur de fin de chargement arriverait
-               après le premier affichage, donc trop tard. */
-            var obs = new MutationObserver(function (lots) {
-                for (var i = 0; i < lots.length; i++) {
-                    var ajouts = lots[i].addedNodes;
-                    for (var j = 0; j < ajouts.length; j++) {
-                        var n = ajouts[j];
-                        if (n.nodeType !== 1) continue;
-                        if (n.hasAttribute('data-image')) poser(n);
-                        var dedans = n.querySelectorAll ? n.querySelectorAll('[data-image]') : [];
-                        for (var k = 0; k < dedans.length; k++) poser(dedans[k]);
-                    }
-                }
-            });
-            obs.observe(document.documentElement, { childList: true, subtree: true });
-
-            /* Filet : ce qui aurait échappé à l'observation est posé à la fin
-               de l'analyse, et l'observation s'arrête là — la laisser courir
-               ferait travailler le navigateur à chaque ajout de la page. */
-            document.addEventListener('DOMContentLoaded', function () {
-                var tous = document.querySelectorAll('[data-image]');
-                for (var i = 0; i < tous.length; i++) poser(tous[i]);
-                obs.disconnect();
-            });
-        })();
-    </script>
-    <!-- apparence-tot:fin -->
-    <!-- apparence-tot:debut -->
-    <script>
-        /* Rejoue l'apparence retenue au chargement précédent AVANT le premier
-           affichage.
-
-           Sans ce bloc, le navigateur peignait la photo inscrite dans ce
-           fichier — celle du dernier déploiement — puis site-common.js la
-           remplaçait une fois la feuille Google interrogée. On voyait donc
-           l'ancienne bannière pendant tout l'aller-retour : mesuré à près
-           d'une seconde avec un cache chaud, plusieurs secondes sans.
-
-           Ce bloc est recopié tel quel dans chaque page concernée ; une
-           épreuve vérifie que les copies restent identiques. */
-        (function () {
-            'use strict';
-            var memoire;
-            try { memoire = JSON.parse(localStorage.getItem('impactali_apparence') || 'null'); }
-            catch (e) { return; }
-            if (!memoire || !memoire.images) return;
-            var images = memoire.images;
-
-            /* Le préchargement lance le téléchargement immédiatement, sans
-               attendre que la balise <img> soit analysée : la vraie photo est
-               souvent déjà là quand elle arrive. */
-            for (var cle in images) {
-                if (!images[cle] || !images[cle].src) continue;
-                var lien = document.createElement('link');
-                lien.rel = 'preload';
-                lien.as = 'image';
-                lien.href = images[cle].src;
-                document.head.appendChild(lien);
-            }
-
-            var poser = function (el) {
-                var v = images[el.getAttribute('data-image')];
-                if (!v || !v.src || el.getAttribute('src') === v.src) return;
-                el.setAttribute('src', v.src);
-                /* Les dimensions d'origine décrivaient l'ancienne image :
-                   les garder réserverait une place au mauvais rapport. */
-                el.removeAttribute('width');
-                el.removeAttribute('height');
-                el.style.objectPosition = v.objectPosition || '';
-                el.style.transform = v.transform || '';
-                el.style.transformOrigin = v.transformOrigin || '';
             };
 
             /* On agit pendant l'analyse du document, au moment où chaque
@@ -223,7 +157,7 @@
     <header class="site-header" id="site-header">
         <div class="site-header__inner">
             <a class="brand" href="/" aria-label="IMPACTALI — Accueil">
-                <img src="/assets/brand/impactali-logo.webp" alt="IMPACTALI" width="720" height="400" decoding="async">
+                <img data-image="marque.logo" data-image-groupe="Marque" data-image-libelle="Logo IMPACTALI" data-image-format="logo" data-image-ratio="9/5" src="/assets/brand/impactali-logo.webp" alt="IMPACTALI" width="720" height="400" decoding="async">
             </a>
 
             <nav class="desktop-nav" aria-label="Navigation principale">
@@ -270,7 +204,7 @@
                 <h1 id="fiche-title">Graphisme &amp; identité visuelle</h1>
                 <p class="fiche-hero__lead">Posez les bases d’un univers graphique reconnaissable : charte, typographies, couleurs et déclinaisons sur vos supports.</p>
 
-                <dl class="fiche-facts" aria-label="Informations clés"><div><dt><span class="material-symbols-outlined" aria-hidden="true">timelapse</span>Durée</dt><dd>12 séances</dd></div><div><dt><span class="material-symbols-outlined" aria-hidden="true">co_present</span>Mode</dt><dd>Présentiel</dd></div><div data-session-fact hidden><dt><span class="material-symbols-outlined" aria-hidden="true">schedule</span>Horaires</dt><dd id="fiche-schedule"></dd></div><div data-session-fact hidden><dt><span class="material-symbols-outlined" aria-hidden="true">location_on</span>Lieu</dt><dd id="fiche-location"></dd></div><div><dt><span class="material-symbols-outlined" aria-hidden="true">payments</span>Participation</dt><dd id="fiche-price">7 500 FDJ</dd></div><div><dt><span class="material-symbols-outlined" aria-hidden="true">event</span>Prochaine session</dt><dd id="fiche-next-session">Dates à annoncer</dd></div></dl>
+                <dl class="fiche-facts" aria-label="Informations clés"><div data-fiche-fact><dt><span class="material-symbols-outlined" aria-hidden="true">timelapse</span>Durée</dt><dd id="fiche-duration">12 séances</dd></div><div data-fiche-fact><dt><span class="material-symbols-outlined" aria-hidden="true">signal_cellular_alt</span>Niveau</dt><dd id="fiche-level">Débuant</dd></div><div data-fiche-fact><dt><span class="material-symbols-outlined" aria-hidden="true">co_present</span>Mode</dt><dd id="fiche-mode">Présentiel</dd></div><div data-session-fact hidden><dt><span class="material-symbols-outlined" aria-hidden="true">schedule</span>Horaires</dt><dd id="fiche-schedule"></dd></div><div data-session-fact hidden><dt><span class="material-symbols-outlined" aria-hidden="true">location_on</span>Lieu</dt><dd id="fiche-location"></dd></div><div><dt><span class="material-symbols-outlined" aria-hidden="true">payments</span>Participation</dt><dd id="fiche-price">7 500 FDJ</dd></div><div><dt><span class="material-symbols-outlined" aria-hidden="true">event</span>Prochaine session</dt><dd id="fiche-next-session">Dates à annoncer</dd></div></dl>
 
                 <div class="fiche-hero__actions">
                     <a class="button button--primary" href="#inscription" data-register-formation="identite-visuelle">
@@ -295,7 +229,7 @@
             <div class="fiche-hero__aside">
                 <!-- ====== AFFICHE (élément complémentaire, plus en pleine largeur) ====== -->
                 <section class="fiche-poster" id="poster-section" aria-label="Affiche de la formation">
-                    <img src="/assets/images/formations/identite-visuelle.webp" alt="Affiche de la formation Graphisme &amp; identité visuelle"
+                    <img src="https://lh3.googleusercontent.com/d/1QXK4d9K3D8ScZ5C5-26RaZgJngEl-aGH=w1200-rw" alt="Affiche de la formation Graphisme &amp; identité visuelle"
                         width="1587" height="2245" fetchpriority="high" decoding="async">
                 </section>
 
@@ -1045,7 +979,7 @@
 
                         <!-- Affiche de la formation -->
                         <div class="mb-6 rounded-2xl overflow-hidden border border-[#CBFD00]/20 shadow-sm">
-                            <img src="/assets/images/formations/identite-visuelle.webp" alt="Affiche de la formation Graphisme &amp; identité visuelle" id="poster-validation"
+                            <img src="https://lh3.googleusercontent.com/d/1QXK4d9K3D8ScZ5C5-26RaZgJngEl-aGH=w1200-rw" alt="Affiche de la formation Graphisme &amp; identité visuelle" id="poster-validation"
                                 class="w-full h-auto object-cover" loading="lazy">
                         </div>
 
@@ -1220,7 +1154,7 @@
         <div class="landing-shell site-footer__inner">
             <div class="site-footer__brand">
                 <a class="site-footer__logo" href="/" aria-label="IMPACTALI — Accueil">
-                    <img src="/assets/brand/impactali-logo.webp" alt="IMPACTALI" width="720" height="400" loading="lazy" decoding="async">
+                    <img data-image="marque.logo" data-image-groupe="Marque" data-image-libelle="Logo IMPACTALI" data-image-format="logo" data-image-ratio="9/5" src="/assets/brand/impactali-logo.webp" alt="IMPACTALI" width="720" height="400" loading="lazy" decoding="async">
                 </a>
                 <span class="site-footer__baseline">Plateforme de formation &amp; de développement des compétences</span>
                 <span class="site-footer__legal">&copy; 2026 IMPACTALI. Tous droits réservés.</span>

@@ -32,7 +32,13 @@ const EPREUVES = [
   ['apparence-tot.test.js', 'Apparence rejouee avant le premier affichage'],
   ['adresse-du-site.test.js', 'Toutes les pages nomment la meme adresse'],
   ['cache-catalogue.test.js', 'Catalogue retenu chez Google, places toujours fraiches'],
-  ['sync-sessions.test.js', 'Alignement des sessions du fichier sur la feuille']
+  ['sync-sessions.test.js', 'Alignement des sessions du fichier sur la feuille'],
+  ['fiche-a-jour.test.js', 'L en-tete d une fiche generee suit le catalogue'],
+  ['coherence-pays-mode.test.js', 'Le mode d une session correspond a ses pays'],
+  ['accueil-a-jour.test.js', 'L accueil suit le catalogue et le pays du visiteur'],
+  ['photo-retiree.test.js', 'Une photo retiree rend celle d origine'],
+  ['places-source-unique.test.js', 'Les places se deduisent toujours des inscrits'],
+  ['sync-formations.test.js', 'Alignement des formations du fichier sur la feuille']
 ];
 
 /* La liste ci-dessus est écrite à la main : une épreuve ajoutée dans le dossier

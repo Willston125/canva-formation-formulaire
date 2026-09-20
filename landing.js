@@ -207,6 +207,38 @@
     /** Carrousel en cours d'exécution, pour pouvoir l'arrêter avant reconstruction. */
     let carrouselActif = null;
 
+    /**
+     * « American corner · Présentiel » — pour le PAYS du visiteur.
+     *
+     * La carte annonçait `session.location` et `session.mode` bruts. Une même
+     * session se tient en présentiel ici et en ligne ailleurs : un candidat
+     * comorien lisait donc l'adresse djiboutienne, alors que la fiche, elle,
+     * avait déjà été corrigée. Sans lieu connu, on n'écrit que le mode — et
+     * jamais un séparateur tout seul.
+     */
+    function lieuEtMode(session) {
+        const code = common.paysActif?.()?.code;
+        const lieu = common.lieuDeSession ? common.lieuDeSession(session, code) : (session.location || '');
+        const mode = common.modeDeSession ? common.modeDeSession(session, code) : (session.mode || '');
+        return [lieu, mode].map(v => String(v || '').trim()).filter(Boolean).join(' · ');
+    }
+
+    /**
+     * Le contenu des cartes du carrousel, sans rien construire d'autre.
+     *
+     * Il sert deux fois : à remplir la piste, et à savoir si elle a changé. Le
+     * carrousel n'était reconstruit que si la LISTE des formations changeait —
+     * un titre, une promesse, une photo ou un badge corrigés dans le tableau de
+     * bord restaient donc ceux du dernier déploiement, sur le premier bloc que
+     * voit un visiteur.
+     */
+    function contenuDuCarrousel() {
+        return [0, 1, 2]
+            .map(copyIndex => FORMATIONS.map(formation => renderCourseCard(formation,
+                { variant: 'dark', accessible: copyIndex === 1, extraClass: 'training-card' })).join(''))
+            .join('');
+    }
+
     function initTrainingCarousel() {
         // Un carrousel déjà en marche est arrêté net : sinon ses minuteurs et ses
         // écouteurs continueraient de piloter des cartes remplacées.
@@ -221,9 +253,7 @@
         const controleur = new AbortController();
         const signal = controleur.signal;
 
-        track.innerHTML = [0, 1, 2]
-            .map(copyIndex => FORMATIONS.map(formation => renderCourseCard(formation, { variant: 'dark', accessible: copyIndex === 1, extraClass: 'training-card' })).join(''))
-            .join('');
+        track.innerHTML = contenuDuCarrousel();
         dots.innerHTML = FORMATIONS.map((formation, index) =>
             `<button class="carousel-dot${index === 0 ? ' is-active' : ''}" type="button" data-carousel-dot="${index}"
                 aria-label="Afficher ${escapeHtml(formation.title)}"${index === 0 ? ' aria-current="true"' : ''}></button>`
@@ -528,7 +558,7 @@
                         <li><span class="material-symbols-outlined" aria-hidden="true">event</span>Début le ${escapeHtml(formatSessionDate(session.startDate))}${session.endDate ? ` · fin le ${escapeHtml(formatSessionDate(session.endDate))}` : ''}</li>
                         <li><span class="material-symbols-outlined" aria-hidden="true">schedule</span>${escapeHtml(session.schedule)}</li>
                         <li><span class="material-symbols-outlined" aria-hidden="true">timelapse</span>${escapeHtml(session.duration)}</li>
-                        <li><span class="material-symbols-outlined" aria-hidden="true">location_on</span>${escapeHtml(session.location)} · ${escapeHtml(session.mode)}</li>
+                        ${lieuEtMode(session) ? `<li><span class="material-symbols-outlined" aria-hidden="true">location_on</span>${escapeHtml(lieuEtMode(session))}</li>` : ''}
                         <li><span class="material-symbols-outlined" aria-hidden="true">payments</span>${escapeHtml(formatPrixDe(session))}</li>
                         <li><span class="material-symbols-outlined" aria-hidden="true">group</span>${escapeHtml(places)}</li>
                     </ul>
@@ -635,6 +665,14 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
+        /* LES DONNÉES SONT RELUES AVANT LE PREMIER RENDU. `FORMATIONS` a été lu
+           à l'analyse du script, donc avant que site-common.js n'ait posé le
+           catalogue mémorisé — son propre DOMContentLoaded est enregistré avant
+           celui-ci. La page affichait donc l'ancienne version, puis la vraie :
+           une photo et un badge qui changent sous les yeux à chaque visite. */
+        FORMATIONS = visibles(window.FORMATIONS);
+        PORTFOLIO = Array.isArray(window.PORTFOLIO) ? window.PORTFOLIO : PORTFOLIO;
+
         initTrainingCarousel();
         renderCatalogueGrid();
         renderDomains();
@@ -648,24 +686,30 @@
         });
 
         /* Catalogue modifié depuis le tableau de bord : on reconstruit tout ce qui
-           en dépend. Le carrousel n'est reconstruit que si la liste des formations
-           a réellement changé, pour ne pas interrompre sa rotation sans raison. */
+           en dépend. Le carrousel, lui, n'est refait que si son contenu a vraiment
+           changé — le reconstruire pour rien interromprait sa rotation. On compare
+           donc ce qui serait AFFICHÉ, et non la liste des formations : un titre ou
+           une photo corrigés ne changent pas cette liste. */
         document.addEventListener('impactali:catalogue', event => {
-            const avant = FORMATIONS.map(f => f.slug).join('|');
+            const avant = contenuDuCarrousel();
             FORMATIONS = visibles(window.FORMATIONS);
             PORTFOLIO = Array.isArray(window.PORTFOLIO) ? window.PORTFOLIO : PORTFOLIO;
             renderCatalogueGrid();
             renderDomains();
             renderSessions();
             renderPortfolio();
-            if (avant !== FORMATIONS.map(f => f.slug).join('|')) initTrainingCarousel();
+            if (contenuDuCarrousel() !== avant) initTrainingCarousel();
             common.observeReveals?.();
         });
         /* Pays changé depuis le formulaire d'inscription : les tarifs affichés
-           sur l'accueil ne sont plus les bons, et les sessions proposées non plus. */
+           sur l'accueil ne sont plus les bons, et les sessions proposées non plus.
+           Les badges des cartes non plus : « Inscriptions ouvertes » n'a pas le
+           même sens là où la session n'est pas proposée. */
         document.addEventListener('impactali:pays', () => {
+            const avant = contenuDuCarrousel();
             renderCatalogueGrid();
             renderSessions();
+            if (contenuDuCarrousel() !== avant) initTrainingCarousel();
             common.observeReveals?.();
         });
 

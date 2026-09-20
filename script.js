@@ -248,7 +248,7 @@
         }
         renderSelectedSessionFacts();
 
-        renderEnteteGenerique(formation);
+        renderEnteteFiche(formation);
         renderBlocsFiche(formation);
         renderPaysSelector();
         renderSessionDetails();
@@ -293,43 +293,106 @@
     }
 
     /**
-     * Page d'inscription générique (/inscription/?trainingId=…) : elle sert toutes
-     * les formations, y compris celles créées depuis le tableau de bord qui n'ont
-     * pas encore de page générée. Son en-tête est écrit ici, à partir des données.
+     * En-tête de la fiche, écrit depuis les données.
+     *
+     * IL VAUT POUR TOUTES LES FICHES, pas seulement pour la page d’inscription
+     * générique. La page générée porte déjà ces valeurs — c’est ce que lit
+     * Google —, mais elles datent de la dernière publication. Tant que cette
+     * fonction sortait sur toute page sans `data-fiche-generique`, une affiche,
+     * un titre ou une durée corrigés dans le tableau de bord ne s’affichaient
+     * nulle part : il fallait regénérer le site et le republier.
+     *
+     * Une valeur vide ne remplace jamais ce qui est affiché. Le HTML publié,
+     * même daté, vaut mieux qu’un en-tête blanc.
      */
-    function renderEnteteGenerique(formation) {
-        if (document.body.dataset.ficheGenerique === undefined || !formation) return;
+    function renderEnteteFiche(formation) {
+        if (!formation) return;
+        /* La page générique ne s’annonce pas comme une fiche : elle sert une
+           formation qui n’a pas encore de page à elle. Le drapeau choisit donc
+           un libellé — il ne fait plus sortir. */
+        const generique = document.body.dataset.ficheGenerique !== undefined;
 
         const titre = document.getElementById('fiche-title');
-        if (titre) titre.textContent = formation.title;
+        if (titre && formation.title) titre.textContent = formation.title;
 
+        /* `lead` accepte une mise en gras, comme à la génération, et passe par le
+           même tamis que les textes du tableau de bord. Sans lui, la description
+           courte, en texte simple. */
         const accroche = document.querySelector('.fiche-hero__lead');
-        if (accroche) accroche.textContent = formation.shortDescription || '';
+        if (accroche) {
+            if (formation.lead && common?.assainirHtml) accroche.innerHTML = common.assainirHtml(formation.lead);
+            else if (formation.shortDescription) accroche.textContent = formation.shortDescription;
+        }
 
         const fil = document.querySelector('.breadcrumb [aria-current="page"]');
         if (fil) fil.textContent = formation.shortTitle || formation.title;
 
         const surtitre = document.querySelector('.fiche-hero .eyebrow');
-        if (surtitre && formation.category) surtitre.textContent = 'INSCRIPTION · ' + formation.category.toUpperCase();
-
-        const affiche = document.querySelector('#poster-section img');
-        if (affiche && (formation.poster || formation.image)) {
-            affiche.src = formation.poster || formation.image;
-            affiche.alt = `Affiche de la formation ${formation.title}`;
+        if (surtitre && formation.category) {
+            surtitre.textContent = (generique ? 'INSCRIPTION' : 'FICHE FORMATION')
+                + ' · ' + formation.category.toUpperCase();
         }
-        document.querySelectorAll('#poster-validation').forEach(img => {
-            if (formation.poster || formation.image) {
-                img.src = formation.poster || formation.image;
+
+        /* L’AFFICHE. Elle était cuite dans la page à la génération : le champ du
+           tableau de bord acceptait bien un fichier, enregistrait bien son
+           adresse, et ne changeait rien sur aucune fiche. */
+        const affiche = formation.poster || formation.image || '';
+        if (affiche) {
+            document.querySelectorAll('#poster-section img, #poster-validation').forEach(img => {
                 img.alt = `Affiche de la formation ${formation.title}`;
-            }
-        });
-        document.title = `${formation.title} — Inscription | IMPACTALI`;
+                if (img.getAttribute('src') === affiche) return;
+                img.setAttribute('src', affiche);
+                /* Les dimensions décrivaient l’ANCIENNE affiche : les garder
+                   réserve une place au mauvais rapport, et la nouvelle
+                   s’afficherait déformée le temps de son chargement. */
+                img.removeAttribute('width');
+                img.removeAttribute('height');
+            });
+        }
+
+        if (formation.title) {
+            document.title = generique
+                ? `${formation.title} — Inscription | IMPACTALI`
+                : `${formation.title} — Fiche formation & inscription | IMPACTALI`;
+        }
 
         document.querySelectorAll('[data-whatsapp-float], .fiche-hero__actions [data-whatsapp-message]').forEach(lien => {
             const message = `Bonjour, je souhaite m’inscrire à la formation ${formation.title} et j’ai une question.`;
             lien.dataset.whatsappMessage = message;
             if (common) lien.href = common.whatsappUrl(message);
         });
+
+        renderFaitsFormation(formation);
+    }
+
+    /**
+     * Durée, niveau et mode : les trois lignes de l’en-tête qui décrivent la
+     * FORMATION, et non la session. Écrites une fois pour toutes à la
+     * génération, elles n’avaient même pas d’identifiant — rien ne pouvait les
+     * atteindre. Une ligne sans valeur se masque plutôt que d’annoncer un blanc.
+     */
+    function renderFaitsFormation(formation) {
+        const connu = v => typeof v === 'string' && v.trim() && !/^à confirmer$/i.test(v.trim());
+        const duree = [formation.duration, typeof formation.modules === 'number' ? `${formation.modules} modules` : '']
+            .filter(Boolean).join(' · ');
+        poserFait('fiche-duration', connu(formation.duration) ? duree : '');
+        poserFait('fiche-level', connu(formation.level) ? formation.level : '');
+        /* LE MODE SUIT LA SESSION ET LE PAYS. Une même session se tient en
+           présentiel ici et en ligne ailleurs : annoncer « Présentiel » en tête
+           de fiche à un candidat comorien le ferait venir dans une salle qui
+           n’est pas la sienne. Le mode de la formation n’est que le repli,
+           quand aucune session n’est affichée. */
+        const modeSession = displaySession ? sessionMode(displaySession) : '';
+        poserFait('fiche-mode', connu(modeSession) ? modeSession : (connu(formation.mode) ? formation.mode : ''));
+    }
+
+    /** Une ligne « fait de formation » : remplie et montrée, ou masquée. */
+    function poserFait(id, valeur) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const ligne = el.closest('[data-fiche-fact]') || el;
+        if (valeur) { el.textContent = valeur; ligne.hidden = false; }
+        else if (ligne !== el) ligne.hidden = true;
     }
 
     /**

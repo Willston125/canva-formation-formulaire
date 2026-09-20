@@ -19,6 +19,9 @@
 
 const fs = require('fs');
 const path = require('path');
+/* La mise en forme des valeurs est COMMUNE aux deux synchronisations : deux
+   copies, c'est le piège de l'apostrophe corrigé d'un côté et pas de l'autre. */
+const { litteral, enregistrementEnTexte } = require('./sync-commun.js');
 
 const RACINE = path.resolve(__dirname, '..');
 const FICHIER = path.join(RACINE, 'formations-data.js');
@@ -30,38 +33,9 @@ const ORDRE = ['id', 'formId', 'startDate', 'endDate', 'schedule', 'duration',
   'location', 'mode', 'pays', 'price', 'currency', 'placesTotal',
   'placesAvailable', 'registrationOpen', 'parPays'];
 
-const litteral = valeur => {
-  if (valeur === null || valeur === undefined) return null;
-  if (typeof valeur === 'string') return "'" + valeur.replace(/\\/g, '\\\\').replace(/'/g, "\\'") + "'";
-  if (typeof valeur === 'number' || typeof valeur === 'boolean') return String(valeur);
-  if (typeof valeur === 'object') {
-    /* VIDE = PAS ÉCRIT. La feuille renvoie « parPays: [] » — un tableau, pas
-       un objet — quand aucun réglage par pays n'a été saisi. Le site traite
-       déjà un tableau comme « aucun réglage » : l'écrire n'encombrerait le
-       fichier que d'une valeur sans effet. */
-    if (!Object.keys(valeur).length) return null;
-    /* Guillemets DOUBLES conservés, tels que JSON les produit. Les remplacer
-       par des apostrophes pour coller au style du fichier casserait la
-       première valeur contenant une apostrophe — « L'atelier » deviendrait
-       'L'atelier', et tout le fichier de données cesserait de se charger. */
-    return JSON.stringify(valeur);
-  }
-  return null;
-};
-
-function sessionEnTexte(session) {
-  const lignes = [];
-  for (const champ of ORDRE) {
-    if (!(champ in session)) continue;
-    const v = litteral(session[champ]);
-    /* Un champ vide n'est pas écrit : `currency: null` dans le fichier
-       vaudrait une devise absente déclarée, là où son absence laisse la
-       valeur du pays faire foi. */
-    if (v === null || v === "''" || v === '{}') continue;
-    lignes.push('    ' + champ + ': ' + v);
-  }
-  return '  Object.freeze({\n' + lignes.join(',\n') + '\n  })';
-}
+/* Les réglages par pays d'une session tiennent en trois champs : ils restent
+   sur une ligne, contrairement au programme d'une formation. */
+const sessionEnTexte = session => enregistrementEnTexte(session, ORDRE);
 
 /* Exporté pour l’épreuve : elle vérifie la mise en forme sans rien
    télécharger ni réécrire. */

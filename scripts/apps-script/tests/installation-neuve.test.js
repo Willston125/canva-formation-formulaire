@@ -70,11 +70,25 @@ const km = c.pays.find(p => p.code === 'KM');
 
 verifier('onglets créés', Object.keys(classeur.feuilles).sort(),
   ['Formations', 'Images', 'Inscriptions', 'Pays', 'Portfolio', 'Reglages', 'Sessions', 'Textes']);
-verifier('formation : titre', canva.title, 'Canva Pro & Création de contenu');
-verifier('formation : tarifs par pays', canva.prices, { DJ: 7500 });
-verifier('formation : acquis', canva.learnings.length, 3);
-verifier('formation : objectifs', canva.objectives.length, 5);
-verifier('formation : visible', canva.active, true);
+/* Les valeurs ne sont PAS écrites en dur, pour la même raison que les sessions
+   plus bas : les formations du fichier sont réalignées sur la feuille par
+   « npm run sync:formations », et un littéral ferait échouer cette épreuve à
+   chaque tarif ou chaque acquis saisi dans le tableau de bord — un échec qui
+   ne signalerait rien d'autre qu'une modification ordinaire. Ce qu'on éprouve,
+   c'est que l'installation REPORTE ces champs, pas qu'ils vaillent ceci ou cela. */
+const canvaFichier = site.window.FORMATIONS.find(f => f.formId === 'canva-pro');
+verifier('la formation de référence est bien dans le fichier', !!canvaFichier, true);
+verifier('formation : titre', canva.title, canvaFichier.title);
+verifier('formation : tarifs par pays', canva.prices, canvaFichier.prices);
+verifier('formation : acquis', canva.learnings.length, canvaFichier.learnings.length);
+verifier('formation : objectifs', canva.objectives.length, canvaFichier.objectives.length);
+verifier('formation : visible', canva.active, canvaFichier.active);
+/* Contre-contrôles : des champs vides des deux côtés rendraient les contrôles
+   ci-dessus vrais sans rien prouver. */
+verifier('et ces champs portent bien quelque chose',
+  [!!canvaFichier.title, Object.keys(canvaFichier.prices || {}).length > 0,
+    (canvaFichier.learnings || []).length > 0, (canvaFichier.objectives || []).length > 0],
+  [true, true, true, true]);
 /* La valeur n'est PAS écrite en dur. Les sessions du fichier sont réalignées
    sur la feuille par « npm run sync:sessions », et un littéral ferait échouer
    cette épreuve à chaque changement de date ou de pays — un échec qui ne

@@ -34,34 +34,51 @@ const RAPPORTS_ATTENDUS = {
   'accueil.formateur.photo': '4/5',
   /* La page d'inscription générique et le gabarit gardent la clé commune ; elle
      sert aussi de repli aux fiches, qui portent chacune la leur. */
-  'fiche.formateur.photo': '3/4'
+  'fiche.formateur.photo': '3/4',
+  /* Le logo, en-tête et pied de chaque page. Les deux emplacements mesurent le
+     même rapport — 75,59 × 42 en haut, 93,59 × 52 en bas, soit 1,8 — parce que
+     la feuille de style fixe la hauteur et laisse la largeur suivre. Un logo
+     d'un autre rapport ne serait donc pas déformé : il prendrait sa largeur. */
+  'marque.logo': '9/5'
 };
 
 /* Chaque fiche a sa propre clé de photo de formateur, dans le même emplacement
    — donc le même rapport. Elles partageaient une clé unique : une photo envoyée
-   depuis le tableau de bord s'appliquait aux six à la fois. */
-const FICHES = ['canva-pro', 'community-management', 'identite-visuelle',
-  'photo-video', 'marketing-digital', 'ia-appliquee'];
-FICHES.forEach(slug => { RAPPORTS_ATTENDUS['fiche.' + slug + '.formateur.photo'] = '3/4'; });
+   depuis le tableau de bord s'appliquait aux six à la fois.
+
+   La liste est RELEVÉE SUR LE DISQUE, et non écrite ici : le catalogue se
+   modifie depuis le tableau de bord, une formation s'y ajoute ou s'en retire,
+   et une liste tenue à la main ferait échouer l'épreuve pour une raison qui
+   n'a rien à voir avec les rapports qu'elle surveille. Un plancher, plus bas,
+   garde le cas où le dossier serait vidé. */
+const FICHES_SUR_DISQUE = fs.existsSync(path.join(RACINE, 'formations'))
+  ? fs.readdirSync(path.join(RACINE, 'formations'))
+    .filter(d => d !== '_template'
+      && fs.existsSync(path.join(RACINE, 'formations', d, 'index.html')))
+    .sort()
+  : [];
+FICHES_SUR_DISQUE.forEach(slug => { RAPPORTS_ATTENDUS['fiche.' + slug + '.formateur.photo'] = '3/4'; });
 
 const GABARIT = 'formations/_template/fiche.html';
 
-/* Le nombre d'emplacements attendu par fichier, compté à la main. C'est le
-   garde-fou de toute l'épreuve : sans lui, un balisage qui échapperait à
-   l'extraction ne relèverait plus RIEN, et les contrôles d'absence ci-dessous
-   compareraient deux listes vides en annonçant que tout va bien. */
+/* Le nombre d'emplacements attendu par fichier. C'est le garde-fou de toute
+   l'épreuve : sans lui, un balisage qui échapperait à l'extraction ne
+   relèverait plus RIEN, et les contrôles d'absence ci-dessous compareraient
+   deux listes vides en annonçant que tout va bien.
+   Chaque page porte DEUX emplacements de plus que ses visuels propres : le
+   logo de l'en-tête et celui du pied. */
 const FICHIERS = [
-  ['index.html', 5],
-  [GABARIT, 1],
-  ['inscription/index.html', 1],
-  ['formations/canva-pro/index.html', 1],
-  ['formations/community-management/index.html', 1],
-  ['formations/ia-appliquee/index.html', 1],
-  ['formations/identite-visuelle/index.html', 1],
-  ['formations/marketing-digital/index.html', 1],
-  ['formations/photo-video/index.html', 1]
+  ['index.html', 7],
+  [GABARIT, 3],
+  ['inscription/index.html', 3],
+  ...FICHES_SUR_DISQUE.map(slug => ['formations/' + slug + '/index.html', 3]),
+  /* Ces deux pages n'ont aucun visuel propre, mais portent le logo : une marque
+     changée depuis le tableau de bord doit changer PARTOUT, sans quoi elle
+     serait à jour sur neuf pages et périmée sur deux. */
+  ['entreprises/index.html', 2],
+  ['mentions-legales/index.html', 2]
 ];
-const OCCURRENCES_ATTENDUES = 13;
+const OCCURRENCES_ATTENDUES = 17 + FICHES_SUR_DISQUE.length * 3;
 
 const resultats = [];
 const verifier = (libelle, obtenu, attendu) => {
@@ -100,9 +117,9 @@ for (const [fichier, attendu] of FICHIERS) {
 verifier('nombre total d’emplacements relevés', occurrences.length, OCCURRENCES_ATTENDUES);
 verifier('et chaque fichier porte bien les siens', comptesFautifs, []);
 
-/* La liste des fiches est écrite en dur ci-dessus. Une septième formation
-   ajoutée sans être inscrite ici échapperait à toute l'épreuve : sa photo de
-   formateur n'annoncerait aucun rapport, et personne ne le saurait. */
+/* Contre-contrôle du relevé sur disque : une fiche qui apparaîtrait ailleurs
+   que dans le dossier `formations/` échapperait à toute l'épreuve, et sa photo
+   de formateur n'annoncerait aucun rapport sans que personne le sache. */
 const dossierFormations = path.join(RACINE, 'formations');
 const fichesSurDisque = fs.existsSync(dossierFormations)
   ? fs.readdirSync(dossierFormations)
@@ -163,7 +180,7 @@ verifier('la clé commune est relevée dans le gabarit et la page d’inscriptio
    partageraient encore une clé ramèneraient le défaut qu'on vient de corriger :
    une photo envoyée pour l'une s'appliquerait à l'autre. */
 verifier('chaque fiche déclare sa propre clé, une seule fois',
-  FICHES.filter(slug =>
+  FICHES_SUR_DISQUE.filter(slug =>
     occurrences.filter(o => o.cle === 'fiche.' + slug + '.formateur.photo').length !== 1), []);
 
 /* Et le repli est déclaré partout : sans lui, une fiche sans photo propre
@@ -178,16 +195,26 @@ verifier('chaque emplacement de formateur DES FICHES déclare son repli',
 
 /* Contre-contrôle : sans lui, le contrôle ci-dessus passerait si plus aucune
    clé ne commençait par « fiche. ». */
+/* Une par fiche, plus la clé commune du gabarit et de la page d'inscription. */
 verifier('des emplacements de fiche sont bien inspectés',
-  occurrences.filter(o => /^fiche\..*formateur\.photo$/.test(o.cle)).length, 8);
+  occurrences.filter(o => /^fiche\..*formateur\.photo$/.test(o.cle)).length,
+  FICHES_SUR_DISQUE.length + 2);
+
+/* Plancher : le catalogue peut perdre une formation, mais pas toutes. Sans ce
+   contrôle, un dossier vidé rendrait toute l'épreuve muette. */
+verifier('des fiches sont bien générées', FICHES_SUR_DISQUE.length >= 5, true);
 
 // --- 5. Le gabarit, source des sept fiches ---
 /* Corriger les fiches sans corriger le gabarit tiendrait jusqu'au prochain
    `npm run build:fiches`, qui les réécrirait toutes avec l'ancienne valeur. */
 const auGabarit = occurrences.filter(o => o.fichier === GABARIT);
-verifier('le gabarit des fiches porte lui aussi le rapport',
-  auGabarit.map(o => o.cle + ' = ' + lireAttribut(o.balise, 'data-image-ratio')),
-  ['fiche.formateur.photo = ' + RAPPORTS_ATTENDUS['fiche.formateur.photo']]);
+verifier('le gabarit des fiches porte lui aussi les rapports mesurés',
+  auGabarit.filter(o => lireAttribut(o.balise, 'data-image-ratio') !== RAPPORTS_ATTENDUS[o.cle])
+    .map(o => o.cle + ' = ' + lireAttribut(o.balise, 'data-image-ratio')), []);
+/* Contre-contrôle : le contrôle ci-dessus passerait sur un gabarit qui aurait
+   perdu tous ses emplacements. Celui du formateur doit y être. */
+verifier('dont celui de la photo du formateur',
+  auGabarit.some(o => o.cle === 'fiche.formateur.photo'), true);
 
 // --- 6. L'étiquette de format ne contredit plus la mesure ---
 /* « paysage » sur un emplacement de rapport 0,95 trompe d'abord celui qui
