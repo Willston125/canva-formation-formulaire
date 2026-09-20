@@ -159,3 +159,55 @@ c.font = '24px "Material Symbols Outlined"';
 c.measureText('view_module').width;      // 24  → un seul pictogramme
 c.measureText('zzz_nexiste_pas').width;  // 360 → quinze lettres, le témoin
 ```
+
+---
+
+## L'ancienne photo s'affiche avant la nouvelle
+
+Symptôme : on actualise le site, l'ancienne bannière apparaît une à plusieurs
+secondes, puis la nouvelle la remplace.
+
+Cause : le fichier HTML porte une photo — celle du dernier déploiement — que le
+navigateur peint tout de suite. La vraie photo, elle, n'est connue qu'après
+interrogation de la feuille Google. Mesuré sur le site publié avant
+correction : photo du fichier peinte à **384 ms**, vraie photo demandée à
+**569 ms** seulement. Et sur une visite à froid, la réponse d'Apps Script
+dépassait **3,5 secondes**.
+
+Deux mécanismes corrigent cela, et les deux doivent rester en place.
+
+### 1. La mémoire d'apparence
+
+`site-common.js` retient dans `localStorage`, sous `impactali_apparence`,
+l'adresse réellement posée sur chaque visuel. Un bloc placé dans l'en-tête des
+pages la rejoue **avant le premier affichage**, et précharge les photos dès la
+première milliseconde.
+
+Ce bloc est délimité par `<!-- apparence-tot:debut -->` et `<!-- apparence-tot:fin -->`,
+recopié à l'identique dans `index.html` et `formations/_template/fiche.html`.
+**Ne le modifiez que dans les deux à la fois**, puis relancez
+`npm run build:fiches` — une épreuve vérifie que les copies restent identiques.
+
+> **Il doit rester la première chose de l'en-tête**, avant toute feuille de
+> style. Un script n'est pas exécuté tant qu'une feuille reste à charger :
+> placé après elles, il ne tournait qu'à 569 ms, soit pas plus tôt que le
+> script qu'il devait devancer.
+
+### 2. Afficher d'abord, vérifier ensuite
+
+Le cache des données vit lui aussi dans `localStorage` — dans `sessionStorage`
+il mourait avec l'onglet, donc précisément entre deux visites. Il est appliqué
+tout de suite **même périmé**, puis la feuille est interrogée et corrige en
+silence ce qui a bougé.
+
+### Vérifier
+
+Videz le cache des données en gardant la mémoire des photos, puis rechargez :
+
+```js
+localStorage.removeItem('impactali_places');
+location.reload();
+```
+
+La photo doit être la bonne **avant** que le texte du bandeau ne change. Si la
+photo attend le texte, le bloc d'en-tête ne fait pas son travail.
