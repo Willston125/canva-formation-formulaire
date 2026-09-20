@@ -75,7 +75,7 @@
  * déploiement n'a pas été publiée, et Google sert encore l'ancien code.
  * C'est l'erreur la plus fréquente, et la plus difficile à diagnostiquer.
  */
-var VERSION = '2026-09-20-session-par-pays';
+var VERSION = '2026-09-20-catalogue-en-cache';
 
 /** Classeur. Vide = le classeur auquel ce script est rattaché (cas normal). */
 var ID_CLASSEUR = '';
@@ -219,7 +219,7 @@ function doGet(e) {
   var p = (e && e.parameter) || {};
   try {
     if (p.action === 'places') return repondre({ sessions: compterInscrits() }, p.callback);
-    if (p.action === 'catalogue') return repondre(lireCatalogue(), p.callback);
+    if (p.action === 'catalogue') return repondre(cataloguePourLeSite(), p.callback);
     /* Diagnostic : dit quelle version du script est réellement servie, et si
        l'autorisation Drive a été accordée. Ne révèle rien de sensible, et évite
        d'avoir à deviner pourquoi une nouveauté « ne marche pas ». */
@@ -387,6 +387,16 @@ function commandeAdmin(d) {
   try { verrou.waitLock(20000); }
   catch (err) { return repondre({ ok: false, erreur: 'Une autre modification est en cours, réessayez.' }, null); }
 
+  /* Le catalogue retenu chez Google doit être jeté dès qu'on écrit, faute de
+     quoi une modification mettrait des heures à paraître sur le site.
+     On invalide ICI, en un seul endroit, plutôt que dans chacune des seize
+     fonctions d'enregistrement — un oubli y serait invisible.
+     La liste énumère les commandes qui ne font que LIRE : tout le reste, y
+     compris une commande ajoutée demain, est traité comme une écriture.
+     Se tromper coûte alors un calcul en trop, jamais un contenu périmé. */
+  var LECTURES_SEULES = ['admin.login', 'admin.catalogue', 'admin.inscriptions'];
+  if (LECTURES_SEULES.indexOf(d.action) < 0) oublierCatalogue();
+
   try {
     switch (d.action) {
       case 'admin.login':        return repondre({ ok: true, version: VERSION, catalogue: lireCatalogue() }, null);
@@ -502,6 +512,80 @@ function verifierMotDePasse(saisi) {
  * session. Aucune donnée personnelle : seulement des compteurs.
  * Le site n'a ainsi qu'un seul appel à faire au chargement.
  */
+/* ---------- Catalogue retenu chez Google ----------
+ *
+ * Mesuré depuis le site publié : un appel « catalogue » prenait 3,9 à 5,5
+ * secondes, de façon CONSTANTE sur trois essais consécutifs. Ce n'est donc pas
+ * un démarrage à froid, c'est le même travail refait pour chaque visiteur :
+ * huit onglets rouverts, un aller-retour réseau chacun.
+ *
+ * Le catalogue est identique pour tout le monde et ne change que lorsque le
+ * tableau de bord écrit. On le garde donc en mémoire chez Google.
+ *
+ * DEUX PRÉCAUTIONS, l'une et l'autre nécessaires :
+ *
+ * 1. LES PLACES RESTANTES N'Y SONT JAMAIS. Elles changent à chaque
+ *    inscription, et une valeur périmée ferait vendre deux fois la dernière
+ *    place. Elles sont recomptées à chaque appel.
+ *
+ * 2. LE TABLEAU DE BORD NE LIT JAMAIS CE CACHE. Il appelle lireCatalogue
+ *    directement : celui qui vient d'enregistrer doit voir ce qu'il a écrit,
+ *    sans quoi il croirait sa modification perdue et la referait.
+ */
+var CLE_CACHE_CATALOGUE = 'catalogue-v1';
+
+/* CINQ MINUTES, et non les six heures permises.
+ *
+ * Une écriture du tableau de bord jette le cache aussitôt : de ce côté-là, une
+ * modification paraît tout de suite. Mais la feuille Google se modifie AUSSI À
+ * LA MAIN — un tarif corrigé directement dans une cellule — et rien alors ne
+ * prévient le script. Avec six heures, une correction saisie le matin ne se
+ * serait vue qu'en fin de journée, sans que personne comprenne pourquoi.
+ *
+ * Cinq minutes suffisent à mutualiser les visites rapprochées, qui sont tout
+ * l'enjeu : pendant une campagne, cent visiteurs se partagent un seul calcul
+ * au lieu d'en payer cent. */
+var DUREE_CACHE_CATALOGUE = 300;
+
+function catalogueEnCache() {
+  try {
+    var brut = CacheService.getScriptCache().get(CLE_CACHE_CATALOGUE);
+    return brut ? JSON.parse(brut) : null;
+  } catch (e) {
+    /* Service indisponible ou contenu illisible : on recalcule. Un cache est
+       une commodité, jamais une dépendance. */
+    return null;
+  }
+}
+
+function memoriserCatalogue(donnees) {
+  try {
+    CacheService.getScriptCache()
+      .put(CLE_CACHE_CATALOGUE, JSON.stringify(donnees), DUREE_CACHE_CATALOGUE);
+  } catch (e) { /* au-delà de la taille permise : tant pis, on recalculera */ }
+}
+
+function oublierCatalogue() {
+  try { CacheService.getScriptCache().remove(CLE_CACHE_CATALOGUE); } catch (e) { }
+}
+
+/** Catalogue servi au SITE : retenu d'un appel à l'autre, places toujours fraîches. */
+function cataloguePourLeSite() {
+  var retenu = catalogueEnCache();
+  if (!retenu) {
+    var frais = lireCatalogue();
+    var aRetenir = {};
+    for (var cle in frais) {
+      if (cle !== 'places' && cle !== 'maj') aRetenir[cle] = frais[cle];
+    }
+    memoriserCatalogue(aRetenir);
+    return frais;
+  }
+  retenu.places = compterInscrits();
+  retenu.maj = new Date().toISOString();
+  return retenu;
+}
+
 function lireCatalogue() {
   /* L'onglet Images est lu UNE fois, puis partagé : l'adresse et le cadrage
      vivent sur la même ligne, et lireCatalogue est rappelé après chaque

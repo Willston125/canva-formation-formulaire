@@ -94,6 +94,9 @@ function creerFeuille(nom) {
 }
 
 const proprietes = {};
+/* Le cache de Google, avec sa péremption : sans l'échéance, une épreuve ne
+   pourrait pas distinguer « retenu » de « expiré ». */
+const cache = {};
 const fichiersDrive = {};
 
 // ------------------------------- SERVICES --------------------------------
@@ -113,6 +116,15 @@ const bac = {
     })
   },
   LockService: { getScriptLock: () => ({ waitLock: () => true, releaseLock: () => true }) },
+  CacheService: {
+    getScriptCache: () => ({
+      get: c => (cache[c] && cache[c].expire > Date.now() ? cache[c].valeur : null),
+      put: (c, v, secondes) => {
+        cache[c] = { valeur: String(v), expire: Date.now() + (secondes || 600) * 1000 };
+      },
+      remove: c => { delete cache[c]; }
+    })
+  },
   Utilities: {
     sleep: () => { },
     formatDate: d => new Date(d).toISOString().slice(0, 10),
@@ -160,7 +172,7 @@ vm.runInContext("MOT_DE_PASSE_ADMIN = 'motdepasse-de-test';", bac);
 
 // -------------------------------- SERVEUR --------------------------------
 
-module.exports = { bac, classeur, creerFeuille, appelsSheets };
+module.exports = { bac, classeur, creerFeuille, appelsSheets, cache };
 if (require.main !== module) return;
 
 http.createServer((req, res) => {

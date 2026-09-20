@@ -30,7 +30,8 @@ const EPREUVES = [
   ['connexion-admin.test.js', 'Ouverture du tableau de bord sans attente inutile'],
   ['reglage-cadrage-admin.test.js', 'Reglage du cadrage dans un apercu au rapport reel'],
   ['apparence-tot.test.js', 'Apparence rejouee avant le premier affichage'],
-  ['adresse-du-site.test.js', 'Toutes les pages nomment la meme adresse']
+  ['adresse-du-site.test.js', 'Toutes les pages nomment la meme adresse'],
+  ['cache-catalogue.test.js', 'Catalogue retenu chez Google, places toujours fraiches']
 ];
 
 /* La liste ci-dessus est écrite à la main : une épreuve ajoutée dans le dossier

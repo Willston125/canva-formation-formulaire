@@ -122,3 +122,43 @@ npm run test:api
 
 Il exécute le **vrai** script dans un bac à sable, avec les services Google
 simulés. Lancez-le après toute modification du fichier `.gs`.
+
+---
+
+## Le catalogue est retenu en mémoire (depuis `2026-09-20-catalogue-en-cache`)
+
+Mesuré depuis le site publié : un appel « catalogue » prenait **3,9 à 5,5
+secondes**, de façon constante sur trois essais consécutifs. Ce n'était donc
+pas un démarrage à froid, mais le même travail refait pour chaque visiteur —
+huit onglets rouverts, un aller-retour réseau chacun.
+
+Le script garde désormais le catalogue en mémoire chez Google. Au banc
+d'essai, le second appel consomme **1 accès à la feuille au lieu de 8**.
+
+### Ce qui paraît tout de suite, et ce qui attend
+
+| Modification | Délai avant de paraître sur le site |
+|---|---|
+| Faite depuis le **tableau de bord** | **immédiat** — toute écriture jette le cache |
+| **Places restantes** (une inscription) | **immédiat** — jamais mises en cache |
+| Faite **à la main dans la feuille Google** | **jusqu'à 5 minutes** |
+
+Cette dernière ligne est le compromis assumé : rien ne prévient le script
+qu'une cellule a été corrigée à la main. La durée est volontairement courte
+(Google en permet six heures, on en prend cinq minutes) pour qu'une correction
+saisie le matin ne se voie pas seulement en fin de journée.
+
+**Si vous corrigez une cellule directement et voulez la voir tout de suite**,
+faites ensuite n'importe quel enregistrement depuis le tableau de bord : cela
+jette le cache.
+
+### Les places restantes ne sont jamais mises en cache
+
+C'est délibéré et il ne faut pas y toucher : une valeur périmée ferait
+promettre deux fois la dernière place. Elles sont recomptées à chaque appel,
+même quand tout le reste vient de la mémoire.
+
+### Le tableau de bord ne lit jamais ce cache
+
+Celui qui vient d'enregistrer doit voir ce qu'il a écrit, sans quoi il
+croirait sa modification perdue et la referait.

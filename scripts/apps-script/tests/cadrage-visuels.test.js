@@ -159,6 +159,13 @@ verifier('et son cadrage',
 const feuilleImages = creerFeuille('Images');
 feuilleImages.appendRow(['cle', 'valeur']);
 feuilleImages.appendRow(['accueil-hero', VISUEL]);
+/* La feuille vient d'être refaite À LA MAIN, sans passer par le tableau de
+   bord : rien n'a donc prévenu le script, et le catalogue qu'il garde en
+   mémoire décrit encore l'état précédent. C'est exactement ce qui se produit
+   en production quand on corrige une cellule directement — le site met alors
+   jusqu'à cinq minutes à s'en apercevoir. On l'oublie ici pour observer la
+   feuille telle qu'elle est. */
+bac.oublierCatalogue();
 verifier('la feuille fabriquée n’a bien que deux colonnes',
   feuilleImages.getLastColumn(), 2);
 verifier('une base à deux colonnes rend son visuel',
