@@ -64,6 +64,23 @@ const malPlacees = PAGES.filter(p => {
 });
 verifier('le bloc est bien dans l’en-tête', malPlacees, []);
 
+/* Et AVANT la première feuille de style. Un script n'est pas exécuté tant
+   qu'une feuille reste à charger : placé après elles, le bloc ne tournait
+   qu'à 569 ms sur le site publié — mesuré — c'est-à-dire pas plus tôt que le
+   script qu'il devait devancer. Il ne servait alors à rien. */
+const apresLesStyles = PAGES.filter(p => {
+  if (!existe(p) || !copies[p]) return false;
+  const contenu = lire(p);
+  const style = contenu.search(/<link[^>]+rel="stylesheet"/);
+  return style >= 0 && contenu.indexOf('apparence-tot:debut') > style;
+});
+verifier('et avant la première feuille de style', apresLesStyles, []);
+
+/* Contre-contrôle : sans lui, le contrôle ci-dessus passerait si plus aucune
+   feuille de style n'était trouvée — précisément quand il devrait crier. */
+verifier('des feuilles de style sont bien trouvées',
+  PAGES.filter(p => existe(p) && /<link[^>]+rel="stylesheet"/.test(lire(p))).length, PAGES.length);
+
 // --- 2. Les deux côtés s'accordent sur la même clé --------------------------
 
 /* site-common.js ÉCRIT la mémoire, le bloc la LIT. S'ils ne nommaient pas la
