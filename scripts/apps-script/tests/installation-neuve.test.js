@@ -75,7 +75,17 @@ verifier('formation : tarifs par pays', canva.prices, { DJ: 7500 });
 verifier('formation : acquis', canva.learnings.length, 3);
 verifier('formation : objectifs', canva.objectives.length, 5);
 verifier('formation : visible', canva.active, true);
-verifier('session : pays', c.sessions[0].pays, 'DJ');
+/* La valeur n'est PAS écrite en dur. Les sessions du fichier sont réalignées
+   sur la feuille par « npm run sync:sessions », et un littéral ferait échouer
+   cette épreuve à chaque changement de date ou de pays — un échec qui ne
+   signalerait rien d'autre qu'une saisie ordinaire dans le tableau de bord.
+   Ce qu'on éprouve ici, c'est que l'installation REPORTE le champ, pas qu'il
+   vaille telle ou telle chose. */
+verifier('session : pays repris du fichier',
+  c.sessions[0].pays, site.window.SESSIONS[0].pays);
+/* Contre-contrôle : un champ vide des deux côtés rendrait le contrôle
+   ci-dessus vrai sans rien prouver. */
+verifier('et ce champ porte bien un pays', /^[A-Z]{2}(,[A-Z]{2})*$/.test(site.window.SESSIONS[0].pays || ''), true);
 verifier('session : places', c.sessions[0].placesTotal, 20);
 verifier('pays DJ : indicatif intact', dj.indicatif, '+253');
 verifier('pays DJ : format des numéros', dj.motifTelephone, '^(77|67)\\d{6}$');

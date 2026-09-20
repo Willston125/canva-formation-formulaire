@@ -53,7 +53,8 @@ les protège, mais toute nouvelle écriture doit passer par les mêmes fonctions
 ## Commandes
 
 ```bash
-npm run test:api       # le banc d’essai : 22 suites
+npm run sync:sessions  # réaligne les sessions du fichier sur la feuille
+npm run test:api       # le banc d’essai : 26 suites
 npm run build:fiches   # régénère les fiches depuis le gabarit
 npm run build:css      # recompile Tailwind
 npm run build:fonts    # reconstruit les polices auto-hébergées

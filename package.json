@@ -9,7 +9,8 @@
     "build:fiches": "node scripts/build-fiches.js",
     "watch:css": "tailwindcss -c tailwind.config.js -i tailwind.src.css -o tailwind.css --watch",
     "serve": "serve -l 5173 .",
-    "test:api": "node scripts/apps-script/tests/run.js"
+    "test:api": "node scripts/apps-script/tests/run.js",
+    "sync:sessions": "node scripts/sync-sessions.js"
   },
   "devDependencies": {
     "@tailwindcss/container-queries": "^0.1.1",
