@@ -31,6 +31,19 @@ const EPREUVES = [
   ['reglage-cadrage-admin.test.js', 'Reglage du cadrage dans un apercu au rapport reel']
 ];
 
+/* La liste ci-dessus est écrite à la main : une épreuve ajoutée dans le dossier
+   mais oubliée ici ne serait jamais lancée, et se tairait pour toujours.
+   On compare donc la liste au contenu réel du dossier avant de commencer. */
+const surLeDisque = require('fs').readdirSync(__dirname)
+  .filter(f => f.endsWith('.test.js'));
+const oubliees = surLeDisque.filter(f => !EPREUVES.some(([nom]) => nom === f));
+const fantomes = EPREUVES.map(([nom]) => nom).filter(n => surLeDisque.indexOf(n) < 0);
+if (oubliees.length || fantomes.length) {
+  if (oubliees.length) console.log('Épreuves présentes mais jamais lancées : ' + oubliees.join(', '));
+  if (fantomes.length) console.log('Épreuves annoncées mais introuvables : ' + fantomes.join(', '));
+  process.exit(1);
+}
+
 let echecs = 0;
 for (const [fichier, titre] of EPREUVES) {
   console.log('\n=== ' + titre + ' ===');

@@ -105,3 +105,57 @@ npm run test:api
 
 S'il passe, le défaut est dans les données ou dans le déploiement, pas dans le
 code. S'il échoue, le message nomme le contrôle qui tombe.
+
+---
+
+## Un mot s'affiche en toutes lettres à la place d'une icône
+
+Symptôme : `VIEW_MODULE`, `PALETTE`, `INBOX` apparaît en majuscules là où on
+attend un pictogramme.
+
+Cause : la police des icônes n'est pas chargée entière — elle est réduite aux
+seules icônes employées, relevées automatiquement dans les sources. Une icône
+écrite sous une forme que le relevé ne reconnaît pas n'entre pas dans le
+fichier téléchargé, et le navigateur affiche alors son nom.
+
+C'est arrivé quatre fois, chaque fois avec une écriture nouvelle :
+
+| Forme dans le code | Icône perdue |
+|---|---|
+| `vide('inbox', …)` | `inbox` |
+| `'Design & Contenu': 'palette'` | `palette`, `smart_toy` |
+| `items.push(['view_module', …])` | `view_module` |
+
+Correction :
+
+```bash
+npm run build:fonts
+npm run build:fiches
+```
+
+La construction compare désormais tous les mots écrits en littéral à la liste
+officielle des icônes de Google, et **nomme** ceux qu'elle n'a pas relevés :
+
+```
+⚠ noms d'icônes écrits mais NON relevés — ils s'afficheraient en toutes lettres :
+      kayaking                 landing.js
+```
+
+Elle avertit sans bloquer : beaucoup de mots ordinaires — `title`, `password`,
+`transform` — sont aussi des noms d'icônes. Si l'avertissement nomme une vraie
+icône, ajoutez un motif dans `collectIcons` de `scripts/fetch-fonts.js` ; si ce
+n'est pas une icône, ajoutez le mot à `MOTS_ORDINAIRES`.
+
+### Vérifier depuis le navigateur
+
+Une boîte carrée ne prouve rien : le carré vient de la feuille de style, pas de
+la police. Il faut mesurer la largeur du **texte**, et la comparer à un témoin
+qui ne peut pas exister :
+
+```js
+await document.fonts.ready;
+const c = document.createElement('canvas').getContext('2d');
+c.font = '24px "Material Symbols Outlined"';
+c.measureText('view_module').width;      // 24  → un seul pictogramme
+c.measureText('zzz_nexiste_pas').width;  // 360 → quinze lettres, le témoin
+```
