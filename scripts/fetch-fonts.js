@@ -1,6 +1,7 @@
 /* Télécharge les polices Google et génère un fonts.css local. */
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36';
 const OUT_DIR = path.join(process.cwd(), 'assets', 'fonts');
@@ -131,6 +132,8 @@ function parseFaces(css) {
     ''
   ];
   let total = 0;
+  /** Empreinte du contenu de chaque fichier, pour versionner son adresse. */
+  const empreintes = {};
 
   for (const source of SOURCES) {
     const css = await fetch(source.url, { headers: { 'User-Agent': UA } }).then(r => {
@@ -156,7 +159,19 @@ function parseFaces(css) {
       total += buffer.length;
       console.log(`  ${fileName.padEnd(38)} ${(buffer.length / 1024).toFixed(1)} Ko`);
 
-      out.push(face.block.replace(urlMatch[1], `/assets/fonts/${fileName}`).trim(), '');
+      /* L'ADRESSE PORTE UNE EMPREINTE DU CONTENU.
+       *
+       * Le fichier gardait la même adresse d'une version à l'autre. Quand le
+       * sous-ensemble d'icônes a gagné `palette` et `smart_toy`, le serveur
+       * servait bien la nouvelle police — mesuré — mais les navigateurs qui
+       * avaient déjà l'ancienne continuaient de l'utiliser, et deux cartes de
+       * l'accueil affichaient encore PALETTE et SMART_TOY en toutes lettres.
+       *
+       * Huit caractères suffisent à distinguer deux versions, et l'adresse
+       * change alors d'elle-même : aucun visiteur ne reste sur l'ancienne. */
+      const empreinte = crypto.createHash('sha1').update(buffer).digest('hex').slice(0, 8);
+      empreintes[fileName] = empreinte;
+      out.push(face.block.replace(urlMatch[1], `/assets/fonts/${fileName}?v=${empreinte}`).trim(), '');
     }
 
     // La classe de base des icônes était fournie par la CSS du CDN : on la conserve
@@ -165,5 +180,26 @@ function parseFaces(css) {
   }
 
   fs.writeFileSync(path.join(process.cwd(), 'fonts.css'), out.join('\n') + '\n');
+
+  /* Les liens de préchargement portent la MÊME empreinte que la feuille.
+     Sans cela ils demanderaient l'adresse nue pendant que la feuille en
+     demande une autre : deux téléchargements du même fichier, et un
+     préchargement qui ne précharge rien. */
+  const PAGES = ['index.html', 'entreprises/index.html', 'mentions-legales/index.html',
+    'admin/index.html', 'formations/_template/fiche.html'];
+  let pagesTouchees = 0;
+  for (const page of PAGES) {
+    if (!fs.existsSync(page)) continue;
+    const avant = fs.readFileSync(page, 'utf8');
+    const apres = avant.replace(
+      /(href="\/assets\/fonts\/([a-z0-9-]+\.woff2))(\?v=[a-f0-9]+)?"/g,
+      (tout, debut, fichier) => empreintes[fichier] ? `${debut}?v=${empreintes[fichier]}"` : tout);
+    if (apres !== avant) { fs.writeFileSync(page, apres); pagesTouchees++; }
+  }
+  if (pagesTouchees) {
+    console.log(`  ${pagesTouchees} page(s) : préchargements réalignés`);
+    console.log('  ⚠ relancez « npm run build:fiches » : le gabarit a changé');
+  }
+
   console.log(`Total : ${(total / 1024).toFixed(1)} Ko`);
 })().catch(e => { console.error('ÉCHEC :', e.message); process.exit(1); });

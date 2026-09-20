@@ -60,8 +60,46 @@ const familles = [...new Set([...fontsCss.matchAll(/font-family:\s*'([^']+)'/g)]
 verifier('familles chargées par fonts.css', familles.sort(),
   ['Inter', 'Material Symbols Outlined', 'Plus Jakarta Sans']);
 
-const fichiers = [...fontsCss.matchAll(/url\(([^)]+)\)/g)].map(m => m[1].replace(/^\//, ''));
+/* L'adresse porte une EMPREINTE du contenu — « …woff2?v=f5c11606 ». Sans elle,
+   le fichier gardait la même adresse d'une version à l'autre : quand le
+   sous-ensemble d'icônes a changé, les navigateurs qui avaient déjà l'ancienne
+   police ont continué de l'utiliser, et deux cartes de l'accueil affichaient
+   encore PALETTE et SMART_TOY en toutes lettres. */
+const references = [...fontsCss.matchAll(/url\(([^)]+)\)/g)].map(m => m[1]);
+const fichiers = references.map(f => f.replace(/^\//, '').split('?')[0]);
 verifier('chaque fichier de police existe', fichiers.filter(f => !existe(f)), []);
+
+verifier('chaque adresse porte une empreinte',
+  references.filter(f => !/\?v=[a-f0-9]{8}$/.test(f)), []);
+
+/* Et l'empreinte doit correspondre au fichier RÉELLEMENT présent : une
+   empreinte périmée ne vaut pas mieux que pas d'empreinte du tout — elle
+   donnerait l'illusion d'un cache correctement invalidé. */
+const crypto = require('crypto');
+const empreintesFausses = references.filter(ref => {
+  const chemin = ref.replace(/^\//, '').split('?')[0];
+  const annoncee = (ref.match(/\?v=([a-f0-9]{8})$/) || [])[1];
+  if (!annoncee || !existe(chemin)) return false;
+  const reelle = crypto.createHash('sha1')
+    .update(fs.readFileSync(path.join(RACINE, chemin))).digest('hex').slice(0, 8);
+  return annoncee !== reelle;
+});
+verifier('et cette empreinte est celle du fichier présent', empreintesFausses, []);
+
+/* Les préchargements doivent demander la MÊME adresse que la feuille : sinon
+   ils téléchargent une seconde fois le même fichier, et ne préchargent rien. */
+const prechargements = [];
+for (const page of ['index.html', 'entreprises/index.html', 'admin/index.html',
+  'formations/_template/fiche.html', 'formations/canva-pro/index.html']) {
+  if (!existe(page)) continue;
+  for (const m of lire(page).matchAll(/rel="preload"[^>]*href="([^"]*\.woff2[^"]*)"/g)) {
+    prechargements.push({ page, adresse: m[1] });
+  }
+}
+verifier('des préchargements sont bien trouvés', prechargements.length >= 3, true);
+verifier('chaque préchargement vise l’adresse versionnée de la feuille',
+  prechargements.filter(p => references.indexOf(p.adresse) < 0)
+    .map(p => p.page + ' → ' + p.adresse), []);
 verifier('au moins un fichier par famille', fichiers.length >= 3, true);
 
 // --- 3. Rien n'est chargé depuis l'extérieur ---------------------------------
