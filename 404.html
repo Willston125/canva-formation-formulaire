@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html class="dark" lang="fr">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Page introuvable | IMPACTALI</title>
+    <meta name="description" content="Cette adresse ne correspond à aucune page du site IMPACTALI.">
+    <!-- Une page d'erreur ne s'indexe pas, et ne désigne pas le site : ni
+         canonical, ni og:url. Elle n'a pas d'adresse à elle. -->
+    <meta name="robots" content="noindex, follow">
+    <!-- Polices auto-hébergées (régénérer avec : npm run build:fonts) -->
+    <link rel="preload" href="/assets/fonts/plus-jakarta-sans-latin.woff2?v=a389d97d" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/assets/fonts/inter-latin.woff2?v=f11d729b" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/assets/fonts/material-symbols-outlined.woff2?v=d51842d3" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="/fonts.css">
+    <link rel="stylesheet" href="/tailwind.css">
+    <link rel="stylesheet" href="/style.css">
+</head>
+
+<body class="page-secondary">
+    <a class="session-banner hidden" id="session-banner" href="/#catalogue">
+        <span id="session-banner-text">PROCHAINE SESSION · INSCRIPTIONS OUVERTES</span>
+        <span class="material-symbols-outlined" aria-hidden="true">keyboard_double_arrow_right</span>
+    </a>
+    <header class="site-header" id="site-header">
+        <div class="site-header__inner">
+            <a class="brand" href="/" aria-label="IMPACTALI — Accueil">
+                <img data-image="marque.logo" data-image-groupe="Marque" data-image-libelle="Logo IMPACTALI" data-image-format="logo" data-image-ratio="9/5" src="/assets/brand/impactali-logo.webp" alt="IMPACTALI" width="720" height="400" decoding="async">
+            </a>
+            <nav class="desktop-nav" aria-label="Navigation principale">
+            <a href="/#accueil">Accueil</a>
+            <a href="/#catalogue">Formations</a>
+            <a href="/#domaines">Domaines</a>
+            <a href="/entreprises/">Entreprises</a>
+            <a href="/#a-propos">À propos</a>
+        </nav>
+            <div class="header-actions">
+                <a class="button button--primary button--compact" href="/#catalogue">
+                    Choisir ma formation<span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+                </a>
+                <button class="menu-toggle" id="menu-toggle" type="button" aria-expanded="false" aria-controls="mobile-menu" aria-label="Ouvrir le menu">
+                    <span class="material-symbols-outlined" aria-hidden="true">menu</span>
+                </button>
+            </div>
+        </div>
+        <nav class="mobile-menu" id="mobile-menu" aria-label="Navigation mobile" hidden>
+            <a href="/#accueil">Accueil</a>
+            <a href="/#catalogue">Formations</a>
+            <a href="/#domaines">Domaines</a>
+            <a href="/entreprises/">Entreprises</a>
+            <a href="/#a-propos">À propos</a>
+            <a class="button button--primary" href="/#catalogue">Choisir ma formation</a>
+        </nav>
+    </header>
+
+    <main id="contenu">
+        <div class="landing-shell legal">
+            <p class="eyebrow">ERREUR 404</p>
+            <h1>Cette page n’existe pas</h1>
+            <p class="legal__notice"><span class="material-symbols-outlined" aria-hidden="true">info</span>L’adresse que vous avez suivie ne correspond à aucune page du site. Elle a pu être mal recopiée, ou la formation qu’elle présentait n’est plus proposée.</p>
+
+            <p>Le catalogue à jour est sur la page d’accueil : vous y trouverez les formations ouvertes, leurs dates et leurs tarifs, pays par pays.</p>
+
+            <p class="fiche-hero__actions">
+                <a class="button button--primary" href="/#catalogue">Voir les formations<span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a>
+                <a class="button button--outline" href="/">Retour à l’accueil</a>
+            </p>
+
+            <p>Si vous cherchiez une formation précise et que vous ne la trouvez plus, écrivez-nous : <a href="mailto:infos@impactali.site" data-email-sujet="Page introuvable"><span data-email-affiche>infos@impactali.site</span></a>.</p>
+        </div>
+    </main>
+
+    <footer class="site-footer" id="site-footer">
+        <div class="landing-shell site-footer__inner">
+            <div class="site-footer__brand">
+                <a class="site-footer__logo" href="/" aria-label="IMPACTALI — Accueil">
+                    <img data-image="marque.logo" data-image-groupe="Marque" data-image-libelle="Logo IMPACTALI" data-image-format="logo" data-image-ratio="9/5" src="/assets/brand/impactali-logo.webp" alt="IMPACTALI" width="720" height="400" loading="lazy" decoding="async">
+                </a>
+                <span class="site-footer__baseline">Plateforme de formation &amp; de développement des compétences</span>
+                <span class="site-footer__legal">&copy; 2026 IMPACTALI. Tous droits réservés.</span>
+            </div>
+            <nav class="site-footer__col" aria-labelledby="pied-formations">
+                <h2 id="pied-formations">Formations</h2>
+                <a href="/#catalogue">Tout le catalogue</a>
+                <a href="/#sessions">Prochaines sessions</a>
+            </nav>
+
+            <nav class="site-footer__col" aria-labelledby="pied-infos">
+                <h2 id="pied-infos">Informations</h2>
+                <a href="/entreprises/">Former mon équipe</a>
+                <a href="/mentions-legales/">Mentions légales</a>
+                <a href="mailto:infos@impactali.site" data-email-sujet="Contact au sujet de vos formations">Nous contacter</a>
+            </nav>
+        </div>
+    </footer>
+
+    <script src="/formations-data.js"></script>
+    <script src="/site-common.js"></script>
+</body>
+
+</html>

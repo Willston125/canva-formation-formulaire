@@ -76,9 +76,12 @@ const FICHIERS = [
      changée depuis le tableau de bord doit changer PARTOUT, sans quoi elle
      serait à jour sur neuf pages et périmée sur deux. */
   ['entreprises/index.html', 2],
-  ['mentions-legales/index.html', 2]
+  ['mentions-legales/index.html', 2],
+  /* La page d’erreur porte le même en-tête et le même pied que les autres :
+     un logo changé depuis le tableau de bord doit y changer aussi. */
+  ['404.html', 2]
 ];
-const OCCURRENCES_ATTENDUES = 17 + FICHES_SUR_DISQUE.length * 3;
+const OCCURRENCES_ATTENDUES = 19 + FICHES_SUR_DISQUE.length * 3;
 
 const resultats = [];
 const verifier = (libelle, obtenu, attendu) => {

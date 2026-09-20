@@ -11,7 +11,8 @@ const RACINE = path.resolve(__dirname, '..', '..', '..');
 
 /* Les pages que le tableau de bord parcourt pour dresser la liste des textes.
    Toute page absente d'ici ne sera jamais modifiable, même bien balisée. */
-const PAGES_PARCOURUES = ['index.html', 'entreprises/index.html', 'mentions-legales/index.html'];
+const PAGES_PARCOURUES = ['index.html', 'entreprises/index.html', 'mentions-legales/index.html',
+  '404.html'];
 const PAGES = PAGES_PARCOURUES.concat(['formations/canva-pro/index.html', 'inscription/index.html']);
 
 const resultats = [];
