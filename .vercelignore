@@ -6,3 +6,22 @@ formations/_template
 tailwind.src.css
 tailwind.config.js
 update_html_script.py
+
+# Documentation interne et réglages d'outils : lisibles dans le dépôt, jamais
+# servis. docs/ explique le mot de passe, l'API et les limites assumées.
+docs
+*.md
+.claude
+
+# Photos de travail et brouillons. Le site ne sert que ses pages et assets/ :
+# une image posée à la racine n'est publiée que si une page la cite
+# (épreuve fichiers-publies).
+affiche format A4
+will.jpg
+will j.jpg
+images.jpg
+Formateur.jpg
+524911867_30683646027916503_5006980848703287782_n.jpg
+Gemini_Generated_Image_78rst478rst478rs.jpg
+ChatGPT Image 17 sept. 2026, 14_47_25.png
+assets/images/formation canva 01.png

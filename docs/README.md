@@ -56,7 +56,7 @@ les protège, mais toute nouvelle écriture doit passer par les mêmes fonctions
 npm run sync             # réaligne formations ET sessions sur la feuille
 npm run sync:formations  # les formations seules
 npm run sync:sessions    # les sessions seules
-npm run test:api         # le banc d’essai : 32 suites
+npm run test:api         # le banc d’essai : 37 suites
 npm run build:fiches     # régénère les fiches, depuis la BASE
 npm run build:css        # recompile Tailwind
 npm run build:fonts      # reconstruit les polices auto-hébergées

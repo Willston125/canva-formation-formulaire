@@ -42,7 +42,8 @@ const EPREUVES = [
   ['page-introuvable.test.js', 'Une adresse inconnue repond introuvable'],
   ['pied-domaines.test.js', 'Les domaines du pied se remplissent sur toutes les pages'],
   ['pays-ferme.test.js', 'Fermer un pays ne ferme pas le site'],
-  ['formulaire-abus.test.js', 'Le formulaire public n est pas une porte d abus']
+  ['formulaire-abus.test.js', 'Le formulaire public n est pas une porte d abus'],
+  ['fichiers-publies.test.js', 'Ni documents internes ni photos de travail en ligne']
 ];
 
 /* La liste ci-dessus est écrite à la main : une épreuve ajoutée dans le dossier
