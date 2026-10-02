@@ -21,9 +21,9 @@
   ],
   "redirects": [
     {
-      "source": "/:chemin*",
+      "source": "/:chemin(.*)",
       "has": [{ "type": "host", "value": "canva-formation-formulaire.vercel.app" }],
-      "destination": "https://www.impactali.site/:chemin*",
+      "destination": "https://www.impactali.site/:chemin",
       "permanent": true
     }
   ]
