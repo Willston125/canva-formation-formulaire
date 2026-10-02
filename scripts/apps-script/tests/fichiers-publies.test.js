@@ -86,7 +86,11 @@ verifier('aucun fichier Markdown n’est publié, où qu’il soit',
   'formations/_template/fiche.html',
   'module de william/module community manager.png',
   'affiche format A4/ia.jpg',
-  'assets/images/formation canva 01.png'
+  'assets/images/formation canva 01.png',
+  // La base : son schéma, et ce que l'import génère (SQL, CSV d'inscriptions)
+  'supabase/migrations/20261002120000_schema.sql',
+  'exports/catalogue.sql',
+  'exports/inscriptions.csv'
 ].forEach(f => verifier('reste dans le dépôt : ' + f, exclu(f), true));
 
 // --- 2. Contre-contrôle : le site, lui, part bien ---------------------------
@@ -101,7 +105,10 @@ const pages = ['index.html', '404.html', 'entreprises/index.html', 'mentions-leg
 const indispensables = pages.concat([
   'style.css', 'tailwind.css', 'fonts.css', 'site-common.js', 'landing.js', 'script.js',
   'fiche-blocs.js', 'formations-data.js', 'admin/admin.js', 'admin/admin.css',
-  'assets/brand/impactali-logo.webp', 'assets/images/partage-impactali.jpg'
+  'assets/brand/impactali-logo.webp', 'assets/images/partage-impactali.jpg',
+  /* Le code partagé de l'API : écarté, il manquerait aux fonctions Vercel, qui
+     ne reçoivent que ce qui est déployé. */
+  'api/_lib/catalogue.js', 'api/_lib/champs.js'
 ]);
 verifier('les fiches générées sont bien comptées', pages.length >= 8, true);
 verifier('aucun fichier du site n’est écarté', indispensables.filter(exclu), []);

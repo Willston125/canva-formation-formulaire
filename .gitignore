@@ -1,1 +1,7 @@
 node_modules/
+
+# Secrets et exports : jamais versionnés (le dépôt est public).
+# exports/ reçoit le SQL généré et les CSV d'inscriptions : données personnelles.
+.env
+.env.*
+exports/

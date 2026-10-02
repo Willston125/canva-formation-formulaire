@@ -12,9 +12,12 @@
     "test:api": "node scripts/apps-script/tests/run.js",
     "sync:sessions": "node scripts/sync-sessions.js",
     "sync:formations": "node scripts/sync-formations.js",
-    "sync": "npm run sync:formations && npm run sync:sessions"
+    "sync": "npm run sync:formations && npm run sync:sessions",
+    "test:base": "node scripts/supabase/tests/run.js",
+    "import:catalogue": "node scripts/supabase/import-catalogue.js"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "0.5.8",
     "@tailwindcss/container-queries": "^0.1.1",
     "@tailwindcss/forms": "^0.5.9",
     "serve": "^14.2.4",

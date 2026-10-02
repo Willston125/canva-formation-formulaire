@@ -1,0 +1,633 @@
+{
+ "formations": [
+  {
+   "id": "formation-canva-pro",
+   "slug": "canva-pro",
+   "title": "Canva Pro & Création de contenu",
+   "shortTitle": "Canva Pro",
+   "category": "Création de contenu",
+   "family": "Design & Contenu",
+   "promise": "Créer, captiver, partager.",
+   "shortDescription": "Maîtrisez Canva Pro pour concevoir des contenus cohérents, une identité de marque et un portfolio de réalisations publiables.",
+   "image": "/assets/images/formations/canva-pro.webp",
+   "imageAlt": "Le formateur en studio face caméra, micro de studio et ordinateur portable sur le bureau",
+   "duration": "12 jours",
+   "level": "Tous niveaux",
+   "mode": "Présentiel",
+   "price": null,
+   "prices": {
+    "DJ": null,
+    "KM": 15000
+   },
+   "modules": 4,
+   "learnings": [
+    "Créer un Brand Kit et maîtriser l’interface Canva Pro",
+    "Concevoir posts, carrousels et Reels qui captent l’attention",
+    "Vendre une offre de design et trouver ses premiers clients"
+   ],
+   "featured": true,
+   "registrationOpen": true,
+   "active": true,
+   "allowRegistrationWithoutSession": true,
+   "hasDetailPage": true,
+   "href": "/formations/canva-pro/",
+   "formId": "canva-pro",
+   "poster": "https://lh3.googleusercontent.com/d/1sIAeQlIh00dsYNKNQjrGfsXBK71EJdul=w1200-rw",
+   "lead": "Devenez graphiste, community manager ou créateur de contenu grâce à <strong>12 jours de pratique 100 % concrète</strong>. Un programme intensif en 4 modules pour maîtriser Canva Pro et repartir avec un portfolio validé.",
+   "levelSubject": "Canva",
+   "objectives": [
+    {
+     "icon": "forum",
+     "label": "Devenir Community Manager",
+     "value": "Devenir Community Manager"
+    },
+    {
+     "icon": "brush",
+     "label": "Graphiste freelance",
+     "value": "Travailler comme Graphiste freelance"
+    },
+    {
+     "icon": "business_center",
+     "label": "Contenu pour mon entreprise",
+     "value": "Créer du contenu pour mon entreprise"
+    },
+    {
+     "icon": "swap_horiz",
+     "label": "Changer de carrière",
+     "value": "Changer de carrière"
+    },
+    {
+     "icon": "trending_up",
+     "label": "Améliorer mes compétences actuelles",
+     "value": "Améliorer mes compétences actuelles"
+    }
+   ],
+   "ordre": 0,
+   "programme": {
+    "sousTitre": "12 jours · 24 heures · 4 modules · 3 séances/semaine",
+    "modules": [
+     {
+      "icone": "design_services",
+      "titre": "MODULE 1 · DESIGN & IDENTITÉ",
+      "points": [
+       "Psychologie des couleurs et typographies",
+       "Création d'un Brand Kit pro",
+       "Hiérarchie visuelle et équilibre",
+       "Maîtrise de l'interface Canva Pro"
+      ]
+     },
+     {
+      "icone": "phone_iphone",
+      "titre": "MODULE 2 · CONTENT STRATEGIE",
+      "points": [
+       "Posts et Carrousels irrésistibles",
+       "Storytelling et Copywriting visuel",
+       "Planning éditorial et automatisation",
+       "Audit et optimisation de compte"
+      ]
+     },
+     {
+      "icone": "movie",
+      "titre": "MODULE 3 · VIDÉO & IA",
+      "points": [
+       "Montage Reels et TikTok pro",
+       "Animations et transitions dynamiques",
+       "Studio Magique et IA générative",
+       "Effets spéciaux et trucages photo"
+      ]
+     },
+     {
+      "icone": "rocket_launch",
+      "titre": "MODULE 4 · BUSINESS & FREELANCE",
+      "points": [
+       "Trouver ses premiers clients",
+       "Vendre une offre de Design",
+       "Gestion de projets et Mockups",
+       "Certificat et Lancement pro"
+      ]
+     }
+    ]
+   },
+   "faq": [
+    {
+     "question": "Faut-il un ordinateur portable pour participer ?",
+     "reponse": "C'est fortement recommandé pour être à l'aise avec les exercices pratiques et les raccourcis. Cependant, si vous avez une tablette performante ou un grand smartphone, vous pouvez tout de même suivre la formation, l'application Canva étant très bien optimisée sur mobile."
+    },
+    {
+     "question": "Dois-je déjà avoir la version Canva Pro payante ?",
+     "reponse": "Non, pas d'inquiétude ! Venez avec votre compte Canva gratuit. Je vous montrerai comment exploiter l'outil à 100% et vous donnerai toutes les astuces concernant les fonctionnalités \"Pro\" pendant nos sessions."
+    },
+    {
+     "question": "Je suis totalement débutant(e), est-ce fait pour moi ?",
+     "reponse": "Absolument ! La première semaine est consacrée aux \"Fondations du Design\". Nous reprenons les bases pas-à-pas. Que vous n'ayez jamais ouvert l'application ou que vous bricoliez déjà un peu, le programme intensif est conçu pour vous amener au niveau professionnel en 12 jours."
+    }
+   ],
+   "prerequis": []
+  },
+  {
+   "id": "formation-identite-visuelle",
+   "slug": "identite-visuelle",
+   "title": "Graphisme & identité visuelle",
+   "shortTitle": "Identité visuelle",
+   "category": "Direction artistique",
+   "family": "Design & Contenu",
+   "promise": "Imaginer, structurer, marquer.",
+   "shortDescription": "Posez les bases d’un univers graphique reconnaissable : charte, typographies, couleurs et déclinaisons sur vos supports.",
+   "image": "/assets/images/formations/identite-visuelle.webp",
+   "imageAlt": "Le formateur à son bureau avec des planches de charte graphique, un nuancier et des ouvrages de design",
+   "duration": "12 séances",
+   "level": "Débuant",
+   "mode": "Présentiel",
+   "price": 7500,
+   "prices": {
+    "DJ": 7500,
+    "KM": 15000
+   },
+   "modules": null,
+   "learnings": [
+    "Nourrir votre créativité et vos partis pris visuels",
+    "Construire une identité de marque cohérente",
+    "Décliner votre design sur tous vos supports"
+   ],
+   "featured": true,
+   "registrationOpen": true,
+   "active": true,
+   "allowRegistrationWithoutSession": false,
+   "hasDetailPage": true,
+   "href": "/formations/identite-visuelle/",
+   "formId": "identite-visuelle",
+   "poster": "https://lh3.googleusercontent.com/d/1QXK4d9K3D8ScZ5C5-26RaZgJngEl-aGH=w1200-rw",
+   "lead": null,
+   "levelSubject": null,
+   "objectives": [],
+   "ordre": 2,
+   "programme": {
+    "sousTitre": "Création de logo - Création d'affiche - Charte graphique - Retouche photo",
+    "modules": []
+   },
+   "faq": [],
+   "prerequis": []
+  },
+  {
+   "id": "formation-photo-video",
+   "slug": "photo-video",
+   "title": "Réalisation et Montage vidéo",
+   "shortTitle": "Réalisation et Montage",
+   "category": "Réalisation et Montage",
+   "family": "Photo & Vidéo",
+   "promise": "Filmer, monter, sublimer.",
+   "shortDescription": "Cadrez, éclairez et montez des images nettes, du tournage jusqu’à la livraison d’une vidéo aboutie.",
+   "image": "/assets/images/formations/photo-video.webp",
+   "imageAlt": "Le formateur debout en studio, appareil photo en main, optiques et clap posés sur le bureau",
+   "duration": "1 Mois",
+   "level": "Débutant",
+   "mode": "Présentiel",
+   "price": 7500,
+   "prices": {
+    "DJ": 7500,
+    "KM": 15000
+   },
+   "modules": null,
+   "learnings": [
+    "Préparer et mener un tournage",
+    "Monter vos séquences avec du rythme",
+    "Livrer des images de qualité professionnelle"
+   ],
+   "featured": true,
+   "registrationOpen": true,
+   "active": true,
+   "allowRegistrationWithoutSession": false,
+   "hasDetailPage": true,
+   "href": "/formations/photo-video/",
+   "formId": "photo-video",
+   "poster": "https://lh3.googleusercontent.com/d/13TQE9TmQpYLNIho62OWA38iu1GxQq5Rc=w1200-rw",
+   "lead": null,
+   "levelSubject": null,
+   "objectives": [],
+   "ordre": 3,
+   "programme": {
+    "sousTitre": "Réalisation de vidéo - Scenarisation - Découpage technique - Cadrage - Tournage - Montage",
+    "modules": []
+   },
+   "faq": [],
+   "prerequis": []
+  },
+  {
+   "id": "formation-ia-appliquee",
+   "slug": "ia-appliquee",
+   "title": "Création de site web avec iA",
+   "shortTitle": "IA appliquée",
+   "category": "Intelligence artificielle",
+   "family": "Intelligence artificielle",
+   "promise": "Automatiser, créer, accélérer.",
+   "shortDescription": "Intégrez les outils d’intelligence artificielle à votre travail quotidien pour produire plus vite, sans perdre en qualité.",
+   "image": "/assets/images/formations/ia-appliquee.webp",
+   "imageAlt": "Le formateur à son bureau devant un ordinateur portable, interfaces d’outils d’intelligence artificielle affichées",
+   "duration": "12 séances",
+   "level": "Débutant",
+   "mode": "Présentiel",
+   "price": 7500,
+   "prices": {
+    "DJ": 7500,
+    "KM": 15000
+   },
+   "modules": null,
+   "learnings": [
+    "Prendre en main les principaux outils d’IA",
+    "Gagner du temps sur vos tâches répétitives",
+    "Automatiser vos flux de production"
+   ],
+   "featured": true,
+   "registrationOpen": true,
+   "active": true,
+   "allowRegistrationWithoutSession": false,
+   "hasDetailPage": true,
+   "href": "/formations/ia-appliquee/",
+   "formId": "ia-appliquee",
+   "poster": "https://lh3.googleusercontent.com/d/17HL1MQapb9LBpsnOLGHdz9rrwoP6L68m=w1200-rw",
+   "lead": null,
+   "levelSubject": "Quel est votre niveau de compréhension du vibecoding",
+   "objectives": [],
+   "ordre": 3,
+   "programme": {
+    "sousTitre": "12",
+    "modules": []
+   },
+   "faq": [],
+   "prerequis": []
+  },
+  {
+   "id": "formation-marketing-digital",
+   "slug": "marketing-digital",
+   "title": "Marketing digital",
+   "shortTitle": "Marketing digital",
+   "category": "Marketing digital",
+   "family": "Marketing",
+   "promise": "Attirer, convertir, grandir.",
+   "shortDescription": "Construisez des campagnes qui attirent une audience, la convertissent en clients et font grandir votre activité.",
+   "image": "/assets/images/formations/marketing-digital.webp",
+   "imageAlt": "Le formateur en costume à son bureau, ordinateur portable ouvert et courbe de croissance affichée derrière lui",
+   "duration": "12 séances",
+   "level": "Débutant",
+   "mode": "Présentiel",
+   "price": 7500,
+   "prices": {
+    "DJ": 7500,
+    "KM": 15000
+   },
+   "modules": null,
+   "learnings": [
+    "Définir une stratégie digitale claire",
+    "Lancer des campagnes qui convertissent",
+    "Mesurer et améliorer vos résultats"
+   ],
+   "featured": false,
+   "registrationOpen": true,
+   "active": true,
+   "allowRegistrationWithoutSession": false,
+   "hasDetailPage": true,
+   "href": "/formations/marketing-digital/",
+   "formId": "marketing-digital",
+   "poster": "https://lh3.googleusercontent.com/d/1Dl0nQspP87BbMAhhbgHGUeiA2w4qCA7K=w1200-rw",
+   "lead": null,
+   "levelSubject": null,
+   "objectives": [],
+   "ordre": 4,
+   "programme": {
+    "sousTitre": "",
+    "modules": []
+   },
+   "faq": [],
+   "prerequis": []
+  }
+ ],
+ "sessions": [
+  {
+   "id": "canva-pro-2026-11",
+   "formId": "canva-pro",
+   "startDate": "2026-10-10",
+   "endDate": "2026-10-30",
+   "schedule": "Lundi et mercredi · 18h – 20h",
+   "duration": "15 séances · 24 heures",
+   "location": "American corner - Ifere",
+   "mode": "Présentiel",
+   "price": 15000,
+   "placesTotal": 20,
+   "placesAvailable": 20,
+   "registrationOpen": true,
+   "currency": null,
+   "pays": "KM",
+   "parPays": {
+    "KM": {
+     "mode": "Présentiel",
+     "tarif": 15000,
+     "lieu": "American corner"
+    }
+   }
+  },
+  {
+   "id": "marketing-digital-2026-11",
+   "formId": "marketing-digital",
+   "startDate": "2026-11-07",
+   "endDate": "2026-12-16",
+   "schedule": "Mercredi et samedi · 18h – 20h",
+   "duration": "12 séances · 24 heures",
+   "location": "American corner - Ifere",
+   "mode": "Présentiel",
+   "price": 15000,
+   "placesTotal": 20,
+   "placesAvailable": 20,
+   "registrationOpen": true,
+   "currency": null,
+   "pays": "KM",
+   "parPays": {
+    "KM": {
+     "lieu": "American corner",
+     "tarif": 15000
+    }
+   }
+  },
+  {
+   "id": "photo-video-2027-01",
+   "formId": "photo-video",
+   "startDate": "2026-10-19",
+   "endDate": "2026-11-01",
+   "schedule": "Lundi et jeudi · 18h – 20h",
+   "duration": "12 séances · 24 heures",
+   "location": "American corner - Ifere",
+   "mode": "Présentiel",
+   "price": 15000,
+   "placesTotal": 20,
+   "placesAvailable": 20,
+   "registrationOpen": true,
+   "currency": null,
+   "pays": "KM",
+   "parPays": {
+    "KM": {
+     "mode": "Présentiel",
+     "lieu": "American corner",
+     "tarif": 15000
+    }
+   }
+  },
+  {
+   "id": "identite-visuelle-2027-01",
+   "formId": "identite-visuelle",
+   "startDate": "2026-10-06",
+   "endDate": "2026-10-13",
+   "schedule": "Mardi et vendredi · 18h – 20h",
+   "duration": "12 séances",
+   "location": "American corner - Ifere",
+   "mode": "Présentiel",
+   "price": 15000,
+   "placesTotal": 20,
+   "placesAvailable": 20,
+   "registrationOpen": true,
+   "currency": null,
+   "pays": "KM",
+   "parPays": {
+    "KM": {
+     "mode": "Présentiel",
+     "lieu": "American corner",
+     "tarif": 15000
+    }
+   }
+  },
+  {
+   "id": "ia-appliquee-2027-01",
+   "formId": "ia-appliquee",
+   "startDate": "2026-10-19",
+   "endDate": "2026-11-02",
+   "schedule": "Mercredi et vendredi · 18h – 20h",
+   "duration": "12 séances",
+   "location": "American corner - Ifere",
+   "mode": "Présentiel",
+   "price": 15000,
+   "placesTotal": 20,
+   "placesAvailable": 20,
+   "registrationOpen": true,
+   "currency": null,
+   "pays": "KM",
+   "parPays": {
+    "KM": {
+     "mode": "Présentiel",
+     "lieu": "American corner",
+     "tarif": 15000
+    }
+   }
+  }
+ ],
+ "pays": [
+  {
+   "code": "DJ",
+   "nom": "Djibouti",
+   "devise": "FDJ",
+   "indicatif": "+253",
+   "motifTelephone": "^(77|67)\\d{6}$",
+   "aideTelephone": "Format invalide. Utilisez 77XXXXXX ou 67XXXXXX",
+   "exempleTelephone": "77XXXXXX",
+   "longueurTelephone": 8,
+   "defaut": false,
+   "active": false,
+   "paymentMethods": [
+    {
+     "kind": "mobile",
+     "label": "Waafi",
+     "numberLabel": "Numéro",
+     "number": "+253 77 55 63 44",
+     "accountName": "Ali William",
+     "value": "Waafi Mobile Money",
+     "image": "/assets/images/waafi.png"
+    },
+    {
+     "kind": "mobile",
+     "label": "Cacpay",
+     "numberLabel": "Numéro de compte",
+     "number": "11000012127",
+     "accountName": "Ali William",
+     "value": "Cacpay",
+     "image": "/assets/images/cacpay.png"
+    },
+    {
+     "kind": "cash",
+     "label": "Espèces",
+     "recipient": "Ali William",
+     "place": "Saalam Tower, 5ème étage",
+     "phone": "+253 77 14 53 06",
+     "value": "Espèces",
+     "image": ""
+    }
+   ],
+   "ordre": 0,
+   "whatsappNumber": "25377145306",
+   "whatsappDisplay": "+253 77 14 53 06",
+   "fuseaux": [],
+   "regions": []
+  },
+  {
+   "code": "KM",
+   "nom": "Comores",
+   "devise": "KMF",
+   "indicatif": "+269",
+   "motifTelephone": "^\\d{7}$",
+   "aideTelephone": "Format invalide. Le numéro comorien compte 7 chiffres",
+   "exempleTelephone": "XXXXXXX",
+   "longueurTelephone": 7,
+   "defaut": false,
+   "active": true,
+   "paymentMethods": [
+    {
+     "kind": "mobile",
+     "label": "Mvola",
+     "numberLabel": "Numéro Mvola",
+     "number": "4866807",
+     "accountName": "Fortixa",
+     "value": "Mvola",
+     "image": "https://lh3.googleusercontent.com/d/1ujOoD8gDzXWaBrBleZ2YYGKSHaRqUD3o=w1200-rw"
+    }
+   ],
+   "ordre": 1,
+   "whatsappNumber": "2693804648",
+   "whatsappDisplay": "+269 380 46 48",
+   "fuseaux": [],
+   "regions": []
+  }
+ ],
+ "portfolio": [
+  {
+   "id": "affiche-canva-pro",
+   "category": "Affiche",
+   "title": "Visuelle créer par le formateur",
+   "description": "Support de communication conçu pour une societé",
+   "image": "https://lh3.googleusercontent.com/d/17L-NJ3c2yhSNqpzTPSqD36p9MxZ5Hai2=w1200-rw",
+   "imageAlt": "Visuel d'une campagne de communication",
+   "imagePosition": "50% 18%",
+   "href": null,
+   "video": null,
+   "ordre": 0
+  },
+  {
+   "id": "banniere-communication-1",
+   "category": "Campagne de communication",
+   "title": "Photographie festival de cinéma",
+   "description": "Visuel de couverture présentant l’offre de services en communication digitale et vidéo.",
+   "image": "https://lh3.googleusercontent.com/d/17KWv6RpDSe21cr0h9VxNsneNt1EKmBoH=w1200-rw",
+   "imageAlt": "Bannière de communication Impact Ali William, version 1",
+   "imagePosition": null,
+   "href": null,
+   "video": null,
+   "ordre": 1
+  },
+  {
+   "id": "banniere-communication-2",
+   "category": "Contenu numérique",
+   "title": "Bannière réseaux sociaux déclinaison",
+   "description": "Déclinaison de la bannière avec une hiérarchie d’information retravaillée.",
+   "image": "https://lh3.googleusercontent.com/d/1938si1Kc6Stn1DxVVBS-dyd0cOq3Seqp=w1200-rw",
+   "imageAlt": "Bannière de communication Impact Ali William,",
+   "imagePosition": "30% 50%",
+   "href": null,
+   "video": null,
+   "ordre": 2
+  },
+  {
+   "id": "placeholder-video",
+   "category": "Vidéo",
+   "title": "Production vidéo",
+   "description": "Extrait d’un film réalisée par le formateur",
+   "image": null,
+   "imageAlt": null,
+   "imagePosition": "50% 50%",
+   "href": null,
+   "video": "https://www.youtube.com/watch?v=1bep0NEFvZ0",
+   "ordre": 3
+  },
+  {
+   "id": "placeholder-identite",
+   "category": "Identité visuelle",
+   "title": "Identité visuelle réalisée",
+   "description": "Logo, charte et déclinaisons pour une organisation — contenu à fournir.",
+   "image": "https://lh3.googleusercontent.com/d/1GGqEM1vDQjERBEeh-oZcVGblgPpZdAOL=w1200-rw",
+   "imageAlt": null,
+   "imagePosition": "50% 50%",
+   "href": null,
+   "video": null,
+   "ordre": 4
+  },
+  {
+   "id": "placeholder-photo",
+   "category": "Photographie",
+   "title": "Série photographique",
+   "description": "Sélection de photographies professionnelles — contenu à fournir.",
+   "image": "https://lh3.googleusercontent.com/d/1IF103FnXR5WfswjHntf1ce2pxGwEg2s0=w1200-rw",
+   "imageAlt": null,
+   "imagePosition": "50% 50%",
+   "href": null,
+   "video": null,
+   "ordre": 5
+  }
+ ],
+ "reglages": {
+  "whatsappNumber": 25377145306,
+  "whatsappDisplay": "+253 77 14 53 06",
+  "contactName": "Ali William",
+  "defaultLocation": "Saalam Tower, 5ème étage, Djibouti"
+ },
+ "textes": {
+  "accueil.chiffre.1": "5 formations",
+  "hero.surtitre": "Se former pour devenir meilleur #quedubon"
+ },
+ "images": {
+  "accueil.methode.1": "https://lh3.googleusercontent.com/d/1_CqBRtKSlQ0AVOilmJrtdnLO5QtliVKO=w1200-rw",
+  "fiche.community-management.formateur.photo": "https://lh3.googleusercontent.com/d/1PyAYG7-dOoCWX0SbIxBQVSlY-pHsHJcu=w1200-rw",
+  "accueil.formateur.photo": "https://lh3.googleusercontent.com/d/1nOz7Nov_9Ofur-gvguhmpHKM6hevz7pU=w1200-rw",
+  "accueil.hero": "https://lh3.googleusercontent.com/d/1ahqTC8Y510EBSOauwWP5ndQzQ6juzHle=w1200-rw",
+  "accueil.methode.2": "https://lh3.googleusercontent.com/d/1NsKYrrf6vODbHJnuf6t3REcSOn2mQ1V-=w1200-rw",
+  "fiche.canva-pro.formateur.photo": "https://lh3.googleusercontent.com/d/1A2vHKA6XG4nahlIEsBiBApN4ztMeYROJ=w1200-rw",
+  "accueil.methode.3": "https://lh3.googleusercontent.com/d/1hAhihvSUbln0D6ZA9vaH_8IBLXAYxXs-=w1200-rw",
+  "fiche.formateur.photo": "https://lh3.googleusercontent.com/d/1uHGSOWuPR_ck8nW3kbEHtgw78k7OkJzf=w1200-rw"
+ },
+ "cadrages": {
+  "accueil.methode.1": {
+   "x": 50,
+   "y": 50,
+   "zoom": 100
+  },
+  "fiche.community-management.formateur.photo": {
+   "x": 50,
+   "y": 50,
+   "zoom": 100
+  },
+  "accueil.formateur.photo": {
+   "x": 50,
+   "y": 50,
+   "zoom": 100
+  },
+  "accueil.hero": {
+   "x": 61,
+   "y": 63,
+   "zoom": 122
+  },
+  "accueil.methode.2": {
+   "x": 50,
+   "y": 50,
+   "zoom": 100
+  },
+  "fiche.canva-pro.formateur.photo": {
+   "x": 50,
+   "y": 50,
+   "zoom": 100
+  },
+  "accueil.methode.3": {
+   "x": 50,
+   "y": 50,
+   "zoom": 100
+  },
+  "fiche.formateur.photo": {
+   "x": 50,
+   "y": 50,
+   "zoom": 100
+  }
+ },
+ "places": {}
+}

@@ -25,3 +25,8 @@ Formateur.jpg
 Gemini_Generated_Image_78rst478rst478rs.jpg
 ChatGPT Image 17 sept. 2026, 14_47_25.png
 assets/images/formation canva 01.png
+
+# Base de données : le schéma et les fichiers générés restent dans le dépôt.
+# api/_lib/ n'est PAS écarté : les fonctions de l'API en ont besoin.
+supabase
+exports
