@@ -15,7 +15,8 @@
     "sync": "npm run sync:formations && npm run sync:sessions",
     "test:base": "node scripts/supabase/tests/run.js",
     "import:catalogue": "node scripts/supabase/import-catalogue.js",
-    "sonde": "node scripts/supabase/sonde.js"
+    "sonde": "node scripts/supabase/sonde.js",
+    "comparer": "node scripts/supabase/comparer.js"
   },
   "devDependencies": {
     "@electric-sql/pglite": "0.5.8",
@@ -24,5 +25,8 @@
     "serve": "^14.2.4",
     "sharp": "^0.35.4",
     "tailwindcss": "^3.4.17"
+  },
+  "dependencies": {
+    "pg": "^8.23.1"
   }
 }
