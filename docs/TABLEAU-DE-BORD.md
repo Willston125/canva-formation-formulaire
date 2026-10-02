@@ -49,6 +49,10 @@ Les candidats reçus, les plus récents d'abord. Vous pouvez changer leur statut
 et leur écrire sur WhatsApp d'un clic. C'est le seul onglet qui contient des
 données personnelles.
 
+Toute inscription arrive **« En attente »** et ne prend aucune place. C'est en
+la passant à **« Confirmé »** ou **« Payé »** que vous lui réservez sa place :
+le compteur du site baisse à ce moment-là, pas avant.
+
 ### Pays
 Les marchés desservis. Pour chacun : devise, indicatif téléphonique, format des
 numéros, moyens de paiement, et votre numéro de contact local.

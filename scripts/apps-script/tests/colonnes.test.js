@@ -47,7 +47,7 @@ bac.doPost({ postData: { contents: JSON.stringify({
   nom: 'NOUVEAU', prenom: 'Comorien', telephone: '3212345', telephoneInternational: '+2693212345',
   age: 28, profession: 'Étudiant', niveau: 'Jamais', objectifs: 'Test', motivation: 'Essai',
   modePaiement: 'Holo', telPaiement: '3212345', montant: 25000, currency: 'KMF',
-  pays: 'Comores', paysCode: 'KM', countryCode: '+269', statut: 'Confirmé', source: 'Site'
+  pays: 'Comores', paysCode: 'KM', countryCode: '+269', statut: 'En attente', source: 'Site'
 }) } });
 
 const grille = inscriptions.getDataRange().getValues();
@@ -71,7 +71,7 @@ verifier('nouvelle ligne : pays', lire(2, 'pays'), 'Comores');
 verifier('nouvelle ligne : paysCode', lire(2, 'paysCode'), 'KM');
 verifier('nouvelle ligne : devise', lire(2, 'currency'), 'KMF');
 verifier('nouvelle ligne : montant', lire(2, 'montant'), 25000);
-verifier('nouvelle ligne : statut non décalé', lire(2, 'statut'), 'Confirmé');
+verifier('nouvelle ligne : statut non décalé', lire(2, 'statut'), 'En attente');
 verifier('nouvelle ligne : session', lire(2, 'sessionId'), 'canva-pro-2027-03-km');
 
 // -------------------------- 2. TARIFS PAR PAYS ---------------------------
@@ -92,6 +92,14 @@ verifier('relecture prices', JSON.stringify(reponse.catalogue.formations[0].pric
 
 // ------------------------- 3. COMPTEUR DE PLACES -------------------------
 
+/* La ligne comorienne est arrivée « En attente », comme toute inscription
+   publique. Le propriétaire la confirme depuis le tableau de bord : c'est le
+   seul chemin qui lui fait occuper une place. Elle est en ligne 3 de la
+   feuille, sous l'en-tête et la ligne ancienne. */
+bac.doPost({ postData: { contents: JSON.stringify({
+  action: 'admin.inscription.statut', motDePasse: 'motdepasse-de-test', ligne: 3, statut: 'Confirmé'
+}) } });
+
 const places = JSON.parse(bac.doGet({ parameter: { action: 'places' } })._t);
 
 /* SEULE UNE INSCRIPTION VALIDÉE OCCUPE UNE PLACE. La ligne ancienne porte le
@@ -102,7 +110,8 @@ const places = JSON.parse(bac.doGet({ parameter: { action: 'places' } })._t);
 verifier('une ligne au statut inconnu n’occupe pas de place',
   places.sessions['canva-pro-2026-11'], undefined);
 /* Contre-contrôle : sans lui, un décompte cassé qui ne compterait plus RIEN
-   passerait ici sans être vu. La ligne comorienne, elle, est « Confirmé ». */
+   passerait ici sans être vu. La ligne comorienne, confirmée ci-dessus depuis
+   le tableau de bord, en occupe une. */
 verifier('une inscription confirmée en occupe bien une',
   places.sessions['canva-pro-2027-03-km'], 1);
 

@@ -75,7 +75,7 @@
  * déploiement n'a pas été publiée, et Google sert encore l'ancien code.
  * C'est l'erreur la plus fréquente, et la plus difficile à diagnostiquer.
  */
-var VERSION = '2026-09-20-formulaire-borne';
+var VERSION = '2026-10-02-statut-en-attente';
 
 /** Classeur. Vide = le classeur auquel ce script est rattaché (cas normal). */
 var ID_CLASSEUR = '';
@@ -300,7 +300,11 @@ function doPost(e) {
    fait refuser.
    --------------------------------------------------------------------------- */
 
-/** Statuts qu'une inscription peut porter en arrivant. Le reste est ramené au premier. */
+/**
+ * Les statuts connus d'une inscription. Une inscription publique arrive
+ * TOUJOURS au premier ; seul le tableau de bord (changerStatut) la fait passer
+ * aux suivants.
+ */
 var STATUTS_ACCEPTES = ['En attente', 'Confirmé', 'Payé', 'Annulé'];
 
 /** Longueur retenue par champ. Au-delà, on tronque : la ligne reste lisible. */
@@ -404,9 +408,14 @@ function assainirInscription(d) {
     propre[cle] = v.trim().slice(0, max);
   });
 
-  /* Le statut est repris tel quel dans la liste déroulante du tableau de bord :
-     il ne doit venir que de la liste connue, jamais de la requête. */
-  if (STATUTS_ACCEPTES.indexOf(propre.statut) < 0) propre.statut = STATUTS_ACCEPTES[0];
+  /* Le statut ne vient JAMAIS de la requête, pas même un statut connu.
+     « Confirmé » et « Payé » occupent une place (STATUTS_COMPTES) : les
+     accepter d'un envoi anonyme rouvrait l'attaque que ce décompte devait
+     fermer. Une centaine de requêtes déclarées « Payé », sous le plafond du
+     jour, faisaient afficher « session complète » partout, et le formulaire
+     disparaissait. Le site envoie toujours « En attente » : rien ne change pour
+     un vrai candidat. */
+  propre.statut = STATUTS_ACCEPTES[0];
 
   // Un montant doit être un nombre, sinon les totaux du tableau de bord mentent
   if (propre.montant !== undefined && propre.montant !== '') {

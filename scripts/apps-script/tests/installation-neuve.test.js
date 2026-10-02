@@ -137,11 +137,16 @@ bac.doPost({ postData: { contents: JSON.stringify({
   age: 27, profession: 'Étudiant', niveau: 'Jamais', objectifs: 'Freelance',
   motivation: 'Essai', modePaiement: 'Waafi Mobile Money', telPaiement: '77112233',
   montant: 7500, currency: 'FDJ', pays: 'Djibouti', paysCode: 'DJ', countryCode: '+253',
-  statut: 'Confirmé', source: 'Site'
+  statut: 'En attente', source: 'Site'
 }) } });
-const apres = JSON.parse(bac.doGet({ parameter: { action: 'catalogue' } })._t);
-verifier('inscription comptée', apres.places, { 'canva-pro-2026-11': 1 });
+const recue = JSON.parse(bac.doGet({ parameter: { action: 'catalogue' } })._t);
+verifier('inscription reçue : en attente, aucune place prise', recue.places, {});
+/* Le chemin réel : le propriétaire confirme depuis le tableau de bord, et
+   c'est alors seulement que la place est prise. */
 const fiche = poste({ action: 'admin.inscriptions' }).inscriptions[0];
+poste({ action: 'admin.inscription.statut', ligne: fiche.ligne, statut: 'Confirmé' });
+const apres = JSON.parse(bac.doGet({ parameter: { action: 'catalogue' } })._t);
+verifier('inscription confirmée depuis le tableau de bord : comptée', apres.places, { 'canva-pro-2026-11': 1 });
 verifier('inscription : téléphone international', fiche.telephoneInternational, '+25377112233');
 verifier('inscription : pays', fiche.pays, 'Djibouti');
 verifier('inscription : montant et devise', [fiche.montant, fiche.currency], [7500, 'FDJ']);

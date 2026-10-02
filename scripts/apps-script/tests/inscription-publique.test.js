@@ -85,8 +85,15 @@ verifier('un prénom seul suffit',
 poster(Object.assign({}, VALABLE, { statut: 'x" onmouseover="alert(1)' }));
 verifier('un statut inventé est ramené au statut par défaut',
   derniere().statut, 'En attente');
-poster(Object.assign({}, VALABLE, { statut: 'Payé' }));
-verifier('mais un statut connu est respecté', derniere().statut, 'Payé');
+/* Un statut CONNU non plus. Ce contrôle affirmait l'inverse — « un statut
+   connu est respecté » — et validait ainsi la faille : « Payé » occupe une
+   place, et n'importe qui pouvait le déclarer. Seul le tableau de bord fait
+   avancer une inscription. */
+['Payé', 'Confirmé', 'Annulé'].forEach(statut => {
+  poster(Object.assign({}, VALABLE, { statut }));
+  verifier('un statut « ' + statut + ' » envoyé par le public arrive « En attente »',
+    derniere().statut, 'En attente');
+});
 
 // --- 4. Ce qui dépasse est tronqué, jamais rejeté ---
 poster(Object.assign({}, VALABLE, {

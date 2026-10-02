@@ -102,8 +102,9 @@ site d'enregistrer les inscriptions.
 
 - **Les 18 commandes du tableau de bord** exigent toutes le mot de passe.
 - **Le formulaire public** est ouvert — il le doit — mais gardé : nom, téléphone
-  et formation obligatoires, champs trop longs tronqués, statut ramené à la liste
-  connue, montants non numériques écartés, requêtes de plus de 1,5 Mo refusées.
+  et formation obligatoires, champs trop longs tronqués, statut toujours
+  « En attente » quoi que dise la requête (seul le tableau de bord le fait
+  avancer), montants non numériques écartés, requêtes de plus de 1,5 Mo refusées.
 - **Les alertes email** sont plafonnées à 60 par jour. Au-delà, les inscriptions
   continuent d'être enregistrées, sans email : épuiser le quota de Google ferait
   perdre les alertes des inscriptions suivantes — les vraies.

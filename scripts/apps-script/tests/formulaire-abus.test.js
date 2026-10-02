@@ -79,6 +79,16 @@ for (let i = 0; i < 20; i++) poster(Object.assign({}, CANDIDAT, { nom: 'Bot ' + 
 verifier('vingt inscriptions anonymes ne ferment pas la session',
   places()['canva-pro-2026-11'], undefined);
 
+/* LA MÊME ATTAQUE, EN SE DÉCLARANT VALIDÉE. Le décompte ne retient que
+   « Confirmé » et « Payé » ; il suffisait donc de les écrire soi-même dans la
+   requête. L'audit du 2 octobre 2026 l'a reproduit : vingt envois « Payé »,
+   vingt places prises, session complète. */
+for (let i = 0; i < 20; i++) {
+  poster(Object.assign({}, CANDIDAT, { nom: 'Faux paiement ' + i, statut: i % 2 ? 'Payé' : 'Confirmé' }));
+}
+verifier('vingt inscriptions qui se disent « Payé » ou « Confirmé » ne prennent aucune place',
+  places()['canva-pro-2026-11'], undefined);
+
 /* Et le propriétaire garde la main : ce qu'il valide occupe bien une place. */
 const feuille = classeur.feuilles['Inscriptions'];
 const entetes = feuille.getDataRange().getValues()[0].map(v => String(v).trim());
