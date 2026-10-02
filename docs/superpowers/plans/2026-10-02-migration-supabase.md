@@ -163,6 +163,16 @@ Ce qui était prévu :
 
 ### Phase 3 — Inscriptions et e-mails, à blanc (1 à 2 séances)
 
+**État au 3/10 :** le code est en ligne (commit `f5c027c`). Il comprend :
+- le POST d'inscription, avec ses garde-fous et le recalcul du tarif (`api/_lib/prix.js`, copie de `prixDe`) ;
+- l'alerte par Resend ;
+- la tâche quotidienne `/api/quotidien`, lancée chaque jour à 3 h UTC.
+
+Les épreuves comptent 48 + 22 + 22 contrôles, prouvés en régression sur cinq cas. Les DNS de Resend sont en place chez LWS (DKIM, `rsend`, `send`).
+**Reste :** la clé `RESEND_API_KEY` dans Vercel, puis un redéploiement, puis l'essai de bout en bout (une inscription « ESSAI » et la première sauvegarde).
+
+Ce qui était prévu :
+
 - **Vous :**
   - créer le compte Resend ;
   - ajouter chez LWS les 3 enregistrements DNS qu'il indique (je vous guide ; le SPF actuel du domaine n'est pas modifié) ;
