@@ -108,8 +108,17 @@ Le banc d'essai continue de tourner sur votre ordinateur, sans Docker, avec une
 
 ## Les phases
 
-À chaque phase, le site reste en ligne, et l'ancienne adresse peut être remise
-d'un seul changement.
+**Construire à côté, basculer d'un coup.** C'est un ajustement du 2/10, fait
+avant la phase 2.
+
+Tant que le tableau de bord écrit dans la feuille, le site doit lire la feuille.
+Sinon, une modification faite au tableau de bord n'apparaîtrait plus sur le site,
+et une inscription confirmée ne serait plus comptée : la dernière place pourrait
+être vendue deux fois.
+
+Chaque partie de l'API est donc construite et vérifiée **en ligne, sans que le
+site s'en serve**. Puis tout bascule en une seule mise en ligne, en phase 4. Le
+retour arrière tient en un changement : remettre l'adresse du script Google.
 
 ### Phase 0 — Sécuriser l'existant (vous, 10 minutes)
 
@@ -118,60 +127,59 @@ Le chantier prendra plusieurs semaines. Le site actuel doit être sûr pendant c
 - [ ] Publier la nouvelle version du script Google (`2026-10-02-statut-en-attente`).
 - [ ] Archiver l'ancien déploiement `AKfycbzq…r8w` dans l'ancien projet Apps Script.
 
-### Phase 1 — Fondations (1 à 2 séances)
+### Phase 1 — Fondations : faite le 2/10
 
-- **Vous :**
-  - ~~créer le projet Supabase~~ — fait le 2/10 : `https://isxkyikakrssekrxudjw.supabase.co` ;
-  - coller dans l'éditeur SQL de Supabase le schéma, puis le SQL du catalogue.
-- **Moi, fait le 2/10 :**
-  - PGlite validé (PostgreSQL 18 en mémoire, 1,5 s, sans Docker) ;
-  - schéma : `supabase/migrations/20261002120000_schema.sql` ;
-  - import du catalogue : `npm run import:catalogue`, qui écrit `exports/catalogue.sql` ;
-  - épreuves : `npm run test:base`. Chacune est prouvée en régression : la RLS, le retrait des droits du navigateur, la règle du calendrier et la liste des statuts.
-- **Ajusté en cours de route :**
-  - Deux formations avaient le même rang. L'import les renumérote dans l'ordre affiché ; rien ne bouge à l'écran.
-  - L'export CSV des inscriptions **passe en phase 3**. L'exporter maintenant obligerait à le refaire, puisque les inscriptions arrivent encore dans Google jusqu'à la bascule.
-- **Fini quand :**
-  - la base existe et contient le catalogue actuel ;
-  - une sonde avec la clé publique ne lit aucune table ;
-  - **rien n'a changé sur le site**.
+- Projet Supabase : `https://isxkyikakrssekrxudjw.supabase.co`.
+- Schéma : `supabase/migrations/20261002120000_schema.sql`, collé dans l'éditeur SQL.
+- Catalogue importé (`npm run import:catalogue`, puis `exports/catalogue.sql` collé). Résultat : 5 formations, 5 sessions, 2 pays, 4 moyens de paiement, 9 tarifs, 6 réalisations, 8 photos. C'est exactement la feuille.
+- Épreuves : `npm run test:base`, sur PGlite. Chacune est prouvée en régression : la RLS, le retrait des droits du navigateur, la règle du calendrier, la liste des statuts.
+- Sonde en ligne : `npm run sonde`, avec la clé publique. Les 13 tables, l'écriture d'une inscription « Payé » et la fonction de calendrier sont toutes refusées.
+- Ajustements en cours de route :
+  - Deux formations avaient le même rang. Elles sont renumérotées dans l'ordre affiché, sans que rien ne bouge à l'écran.
+  - L'export CSV des inscriptions est repoussé au jour de la bascule.
 
-### Phase 2 — Lecture (1 séance)
+### Phase 2 — Lecture, à blanc (1 séance)
 
 - **Moi :**
-  - `/api` répond à `?action=catalogue` et `?action=places`, fonctions en région Paris ;
-  - le site bascule sur `/api`, le script Google restant en secours ;
-  - le repli JSONP est retiré (audit T6) ;
-  - premier `vercel.json` : en-têtes de sécurité (audit T3), redirection de l'ancien domaine (audit H3), région ;
-  - `api/_lib/` répondre 404 : constaté le 2/10, tant qu'aucune fonction n'existe, Vercel sert ces fichiers tels quels. Le code n'a aucun secret et il est public sur GitHub, mais il n'a pas à être servi. À vérifier en ligne après la bascule.
-- **Vous :** saisir dans Vercel l'adresse de la base et la clé de service.
-- **Fini quand :** le catalogue s'affiche depuis la nouvelle base, avec un temps de réponse mesuré. Cible : moins d'une seconde, contre 4,5 à 7 aujourd'hui.
+  - `/api` répond à `?action=catalogue` et `?action=places` depuis Supabase, avec des fonctions en région Paris. **Le site continue de lire le script Google** ;
+  - une épreuve compare, champ par champ, la réponse de `/api` à celle du script Google ;
+  - premier `vercel.json` : en-têtes de sécurité (audit T3), région, redirection de l'ancien domaine (audit H3) ;
+  - `api/_lib/` répond 404. Constaté le 2/10 : tant qu'aucune fonction n'existe, Vercel sert ces fichiers tels quels.
+- **Vous :**
+  - désactiver la création de comptes dans Supabase (Authentication → Sign In / Providers → « Allow new users to sign up ») ;
+  - saisir dans Vercel l'adresse de connexion à la base (`DATABASE_URL`), mot de passe compris. **Ne me l'envoyez jamais.**
+- **Fini quand :** `/api?action=catalogue` répond en ligne la même chose que le script Google, en moins d'une seconde.
 
-### Phase 3 — Inscriptions et e-mails (1 à 2 séances)
+### Phase 3 — Inscriptions et e-mails, à blanc (1 à 2 séances)
 
 - **Vous :**
   - créer le compte Resend ;
   - ajouter chez LWS les 3 enregistrements DNS qu'il indique (je vous guide ; le SPF actuel du domaine n'est pas modifié) ;
-  - saisir la clé Resend dans Vercel ;
-  - au moment de la bascule, exporter l'onglet Inscriptions en CSV (Fichier → Télécharger) dans `exports/`, qui n'est ni versionné ni publié.
+  - saisir la clé Resend dans Vercel.
 - **Moi :**
   - le POST d'inscription écrit dans Supabase, avec les garde-fous ci-dessus ;
   - l'alerte e-mail est reprise du script actuel (même contenu, même bouton WhatsApp) ;
   - la tâche quotidienne fait la sauvegarde et l'écriture qui empêche la pause ;
-  - les inscriptions historiques sont importées.
+  - essais en ligne avec des inscriptions de test, supprimées ensuite. **Le formulaire du site envoie toujours au script Google.**
 - **Fini quand :** une inscription de test arrive dans la base et déclenche l'alerte, et la première sauvegarde est reçue.
 
-### Phase 4 — Tableau de bord (2 à 3 séances)
+### Phase 4 — Tableau de bord, puis la bascule (2 à 3 séances)
 
 - **Vous :**
-  - créer votre compte administrateur dans Supabase Auth ;
-  - désactiver les inscriptions publiques (je vous indique où).
+  - créer votre compte administrateur (Authentication → Users → Add user) ;
+  - le jour de la bascule : ne rien modifier pendant environ 15 minutes, et exporter l'onglet Inscriptions en CSV dans `exports/`, qui n'est ni versionné ni publié.
 - **Moi :**
   - connexion par compte, en session de navigateur, sans « Rester connecté » coché d'office (audit T1) ;
   - les 18 commandes répondent sur `/api` ;
   - les photos passent dans Supabase Storage, avec reprise des photos Drive actuelles ;
-  - ajout du journal des actions et de l'alerte quand un numéro de paiement change.
-- **Fini quand :** toutes les rubriques du tableau de bord fonctionnent sur la nouvelle base.
+  - ajout du journal des actions et de l'alerte quand un numéro de paiement change ;
+  - **puis la bascule, en une seule mise en ligne :**
+    1. ré-import du catalogue et des inscriptions ;
+    2. le site, le formulaire et le tableau de bord passent sur `/api` ;
+    3. le repli JSONP est retiré (audit T6) ;
+    4. vérification en ligne et sonde.
+- **Retour arrière :** remettre l'adresse du script Google. Les inscriptions reçues entre-temps sont recopiées dans la feuille ; il y en aura peu.
+- **Fini quand :** le site, le formulaire et toutes les rubriques du tableau de bord fonctionnent sur la nouvelle base.
 
 ### Phase 5 — Fin de Google (1 séance)
 
