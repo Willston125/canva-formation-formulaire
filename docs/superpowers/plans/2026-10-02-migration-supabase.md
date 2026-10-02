@@ -138,7 +138,18 @@ Le chantier prendra plusieurs semaines. Le site actuel doit être sûr pendant c
   - Deux formations avaient le même rang. Elles sont renumérotées dans l'ordre affiché, sans que rien ne bouge à l'écran.
   - L'export CSV des inscriptions est repoussé au jour de la bascule.
 
-### Phase 2 — Lecture, à blanc (1 séance)
+### Phase 2 — Lecture, à blanc : faite le 3/10
+
+**Résultat :**
+- `npm run comparer` : **identique** au script Google, places comprises, en **0,8 s contre 5,9 s**, mesuré depuis Le Cap.
+- La base est à **Francfort** (et non Paris) : les fonctions y sont aussi (`fra1`).
+- Le chiffrement est vérifié contre la racine de Supabase (`api/_lib/supabase-ca-2021.crt`, **à remplacer avant avril 2031**).
+- En-têtes de sécurité actifs sur toutes les pages, `api/_lib/` en 404, ancien domaine redirigé (308).
+- Sonde : tout reste fermé.
+- Création de comptes fermée dans Supabase, `DATABASE_URL` saisie dans Vercel par le propriétaire.
+- Le site lit toujours le script Google.
+
+Ce qui était prévu :
 
 - **Moi :**
   - `/api` répond à `?action=catalogue` et `?action=places` depuis Supabase, avec des fonctions en région Paris. **Le site continue de lire le script Google** ;
