@@ -108,7 +108,8 @@ const indispensables = pages.concat([
   'assets/brand/impactali-logo.webp', 'assets/images/partage-impactali.jpg',
   /* Le code partagé de l'API : écarté, il manquerait aux fonctions Vercel, qui
      ne reçoivent que ce qui est déployé. */
-  'api/_lib/catalogue.js', 'api/_lib/champs.js'
+  'api/index.js', 'api/quotidien.js', 'api/_lib/catalogue.js', 'api/_lib/champs.js', 'api/_lib/base.js',
+  'api/_lib/inscription.js', 'api/_lib/prix.js', 'api/_lib/courriel.js', 'api/_lib/supabase-ca-2021.crt'
 ]);
 verifier('les fiches générées sont bien comptées', pages.length >= 8, true);
 verifier('aucun fichier du site n’est écarté', indispensables.filter(exclu), []);

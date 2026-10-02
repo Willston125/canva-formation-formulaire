@@ -5,8 +5,15 @@
     "api/index.js": {
       "includeFiles": "api/_lib/**",
       "maxDuration": 10
+    },
+    "api/quotidien.js": {
+      "includeFiles": "api/_lib/**",
+      "maxDuration": 30
     }
   },
+  "crons": [
+    { "path": "/api/quotidien", "schedule": "0 3 * * *" }
+  ],
   "headers": [
     {
       "source": "/(.*)",

@@ -19,14 +19,24 @@ const { RACINE_SUPABASE } = require('../../../api/_lib/base');
 const { verifier, bilan } = verificateur();
 const source = JSON.parse(fs.readFileSync(path.join(__dirname, 'catalogue-2026-10-02.json'), 'utf8'));
 
+/** Ce que le formulaire du site envoie vraiment (script.js), pour Canva Pro aux Comores. */
+const INSCRIPTION = {
+  formationId: 'canva-pro', sessionId: 'canva-pro-2026-11', nom: 'SAID', prenom: 'Awa',
+  telephone: '3212345', email: 'awa@exemple.test', age: 24, profession: 'Étudiant',
+  niveau: 'Débutant', motivation: 'Créer mes visuels', objectifs: 'Freelance', modePaiement: 'Mvola',
+  telPaiement: '3212345', statut: 'En attente', source: 'Site', paysCode: 'KM', pays: 'Comores',
+  countryCode: '+269', telephoneInternational: '+2693212345', montant: 15000, currency: 'KMF',
+  formationTitle: 'Canva Pro & Création de contenu', dateInscription: '2026-10-03T08:00:00.000Z'
+};
+
 /** Un appel HTTP simulé : ce que reçoit le gestionnaire, ce qu'il renvoie. */
-async function appeler(gestionnaire, methode, url) {
+async function appeler(gestionnaire, methode, url, corps) {
   const res = {
     statusCode: 200, entetes: {}, corps: '',
     setHeader(k, v) { this.entetes[k.toLowerCase()] = v; },
     end(corps) { this.corps = corps || ''; }
   };
-  await gestionnaire({ method: methode, url }, res);
+  await gestionnaire({ method: methode, url, body: corps, headers: { 'x-forwarded-for': '41.223.0.10' } }, res);
   let json = null;
   try { json = JSON.parse(res.corps); } catch (e) { /* corps vide ou non JSON */ }
   return { statut: res.statusCode, entetes: res.entetes, json };
@@ -38,6 +48,13 @@ const sansMaj = c => { const { maj, ...reste } = c || {}; return reste; };
   const db = await baseNeuve();
   await db.exec(catalogueVersSql(source).sql);
   const api = creerGestionnaire(() => db);
+  /* Un faux envoi d'e-mail : on compte les alertes, rien ne part. */
+  const courriels = [];
+  const apiEnvoi = creerGestionnaire(() => db, {
+    envoyer: async m => { courriels.push(m); return { envoye: true, erreur: null }; },
+    sel: () => 'sel-des-epreuves'
+  });
+  const compter = async () => (await db.query('select count(*)::int as n from inscriptions')).rows[0].n;
 
   // ------------------------------------------------- 1. Les appels du site ---
 
@@ -68,11 +85,34 @@ const sansMaj = c => { const { maj, ...reste } = c || {}; return reste; };
   const inconnue = await appeler(api, 'GET', '/api?action=supprimer');
   verifier('une action inconnue est refusée', [inconnue.statut, inconnue.json], [400, { erreur: 'action inconnue' }]);
   verifier('sans action aussi', (await appeler(api, 'GET', '/api')).statut, 400);
-  /* Les écritures arrivent en phases 3 et 4 : d'ici là, rien ne s'écrit par l'API. */
-  const post = await appeler(api, 'POST', '/api?action=catalogue');
-  verifier('une écriture est refusée pour l’instant', [post.statut, post.entetes.allow], [405, 'GET, HEAD']);
+  const put = await appeler(api, 'PUT', '/api');
+  verifier('une autre méthode est refusée', [put.statut, put.entetes.allow], [405, 'GET, HEAD, POST']);
 
-  // ---------------------------------------- 3. Une base en panne ne fuit pas ---
+  // ------------------------------------------ 3. L'envoi du formulaire ---
+
+  /* Les commandes du tableau de bord arrivent en phase 4 : une requête qui en
+     porte une ne doit SURTOUT PAS être prise pour une inscription. */
+  const commande = await appeler(apiEnvoi, 'POST', '/api', JSON.stringify({ action: 'admin.inscriptions', motDePasse: 'x' }));
+  verifier('une commande d’administration est refusée pour l’instant', commande.json, { ok: false, erreur: 'Commande inconnue.' });
+  verifier('un envoi illisible est refusé',
+    (await appeler(apiEnvoi, 'POST', '/api', '{pas du json')).json, { ok: false, erreur: 'Envoi illisible.' });
+  verifier('un envoi démesuré est refusé', (await appeler(apiEnvoi, 'POST', '/api', 'x'.repeat(30000))).statut, 413);
+  verifier('aucune ligne n’a été écrite par ces refus', await compter(), 2);
+
+  const envoi = await appeler(apiEnvoi, 'POST', '/api', JSON.stringify(INSCRIPTION));
+  verifier('une inscription du formulaire est acceptée', [envoi.statut, envoi.json], [200, { ok: true }]);
+  verifier('et enregistrée', await compter(), 3);
+  verifier('l’alerte est partie une fois', courriels.length, 1);
+  verifier('elle nomme la formation du catalogue', /Canva Pro & Création de contenu/.test(courriels[0] && courriels[0].sujet), true);
+  verifier('et répond au candidat', courriels[0] && courriels[0].repondreA, 'awa@exemple.test');
+
+  /* Le même envoi, renvoyé après un délai dépassé : « reçu », sans doublon ni seconde alerte. */
+  const renvoi = await appeler(apiEnvoi, 'POST', '/api', JSON.stringify(INSCRIPTION));
+  verifier('un renvoi identique répond « reçu »', renvoi.json, { ok: true });
+  verifier('sans doublon', await compter(), 3);
+  verifier('ni seconde alerte', courriels.length, 1);
+
+  // ---------------------------------------- 4. Une base en panne ne fuit pas ---
 
   /* L'erreur porte un détail interne : il ne doit pas atteindre le visiteur. */
   const enPanne = creerGestionnaire(() => ({
@@ -80,7 +120,7 @@ const sansMaj = c => { const { maj, ...reste } = c || {}; return reste; };
   }));
   const panne = await appeler(enPanne, 'GET', '/api?action=catalogue');
   verifier('base en panne : réponse 503', panne.statut, 503);
-  verifier('base en panne : message générique', panne.json, { erreur: 'Service momentanément indisponible.' });
+  verifier('base en panne : message générique', panne.json, { ok: false, erreur: 'Service momentanément indisponible.' });
   verifier('et rien de l’erreur interne', JSON.stringify(panne.json).includes('SECRET'), false);
   verifier('et jamais mise en cache', panne.entetes['cache-control'], 'no-store');
 
@@ -93,7 +133,7 @@ const sansMaj = c => { const { maj, ...reste } = c || {}; return reste; };
   verifier('sans DATABASE_URL : 503 propre', (await appeler(sansAdresse, 'GET', '/api?action=places')).statut, 503);
   verifier('et le diagnostic le dit', (await appeler(sansAdresse, 'GET', '/api?action=version')).json.code, 'SANS_ADRESSE');
 
-  // ------------------------------------ 4. Le certificat de Supabase est lisible ---
+  // ------------------------------------ 5. Le certificat de Supabase est lisible ---
 
   /* La connexion réelle ne se fait qu'en ligne. On vérifie au moins que la
      racine embarquée est un certificat valide, que Node accepte. */
