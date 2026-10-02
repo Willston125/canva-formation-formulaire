@@ -142,7 +142,8 @@ Le chantier prendra plusieurs semaines. Le site actuel doit être sûr pendant c
   - `/api` répond à `?action=catalogue` et `?action=places`, fonctions en région Paris ;
   - le site bascule sur `/api`, le script Google restant en secours ;
   - le repli JSONP est retiré (audit T6) ;
-  - premier `vercel.json` : en-têtes de sécurité (audit T3), redirection de l'ancien domaine (audit H3), région.
+  - premier `vercel.json` : en-têtes de sécurité (audit T3), redirection de l'ancien domaine (audit H3), région ;
+  - `api/_lib/` répondre 404 : constaté le 2/10, tant qu'aucune fonction n'existe, Vercel sert ces fichiers tels quels. Le code n'a aucun secret et il est public sur GitHub, mais il n'a pas à être servi. À vérifier en ligne après la bascule.
 - **Vous :** saisir dans Vercel l'adresse de la base et la clé de service.
 - **Fini quand :** le catalogue s'affiche depuis la nouvelle base, avec un temps de réponse mesuré. Cible : moins d'une seconde, contre 4,5 à 7 aujourd'hui.
 
