@@ -15,6 +15,7 @@
     "sync": "npm run sync:formations && npm run sync:sessions",
     "test:base": "node scripts/supabase/tests/run.js",
     "import:catalogue": "node scripts/supabase/import-catalogue.js",
+    "import:inscriptions": "node scripts/supabase/import-inscriptions.js",
     "sonde": "node scripts/supabase/sonde.js",
     "comparer": "node scripts/supabase/comparer.js",
     "banc": "node scripts/supabase/banc-local.js"
