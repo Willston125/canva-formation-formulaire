@@ -191,6 +191,20 @@ Ce qui était prévu :
 
 ### Phase 4 — Tableau de bord, puis la bascule (2 à 3 séances)
 
+**État au 3/10 : première partie en ligne** (commit `ad3b379`).
+- `/admin/?essai` ouvre le tableau de bord sur la nouvelle base, avec une connexion par compte Supabase. Sans `?essai`, rien ne change.
+- Commandes portées : connexion, catalogue, inscriptions, statut. Le statut se change par identifiant (S8), et chaque changement va au journal.
+- Compte administrateur créé. `ADMIN_EMAIL` et `SUPABASE_PUBLISHABLE_KEY` sont dans Vercel.
+- **Ajustement — les photos vont dans la base**, servies par le réseau de Vercel, au lieu de Supabase Storage. Dépasser les 5 Go de bande passante gratuite bloquerait tout le projet Supabase, inscriptions comprises, alors que Vercel en offre 100 Go et garde les photos en cache.
+- **Reste :**
+  - formations, sessions, pays, portfolio, réglages, textes, visuels ;
+  - les photos ;
+  - l'import ;
+  - le journal des moyens de paiement ;
+  - puis la bascule.
+
+Ce qui était prévu :
+
 - **Vous :**
   - créer votre compte administrateur (Authentication → Users → Add user) ;
   - le jour de la bascule : ne rien modifier pendant environ 15 minutes, et exporter l'onglet Inscriptions en CSV dans `exports/`, qui n'est ni versionné ni publié.
