@@ -169,7 +169,12 @@ Ce qui était prévu :
 - la tâche quotidienne `/api/quotidien`, lancée chaque jour à 3 h UTC.
 
 Les épreuves comptent 48 + 22 + 22 contrôles, prouvés en régression sur cinq cas. Les DNS de Resend sont en place chez LWS (DKIM, `rsend`, `send`).
-**Reste :** la clé `RESEND_API_KEY` dans Vercel, puis un redéploiement, puis l'essai de bout en bout (une inscription « ESSAI » et la première sauvegarde).
+**Faite et vérifiée en ligne le 3/10**, avec `RESEND_API_KEY` saisie dans Vercel par le propriétaire :
+- **Sauvegarde :** la première est partie (18 Ko). Trois appels de plus ont tous répondu « déjà faite », et rien n'est reparti.
+- **Inscription « ESSAI » :** une requête a été envoyée exprès avec le statut « Payé », 1 EUR et un faux titre. La base a enregistré En attente, 15000 KMF, « Canva Pro & Création de contenu » et le 10 octobre 2026. Le renvoi identique est resté une seule ligne.
+- **Places et refus :** les places sont inchangées. Une liste dans un champ et une commande d'administration sont refusées.
+- **E-mails :** la sauvegarde et l'alerte sont arrivées **en boîte de réception** : la signature DKIM du domaine est reconnue.
+- **Nettoyage et sonde :** l'inscription de test a été effacée par le propriétaire, et la sonde trouve tout fermé.
 
 Ce qui était prévu :
 
