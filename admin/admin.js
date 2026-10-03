@@ -156,10 +156,21 @@
 
   /* L'adresse de Supabase et sa clé PUBLIQUE, données par l'API : le dépôt ne
      porte aucune clé, même publique. */
+  /* Chaque attente a sa limite, et dit laquelle a manqué. Sans cela, une
+     réponse perdue en route laissait le bouton sur « Vérification… » sans fin,
+     sans un mot : on ne savait ni quoi attendre, ni quoi réessayer. */
+  function avecDelai(promesse, ms, message) {
+    return Promise.race([promesse, new Promise(function (_, rejeter) {
+      window.setTimeout(function () { rejeter(new Error(message)); }, ms);
+    })]);
+  }
+
   var configAuth = null;
   function lireConfigAuth() {
     if (configAuth) return Promise.resolve(configAuth);
-    return fetch('/api?action=config').then(function (r) { return r.ok ? r.json() : null; }).then(function (c) {
+    return avecDelai(fetch('/api?action=config', { cache: 'no-store' }), 15000,
+      'Le site ne répond pas (configuration de la connexion). Vérifiez votre connexion Internet, puis réessayez.')
+      .then(function (r) { return r.ok ? r.json() : null; }).then(function (c) {
       if (!c || !c.supabaseUrl || !c.cle) {
         throw new Error('La connexion n’est pas encore configurée : SUPABASE_PUBLISHABLE_KEY manque dans Vercel.');
       }
@@ -189,11 +200,11 @@
   /** Demande un jeton à Supabase Auth : par mot de passe, ou en renouvelant la session. */
   function demanderJeton(type, corps) {
     return lireConfigAuth().then(function (c) {
-      return fetch(c.supabaseUrl + '/auth/v1/token?grant_type=' + type, {
+      return avecDelai(fetch(c.supabaseUrl + '/auth/v1/token?grant_type=' + type, {
         method: 'POST',
         headers: { apikey: c.cle, 'Content-Type': 'application/json' },
         body: JSON.stringify(corps)
-      });
+      }), 20000, 'Supabase ne répond pas à la connexion. Vérifiez votre connexion Internet, puis réessayez.');
     }).then(function (r) {
       return r.json().catch(function () { return {}; }).then(function (d) {
         if (r.status === 429) throw erreurSession('Trop d’essais de connexion : patientez quelques minutes.');
@@ -244,11 +255,14 @@
   function appelerNouvelleBase(action, charge) {
     var corps = JSON.stringify(Object.assign({ action: action }, charge || {}));
     var envoyer = function (jeton) {
-      return fetch('/api', {
+      /* Le délai abandonne l'ATTENTE, pas la requête : comme avec le script
+         Google, la modification a pu passer quand même. */
+      return avecDelai(fetch('/api', {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8', Authorization: 'Bearer ' + jeton },
         body: corps
-      });
+      }), DELAIS[action] || 30000, 'Le serveur met trop de temps à répondre. La modification est '
+        + 'peut-être passée quand même : actualisez la page avant de réessayer.');
     };
     return jetonValable().then(function (jeton) {
       return envoyer(jeton).then(function (r) {
