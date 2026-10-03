@@ -181,10 +181,10 @@
 
   /* La session vit dans sessionStorage : elle disparaît en fermant l'onglet.
      Le mot de passe, lui, n'est JAMAIS gardé (audit T1). */
-  function sessionLue() {
+  function sessionCompteLue() {
     try { return JSON.parse(sessionStorage.getItem(CLE_SESSION) || 'null'); } catch (e) { return null; }
   }
-  function sessionRangee(s) {
+  function sessionCompteRangee(s) {
     try {
       if (s) sessionStorage.setItem(CLE_SESSION, JSON.stringify(s));
       else sessionStorage.removeItem(CLE_SESSION);
@@ -216,33 +216,33 @@
           renouvellement: d.refresh_token,
           expire: Date.now() + (Number(d.expires_in) || 3600) * 1000
         };
-        sessionRangee(s);
+        sessionCompteRangee(s);
         return s;
       });
     });
   }
 
-  function ouvrirSession(email, motDePasse) {
+  function connexionCompte(email, motDePasse) {
     return demanderJeton('password', { email: email, password: motDePasse });
   }
 
-  function renouvelerSession() {
-    var s = sessionLue();
+  function renouvelerSessionCompte() {
+    var s = sessionCompteLue();
     if (!s || !s.renouvellement) return Promise.reject(erreurSession());
     return demanderJeton('refresh_token', { refresh_token: s.renouvellement });
   }
 
   /** Un jeton valable encore au moins une minute ; renouvelé sinon. */
   function jetonValable() {
-    var s = sessionLue();
+    var s = sessionCompteLue();
     if (s && s.jeton && s.expire - Date.now() > 60000) return Promise.resolve(s.jeton);
-    return renouvelerSession().then(function (n) { return n.jeton; });
+    return renouvelerSessionCompte().then(function (n) { return n.jeton; });
   }
 
   /** Se déconnecter vraiment : Supabase révoque la session, pas seulement l'onglet. */
-  function fermerSession() {
-    var s = sessionLue();
-    sessionRangee(null);
+  function deconnexionCompte() {
+    var s = sessionCompteLue();
+    sessionCompteRangee(null);
     if (!s) return Promise.resolve();
     return lireConfigAuth().then(function (c) {
       return fetch(c.supabaseUrl + '/auth/v1/logout', {
@@ -268,14 +268,14 @@
       return envoyer(jeton).then(function (r) {
         // Jeton refusé entre-temps (expiré, révoqué) : un renouvellement, une seule fois
         if (r.status !== 401) return r;
-        return renouvelerSession().then(function (s) { return envoyer(s.jeton); });
+        return renouvelerSessionCompte().then(function (s) { return envoyer(s.jeton); });
       });
     }).then(function (r) {
       return r.text().then(function (t) {
         var d;
         try { d = JSON.parse(t); } catch (e) { throw new Error('Réponse inattendue du serveur.'); }
         if (r.status === 401 || (d && d.authentification === false)) {
-          sessionRangee(null);
+          sessionCompteRangee(null);
           throw erreurSession();
         }
         if (!d || d.ok !== true) throw new Error(d && d.erreur ? d.erreur : 'Le serveur a refusé la demande.');
@@ -363,6 +363,10 @@
 
   /** Mode essai : connexion par compte Supabase. */
   function initConnexionEssai() {
+    window.addEventListener('error', function (ev) { signalerImprevu(ev.message || 'erreur de script'); });
+    window.addEventListener('unhandledrejection', function (ev) {
+      signalerImprevu((ev.reason && ev.reason.message) || String(ev.reason));
+    });
     $('#champ-email').hidden = false;
     $('#email-connexion').required = true;
     var rester = $('#rester-connecte');
@@ -370,8 +374,27 @@
     var aide = $('.connexion__aide');
     if (aide) aide.textContent = 'Mode essai : la nouvelle base. Connectez-vous avec votre compte.';
     // Une session encore ouverte dans cet onglet : on entre sans la redemander
-    if (sessionLue()) { connecter(true); return; }
+    if (sessionCompteLue()) { connecter(true); return; }
     $('#form-connexion').addEventListener('submit', soumettreEssai);
+  }
+
+  /* L'étape en cours s'écrit dans le bouton : si la connexion bloque, on sait
+     où — au lieu d'un « Vérification… » qui ne dit rien. */
+  function etape(texte) {
+    var a = document.querySelector('#btn-connexion .btn-attente');
+    if (a && a.lastChild && a.lastChild.nodeType === 3) a.lastChild.nodeValue = texte;
+    if (window.console) console.info('[connexion essai] ' + texte);
+  }
+
+  /* Toute erreur imprévue de la page, en mode essai, s'affiche sur l'écran de
+     connexion au lieu de rester dans la console, et rend la main. */
+  function signalerImprevu(message) {
+    var carte = $('#connexion');
+    if (!carte || carte.hidden) return;
+    attente($('#btn-connexion'), false);
+    var erreur = $('#erreur-connexion');
+    erreur.textContent = 'Erreur imprévue : ' + message;
+    erreur.hidden = false;
   }
 
   function soumettreEssai(e) {
@@ -380,8 +403,9 @@
     var erreur = $('#erreur-connexion');
     erreur.hidden = true;
     attente(bouton, true);
-    ouvrirSession(String($('#email-connexion').value || '').trim(), motDePasseSaisi())
-      .then(function () { connecter(false); })
+    etape('Connexion à Supabase…');
+    connexionCompte(String($('#email-connexion').value || '').trim(), motDePasseSaisi())
+      .then(function () { etape('Ouverture du tableau de bord…'); connecter(false); })
       .catch(function (err) {
         attente(bouton, false);
         erreur.textContent = messageLisible(err);
@@ -509,6 +533,7 @@
         e.apiObsolete = true;
         return Promise.reject(e);
       }
+      if (ESSAI) etape('Lecture du catalogue sur la nouvelle base…');
       return appeler('admin.login', {});
     }).then(function () {
       if (!ESSAI) memoriserMotDePasse(etat.motDePasse);
@@ -528,7 +553,7 @@
       var refuse = !!(err && err.authentification === false);
       if (refuse) {
         etat.motDePasse = '';
-        if (ESSAI) sessionRangee(null);
+        if (ESSAI) sessionCompteRangee(null);
         try { localStorage.removeItem(CLE_MDP); sessionStorage.removeItem(CLE_MDP); } catch (e) { }
       }
       if (silencieux) {
@@ -549,7 +574,7 @@
 
   function deconnecter() {
     if (ESSAI) {
-      fermerSession().then(function () { window.location.reload(); });
+      deconnexionCompte().then(function () { window.location.reload(); });
       return;
     }
     try { localStorage.removeItem(CLE_MDP); sessionStorage.removeItem(CLE_MDP); } catch (e) { }

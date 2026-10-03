@@ -16,7 +16,8 @@
     "test:base": "node scripts/supabase/tests/run.js",
     "import:catalogue": "node scripts/supabase/import-catalogue.js",
     "sonde": "node scripts/supabase/sonde.js",
-    "comparer": "node scripts/supabase/comparer.js"
+    "comparer": "node scripts/supabase/comparer.js",
+    "banc": "node scripts/supabase/banc-local.js"
   },
   "devDependencies": {
     "@electric-sql/pglite": "0.5.8",
