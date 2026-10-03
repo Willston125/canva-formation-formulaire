@@ -862,3 +862,19 @@ select.statut:focus { outline: none; border-color: var(--brand); }
 @media (max-width: 720px) {
   .pays-reglage__champs { grid-template-columns: 1fr; }
 }
+
+/* Mode essai (/admin/?essai) : la nouvelle base, pendant que le site lit encore
+   la feuille Google. Le bandeau reste en haut de l'écran pour qu'on ne le
+   confonde jamais avec le vrai tableau de bord. */
+.bandeau-essai {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  padding: 10px 18px;
+  background: var(--brand);
+  color: #050709;
+  font-size: 0.86rem;
+  font-weight: 600;
+  line-height: 1.45;
+  text-align: center;
+}

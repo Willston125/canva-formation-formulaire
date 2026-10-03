@@ -7,8 +7,17 @@
 (function () {
   'use strict';
 
-  var API = (window.SITE_ENDPOINTS && window.SITE_ENDPOINTS.registration) || '';
+  /* MODE ESSAI — migration vers Supabase, phase 4
+     (docs/superpowers/plans/2026-10-02-migration-supabase.md).
+     /admin/?essai ouvre ce tableau de bord sur la NOUVELLE base, pendant que le
+     site lit encore la feuille Google. On s'y connecte avec son compte
+     (e-mail et mot de passe Supabase), et la session ne vit que dans l'onglet.
+     Ce qui y est modifié sera remplacé à la bascule par les données du jour.
+     Sans « ?essai », rien ne change : le tableau de bord parle au script Google. */
+  var ESSAI = /[?&]essai(?:[=&]|$)/.test(window.location.search);
+  var API = ESSAI ? '/api' : ((window.SITE_ENDPOINTS && window.SITE_ENDPOINTS.registration) || '');
   var CLE_MDP = 'impactali_admin_mdp';
+  var CLE_SESSION = 'impactali_admin_session';
 
   /** État courant, rechargé à chaque écriture depuis la réponse de l'API. */
   var etat = {
@@ -143,7 +152,127 @@
      que rien ne s'est passé alors que le serveur travaille encore. */
   var DELAIS = { 'admin.importer': 120000 };
 
+  // ------------------------- SESSION SUPABASE (essai) -------------------------
+
+  /* L'adresse de Supabase et sa clé PUBLIQUE, données par l'API : le dépôt ne
+     porte aucune clé, même publique. */
+  var configAuth = null;
+  function lireConfigAuth() {
+    if (configAuth) return Promise.resolve(configAuth);
+    return fetch('/api?action=config').then(function (r) { return r.ok ? r.json() : null; }).then(function (c) {
+      if (!c || !c.supabaseUrl || !c.cle) {
+        throw new Error('La connexion n’est pas encore configurée : SUPABASE_PUBLISHABLE_KEY manque dans Vercel.');
+      }
+      configAuth = c;
+      return c;
+    });
+  }
+
+  /* La session vit dans sessionStorage : elle disparaît en fermant l'onglet.
+     Le mot de passe, lui, n'est JAMAIS gardé (audit T1). */
+  function sessionLue() {
+    try { return JSON.parse(sessionStorage.getItem(CLE_SESSION) || 'null'); } catch (e) { return null; }
+  }
+  function sessionRangee(s) {
+    try {
+      if (s) sessionStorage.setItem(CLE_SESSION, JSON.stringify(s));
+      else sessionStorage.removeItem(CLE_SESSION);
+    } catch (e) { /* stockage refusé : la session dure le temps de la page */ }
+  }
+
+  function erreurSession(message) {
+    var e = new Error(message || 'Session expirée : reconnectez-vous.');
+    e.authentification = false;
+    return e;
+  }
+
+  /** Demande un jeton à Supabase Auth : par mot de passe, ou en renouvelant la session. */
+  function demanderJeton(type, corps) {
+    return lireConfigAuth().then(function (c) {
+      return fetch(c.supabaseUrl + '/auth/v1/token?grant_type=' + type, {
+        method: 'POST',
+        headers: { apikey: c.cle, 'Content-Type': 'application/json' },
+        body: JSON.stringify(corps)
+      });
+    }).then(function (r) {
+      return r.json().catch(function () { return {}; }).then(function (d) {
+        if (r.status === 429) throw erreurSession('Trop d’essais de connexion : patientez quelques minutes.');
+        if (!r.ok || !d.access_token) {
+          throw erreurSession(type === 'password' ? 'E-mail ou mot de passe incorrect.' : 'Session expirée : reconnectez-vous.');
+        }
+        var s = {
+          jeton: d.access_token,
+          renouvellement: d.refresh_token,
+          expire: Date.now() + (Number(d.expires_in) || 3600) * 1000
+        };
+        sessionRangee(s);
+        return s;
+      });
+    });
+  }
+
+  function ouvrirSession(email, motDePasse) {
+    return demanderJeton('password', { email: email, password: motDePasse });
+  }
+
+  function renouvelerSession() {
+    var s = sessionLue();
+    if (!s || !s.renouvellement) return Promise.reject(erreurSession());
+    return demanderJeton('refresh_token', { refresh_token: s.renouvellement });
+  }
+
+  /** Un jeton valable encore au moins une minute ; renouvelé sinon. */
+  function jetonValable() {
+    var s = sessionLue();
+    if (s && s.jeton && s.expire - Date.now() > 60000) return Promise.resolve(s.jeton);
+    return renouvelerSession().then(function (n) { return n.jeton; });
+  }
+
+  /** Se déconnecter vraiment : Supabase révoque la session, pas seulement l'onglet. */
+  function fermerSession() {
+    var s = sessionLue();
+    sessionRangee(null);
+    if (!s) return Promise.resolve();
+    return lireConfigAuth().then(function (c) {
+      return fetch(c.supabaseUrl + '/auth/v1/logout', {
+        method: 'POST', headers: { apikey: c.cle, Authorization: 'Bearer ' + s.jeton }
+      });
+    }).catch(function () { /* déjà expirée : rien à révoquer */ });
+  }
+
+  /** Les commandes, sur la nouvelle API : même réponse que le script Google. */
+  function appelerNouvelleBase(action, charge) {
+    var corps = JSON.stringify(Object.assign({ action: action }, charge || {}));
+    var envoyer = function (jeton) {
+      return fetch('/api', {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8', Authorization: 'Bearer ' + jeton },
+        body: corps
+      });
+    };
+    return jetonValable().then(function (jeton) {
+      return envoyer(jeton).then(function (r) {
+        // Jeton refusé entre-temps (expiré, révoqué) : un renouvellement, une seule fois
+        if (r.status !== 401) return r;
+        return renouvelerSession().then(function (s) { return envoyer(s.jeton); });
+      });
+    }).then(function (r) {
+      return r.text().then(function (t) {
+        var d;
+        try { d = JSON.parse(t); } catch (e) { throw new Error('Réponse inattendue du serveur.'); }
+        if (r.status === 401 || (d && d.authentification === false)) {
+          sessionRangee(null);
+          throw erreurSession();
+        }
+        if (!d || d.ok !== true) throw new Error(d && d.erreur ? d.erreur : 'Le serveur a refusé la demande.');
+        if (d.catalogue) etat.catalogue = d.catalogue;
+        return d;
+      });
+    });
+  }
+
   function appeler(action, charge) {
+    if (ESSAI) return appelerNouvelleBase(action, charge);
     if (!API) return Promise.reject(new Error('Adresse de l’API non configurée dans formations-data.js.'));
     var corps = Object.assign({ action: action, motDePasse: etat.motDePasse }, charge || {});
     var expiration = new Promise(function (_, rejeter) {
@@ -218,7 +347,36 @@
     return champ ? String(champ.value || '').trim() : '';
   }
 
+  /** Mode essai : connexion par compte Supabase. */
+  function initConnexionEssai() {
+    $('#champ-email').hidden = false;
+    $('#email-connexion').required = true;
+    var rester = $('#rester-connecte');
+    if (rester && rester.closest('label')) rester.closest('label').hidden = true;
+    var aide = $('.connexion__aide');
+    if (aide) aide.textContent = 'Mode essai : la nouvelle base. Connectez-vous avec votre compte.';
+    // Une session encore ouverte dans cet onglet : on entre sans la redemander
+    if (sessionLue()) { connecter(true); return; }
+    $('#form-connexion').addEventListener('submit', soumettreEssai);
+  }
+
+  function soumettreEssai(e) {
+    e.preventDefault();
+    var bouton = $('#btn-connexion');
+    var erreur = $('#erreur-connexion');
+    erreur.hidden = true;
+    attente(bouton, true);
+    ouvrirSession(String($('#email-connexion').value || '').trim(), motDePasseSaisi())
+      .then(function () { connecter(false); })
+      .catch(function (err) {
+        attente(bouton, false);
+        erreur.textContent = messageLisible(err);
+        erreur.hidden = false;
+      });
+  }
+
   function initConnexion() {
+    if (ESSAI) return initConnexionEssai();
     restaurerChoixRester();
     var memorise = '';
     try { memorise = localStorage.getItem(CLE_MDP) || sessionStorage.getItem(CLE_MDP) || ''; } catch (e) { }
@@ -330,7 +488,7 @@
     erreur.hidden = true;
     attente(bouton, true);
 
-    verifierApi().then(function (apiPrete) {
+    (ESSAI ? Promise.resolve(true) : verifierApi()).then(function (apiPrete) {
       if (!apiPrete) {
         var e = new Error('Le script Google n’est pas encore à jour : il ne connaît pas l’administration. '
           + 'Installez la nouvelle version du script, puis déployez une nouvelle version.');
@@ -339,7 +497,7 @@
       }
       return appeler('admin.login', {});
     }).then(function () {
-      memoriserMotDePasse(etat.motDePasse);
+      if (!ESSAI) memoriserMotDePasse(etat.motDePasse);
       /* `appeler` a déjà rangé le catalogue rendu par la connexion. On le note
          ici plutôt que de tester `etat.catalogue`, qui part d'un objet vide
          mais non nul : le tester rendrait toujours vrai, même sans réponse. */
@@ -356,11 +514,12 @@
       var refuse = !!(err && err.authentification === false);
       if (refuse) {
         etat.motDePasse = '';
+        if (ESSAI) sessionRangee(null);
         try { localStorage.removeItem(CLE_MDP); sessionStorage.removeItem(CLE_MDP); } catch (e) { }
       }
       if (silencieux) {
         // On redonne la main sur le formulaire
-        $('#form-connexion').addEventListener('submit', function (e) {
+        $('#form-connexion').addEventListener('submit', ESSAI ? soumettreEssai : function (e) {
           e.preventDefault();
           etat.motDePasse = motDePasseSaisi();
           connecter(false);
@@ -375,6 +534,10 @@
   }
 
   function deconnecter() {
+    if (ESSAI) {
+      fermerSession().then(function () { window.location.reload(); });
+      return;
+    }
     try { localStorage.removeItem(CLE_MDP); sessionStorage.removeItem(CLE_MDP); } catch (e) { }
     window.location.reload();
   }
@@ -402,6 +565,17 @@
     var importer = $('#btn-importer');
     if (importer) importer.addEventListener('click', importerCatalogueDuSite);
 
+    if (ESSAI) {
+      /* Qu'on ne le confonde jamais avec le vrai tableau de bord : le site
+         public, lui, lit encore la feuille Google. */
+      var bandeau = document.createElement('div');
+      bandeau.className = 'bandeau-essai';
+      bandeau.setAttribute('role', 'note');
+      bandeau.textContent = 'Mode essai : vous travaillez sur la nouvelle base. Le site public lit toujours la feuille '
+        + 'Google, et ce que vous modifiez ici sera remplacé par les données du jour au moment de la bascule.';
+      $('#app').insertBefore(bandeau, $('#app').firstChild);
+    }
+
     afficherEtatDuScript();
     /* Le catalogue est arrivé avec la réponse de connexion : inutile de le
        redemander pour ouvrir l'écran. */
@@ -416,6 +590,12 @@
   function afficherEtatDuScript() {
     var pied = $('#etat-script');
     if (!pied || !API) return;
+    if (ESSAI) {
+      // Pas de script Google à surveiller : le code de l'API part avec le site
+      pied.innerHTML = '<span class="etiquette etiquette--alerte">Mode essai</span>'
+        + '<span class="etat-script__version">nouvelle base</span>';
+      return;
+    }
     /* La vérification d'API vient d'interroger cette même adresse : on reprend
        sa réponse plutôt que de la redemander. Deux allers-retours chez Google
        pour la même information, c'est deux secondes et demie de plus sur un
@@ -1561,7 +1741,10 @@
     );
     $$('[data-statut-ligne]').forEach(function (sel) {
       sel.addEventListener('change', function () {
-        var ligne = Number(sel.dataset.statutLigne);
+        /* La feuille désignait une inscription par son numéro de ligne ; la
+           nouvelle base, par un identifiant qui ne bouge pas quand on trie. */
+        var brut = sel.dataset.statutLigne;
+        var ligne = /^\d+$/.test(brut) ? Number(brut) : brut;
         appeler('admin.inscription.statut', { ligne: ligne, statut: sel.value }).then(function () {
           var cible = etat.inscriptions.find(function (i) { return i.ligne === ligne; });
           if (cible) cible.statut = sel.value;
@@ -1579,7 +1762,7 @@
   function selecteurStatut(i) {
     var actuel = i.statut || 'En attente';
     var options = STATUTS.indexOf(actuel) < 0 ? [actuel].concat(STATUTS) : STATUTS;
-    return '<select class="statut" data-statut-ligne="' + i.ligne + '">'
+    return '<select class="statut" data-statut-ligne="' + echapper(i.ligne) + '">'
       + options.map(function (s) {
         return '<option value="' + echapper(s) + '"' + (s === actuel ? ' selected' : '') + '>' + echapper(s) + '</option>';
       }).join('') + '</select>';

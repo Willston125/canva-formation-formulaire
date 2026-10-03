@@ -93,7 +93,7 @@ const sansMaj = c => { const { maj, ...reste } = c || {}; return reste; };
   /* Les commandes du tableau de bord arrivent en phase 4 : une requête qui en
      porte une ne doit SURTOUT PAS être prise pour une inscription. */
   const commande = await appeler(apiEnvoi, 'POST', '/api', JSON.stringify({ action: 'admin.inscriptions', motDePasse: 'x' }));
-  verifier('une commande d’administration est refusée pour l’instant', commande.json, { ok: false, erreur: 'Commande inconnue.' });
+  verifier('une commande d’administration sans session est refusée', [commande.statut, commande.json.authentification], [401, false]);
   verifier('un envoi illisible est refusé',
     (await appeler(apiEnvoi, 'POST', '/api', '{pas du json')).json, { ok: false, erreur: 'Envoi illisible.' });
   verifier('un envoi démesuré est refusé', (await appeler(apiEnvoi, 'POST', '/api', 'x'.repeat(30000))).statut, 413);

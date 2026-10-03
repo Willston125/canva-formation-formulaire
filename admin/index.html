@@ -25,6 +25,13 @@
             <h1>Tableau de bord</h1>
             <p class="connexion__aide">Espace réservé à l’administration du site.</p>
 
+            <!-- Mode essai (/admin/?essai) : connexion par compte, sur la nouvelle base -->
+            <label class="champ" id="champ-email" hidden>
+                <span class="champ__label">E-mail</span>
+                <input type="email" id="email-connexion" name="email" autocomplete="username"
+                    placeholder="L’e-mail de votre compte">
+            </label>
+
             <label class="champ">
                 <span class="champ__label">Mot de passe</span>
                 <input type="password" id="mot-de-passe" name="password" autocomplete="current-password" required

@@ -2,6 +2,7 @@
  * Google, avec les mêmes réponses :
  *   GET  ?action=catalogue | places | version
  *   POST (sans « action ») : une inscription du formulaire public
+ *   POST avec « action »   : une commande du tableau de bord (session Supabase)
  *
  * PHASE 3 DU PLAN : elle répond en ligne, mais le site ne s'en sert pas
  * encore. Il basculera d'un coup en phase 4, avec le tableau de bord : tant
@@ -14,6 +15,7 @@ const { base } = require('./_lib/base');
 const { lireCatalogue, compterInscrits } = require('./_lib/catalogue');
 const { recevoirInscription } = require('./_lib/inscription');
 const { alerteInscription, envoyer: envoyerCourriel } = require('./_lib/courriel');
+const { executer: executerCommande, SUPABASE_URL } = require('./_lib/admin');
 
 /* Les places changent à chaque confirmation : 15 secondes de cache partagé,
    pas plus (audit P1). Le script Google relisait toute la feuille à chaque
@@ -50,21 +52,26 @@ function selParDefaut() {
 /** Diagnostic sans secret : quelle version est en ligne, et la base répond-elle ? */
 async function etat(obtenirBase) {
   const version = String(process.env.VERCEL_GIT_COMMIT_SHA || 'local').slice(0, 7);
-  const courriel = process.env.RESEND_API_KEY ? 'configuré' : 'absent';
+  // Ce qui est réglé dans Vercel, sans jamais dire la valeur
+  const reglages = {
+    courriel: process.env.RESEND_API_KEY ? 'configuré' : 'absent',
+    admin: process.env.ADMIN_EMAIL ? 'configuré' : 'absent',
+    cle: process.env.SUPABASE_PUBLISHABLE_KEY ? 'configurée' : 'absente'
+  };
   try {
     const debut = Date.now();
     await obtenirBase().query('select 1');
-    return { version, base: 'ok', ms: Date.now() - debut, courriel };
+    return Object.assign({ version, base: 'ok', ms: Date.now() - debut }, reglages);
   } catch (e) {
     /* Le CODE d'erreur suffit à diagnostiquer (mot de passe refusé : 28P01,
        adresse introuvable : ENOTFOUND, certificat : SELF_SIGNED_CERT_IN_CHAIN)
        sans rien révéler de la base ni de son adresse. */
-    return { version, base: 'injoignable', code: String((e && (e.code || e.name)) || 'inconnu'), courriel };
+    return Object.assign({ version, base: 'injoignable', code: String((e && (e.code || e.name)) || 'inconnu') }, reglages);
   }
 }
 
-/** Fabrique le gestionnaire : les épreuves lui passent une base PGlite et un faux envoi d'e-mail. */
-function creerGestionnaire(obtenirBase, { envoyer = envoyerCourriel, sel = selParDefaut } = {}) {
+/** Fabrique le gestionnaire : les épreuves lui passent une base PGlite, un faux envoi d'e-mail, un faux Supabase Auth. */
+function creerGestionnaire(obtenirBase, { envoyer = envoyerCourriel, sel = selParDefaut, admin = {} } = {}) {
   return async function gestionnaire(req, res) {
     const action = new URL(req.url || '/', 'http://site').searchParams.get('action') || '';
 
@@ -73,6 +80,14 @@ function creerGestionnaire(obtenirBase, { envoyer = envoyerCourriel, sel = selPa
         if (action === 'catalogue') return repondre(res, 200, await lireCatalogue(obtenirBase()), CACHE_COURT);
         if (action === 'places') return repondre(res, 200, { sessions: await compterInscrits(obtenirBase()) }, CACHE_COURT);
         if (action === 'version') return repondre(res, 200, await etat(obtenirBase));
+        /* Ce dont la page de connexion a besoin pour parler à Supabase Auth.
+           La clé « publishable » est publique par conception : avec la RLS
+           fermée, elle ne lit rien de la base. Elle vit dans Vercel pour que
+           le dépôt, lui, ne porte aucune clé. */
+        if (action === 'config') {
+          return repondre(res, 200, { supabaseUrl: SUPABASE_URL, cle: process.env.SUPABASE_PUBLISHABLE_KEY || null },
+            'public, max-age=0, s-maxage=300');
+        }
         return repondre(res, 400, { erreur: 'action inconnue' });
       }
 
@@ -81,10 +96,14 @@ function creerGestionnaire(obtenirBase, { envoyer = envoyerCourriel, sel = selPa
         if (brut.length > TAILLE_MAX) return repondre(res, 413, { ok: false, erreur: 'Envoi trop volumineux.' });
         let charge;
         try { charge = JSON.parse(brut); } catch (e) { return repondre(res, 200, { ok: false, erreur: 'Envoi illisible.' }); }
-        /* Les commandes du tableau de bord arrivent en phase 4. D'ici là, une
-           requête qui en porte une n'est surtout pas prise pour une inscription. */
+        /* Une requête qui porte une « action » est une commande du tableau de
+           bord : elle n'est JAMAIS prise pour une inscription. Elle exige la
+           session de l'administrateur, présentée dans l'en-tête Authorization. */
         if (charge && typeof charge === 'object' && charge.action) {
-          return repondre(res, 200, { ok: false, erreur: 'Commande inconnue.' });
+          const entete = String((req.headers && req.headers.authorization) || '');
+          const jeton = entete.startsWith('Bearer ') ? entete.slice(7).trim() : '';
+          const issue = await executerCommande(obtenirBase(), charge, jeton, admin);
+          return repondre(res, issue.statut, issue.corps);
         }
 
         const ip = String((req.headers && (req.headers['x-forwarded-for'] || req.headers['x-real-ip'])) || '')
