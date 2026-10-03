@@ -55,8 +55,12 @@ async function etat(obtenirBase) {
   // Ce qui est réglé dans Vercel, sans jamais dire la valeur
   const reglages = {
     courriel: process.env.RESEND_API_KEY ? 'configuré' : 'absent',
-    admin: process.env.ADMIN_EMAIL ? 'configuré' : 'absent',
-    cle: process.env.SUPABASE_PUBLISHABLE_KEY ? 'configurée' : 'absente'
+    /* La FORME seulement, jamais la valeur : une clé collée par erreur à la
+       place de l'e-mail fermerait le tableau de bord sans autre indice. */
+    admin: !process.env.ADMIN_EMAIL ? 'absent'
+      : /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(process.env.ADMIN_EMAIL.trim()) ? 'configuré' : 'pas un e-mail',
+    cle: !process.env.SUPABASE_PUBLISHABLE_KEY ? 'absente'
+      : /^sb_publishable_/.test(process.env.SUPABASE_PUBLISHABLE_KEY.trim()) ? 'configurée' : 'pas une clé publishable'
   };
   try {
     const debut = Date.now();
