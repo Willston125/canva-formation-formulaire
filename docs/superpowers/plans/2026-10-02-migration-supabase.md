@@ -196,11 +196,16 @@ Ce qui était prévu :
 - Commandes portées : connexion, catalogue, inscriptions, statut. Le statut se change par identifiant (S8), et chaque changement va au journal.
 - Compte administrateur créé. `ADMIN_EMAIL` et `SUPABASE_PUBLISHABLE_KEY` sont dans Vercel.
 - **Ajustement — les photos vont dans la base**, servies par le réseau de Vercel, au lieu de Supabase Storage. Dépasser les 5 Go de bande passante gratuite bloquerait tout le projet Supabase, inscriptions comprises, alors que Vercel en offre 100 Go et garde les photos en cache.
+- **Deuxième partie, 3/10 :** les enregistrements du catalogue (`api/_lib/ecritures.js`).
+  - Formations, sessions, pays, portfolio, réglages, textes, visuels. Les règles et les messages sont ceux du script Google, et ce qui n'est pas mentionné n'est pas effacé.
+  - **Règle du calendrier (C1).** Une session qui annonce plus de séances que ses dates n'en contiennent est refusée, avec le calcul. Quatre sessions reprises de la feuille sont dans ce cas : leurs dates devront être corrigées à leur prochaine modification.
+  - **Moyens de paiement.** Un changement de numéro va au journal et prévient infos@impactali.site. Une saisie sans moyens de paiement ne les efface plus : le script les remettait à zéro.
+  - Chaque écriture est notée au journal, une à la fois, sous verrou.
+  - **L'import depuis les fichiers du site n'est pas repris.** Il ne servait qu'à amorcer une base vide, et ces fichiers sont plus anciens que la feuille.
+  - Banc local : formation, session (refus puis correction), pays (alerte), réglages, textes et visuels enregistrés depuis le vrai tableau de bord.
+  - Corrigé au passage : en mode essai, le bandeau écrasait le contenu à 60 px de large.
 - **Reste :**
-  - formations, sessions, pays, portfolio, réglages, textes, visuels ;
-  - les photos ;
-  - l'import ;
-  - le journal des moyens de paiement ;
+  - les photos (téléversement dans la base, suppression) ;
   - puis la bascule.
 
 Ce qui était prévu :

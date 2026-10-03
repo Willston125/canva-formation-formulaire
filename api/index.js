@@ -23,6 +23,10 @@ const { executer: executerCommande, SUPABASE_URL } = require('./_lib/admin');
 const CACHE_COURT = 'public, max-age=0, s-maxage=15, stale-while-revalidate=30';
 /* Une inscription tient en quelques kilo-octets : au-delà, ce n'est pas un formulaire. */
 const TAILLE_MAX = 20000;
+/* Une commande du tableau de bord peut porter un programme complet, et bientôt
+   une photo (1,5 Mo, soit 2 Mo une fois encodée). Vercel coupe de toute façon
+   à 4,5 Mo. */
+const TAILLE_MAX_ADMIN = 3000000;
 
 function repondre(res, statut, donnees, cache) {
   res.statusCode = statut;
@@ -32,14 +36,14 @@ function repondre(res, statut, donnees, cache) {
 }
 
 /** Le corps de la requête, en texte. Le site l'envoie en text/plain (requête « simple »). */
-async function lireCorps(req) {
+async function lireCorps(req, max) {
   if (typeof req.body === 'string') return req.body;
   if (req.body && typeof req.body === 'object' && !Buffer.isBuffer(req.body)) return JSON.stringify(req.body);
   if (Buffer.isBuffer(req.body)) return req.body.toString('utf8');
   let texte = '';
   for await (const morceau of req) {
     texte += morceau;
-    if (texte.length > TAILLE_MAX) break;
+    if (texte.length > max) break;
   }
   return texte;
 }
@@ -96,19 +100,24 @@ function creerGestionnaire(obtenirBase, { envoyer = envoyerCourriel, sel = selPa
       }
 
       if (req.method === 'POST') {
-        const brut = await lireCorps(req);
-        if (brut.length > TAILLE_MAX) return repondre(res, 413, { ok: false, erreur: 'Envoi trop volumineux.' });
+        const brut = await lireCorps(req, TAILLE_MAX_ADMIN);
+        const tropGros = () => repondre(res, 413, { ok: false, erreur: 'Envoi trop volumineux.' });
+        if (brut.length > TAILLE_MAX_ADMIN) return tropGros();
         let charge;
-        try { charge = JSON.parse(brut); } catch (e) { return repondre(res, 200, { ok: false, erreur: 'Envoi illisible.' }); }
+        try { charge = JSON.parse(brut); } catch (e) {
+          return brut.length > TAILLE_MAX ? tropGros() : repondre(res, 200, { ok: false, erreur: 'Envoi illisible.' });
+        }
         /* Une requête qui porte une « action » est une commande du tableau de
            bord : elle n'est JAMAIS prise pour une inscription. Elle exige la
            session de l'administrateur, présentée dans l'en-tête Authorization. */
         if (charge && typeof charge === 'object' && charge.action) {
           const entete = String((req.headers && req.headers.authorization) || '');
           const jeton = entete.startsWith('Bearer ') ? entete.slice(7).trim() : '';
-          const issue = await executerCommande(obtenirBase(), charge, jeton, admin);
+          const issue = await executerCommande(obtenirBase(), charge, jeton, Object.assign({ envoyer }, admin));
           return repondre(res, issue.statut, issue.corps);
         }
+        // Seul le tableau de bord a droit à un envoi volumineux
+        if (brut.length > TAILLE_MAX) return tropGros();
 
         const ip = String((req.headers && (req.headers['x-forwarded-for'] || req.headers['x-real-ip'])) || '')
           .split(',')[0].trim();

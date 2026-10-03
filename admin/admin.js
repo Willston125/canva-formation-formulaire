@@ -612,7 +612,11 @@
       bandeau.setAttribute('role', 'note');
       bandeau.textContent = 'Mode essai : vous travaillez sur la nouvelle base. Le site public lit toujours la feuille '
         + 'Google, et ce que vous modifiez ici sera remplacé par les données du jour au moment de la bascule.';
-      $('#app').insertBefore(bandeau, $('#app').firstChild);
+      /* En tête de la zone de contenu, pas de #app : #app est une rangée flexible
+         (menu | contenu), où le bandeau devenait une troisième colonne qui
+         écrasait le contenu à quelques pixels de large. */
+      var contenu = document.querySelector('.contenu');
+      contenu.insertBefore(bandeau, contenu.firstChild);
     }
 
     afficherEtatDuScript();

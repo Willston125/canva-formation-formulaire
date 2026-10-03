@@ -10,20 +10,22 @@
  * Chaque entrée : [clé du contrat, colonne, type]. Le type dit ce que rend une
  * valeur absente, comme le faisait le script Google (depuisCellule) : un champ
  * « json » vide vaut [], tout autre champ vide vaut null. « date » est relu en
- * texte AAAA-MM-JJ : un objet Date décalerait le jour selon le fuseau. */
+ * texte AAAA-MM-JJ : un objet Date décalerait le jour selon le fuseau.
+ * « bool » et « num » disent aux écritures du tableau de bord (ecritures.js)
+ * comment convertir ce qu'elles reçoivent, comme le faisait versCellule. */
 'use strict';
 
 const FORMATION = [
   ['id', 'id'], ['slug', 'slug'], ['title', 'title'], ['shortTitle', 'short_title'],
   ['category', 'category'], ['family', 'family'], ['promise', 'promise'],
   ['shortDescription', 'short_description'], ['image', 'image'], ['imageAlt', 'image_alt'],
-  ['duration', 'duration'], ['level', 'level'], ['mode', 'mode'], ['price', 'price'],
-  ['modules', 'modules'], ['learnings', 'learnings', 'json'], ['featured', 'featured'],
-  ['registrationOpen', 'registration_open'], ['active', 'active'],
-  ['allowRegistrationWithoutSession', 'allow_registration_without_session'],
-  ['hasDetailPage', 'has_detail_page'], ['href', 'href'], ['formId', 'form_id'],
+  ['duration', 'duration'], ['level', 'level'], ['mode', 'mode'], ['price', 'price', 'num'],
+  ['modules', 'modules', 'num'], ['learnings', 'learnings', 'json'], ['featured', 'featured', 'bool'],
+  ['registrationOpen', 'registration_open', 'bool'], ['active', 'active', 'bool'],
+  ['allowRegistrationWithoutSession', 'allow_registration_without_session', 'bool'],
+  ['hasDetailPage', 'has_detail_page', 'bool'], ['href', 'href'], ['formId', 'form_id'],
   ['poster', 'poster'], ['lead', 'lead'], ['levelSubject', 'level_subject'],
-  ['objectives', 'objectives', 'json'], ['ordre', 'ordre'], ['programme', 'programme', 'json'],
+  ['objectives', 'objectives', 'json'], ['ordre', 'ordre', 'num'], ['programme', 'programme', 'json'],
   ['faq', 'faq', 'json'], ['prerequis', 'prerequis', 'json']
 ];
 
@@ -34,16 +36,16 @@ const FORMATION = [
 const SESSION = [
   ['id', 'id'], ['formId', 'form_id'], ['startDate', 'start_date', 'date'],
   ['endDate', 'end_date', 'date'], ['schedule', 'schedule'], ['duration', 'duration'],
-  ['location', 'location'], ['mode', 'mode'], ['price', 'price'],
-  ['placesTotal', 'places_total'], ['registrationOpen', 'registration_open'],
-  ['currency', 'currency'], ['jours', 'jours', 'liste'], ['seances', 'seances']
+  ['location', 'location'], ['mode', 'mode'], ['price', 'price', 'num'],
+  ['placesTotal', 'places_total', 'num'], ['registrationOpen', 'registration_open', 'bool'],
+  ['currency', 'currency'], ['jours', 'jours', 'liste'], ['seances', 'seances', 'num']
 ];
 
 const PAYS = [
   ['code', 'code'], ['nom', 'nom'], ['devise', 'devise'], ['indicatif', 'indicatif'],
   ['motifTelephone', 'motif_telephone'], ['aideTelephone', 'aide_telephone'],
-  ['exempleTelephone', 'exemple_telephone'], ['longueurTelephone', 'longueur_telephone'],
-  ['defaut', 'defaut'], ['active', 'active'], ['ordre', 'ordre'],
+  ['exempleTelephone', 'exemple_telephone'], ['longueurTelephone', 'longueur_telephone', 'num'],
+  ['defaut', 'defaut', 'bool'], ['active', 'active', 'bool'], ['ordre', 'ordre', 'num'],
   ['whatsappNumber', 'whatsapp_number'], ['whatsappDisplay', 'whatsapp_display'],
   ['fuseaux', 'fuseaux', 'json'], ['regions', 'regions', 'json']
 ];
@@ -60,7 +62,7 @@ const MOYEN_PAIEMENT = [
 const REALISATION = [
   ['id', 'id'], ['category', 'category'], ['title', 'title'], ['description', 'description'],
   ['image', 'image'], ['imageAlt', 'image_alt'], ['imagePosition', 'image_position'],
-  ['href', 'href'], ['video', 'video'], ['ordre', 'ordre']
+  ['href', 'href'], ['video', 'video'], ['ordre', 'ordre', 'num']
 ];
 
 /** Liste de colonnes pour un SELECT : les dates reviennent en texte. */

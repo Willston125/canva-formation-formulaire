@@ -28,6 +28,28 @@ async function compterInscrits(db) {
 /** Comme le script Google : sans ordre, en fin de liste. */
 const parOrdre = (a, b) => (typeof a.ordre === 'number' ? a.ordre : 999) - (typeof b.ordre === 'number' ? b.ordre : 999);
 
+/**
+ * Une session telle que le site la reçoit, depuis sa ligne et ses lignes de
+ * session_pays : `pays` = les codes proposés (« DJ,KM »), `parPays` = ce qui
+ * est propre à chacun. Les écritures du tableau de bord relisent une session
+ * par ici : elles partent ainsi de ce que l'administrateur a sous les yeux.
+ */
+function objetSession(ligne, lignesPays) {
+  const s = versObjet(ligne, SESSION);
+  const proposes = lignesPays.filter(p => p.propose).map(p => p.pays_code);
+  s.pays = proposes.length ? proposes.join(',') : null;
+  const parPays = {};
+  for (const p of lignesPays) {
+    const reglage = {};
+    if (p.mode !== null) reglage.mode = p.mode;
+    if (p.tarif !== null) reglage.tarif = p.tarif;
+    if (p.lieu !== null) reglage.lieu = p.lieu;
+    if (Object.keys(reglage).length) parPays[p.pays_code] = reglage;
+  }
+  s.parPays = Object.keys(parPays).length ? parPays : [];
+  return s;
+}
+
 async function lireCatalogue(db) {
   const q = async (texte, valeurs) => (await db.query(texte, valeurs)).rows;
   const [formations, tarifs, sessions, sessionPays, pays, moyens, realisations,
@@ -55,19 +77,7 @@ async function lireCatalogue(db) {
     }).sort(parOrdre),
 
     sessions: sessions.map(ligne => {
-      const s = versObjet(ligne, SESSION);
-      const lignes = sessionPays.filter(p => p.session_id === s.id);
-      const proposes = lignes.filter(p => p.propose).map(p => p.pays_code);
-      s.pays = proposes.length ? proposes.join(',') : null;
-      const parPays = {};
-      for (const p of lignes) {
-        const reglage = {};
-        if (p.mode !== null) reglage.mode = p.mode;
-        if (p.tarif !== null) reglage.tarif = p.tarif;
-        if (p.lieu !== null) reglage.lieu = p.lieu;
-        if (Object.keys(reglage).length) parPays[p.pays_code] = reglage;
-      }
-      s.parPays = Object.keys(parPays).length ? parPays : [];
+      const s = objetSession(ligne, sessionPays.filter(p => p.session_id === ligne.id));
       s.placesAvailable = typeof s.placesTotal === 'number'
         ? Math.max(0, s.placesTotal - (places[s.id] || 0))
         : null;
@@ -97,4 +107,4 @@ async function lireCatalogue(db) {
   };
 }
 
-module.exports = { lireCatalogue, compterInscrits, STATUTS_COMPTES };
+module.exports = { lireCatalogue, compterInscrits, objetSession, STATUTS_COMPTES };

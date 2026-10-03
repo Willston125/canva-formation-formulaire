@@ -111,7 +111,7 @@ async function commande(api, charge, jeton) {
   // ------------------------------------- 4. Ce qui n'est pas encore là ---
 
   verifier('une commande pas encore portée le dit',
-    (await commande(api, { action: 'admin.formation.save', donnees: {} }, JETON_ADMIN)).json.erreur,
+    (await commande(api, { action: 'admin.image.upload', donnees: {} }, JETON_ADMIN)).json.erreur,
     'Cette commande n’est pas encore disponible sur la nouvelle base.');
 
   await db.close();

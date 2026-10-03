@@ -46,30 +46,9 @@ function insertion(table, valeurs) {
 
 // ------------------------------------------------- jours et séances ----
 
-const JOURS = { lundi: 1, mardi: 2, mercredi: 3, jeudi: 4, vendredi: 5, samedi: 6, dimanche: 7 };
-
-/** « Lundi et mercredi · 18h – 20h » → [1, 3]. */
-function joursDepuisHoraires(texte) {
-  const bas = String(texte || '').toLowerCase();
-  return Object.keys(JOURS).filter(j => new RegExp('\\b' + j + 's?\\b').test(bas)).map(j => JOURS[j]).sort((a, b) => a - b);
-}
-
-/** « 15 séances · 24 heures » → 15. */
-function seancesDepuisDuree(texte) {
-  const m = /(\d+)\s*s[ée]ances?/i.exec(String(texte || ''));
-  return m ? Number(m[1]) : null;
-}
-
-/** Même calcul que seances_possibles() dans la base. */
-function seancesPossibles(debut, fin, jours) {
-  if (!debut || !fin || !jours.length) return null;
-  let n = 0;
-  for (let d = new Date(debut + 'T00:00:00Z'); d <= new Date(fin + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() + 1)) {
-    const isodow = ((d.getUTCDay() + 6) % 7) + 1;
-    if (jours.includes(isodow)) n++;
-  }
-  return n;
-}
+/* Les mêmes que l'API : la reprise et le tableau de bord lisent les horaires
+   de la même façon (api/_lib/calendrier.js). */
+const { joursDepuisHoraires, seancesDepuisDuree, seancesPossibles } = require('../../api/_lib/calendrier');
 
 const estDate = v => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v);
 

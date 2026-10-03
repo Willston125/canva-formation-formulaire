@@ -4,8 +4,20 @@
     {
       "name": "site",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "serve"],
+      "runtimeArgs": [
+        "run",
+        "serve"
+      ],
       "port": 5173
+    },
+    {
+      "name": "banc",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "banc"
+      ],
+      "port": 5180
     }
   ]
 }

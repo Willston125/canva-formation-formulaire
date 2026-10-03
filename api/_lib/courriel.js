@@ -79,6 +79,53 @@ function alerteInscription(i) {
   return { sujet, texte, html, repondreA };
 }
 
+/** « Waafi : +253 77 55 63 44 — Ali William » : ce qu'un candidat lirait pour payer. */
+function decrireMoyen(m) {
+  if (m.kind === 'cash') {
+    return (m.label || 'Espèces') + ' : ' + ([m.recipient, m.place, m.phone].filter(Boolean).join(', ') || '—');
+  }
+  return (m.label || 'Paiement mobile') + ' : ' + (m.number || '—') + (m.accountName ? ' — ' + m.accountName : '');
+}
+
+/**
+ * L'alerte d'un changement de moyens de paiement : { sujet, texte, html }.
+ *
+ * Un numéro de paiement est ce qu'un intrus changerait en premier : les
+ * candidats paieraient chez lui, sans que rien ne paraisse sur le site. Chaque
+ * changement part donc aussitôt dans la boîte du propriétaire, avant et après
+ * côte à côte, pour qu'un changement qu'il n'a pas fait saute aux yeux.
+ */
+function alerteMoyensPaiement({ code, nom, avant, apres, qui, quand = new Date() }) {
+  const pays = (nom || code) + (nom && code ? ' (' + code + ')' : '');
+  const date = quand.toLocaleString('fr-FR', { dateStyle: 'long', timeStyle: 'short', timeZone: 'Africa/Djibouti' });
+  const liste = moyens => (moyens.length ? moyens.map(decrireMoyen) : ['(aucun)']);
+  const mise = 'Si ce changement ne vient pas de vous, changez tout de suite le mot de passe de votre compte '
+    + 'Supabase, puis rétablissez les bons numéros dans le tableau de bord.';
+
+  const texte = 'MOYENS DE PAIEMENT MODIFIÉS — ' + pays + '\n\n'
+    + 'Par ' + qui + ', le ' + date + ' (heure de Djibouti).\n\n'
+    + 'AVANT\n' + liste(avant).map(l => '- ' + l).join('\n') + '\n\n'
+    + 'APRÈS\n' + liste(apres).map(l => '- ' + l).join('\n') + '\n\n' + mise;
+
+  const bloc = (titre, moyens) => '<p style="margin:18px 0 6px;color:#5f6368;font-size:12px;font-weight:700;letter-spacing:1px">'
+    + titre + '</p><ul style="margin:0;padding-left:20px;color:#111;font-size:14px;line-height:1.6">'
+    + liste(moyens).map(l => '<li>' + echapper(l) + '</li>').join('') + '</ul>';
+  const html = '<div style="font-family:Arial,Helvetica,sans-serif;max-width:640px;margin:0 auto">'
+    + '<div style="background:#050709;padding:20px 24px;border-radius:12px 12px 0 0">'
+    + '<p style="margin:0;color:#CBFD00;font-size:12px;letter-spacing:1px;font-weight:700">IMPACTALI</p>'
+    + '<h1 style="margin:6px 0 0;color:#ffffff;font-size:20px">Moyens de paiement modifiés</h1>'
+    + '<p style="margin:6px 0 0;color:#9CA6B2;font-size:14px">' + echapper(pays) + '</p>'
+    + '</div><div style="border:1px solid #e6e6e6;border-top:0;border-radius:0 0 12px 12px;padding:4px 24px 20px">'
+    + '<p style="margin:16px 0 0;color:#111;font-size:14px">Par <strong>' + echapper(qui) + '</strong>, le '
+    + echapper(date) + ' (heure de Djibouti).</p>'
+    + bloc('AVANT', avant) + bloc('APRÈS', apres)
+    + '<p style="margin:20px 0 0;padding:12px 14px;background:#fff4e5;border-radius:8px;color:#5a3b00;font-size:13px">'
+    + echapper(mise) + '</p></div></div>';
+
+  const sujet = ('Moyens de paiement modifiés · ' + pays).replace(/[\r\n\t]+/g, ' ').slice(0, 200);
+  return { sujet, texte, html };
+}
+
 /**
  * Envoie un e-mail par Resend. Ne lève jamais : rend { envoye, erreur }.
  * Une alerte qui échoue ne doit pas faire perdre l'inscription.
@@ -104,4 +151,4 @@ async function envoyer({ a = EMAIL_PRO, sujet, texte, html, repondreA = null, pi
   }
 }
 
-module.exports = { alerteInscription, envoyer, echapper, EMAIL_PRO };
+module.exports = { alerteInscription, alerteMoyensPaiement, envoyer, echapper, EMAIL_PRO };

@@ -10,11 +10,13 @@
  * reste fermée par défaut, même si la création de comptes était rouverte.
  *
  * QUOI. Les commandes répondent comme celles du script Google (commandeAdmin),
- * pour que le tableau de bord change le moins possible. Phase 4, première
- * partie : connexion, catalogue, inscriptions, changement de statut. */
+ * pour que le tableau de bord change le moins possible : ici la connexion, les
+ * inscriptions et leur statut ; les enregistrements du catalogue sont dans
+ * ecritures.js. */
 'use strict';
 
 const { lireCatalogue } = require('./catalogue');
+const { ECRITURES, noter } = require('./ecritures');
 
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://isxkyikakrssekrxudjw.supabase.co';
 const STATUTS = ['En attente', 'Confirmé', 'Payé', 'Annulé'];
@@ -85,11 +87,6 @@ async function lireInscriptions(db, formationId) {
   });
 }
 
-async function noter(db, qui, action, cible, details) {
-  await db.query('insert into journal (qui, action, cible, details) values ($1, $2, $3, $4::jsonb)',
-    [qui, action, cible, JSON.stringify(details || {})]);
-}
-
 async function changerStatut(db, id, statut, qui) {
   if (!FORMAT_ID.test(String(id || ''))) throw new Error('Inscription introuvable.');
   if (STATUTS.indexOf(statut) < 0) throw new Error('Statut inconnu : ' + statut + '.');
@@ -100,12 +97,21 @@ async function changerStatut(db, id, statut, qui) {
   return { ok: true };
 }
 
-const COMMANDES = {
+const COMMANDES = Object.assign({
   'admin.login': async db => ({ ok: true, version: 'supabase', catalogue: await lireCatalogue(db) }),
   'admin.catalogue': async db => ({ ok: true, catalogue: await lireCatalogue(db) }),
   'admin.inscriptions': async (db, d) => ({ ok: true, inscriptions: await lireInscriptions(db, d.formationId) }),
   'admin.inscription.statut': async (db, d, qui) => changerStatut(db, d.ligne, d.statut, qui)
-};
+}, ECRITURES);
+
+/* Les classes 22 (valeur mal formée) et 23 (règle d'intégrité) de Postgres :
+   une saisie que l'API n'a pas su refuser avant la base. L'administrateur doit
+   savoir que RIEN n'a été écrit, et quelle règle a dit non ; le nom d'une règle
+   du schéma n'apprend rien qu'un dépôt public ne dise déjà. */
+const REFUS_DE_LA_BASE = /^2[23]/;
+function refusDeLaBase(e) {
+  return 'La base a refusé cet enregistrement (règle « ' + (e.constraint || e.code) + ' ») : rien n’a été modifié.';
+}
 
 /**
  * Exécute une commande du tableau de bord.
@@ -116,16 +122,21 @@ async function executer(db, charge, jeton, options) {
   if (!qui) {
     return { statut: 401, corps: { ok: false, erreur: 'Connexion requise.', authentification: false } };
   }
-  const commande = COMMANDES[charge.action];
+  /* Seules les commandes de la table : « constructor » ou « __proto__ » en
+     sont des propriétés héritées, et en feraient une commande. */
+  const commande = Object.prototype.hasOwnProperty.call(COMMANDES, charge.action) ? COMMANDES[charge.action] : null;
   if (!commande) {
     return { statut: 200, corps: { ok: false, erreur: 'Cette commande n’est pas encore disponible sur la nouvelle base.' } };
   }
   try {
-    return { statut: 200, corps: await commande(db, charge, qui) };
+    return { statut: 200, corps: await commande(db, charge, qui, options || {}) };
   } catch (e) {
     /* Les erreurs de règle (statut inconnu, inscription introuvable) sont pour
-       l'administrateur, et dites telles quelles. Une erreur de la base, elle,
+       l'administrateur, et dites telles quelles. Une panne de la base, elle,
        remonte au gestionnaire, qui répond un message générique (audit S9). */
+    if (e && e.code && REFUS_DE_LA_BASE.test(String(e.code))) {
+      return { statut: 200, corps: { ok: false, erreur: refusDeLaBase(e) } };
+    }
     if (e && e.code) throw e;
     return { statut: 200, corps: { ok: false, erreur: String((e && e.message) || 'Erreur inconnue.') } };
   }

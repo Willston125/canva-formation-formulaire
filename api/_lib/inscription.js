@@ -23,6 +23,7 @@ const crypto = require('crypto');
 const { lireCatalogue } = require('./catalogue');
 const { tarifInscription, trouverPays, sessionOuverteAu, dateEnFrancais } = require('./prix');
 const { EMAIL_PRO } = require('./courriel');
+const { enTransaction } = require('./transaction');
 
 /* Même plafond que le script Google : très au-dessus d'une vraie journée,
    très en dessous de ce qu'une boucle produit. */
@@ -53,23 +54,6 @@ function nettoyer(charge) {
 
 /** L'adresse du visiteur n'est jamais gardée : seulement une empreinte salée. */
 const empreinte = (ip, sel) => crypto.createHmac('sha256', String(sel)).update(String(ip || '')).digest('hex').slice(0, 32);
-
-/** Une transaction, que la base soit PGlite (épreuves) ou node-postgres (en ligne). */
-async function enTransaction(db, travail) {
-  if (typeof db.transaction === 'function') return db.transaction(travail);
-  const client = await db.connect();
-  try {
-    await client.query('begin');
-    const r = await travail(client);
-    await client.query('commit');
-    return r;
-  } catch (e) {
-    await client.query('rollback').catch(() => {});
-    throw e;
-  } finally {
-    client.release();
-  }
-}
 
 async function recevoirInscription(db, chargeBrute, { ip = '', sel = 'local' } = {}) {
   const d = nettoyer(chargeBrute);
