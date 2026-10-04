@@ -110,7 +110,8 @@ const indispensables = pages.concat([
      ne reçoivent que ce qui est déployé. */
   'api/index.js', 'api/quotidien.js', 'api/_lib/catalogue.js', 'api/_lib/champs.js', 'api/_lib/base.js',
   'api/_lib/inscription.js', 'api/_lib/prix.js', 'api/_lib/courriel.js', 'api/_lib/admin.js', 'api/_lib/supabase-ca-2021.crt',
-  'api/_lib/ecritures.js', 'api/_lib/calendrier.js', 'api/_lib/transaction.js'
+  'api/_lib/ecritures.js', 'api/_lib/calendrier.js', 'api/_lib/transaction.js', 'api/_lib/photos.js',
+  'api/_lib/journal.js'
 ]);
 verifier('les fiches générées sont bien comptées', pages.length >= 8, true);
 verifier('aucun fichier du site n’est écarté', indispensables.filter(exclu), []);

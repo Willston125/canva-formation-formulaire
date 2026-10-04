@@ -27,6 +27,8 @@ const { joursDepuisHoraires, seancesDepuisDuree, seancesPossibles, NOMS_JOURS } 
 const { dateEnFrancais } = require('./prix');
 const { alerteMoyensPaiement, envoyer: envoyerCourriel } = require('./courriel');
 const { enTransaction } = require('./transaction');
+const { noter } = require('./journal');
+const { supprimerSiInutile } = require('./photos');
 
 const possede = (o, cle) => Object.prototype.hasOwnProperty.call(o, cle);
 const estObjet = v => !!v && typeof v === 'object' && !Array.isArray(v);
@@ -229,7 +231,7 @@ async function enregistrerFormation(tx, donnees) {
 
 async function supprimerFormation(tx, id) {
   if (!id) throw new Error('Identifiant manquant.');
-  const { rows } = await tx.query('select form_id from formations where id = $1 for update', [String(id)]);
+  const { rows } = await tx.query('select form_id, image, poster from formations where id = $1 for update', [String(id)]);
   if (!rows.length) throw new Error('Formation introuvable.');
   const formId = rows[0].form_id;
 
@@ -241,6 +243,9 @@ async function supprimerFormation(tx, id) {
   }
   const sessions = await tx.query('delete from sessions where form_id = $1 returning id', [formId]);
   await tx.query('delete from formations where id = $1', [String(id)]);
+  // Ses visuels n'ont plus d'usage : on ne les laisse pas dans la base (si rien d'autre ne s'en sert)
+  await supprimerSiInutile(tx, rows[0].image);
+  await supprimerSiInutile(tx, rows[0].poster);
   const sessionsSupprimees = sessions.rows.length;
   return { sessionsSupprimees, cible: String(id), journal: { sessions: sessions.rows.map(r => r.id) } };
 }
@@ -721,11 +726,6 @@ async function enregistrerVisuels(tx, donnees, cadrages) {
 }
 
 // ------------------------------------------------------------ COMMANDES ----
-
-async function noter(db, qui, action, cible, details) {
-  await db.query('insert into journal (qui, action, cible, details) values ($1, $2, $3, $4::jsonb)',
-    [qui, action, cible, JSON.stringify(details || {})]);
-}
 
 /* Une écriture à la fois, comme le LockService du script : deux onglets
    ouverts ne se marchent pas dessus. L'écriture et sa trace au journal vont

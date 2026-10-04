@@ -1,6 +1,7 @@
 /* L'API du site : la base Supabase, derrière les MÊMES appels que le script
  * Google, avec les mêmes réponses :
- *   GET  ?action=catalogue | places | version
+ *   GET  ?action=catalogue | places | version | config
+ *   GET  ?photo=<identifiant> : une photo téléversée depuis le tableau de bord
  *   POST (sans « action ») : une inscription du formulaire public
  *   POST avec « action »   : une commande du tableau de bord (session Supabase)
  *
@@ -16,6 +17,7 @@ const { lireCatalogue, compterInscrits } = require('./_lib/catalogue');
 const { recevoirInscription } = require('./_lib/inscription');
 const { alerteInscription, envoyer: envoyerCourriel } = require('./_lib/courriel');
 const { executer: executerCommande, SUPABASE_URL } = require('./_lib/admin');
+const { lirePhoto } = require('./_lib/photos');
 
 /* Les places changent à chaque confirmation : 15 secondes de cache partagé,
    pas plus (audit P1). Le script Google relisait toute la feuille à chaque
@@ -33,6 +35,25 @@ function repondre(res, statut, donnees, cache) {
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
   res.setHeader('Cache-Control', cache || 'no-store');
   res.end(JSON.stringify(donnees));
+}
+
+/* Une photo ne change jamais : la remplacer en crée une autre, à une autre
+   adresse. Le réseau de Vercel la garde donc un an, et elle ne sort de la base
+   qu'une fois. Le type vient de la base, qui n'en accepte que trois ; « nosniff »
+   et la politique de contenu empêchent qu'on la lise comme autre chose. */
+function servirPhoto(res, photo) {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Content-Security-Policy', "default-src 'none'; sandbox");
+  if (!photo) {
+    res.statusCode = 404;
+    res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=60');
+    return res.end();
+  }
+  res.statusCode = 200;
+  res.setHeader('Content-Type', photo.type);
+  res.setHeader('Content-Length', photo.octets.length);
+  res.setHeader('Cache-Control', 'public, max-age=31536000, s-maxage=31536000, immutable');
+  res.end(photo.octets);
 }
 
 /** Le corps de la requête, en texte. Le site l'envoie en text/plain (requête « simple »). */
@@ -81,10 +102,12 @@ async function etat(obtenirBase) {
 /** Fabrique le gestionnaire : les épreuves lui passent une base PGlite, un faux envoi d'e-mail, un faux Supabase Auth. */
 function creerGestionnaire(obtenirBase, { envoyer = envoyerCourriel, sel = selParDefaut, admin = {} } = {}) {
   return async function gestionnaire(req, res) {
-    const action = new URL(req.url || '/', 'http://site').searchParams.get('action') || '';
+    const parametres = new URL(req.url || '/', 'http://site').searchParams;
+    const action = parametres.get('action') || '';
 
     try {
       if (req.method === 'GET' || req.method === 'HEAD') {
+        if (parametres.has('photo')) return servirPhoto(res, await lirePhoto(obtenirBase(), parametres.get('photo')));
         if (action === 'catalogue') return repondre(res, 200, await lireCatalogue(obtenirBase()), CACHE_COURT);
         if (action === 'places') return repondre(res, 200, { sessions: await compterInscrits(obtenirBase()) }, CACHE_COURT);
         if (action === 'version') return repondre(res, 200, await etat(obtenirBase));

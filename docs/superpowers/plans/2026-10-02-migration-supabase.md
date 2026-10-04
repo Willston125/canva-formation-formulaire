@@ -204,9 +204,16 @@ Ce qui était prévu :
   - **L'import depuis les fichiers du site n'est pas repris.** Il ne servait qu'à amorcer une base vide, et ces fichiers sont plus anciens que la feuille.
   - Banc local : formation, session (refus puis correction), pays (alerte), réglages, textes et visuels enregistrés depuis le vrai tableau de bord.
   - Corrigé au passage : en mode essai, le bandeau écrasait le contenu à 60 px de large.
+- **Troisième partie, 4/10 : les photos.**
+  - Elles sont rangées dans la base (table `photos`, migration `20261004120000_photos.sql`) et servies à l'adresse `/api?photo=…`. Le réseau de Vercel les garde en cache un an.
+  - Seuls le WebP, le JPEG et le PNG sont acceptés, vérifiés sur leurs premiers octets. Une photo n'est effacée que si plus rien ne s'en sert.
+  - Bouton « Rapatrier les photos » dans Visuels du site. Il télécharge chez Google, à leur taille d'origine, les 19 photos encore sur Drive, et les remplace partout. Relancé, il ne retélécharge rien.
+  - Banc local : les 19 vraies photos rapatriées en 20 s, soit 1,5 Mo. Aucune ne reste sur Drive.
+  - La sauvegarde quotidienne liste les photos sans les joindre. Une table illisible ne l'arrête plus, et la ligne anti-pause est écrite quand même.
+  - L'import des inscriptions depuis le CSV est prêt (`npm run import:inscriptions`).
 - **Reste :**
-  - les photos (téléversement dans la base, suppression) ;
-  - puis la bascule.
+  - la migration des photos, à coller dans Supabase (propriétaire) ;
+  - puis la bascule. Rapatrier les photos se fera APRÈS : la reprise du catalogue ramène les adresses Drive de la feuille.
 
 Ce qui était prévu :
 

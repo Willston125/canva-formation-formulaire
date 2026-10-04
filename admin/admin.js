@@ -16,6 +16,10 @@
      Sans « ?essai », rien ne change : le tableau de bord parle au script Google. */
   var ESSAI = /[?&]essai(?:[=&]|$)/.test(window.location.search);
   var API = ESSAI ? '/api' : ((window.SITE_ENDPOINTS && window.SITE_ENDPOINTS.registration) || '');
+  /* Le tableau de bord parle à la nouvelle base (Supabase) : aujourd'hui en
+     mode essai seulement, toujours après la bascule. Ce qui n'existe que là —
+     le rapatriement des photos de Drive — se règle sur ce repère. */
+  var NOUVELLE_BASE = ESSAI;
   var CLE_MDP = 'impactali_admin_mdp';
   var CLE_SESSION = 'impactali_admin_session';
 
@@ -2340,7 +2344,8 @@
    */
   function aRetirer(url) {
     url = String(url || '').trim();
-    if (!url || !/googleusercontent|drive\.google/.test(url)) return;
+    // Drive (script Google) ou la base (/api?photo=…) : un fichier du site, lui, ne s'efface pas
+    if (!url || !(/googleusercontent|drive\.google/.test(url) || /^\/api\?photo=/.test(url))) return;
     if (etat.imagesARetirer.indexOf(url) < 0) etat.imagesARetirer.push(url);
   }
 
@@ -2733,6 +2738,74 @@
     return { donnees: donnees, cadrages: cadrages };
   }
 
+  /**
+   * Les photos du site encore hébergées par Google Drive, sans doublon.
+   *
+   * Sur la nouvelle base, Drive n'est plus qu'un hébergeur de passage : un
+   * fichier effacé là-bas ferait disparaître la photo du site, sans que rien
+   * ne le signale ici.
+   */
+  function photosSurDrive(c) {
+    var vues = [];
+    var ajouter = function (url) {
+      url = String(url || '').trim();
+      if (/googleusercontent|drive\.google/.test(url) && vues.indexOf(url) < 0) vues.push(url);
+    };
+    Object.keys(c.images || {}).forEach(function (cle) { ajouter(c.images[cle]); });
+    (c.formations || []).forEach(function (f) { ajouter(f.image); ajouter(f.poster); });
+    (c.portfolio || []).forEach(function (r) { ajouter(r.image); });
+    (c.pays || []).forEach(function (p) {
+      (p.paymentMethods || []).forEach(function (m) { ajouter(m.image); });
+    });
+    return vues;
+  }
+
+  function blocRapatriement() {
+    var n = NOUVELLE_BASE ? photosSurDrive(etat.catalogue).length : 0;
+    if (!n) return '';
+    return '<div class="bloc" id="bloc-drive"><h2>' + n + (n > 1 ? ' photos encore' : ' photo encore')
+      + ' sur Google Drive</h2>'
+      + '<p class="aide">Le site les affiche, mais elles dépendent de votre compte Google : un fichier '
+      + 'effacé dans Drive disparaîtrait du site. Rapatriez-les dans la base du site. Rien ne change '
+      + 'à l’écran : ce sont les mêmes photos, à leur taille d’origine.</p>'
+      + '<div class="panneau__boutons" style="justify-content:flex-start">'
+      + '<button class="bouton bouton--primaire" type="button" id="btn-rapatrier">'
+      + '<span class="btn-texte">Rapatrier ' + (n > 1 ? 'les ' + n + ' photos' : 'la photo') + '</span>'
+      + '<span class="btn-attente" hidden><span class="rondelle"></span>'
+      + '<span id="avancee-rapatriement">Rapatriement…</span></span></button></div></div>';
+  }
+
+  /* Une photo à la fois, et non toutes ensemble : chacune tient largement dans
+     le délai d'une requête, on voit où l'on en est, et un échec n'arrête pas
+     les suivantes. Relancer ne télécharge pas deux fois une photo déjà là. */
+  function rapatrierPhotos() {
+    var bouton = $('#btn-rapatrier');
+    var liste = photosSurDrive(etat.catalogue);
+    var faites = 0, echecs = [];
+    attente(bouton, true);
+    var suite = Promise.resolve();
+    liste.forEach(function (url, i) {
+      suite = suite.then(function () {
+        var avancee = $('#avancee-rapatriement');
+        if (avancee) avancee.textContent = 'Photo ' + (i + 1) + ' sur ' + liste.length + '…';
+        return appeler('admin.image.rapatrier', { url: url })
+          .then(function () { faites++; })
+          .catch(function (err) { echecs.push(messageLisible(err)); });
+      });
+    });
+    suite.then(function () {
+      attente(bouton, false);
+      rendre();
+      if (echecs.length) {
+        afficherMessage('#erreur-globale', faites + ' photo(s) rapatriée(s), ' + echecs.length
+          + ' en échec. Relancez pour réessayer celles qui manquent. Première erreur : ' + echecs[0], 15000);
+      } else {
+        afficherMessage('#succes-globale', faites + ' photo(s) rapatriée(s) : le site les lit désormais '
+          + 'dans sa propre base.', 7000);
+      }
+    });
+  }
+
   function rendreVisuels() {
     var boite = $('#formulaire-visuels');
     if (!etat.visuelsDeclares) {
@@ -2753,7 +2826,7 @@
       g.items.push(v);
     });
 
-    boite.innerHTML = '<div class="bloc"><h2>Visuels du site</h2>'
+    boite.innerHTML = blocRapatriement() + '<div class="bloc"><h2>Visuels du site</h2>'
       + '<p class="aide">Remplacez une image et choisissez son cadrage. Retirer le remplacement '
       + 'rétablit le visuel d’origine du site.</p></div>'
       + groupes.map(function (g) {
@@ -2789,6 +2862,7 @@
     etat.visuelsDeclares.forEach(function (v) {
       activerChampImage('visuel-' + v.cle, v.format, v.rapport);
     });
+    if ($('#btn-rapatrier')) $('#btn-rapatrier').addEventListener('click', rapatrierPhotos);
 
     $('#btn-visuels').addEventListener('click', function () {
       var bouton = $('#btn-visuels');

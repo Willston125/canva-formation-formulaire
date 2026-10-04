@@ -16,7 +16,9 @@
 'use strict';
 
 const { lireCatalogue } = require('./catalogue');
-const { ECRITURES, noter } = require('./ecritures');
+const { ECRITURES } = require('./ecritures');
+const { PHOTOS } = require('./photos');
+const { noter } = require('./journal');
 
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://isxkyikakrssekrxudjw.supabase.co';
 const STATUTS = ['En attente', 'Confirmé', 'Payé', 'Annulé'];
@@ -102,7 +104,7 @@ const COMMANDES = Object.assign({
   'admin.catalogue': async db => ({ ok: true, catalogue: await lireCatalogue(db) }),
   'admin.inscriptions': async (db, d) => ({ ok: true, inscriptions: await lireInscriptions(db, d.formationId) }),
   'admin.inscription.statut': async (db, d, qui) => changerStatut(db, d.ligne, d.statut, qui)
-}, ECRITURES);
+}, ECRITURES, PHOTOS);
 
 /* Les classes 22 (valeur mal formée) et 23 (règle d'intégrité) de Postgres :
    une saisie que l'API n'a pas su refuser avant la base. L'administrateur doit
@@ -136,6 +138,13 @@ async function executer(db, charge, jeton, options) {
        remonte au gestionnaire, qui répond un message générique (audit S9). */
     if (e && e.code && REFUS_DE_LA_BASE.test(String(e.code))) {
       return { statut: 200, corps: { ok: false, erreur: refusDeLaBase(e) } };
+    }
+    /* Table absente : une migration du dépôt (supabase/migrations) n'a pas
+       encore été collée dans l'éditeur SQL de Supabase. Le dire, c'est donner
+       la solution ; « service indisponible » ne la donnait pas. */
+    if (e && e.code === '42P01') {
+      return { statut: 200, corps: { ok: false, erreur: 'Une table manque dans la base : un fichier de '
+        + 'supabase/migrations reste à coller dans l’éditeur SQL de Supabase. Rien n’a été modifié.' } };
     }
     if (e && e.code) throw e;
     return { statut: 200, corps: { ok: false, erreur: String((e && e.message) || 'Erreur inconnue.') } };

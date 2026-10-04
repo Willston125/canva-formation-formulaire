@@ -88,7 +88,20 @@ async function lancer(tache, entetes = {}) {
     (await lancer(tache, { authorization: 'Bearer secret-des-epreuves' })).json.envoyee, true);
   delete process.env.CRON_SECRET;
 
-  // ------------------------------------------------------- 5. Base en panne ---
+  // ---------------------------------------------- 5. Une table manquante ---
+
+  /* Une migration pas encore collée dans Supabase (la table des photos, le
+     4 octobre 2026) : la copie part sans elle, et la ligne qui garde le projet
+     éveillé est écrite quand même. */
+  await db.exec('drop table photos');
+  envois.length = 0;
+  heure = new Date('2026-10-10T03:00:00Z');
+  const sansPhotos = await lancer(tache);
+  verifier('une table manquante n’arrête pas la sauvegarde', sansPhotos.json.envoyee, true);
+  verifier('le résumé le dit', /photos : ILLISIBLE \(42P01\)/.test(envois[0] && envois[0].texte), true);
+  verifier('et la ligne anti-pause est écrite', (await lignes()).pop().faite_le.toISOString(), '2026-10-10T03:00:00.000Z');
+
+  // ------------------------------------------------------- 6. Base en panne ---
 
   const enPanne = creerTache(() => ({ query: async () => { throw Object.assign(new Error('connexion SECRETE refusée'), { code: 'ECONNREFUSED' }); } }));
   const panne = await lancer(enPanne);

@@ -18,7 +18,15 @@ const { base } = require('./_lib/base');
 const { envoyer: envoyerCourriel } = require('./_lib/courriel');
 
 const TABLES = ['pays', 'moyens_paiement', 'formations', 'formation_tarifs', 'sessions', 'session_pays',
-  'realisations', 'reglages', 'textes', 'visuels', 'inscriptions', 'journal', 'sauvegardes'];
+  'realisations', 'reglages', 'textes', 'visuels', 'inscriptions', 'journal', 'sauvegardes', 'photos'];
+
+/* Les photos ne partent pas dans l'e-mail : quelques centaines de Ko chacune,
+   chaque jour, la copie dépasserait vite ce qu'un e-mail transporte. La copie
+   en donne la LISTE (nom, poids, origine) ; les photos elles-mêmes restent dans
+   la base, et leurs originaux chez le propriétaire. */
+const LECTURES = {
+  photos: 'select id, type, octet_length(octets) as poids, nom, origine, creee_le from photos'
+};
 const APRES_REUSSITE_H = 20;
 const APRES_ECHEC_H = 1;
 
@@ -45,16 +53,25 @@ function creerTache(obtenirBase, { envoyer = envoyerCourriel, maintenant = () =>
       }
 
       const tables = {};
-      for (const t of TABLES) tables[t] = (await db.query(`select * from ${t}`)).rows;
+      /* Une table illisible — absente, par exemple, tant qu'une migration n'a pas
+         été collée dans Supabase — ne doit pas tout arrêter : sans la ligne
+         écrite plus bas, le projet gratuit se mettrait en pause. On copie le
+         reste, et on le dit. */
+      const illisibles = {};
+      for (const t of TABLES) {
+        try { tables[t] = (await db.query(LECTURES[t] || `select * from ${t}`)).rows; }
+        catch (e) { tables[t] = []; illisibles[t] = String((e && e.code) || 'erreur'); }
+      }
       const jour = maintenant().toISOString().slice(0, 10);
       const contenu = JSON.stringify({ projet: 'IMPACTALI', faite_le: maintenant().toISOString(), tables });
       const octets = Buffer.byteLength(contenu);
-      const resume = TABLES.map(t => `${t} : ${tables[t].length}`).join('\n');
+      const resume = TABLES.map(t => `${t} : ` + (illisibles[t] ? `ILLISIBLE (${illisibles[t]})` : tables[t].length)).join('\n');
 
       const envoi = await envoyer({
         sujet: 'Sauvegarde IMPACTALI du ' + jour,
         texte: 'Sauvegarde quotidienne de la base du site, en pièce jointe (' + Math.ceil(octets / 1024) + ' Ko).\n\n'
-          + resume + '\n\nElle contient les inscriptions, donc des données personnelles : '
+          + resume + '\n\nLes photos y sont listées, mais pas jointes : elles restent dans la base.'
+          + '\n\nElle contient les inscriptions, donc des données personnelles : '
           + 'gardez-la dans cette boîte, ne la transférez pas.',
         piecesJointes: [{ filename: 'impactali-sauvegarde-' + jour + '.json', content: Buffer.from(contenu).toString('base64') }]
       });
