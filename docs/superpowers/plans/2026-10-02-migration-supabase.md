@@ -212,7 +212,7 @@ Ce qui était prévu :
   - La sauvegarde quotidienne liste les photos sans les joindre. Une table illisible ne l'arrête plus, et la ligne anti-pause est écrite quand même.
   - L'import des inscriptions depuis le CSV est prêt (`npm run import:inscriptions`).
 - **Reste :**
-  - la migration des photos, à coller dans Supabase (propriétaire) ;
+  - ~~la migration des photos, à coller dans Supabase~~ : collée le 4/10. Sonde : les 14 tables sont fermées, et /api?photo= répond ;
   - puis la bascule. Rapatrier les photos se fera APRÈS : la reprise du catalogue ramène les adresses Drive de la feuille.
 
 Ce qui était prévu :
