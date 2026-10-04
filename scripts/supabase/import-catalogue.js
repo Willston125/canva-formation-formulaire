@@ -19,8 +19,8 @@
 
 const fs = require('fs');
 const path = require('path');
-const vm = require('vm');
 const { FORMATION, SESSION, PAYS, MOYEN_PAIEMENT, REALISATION } = require('../../api/_lib/champs');
+const { lireCatalogueGoogle } = require('./google');
 
 const RACINE = path.resolve(__dirname, '..', '..');
 
@@ -245,13 +245,7 @@ async function principal() {
   if (option('--depuis')) {
     catalogue = JSON.parse(fs.readFileSync(path.resolve(option('--depuis')), 'utf8'));
   } else {
-    const site = { window: {} };
-    vm.runInNewContext(fs.readFileSync(path.join(RACINE, 'formations-data.js'), 'utf8'), site);
-    const api = site.window.SITE_ENDPOINTS && site.window.SITE_ENDPOINTS.registration;
-    if (!api) throw new Error('Adresse du script Google introuvable dans formations-data.js.');
-    const reponse = await fetch(api + '?action=catalogue', { redirect: 'follow' });
-    if (!reponse.ok) throw new Error('Le script Google a répondu ' + reponse.status);
-    catalogue = await reponse.json();
+    catalogue = await lireCatalogueGoogle();
   }
   if (!Array.isArray(catalogue.formations) || !catalogue.formations.length) {
     throw new Error('Catalogue vide : rien n’est écrit, pour ne pas vider la base.');

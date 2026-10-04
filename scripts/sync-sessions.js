@@ -21,7 +21,7 @@ const fs = require('fs');
 const path = require('path');
 /* La mise en forme des valeurs est COMMUNE aux deux synchronisations : deux
    copies, c'est le piège de l'apostrophe corrigé d'un côté et pas de l'autre. */
-const { litteral, enregistrementEnTexte } = require('./sync-commun.js');
+const { litteral, enregistrementEnTexte, pointDeTerminaison } = require('./sync-commun.js');
 
 const RACINE = path.resolve(__dirname, '..');
 const FICHIER = path.join(RACINE, 'formations-data.js');
@@ -45,8 +45,7 @@ if (require.main !== module) return;
 (async () => {
   const source = fs.readFileSync(FICHIER, 'utf8');
 
-  const point = (/SITE_ENDPOINTS[\s\S]{0,400}?registration:\s*'([^']+)'/.exec(source) || [])[1]
-    || (/https:\/\/script\.google\.com\/macros\/[^'"]+/.exec(source) || [])[0];
+  const point = pointDeTerminaison(source);
   if (!point) { console.error('Point de terminaison introuvable dans formations-data.js.'); process.exit(1); }
 
   let catalogue;

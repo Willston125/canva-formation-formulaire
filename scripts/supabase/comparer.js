@@ -9,11 +9,8 @@
  * Avant la bascule, c'est la preuve que le site ne verra pas la différence. */
 'use strict';
 
-const fs = require('fs');
-const path = require('path');
-const vm = require('vm');
+const { ADRESSE_GOOGLE } = require('./google');
 
-const RACINE = path.resolve(__dirname, '..', '..');
 const args = process.argv.slice(2);
 const option = nom => { const i = args.indexOf(nom); return i >= 0 ? args[i + 1] : null; };
 
@@ -66,9 +63,7 @@ function ecarts(google, api) {
 }
 
 async function principal() {
-  const site = { window: {} };
-  vm.runInNewContext(fs.readFileSync(path.join(RACINE, 'formations-data.js'), 'utf8'), site);
-  const adresseGoogle = site.window.SITE_ENDPOINTS.registration + '?action=catalogue';
+  const adresseGoogle = ADRESSE_GOOGLE + '?action=catalogue';
   const adresseApi = (option('--api') || 'https://www.impactali.site/api') + '?action=catalogue';
 
   const [google, api] = await Promise.all([lire(adresseGoogle), lire(adresseApi)]);

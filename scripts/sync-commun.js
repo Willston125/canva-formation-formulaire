@@ -78,9 +78,18 @@ function enregistrementEnTexte(objet, ordre, options) {
 
 /** L'adresse de l'API, lue dans le fichier lui-même : aucun repli codé en dur. */
 function pointDeTerminaison(source) {
-  return (/SITE_ENDPOINTS[\s\S]{0,400}?registration:\s*'([^']+)'/.exec(source) || [])[1]
+  const lue = (/SITE_ENDPOINTS[\s\S]{0,400}?registration:\s*'([^']+)'/.exec(source) || [])[1]
     || (/https:\/\/script\.google\.com\/macros\/[^'"]+/.exec(source) || [])[0]
     || null;
+  return lue ? adresseComplete(lue) : null;
+}
+
+/* Depuis la bascule, le site écrit « /api » : une adresse du site lui-même,
+   que le navigateur complète seul. Un script lancé sur l'ordinateur, lui, doit
+   savoir de quel site il s'agit. */
+const SITE = 'https://www.impactali.site';
+function adresseComplete(adresse) {
+  return new URL(adresse, SITE).toString();
 }
 
 /**
@@ -101,4 +110,4 @@ function remplacerBloc(source, nom, contenu) {
   };
 }
 
-module.exports = { litteral, enregistrementEnTexte, pointDeTerminaison, remplacerBloc };
+module.exports = { litteral, enregistrementEnTexte, pointDeTerminaison, remplacerBloc, adresseComplete };

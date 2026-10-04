@@ -355,8 +355,10 @@ async function formationsAGenerer() {
     return FORMATIONS;
   }
 
-  const api = (sandbox.window.SITE_ENDPOINTS || {}).registration;
-  if (!api) throw new Error('Adresse de l’API absente de formations-data.js');
+  const lue = (sandbox.window.SITE_ENDPOINTS || {}).registration;
+  if (!lue) throw new Error('Adresse de l’API absente de formations-data.js');
+  // « /api » depuis la bascule : une adresse du site, à compléter hors du navigateur
+  const api = require('./sync-commun.js').adresseComplete(lue);
   let reponse;
   try {
     reponse = await fetch(`${api}?action=catalogue`, { redirect: 'follow' });
