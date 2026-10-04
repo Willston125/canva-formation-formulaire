@@ -674,13 +674,17 @@ window.PAYS = Object.freeze([
 ]);
 
 /**
- * Point d'entrée du script Google Apps Script.
- * Il reçoit les inscriptions (POST) et, depuis l'ajout de `doGet`, renvoie le
- * nombre d'inscrits par session (GET `?action=places`). Le site s'en sert pour
- * décompter les places réellement prises : voir scripts/apps-script/places.gs.
+ * L'API du site (dossier api/, base Supabase), depuis la bascule.
+ * Elle reçoit les inscriptions (POST) et sert le catalogue et les places
+ * (GET `?action=catalogue`, `?action=places`), avec les mêmes réponses que
+ * l'ancien script Google. Une adresse du site lui-même : même origine, donc
+ * aucune règle de partage entre sites à négocier.
+ *
+ * RETOUR ARRIÈRE : remettre ici l'adresse du script Google, qui reste dans
+ * scripts/supabase/google.js.
  */
 window.SITE_ENDPOINTS = Object.freeze({
-  registration: 'https://script.google.com/macros/s/AKfycbw_fGtr_y_Mso7aKbg43mnKpSffZtb3XMiCvxcfTxOd76FM9HAJA6BBmdWS0_FkY5AmFQ/exec',
+  registration: '/api',
   /**
    * Version du script Google attendue par ce site (VERSION dans le fichier .gs).
    * Google continue de servir l'ANCIEN code tant qu'on n'a pas publié une

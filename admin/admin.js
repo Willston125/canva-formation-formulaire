@@ -7,19 +7,16 @@
 (function () {
   'use strict';
 
-  /* MODE ESSAI — migration vers Supabase, phase 4
+  /* LA NOUVELLE BASE, depuis la bascule
      (docs/superpowers/plans/2026-10-02-migration-supabase.md).
-     /admin/?essai ouvre ce tableau de bord sur la NOUVELLE base, pendant que le
-     site lit encore la feuille Google. On s'y connecte avec son compte
-     (e-mail et mot de passe Supabase), et la session ne vit que dans l'onglet.
-     Ce qui y est modifié sera remplacé à la bascule par les données du jour.
-     Sans « ?essai », rien ne change : le tableau de bord parle au script Google. */
-  var ESSAI = /[?&]essai(?:[=&]|$)/.test(window.location.search);
-  var API = ESSAI ? '/api' : ((window.SITE_ENDPOINTS && window.SITE_ENDPOINTS.registration) || '');
-  /* Le tableau de bord parle à la nouvelle base (Supabase) : aujourd'hui en
-     mode essai seulement, toujours après la bascule. Ce qui n'existe que là —
-     le rapatriement des photos de Drive — se règle sur ce repère. */
-  var NOUVELLE_BASE = ESSAI;
+     Le tableau de bord parle à l'API du site (/api), qui range tout dans la
+     base Supabase. On s'y connecte avec son compte (e-mail et mot de passe
+     Supabase), et la session ne vit que dans l'onglet.
+     Le chemin de l'ancien script Google (mot de passe partagé) reste dans ce
+     fichier jusqu'à la phase 5, mais n'est plus emprunté. « ?essai », resté
+     dans un favori, ne change plus rien. */
+  var NOUVELLE_BASE = true;
+  var API = NOUVELLE_BASE ? '/api' : ((window.SITE_ENDPOINTS && window.SITE_ENDPOINTS.registration) || '');
   var CLE_MDP = 'impactali_admin_mdp';
   var CLE_SESSION = 'impactali_admin_session';
 
@@ -156,7 +153,7 @@
      que rien ne s'est passé alors que le serveur travaille encore. */
   var DELAIS = { 'admin.importer': 120000 };
 
-  // ------------------------- SESSION SUPABASE (essai) -------------------------
+  // ----------------------------- SESSION SUPABASE ------------------------------
 
   /* L'adresse de Supabase et sa clé PUBLIQUE, données par l'API : le dépôt ne
      porte aucune clé, même publique. */
@@ -290,7 +287,7 @@
   }
 
   function appeler(action, charge) {
-    if (ESSAI) return appelerNouvelleBase(action, charge);
+    if (NOUVELLE_BASE) return appelerNouvelleBase(action, charge);
     if (!API) return Promise.reject(new Error('Adresse de l’API non configurée dans formations-data.js.'));
     var corps = Object.assign({ action: action, motDePasse: etat.motDePasse }, charge || {});
     var expiration = new Promise(function (_, rejeter) {
@@ -365,7 +362,7 @@
     return champ ? String(champ.value || '').trim() : '';
   }
 
-  /** Mode essai : connexion par compte Supabase. */
+  /** Connexion par compte Supabase (le nom date du mode essai, d'avant la bascule). */
   function initConnexionEssai() {
     window.addEventListener('error', function (ev) { signalerImprevu(ev.message || 'erreur de script'); });
     window.addEventListener('unhandledrejection', function (ev) {
@@ -376,7 +373,7 @@
     var rester = $('#rester-connecte');
     if (rester && rester.closest('label')) rester.closest('label').hidden = true;
     var aide = $('.connexion__aide');
-    if (aide) aide.textContent = 'Mode essai : la nouvelle base. Connectez-vous avec votre compte.';
+    if (aide) aide.textContent = 'Espace réservé à l’administration du site. Connectez-vous avec votre compte.';
     // Une session encore ouverte dans cet onglet : on entre sans la redemander
     if (sessionCompteLue()) { connecter(true); return; }
     $('#form-connexion').addEventListener('submit', soumettreEssai);
@@ -387,10 +384,10 @@
   function etape(texte) {
     var a = document.querySelector('#btn-connexion .btn-attente');
     if (a && a.lastChild && a.lastChild.nodeType === 3) a.lastChild.nodeValue = texte;
-    if (window.console) console.info('[connexion essai] ' + texte);
+    if (window.console) console.info('[connexion] ' + texte);
   }
 
-  /* Toute erreur imprévue de la page, en mode essai, s'affiche sur l'écran de
+  /* Toute erreur imprévue de la page s'affiche sur l'écran de
      connexion au lieu de rester dans la console, et rend la main. */
   function signalerImprevu(message) {
     var carte = $('#connexion');
@@ -418,7 +415,7 @@
   }
 
   function initConnexion() {
-    if (ESSAI) return initConnexionEssai();
+    if (NOUVELLE_BASE) return initConnexionEssai();
     restaurerChoixRester();
     var memorise = '';
     try { memorise = localStorage.getItem(CLE_MDP) || sessionStorage.getItem(CLE_MDP) || ''; } catch (e) { }
@@ -530,17 +527,17 @@
     erreur.hidden = true;
     attente(bouton, true);
 
-    (ESSAI ? Promise.resolve(true) : verifierApi()).then(function (apiPrete) {
+    (NOUVELLE_BASE ? Promise.resolve(true) : verifierApi()).then(function (apiPrete) {
       if (!apiPrete) {
         var e = new Error('Le script Google n’est pas encore à jour : il ne connaît pas l’administration. '
           + 'Installez la nouvelle version du script, puis déployez une nouvelle version.');
         e.apiObsolete = true;
         return Promise.reject(e);
       }
-      if (ESSAI) etape('Lecture du catalogue sur la nouvelle base…');
+      if (NOUVELLE_BASE) etape('Lecture du catalogue sur la nouvelle base…');
       return appeler('admin.login', {});
     }).then(function () {
-      if (!ESSAI) memoriserMotDePasse(etat.motDePasse);
+      if (!NOUVELLE_BASE) memoriserMotDePasse(etat.motDePasse);
       /* `appeler` a déjà rangé le catalogue rendu par la connexion. On le note
          ici plutôt que de tester `etat.catalogue`, qui part d'un objet vide
          mais non nul : le tester rendrait toujours vrai, même sans réponse. */
@@ -557,12 +554,12 @@
       var refuse = !!(err && err.authentification === false);
       if (refuse) {
         etat.motDePasse = '';
-        if (ESSAI) sessionCompteRangee(null);
+        if (NOUVELLE_BASE) sessionCompteRangee(null);
         try { localStorage.removeItem(CLE_MDP); sessionStorage.removeItem(CLE_MDP); } catch (e) { }
       }
       if (silencieux) {
         // On redonne la main sur le formulaire
-        $('#form-connexion').addEventListener('submit', ESSAI ? soumettreEssai : function (e) {
+        $('#form-connexion').addEventListener('submit', NOUVELLE_BASE ? soumettreEssai : function (e) {
           e.preventDefault();
           etat.motDePasse = motDePasseSaisi();
           connecter(false);
@@ -577,7 +574,7 @@
   }
 
   function deconnecter() {
-    if (ESSAI) {
+    if (NOUVELLE_BASE) {
       deconnexionCompte().then(function () { window.location.reload(); });
       return;
     }
@@ -608,21 +605,6 @@
     var importer = $('#btn-importer');
     if (importer) importer.addEventListener('click', importerCatalogueDuSite);
 
-    if (ESSAI) {
-      /* Qu'on ne le confonde jamais avec le vrai tableau de bord : le site
-         public, lui, lit encore la feuille Google. */
-      var bandeau = document.createElement('div');
-      bandeau.className = 'bandeau-essai';
-      bandeau.setAttribute('role', 'note');
-      bandeau.textContent = 'Mode essai : vous travaillez sur la nouvelle base. Le site public lit toujours la feuille '
-        + 'Google, et ce que vous modifiez ici sera remplacé par les données du jour au moment de la bascule.';
-      /* En tête de la zone de contenu, pas de #app : #app est une rangée flexible
-         (menu | contenu), où le bandeau devenait une troisième colonne qui
-         écrasait le contenu à quelques pixels de large. */
-      var contenu = document.querySelector('.contenu');
-      contenu.insertBefore(bandeau, contenu.firstChild);
-    }
-
     afficherEtatDuScript();
     /* Le catalogue est arrivé avec la réponse de connexion : inutile de le
        redemander pour ouvrir l'écran. */
@@ -637,10 +619,10 @@
   function afficherEtatDuScript() {
     var pied = $('#etat-script');
     if (!pied || !API) return;
-    if (ESSAI) {
+    if (NOUVELLE_BASE) {
       // Pas de script Google à surveiller : le code de l'API part avec le site
-      pied.innerHTML = '<span class="etiquette etiquette--alerte">Mode essai</span>'
-        + '<span class="etat-script__version">nouvelle base</span>';
+      pied.innerHTML = '<span class="etiquette etiquette--ouvert">Base du site</span>'
+        + '<span class="etat-script__version">Supabase</span>';
       return;
     }
     /* La vérification d'API vient d'interroger cette même adresse : on reprend
