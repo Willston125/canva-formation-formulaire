@@ -215,6 +215,40 @@ Ce qui était prévu :
   - ~~la migration des photos, à coller dans Supabase~~ : collée le 4/10. Sonde : les 14 tables sont fermées, et /api?photo= répond ;
   - puis la bascule. Rapatrier les photos se fera APRÈS : la reprise du catalogue ramène les adresses Drive de la feuille.
 
+**Bascule préparée le 4/10.**
+- Elle est dans la branche **locale** `bascule` (commit `3612bd5`), qui n'est pas publiée. Pas de déploiement d'aperçu chez Vercel : il n'aurait pas les réglages de la base.
+- Elle change trois choses :
+  - le site lit `/api` ;
+  - le formulaire y envoie les inscriptions ;
+  - `/admin` (sans `?essai`) s'ouvre sur la nouvelle base.
+- Le repli JSONP disparaît.
+- Éprouvée sur le banc :
+  - l'accueil est lu sur la base ;
+  - une inscription complète passe par le vrai formulaire (montant recalculé, alerte) ;
+  - la connexion au tableau de bord fonctionne.
+- Préparé sur `main` : `npm run bascule` (un seul fichier à coller), l'adresse Google mise à part (`scripts/supabase/google.js`), et les générateurs de fiches qui comprennent `/api`.
+
+**Jour J, environ 30 minutes, à un moment calme :**
+1. **Propriétaire** : ne plus rien modifier dans le tableau de bord. Télécharger l'onglet Inscriptions en CSV, et en donner le chemin.
+2. **Moi** :
+   - `npm run bascule -- --inscriptions "<csv>"` → `exports/bascule.sql` ;
+   - relire les avertissements.
+3. **Propriétaire** : coller `exports/bascule.sql` dans l'éditeur SQL de Supabase → Run. La dernière ligne affiche les comptes, à comparer à la feuille.
+4. **Moi** :
+   - `npm run comparer` (doit dire IDENTIQUE) ;
+   - remettre la branche `bascule` à jour sur `main`, l'y fusionner, la publier ;
+   - attendre la nouvelle version (`/api?action=version`).
+5. **Moi** : vérifier en ligne que l'accueil lit `/api`, puis `npm run sonde`. Une inscription d'essai seulement avec l'accord du propriétaire : elle lui enverrait une alerte.
+6. **Propriétaire** :
+   - se connecter à `/admin` avec son compte Supabase ;
+   - vérifier les inscriptions et le catalogue ;
+   - puis, dans Visuels du site, cliquer sur « Rapatrier les photos ».
+7. **Le lendemain, propriétaire** : regarder la feuille Google. Si une inscription y est arrivée après l'export, refaire un CSV. `npm run import:inscriptions` le transforme en un fichier qu'on peut coller sans risque, même plusieurs fois.
+
+**Retour arrière** :
+- Annuler le commit de bascule (`git revert`) et publier : le site relit le script Google, toujours en place.
+- Les inscriptions reçues entre-temps sur la nouvelle base sont à recopier dans la feuille.
+
 Ce qui était prévu :
 
 - **Vous :**
