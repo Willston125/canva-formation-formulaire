@@ -440,20 +440,6 @@
         return change;
     }
 
-    /** Repli quand la lecture directe est bloquée par la politique d'origine du navigateur. */
-    function releveParScript(cible) {
-        return new Promise((resolve, reject) => {
-            const nom = 'impactaliPlaces' + Math.random().toString(36).slice(2);
-            const balise = document.createElement('script');
-            const nettoyer = () => { delete window[nom]; balise.remove(); window.clearTimeout(minuteur); };
-            const minuteur = window.setTimeout(() => { nettoyer(); reject(new Error('délai dépassé')); }, 8000);
-            window[nom] = donnees => { nettoyer(); resolve(donnees); };
-            balise.onerror = () => { nettoyer(); reject(new Error('script inaccessible')); };
-            balise.src = `${cible}&callback=${nom}`;
-            document.head.appendChild(balise);
-        });
-    }
-
     /**
      * Remplace le catalogue affiché par celui tenu à jour dans le tableau de bord.
      * Un catalogue vide est IGNORÉ : tant que rien n'a été importé côté
@@ -942,11 +928,13 @@
             } catch (e) { /* cache illisible : on interroge */ }
         }
 
+        /* Plus de repli par balise <script> (JSONP, audit T6) : l'API est sur le
+           site même, rien ne bloque sa lecture directe — et une balise
+           <script> exécute ce qu'on lui sert, quand fetch ne fait que le lire. */
         const interroger = action => {
             const cible = `${url}${url.includes('?') ? '&' : '?'}action=${action}`;
             return fetch(cible, { method: 'GET' })
-                .then(reponse => (reponse.ok ? reponse.json() : Promise.reject(new Error('HTTP ' + reponse.status))))
-                .catch(() => releveParScript(cible));
+                .then(reponse => (reponse.ok ? reponse.json() : Promise.reject(new Error('HTTP ' + reponse.status))));
         };
 
         return interroger('catalogue')

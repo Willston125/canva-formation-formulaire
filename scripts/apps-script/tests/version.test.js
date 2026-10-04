@@ -28,9 +28,18 @@ verifier('le script déclare une version', !!versionDuScript, true);
 verifier('le site déclare la version attendue', !!attendueParLeSite, true);
 verifier('les deux numéros correspondent', attendueParLeSite, versionDuScript);
 
-// L'adresse de l'API doit être une application web publiée, pas un lien de test
+/* Depuis la bascule, le site parle à SA propre API. L'adresse du script Google
+   reste à part, pour la reprise et le retour arrière : elle doit être une
+   application web publiée, pas un lien de test. */
 const adresse = site.window.SITE_ENDPOINTS && site.window.SITE_ENDPOINTS.registration;
-verifier('adresse de l’API en /exec', /^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(adresse || ''), true);
+verifier('le site parle à sa propre API', adresse, '/api');
+const { ADRESSE_GOOGLE } = require('../../supabase/google');
+verifier('l’adresse du retour arrière est un script Google publié (/exec)',
+  /^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(ADRESSE_GOOGLE), true);
+/* Audit T6 : le repli par balise <script> (JSONP) exécutait ce que servait le
+   script Google. L'API étant sur le site même, il n'a plus de raison d'être. */
+verifier('le site ne charge plus de script à distance (JSONP)',
+  /callback=/.test(fs.readFileSync(path.join(RACINE, 'site-common.js'), 'utf8')), false);
 
 // Le mot de passe par défaut ne doit jamais partir en production
 verifier('mot de passe non laissé en clair dans le dépôt',
