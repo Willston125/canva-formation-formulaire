@@ -1,28 +1,20 @@
-/* Reprise du catalogue : feuille Google → base Supabase.
+/* Un catalogue → le SQL qui le range dans les tables de supabase/migrations.
  *
- * Lit le catalogue tel que le site le reçoit (`?action=catalogue` du script
- * Google, public), et écrit le SQL qui le range dans les tables de
- * supabase/migrations. Ce SQL se colle dans l'éditeur SQL de Supabase.
- *
- *   node scripts/supabase/import-catalogue.js                 → lit l'API en ligne
- *   node scripts/supabase/import-catalogue.js --depuis c.json → lit un fichier
- *   … --vers exports/catalogue.sql                            → où écrire (par défaut)
+ * Sert aux épreuves et au banc local (`npm run banc`) : ils montent une vraie
+ * base avec le catalogue du 2 octobre 2026 (scripts/supabase/tests/). Il fut
+ * aussi l'outil de la reprise de la feuille Google, faite le 5 octobre 2026.
  *
  * Le SQL vide d'abord les tables du CATALOGUE, puis les remplit : on peut le
- * relancer sans doublon. Il ne touche jamais aux inscriptions.
+ * rejouer sans doublon. Il ne touche jamais aux inscriptions.
  *
  * Ce qui ne passe pas les règles de la base n'est pas forcé : c'est écarté ou
- * laissé vide, et AFFICHÉ. Une session qui annonce plus de séances que le
+ * laissé vide, et SIGNALÉ. Une session qui annonce plus de séances que le
  * calendrier n'en permet garde son texte affiché, mais son nombre de séances
  * reste vide jusqu'à correction (audit C1). */
 'use strict';
 
-const fs = require('fs');
-const path = require('path');
 const { FORMATION, SESSION, PAYS, MOYEN_PAIEMENT, REALISATION } = require('../../api/_lib/champs');
-const { lireCatalogueGoogle } = require('./google');
 
-const RACINE = path.resolve(__dirname, '..', '..');
 
 // ------------------------------------------------------------ SQL sûr ----
 
@@ -232,39 +224,6 @@ function catalogueVersSql(catalogue) {
 
   sql.push('commit;');
   return { sql: sql.join('\n') + '\n', avertissements };
-}
-
-// -------------------------------------------------------- en commande ----
-
-async function principal() {
-  const args = process.argv.slice(2);
-  const option = nom => { const i = args.indexOf(nom); return i >= 0 ? args[i + 1] : null; };
-  const vers = path.resolve(RACINE, option('--vers') || 'exports/catalogue.sql');
-
-  let catalogue;
-  if (option('--depuis')) {
-    catalogue = JSON.parse(fs.readFileSync(path.resolve(option('--depuis')), 'utf8'));
-  } else {
-    catalogue = await lireCatalogueGoogle();
-  }
-  if (!Array.isArray(catalogue.formations) || !catalogue.formations.length) {
-    throw new Error('Catalogue vide : rien n’est écrit, pour ne pas vider la base.');
-  }
-
-  const { sql, avertissements } = catalogueVersSql(catalogue);
-  fs.mkdirSync(path.dirname(vers), { recursive: true });
-  fs.writeFileSync(vers, sql);
-  console.log(`SQL écrit : ${path.relative(RACINE, vers)} (${sql.split('\n').length} lignes)`);
-  console.log(`${catalogue.formations.length} formations, ${(catalogue.sessions || []).length} sessions, `
-    + `${(catalogue.pays || []).length} pays, ${(catalogue.portfolio || []).length} réalisations.`);
-  if (avertissements.length) {
-    console.log('\nÀ SAVOIR (' + avertissements.length + ') :');
-    avertissements.forEach(a => console.log('  - ' + a));
-  }
-}
-
-if (require.main === module) {
-  principal().catch(e => { console.error('Échec : ' + e.message); process.exit(1); });
 }
 
 module.exports = { catalogueVersSql, joursDepuisHoraires, seancesDepuisDuree, seancesPossibles, lit };

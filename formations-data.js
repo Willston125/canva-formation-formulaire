@@ -679,9 +679,6 @@ window.PAYS = Object.freeze([
  * (GET `?action=catalogue`, `?action=places`), avec les mêmes réponses que
  * l'ancien script Google. Une adresse du site lui-même : même origine, donc
  * aucune règle de partage entre sites à négocier.
- *
- * RETOUR ARRIÈRE : remettre ici l'adresse du script Google, qui reste dans
- * scripts/supabase/google.js.
  */
 window.SITE_ENDPOINTS = Object.freeze({
   registration: '/api'

@@ -7,7 +7,7 @@
  * Sert à éprouver le tableau de bord de bout en bout, connexion comprise, sans
  * jamais toucher à la vraie base ni à de vrais identifiants. C'est lui qui a
  * trouvé, le 3 octobre 2026, la fonction `ouvrirSession` déclarée deux fois
- * (voir scripts/apps-script/tests/noms-uniques.test.js). */
+ * (voir scripts/site/tests/noms-uniques.test.js). */
 'use strict';
 
 const http = require('http');

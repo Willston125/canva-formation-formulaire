@@ -118,21 +118,15 @@ Vercel.
 
 ---
 
-## Reprendre une copie
+## Une copie contient des données personnelles
 
-Une copie contient les inscriptions : des données personnelles. Elle ne se
-partage pas, et ne se dépose jamais dans le dépôt (`exports/` n'est ni versionné
-ni publié).
+La sauvegarde nocturne contient les inscriptions. Elle ne se partage pas, et ne
+se dépose jamais dans le dépôt (`exports/` n'est ni versionné ni publié).
 
-Pour recharger des inscriptions depuis un CSV de l'ancienne feuille :
-
-```bash
-npm run import:inscriptions -- --depuis "chemin/vers/Inscriptions.csv"
-```
-
-Cela écrit `exports/inscriptions.sql`, à coller dans l'éditeur SQL de Supabase. On
-peut le coller plusieurs fois sans doublon, et il ne touche jamais une
-inscription reçue directement par la base.
+**Recharger une copie** n'est pas automatisé : elle est lisible (une liste par
+table, au format JSON), mais aucun outil ne la transforme encore en SQL à coller
+dans Supabase. Il sera à écrire le jour où il servira, et à tester d'abord sur
+une base d'essai (`npm run banc` en monte une).
 
 ---
 

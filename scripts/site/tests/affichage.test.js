@@ -31,9 +31,7 @@ const verifier = (libelle, obtenu, attendu) => {
 /* Le serveur renvoie TOUT : le tableau de bord doit voir les fiches masquées.
    C'est donc au site de trier, et il ne le faisait pas. */
 verifier('le serveur ne filtre pas lui-même (sinon ce contrôle ne sert à rien)',
-  /active/.test(lire('scripts/apps-script/impactali-inscriptions.gs')
-    .slice(lire('scripts/apps-script/impactali-inscriptions.gs').indexOf('function lireCatalogue'),
-           lire('scripts/apps-script/impactali-inscriptions.gs').indexOf('function lireTable'))), false);
+  /where[^`]*\bactive\b/i.test(lire('api/_lib/catalogue.js')), false);
 
 verifier('l’accueil écarte les formations masquées',
   /const visibles = liste => \(Array\.isArray\(liste\) \? liste : \[\]\)\.filter\(f => f && f\.active !== false\);/.test(landing), true);
@@ -175,8 +173,8 @@ verifier('des visuels sont bien déclarés en relatif (sinon ce contrôle ne pro
 verifier('le tableau de bord affiche le numéro international',
   /echapper\(i\.telephoneInternational \|\| i\.telephone \|\| '—'\)/.test(admin), true);
 
-const colonnes = lire('scripts/apps-script/impactali-inscriptions.gs');
-const blocColonnes = colonnes.slice(colonnes.indexOf('var COLONNES = ['), colonnes.indexOf('CHAMPS_FORMATION'));
+const colonnes = lire('api/_lib/admin.js');
+const blocColonnes = colonnes.slice(colonnes.indexOf('const COLONNES_FEUILLE = ['), colonnes.indexOf('async function lireInscriptions'));
 verifier('« countryCode » n’est toujours pas une colonne : on ne peut donc pas s’y fier',
   /countryCode/.test(blocColonnes), false);
 verifier('« telephoneInternational », lui, en est une',
@@ -538,8 +536,7 @@ const blocs = lire('fiche-blocs.js');
 verifier('le module des blocs sait rendre des prérequis',
   /prerequisInterieur: prerequisInterieur/.test(blocs) && /aDesPrerequis: function/.test(blocs), true);
 
-const gs = lire('scripts/apps-script/impactali-inscriptions.gs');
-verifier('le serveur déclare la colonne', /\['prerequis', 'json'\]/.test(gs), true);
+verifier('le serveur déclare la colonne', /\['prerequis', 'prerequis', 'json'\]/.test(lire('api/_lib/champs.js')), true);
 verifier('le tableau de bord la propose', /cle: 'prerequis'/.test(admin), true);
 
 const generateur = lire('scripts/build-fiches.js');
@@ -616,7 +613,7 @@ verifier('et relit toutes les cases cochées',
 /* Supprimer un pays doit voir les sessions qui le citent PARMI d'autres, sinon
    elles resteraient en renvoyant à un pays disparu. */
 verifier('le serveur détecte un pays cité parmi d’autres',
-  /String\(s\.pays \|\| ''\)\.split\(','\)\.some\(function \(c\) \{/.test(gs), true);
+  /from session_pays where pays_code = \$1 and propose/.test(lire('api/_lib/ecritures.js')), true);
 
 // --- 26. Un bouton dit ce qu'il fait ---
 

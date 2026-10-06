@@ -196,17 +196,15 @@ if (curseur && bornesCode) {
 
   /* Contre-contrôle des deux précédents : ils comparent le curseur au code, et
      passeraient si les DEUX dérivaient ensemble vers 400. On les rattache donc
-     à ce que le script Google enregistre réellement — un cadrage au-delà de sa
-     borne serait ramené à l'écriture, et le réglage montré ici serait perdu. */
-  const gs = fs.readFileSync(
-    path.join(RACINE, 'scripts', 'apps-script', 'impactali-inscriptions.gs'), 'utf8');
-  const gsMax = /var CADRAGE_ZOOM_MAX = (\d+);/.exec(gs);
-  const gsMin = /var CADRAGE_ZOOM_MIN = (\d+);/.exec(gs);
-  verifier('les bornes du script Google sont bien retrouvées', !!gsMax && !!gsMin, true);
-  if (gsMax && gsMin) {
-    verifier('la fenêtre borne comme le script Google enregistre',
-      [Number(bornesCode[1]), Number(bornesCode[2])], [Number(gsMin[1]), Number(gsMax[1])]);
-  }
+     à ce que l'API enregistre réellement — un cadrage au-delà de sa borne
+     serait ramené à l'écriture, et le réglage montré ici serait perdu. Les
+     bornes sont celles que l'API APPLIQUE : on lui présente des valeurs
+     absurdes et on lit ce qu'elle garde. */
+  const { normaliserCadrage } = require('../../../api/_lib/ecritures');
+  const apiMin = normaliserCadrage({ x: 0, y: 0, zoom: -1e9 }).zoom;
+  const apiMax = normaliserCadrage({ x: 0, y: 0, zoom: 1e9 }).zoom;
+  verifier('la fenêtre borne comme l’API enregistre',
+    [Number(bornesCode[1]), Number(bornesCode[2])], [apiMin, apiMax]);
 }
 
 // ============ 4. Aucun format n'impose plus de hauteur ============

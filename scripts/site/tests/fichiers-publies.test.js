@@ -82,7 +82,6 @@ verifier('aucun fichier Markdown n’est publié, où qu’il soit',
   fichiersSous('').filter(f => /\.md$/i.test(f) && !exclu(f)), []);
 
 [
-  'scripts/apps-script/impactali-inscriptions.gs',
   'formations/_template/fiche.html',
   'module de william/module community manager.png',
   'affiche format A4/ia.jpg',

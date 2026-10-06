@@ -17,7 +17,7 @@ const vm = require('vm');
 const RACINE = path.resolve(__dirname, '..', '..', '..');
 const commun = fs.readFileSync(path.join(RACINE, 'site-common.js'), 'utf8');
 const admin = fs.readFileSync(path.join(RACINE, 'admin', 'admin.js'), 'utf8');
-const gs = fs.readFileSync(path.join(RACINE, 'scripts', 'apps-script', 'impactali-inscriptions.gs'), 'utf8');
+const champsApi = fs.readFileSync(path.join(RACINE, 'api', '_lib', 'catalogue.js'), 'utf8');
 
 const resultats = [];
 const verifier = (libelle, obtenu, attendu) => {
@@ -120,9 +120,9 @@ verifier('prixDe consulte le tarif du pays',
 verifier('et il le consulte avant la table de la formation',
   corpsPrix.indexOf('reglagesDuPays') < corpsPrix.indexOf('const table = objet.prices'), true);
 
-// --- 6. La colonne existe côté script Google ---
-verifier('l’onglet Sessions porte la colonne parPays',
-  /\['parPays', 'json'\]/.test(gs), true);
+// --- 6. L'API sert les réglages par pays ---
+verifier('l’API rend les réglages par pays de chaque session (parPays)',
+  /s\.parPays = Object\.keys\(parPays\)\.length \? parPays : \[\];/.test(champsApi), true);
 
 // --- 7. Le tableau de bord saisit et relit ces réglages ---
 verifier('le formulaire de session déclare le champ',

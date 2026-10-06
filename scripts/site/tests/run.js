@@ -1,27 +1,19 @@
-/* Lance les épreuves du script Google, chacune dans son propre processus :
-   l'émulateur garde un classeur en mémoire, deux épreuves qui le partageraient
-   ne partiraient pas d'un état propre. */
+/* Lance les épreuves du site et du tableau de bord, chacune dans son propre
+   processus : on part ainsi toujours d'un état propre. */
 'use strict';
 
 const { spawnSync } = require('child_process');
 const path = require('path');
 
 const EPREUVES = [
-  ['installation-neuve.test.js', 'Installation sur un classeur vierge'],
-  ['colonnes.test.js', 'Colonnes ajoutées à un classeur déjà rempli'],
-  ['formules.test.js', 'Valeurs commençant par + = - (formules Sheets)'],
   ['textes.test.js', 'Textes modifiables du site'],
-  ['version.test.js', 'Le site parle a sa propre API'],
+  ['api-du-site.test.js', 'Le site parle a sa propre API, et a personne d autre'],
   ['pays.test.js', 'Pays desservis'],
   ['polices.test.js', 'Typographie du site et du tableau de bord'],
-  ['mise-a-jour-partielle.test.js', 'Une modification n’efface pas le reste de la ligne'],
   ['formulaires.test.js', 'Formulaires : cloisonnement et valeurs conservees'],
   ['affichage.test.js', 'Ce qui est masque disparait, ce qui est garde s affiche'],
-  ['motdepasse.test.js', 'Le mot de passe survit a une mise a jour du script'],
   ['echappement.test.js', 'Echappement HTML valable aussi dans un attribut'],
-  ['inscription-publique.test.js', 'Garde-fous du formulaire ouvert a tous'],
   ['filtres-photo.test.js', 'Aucune regle ne recolore une photo'],
-  ['cadrage-visuels.test.js', 'Cadrage range a cote de l adresse du visuel'],
   ['cadrage-affichage.test.js', 'Le cadrage s applique aux seules images remplacees'],
   ['rapports-visuels.test.js', 'Chaque emplacement annonce son rapport reel'],
   ['envoi-non-destructif.test.js', 'L envoi conserve la photo entiere'],
@@ -30,18 +22,14 @@ const EPREUVES = [
   ['reglage-cadrage-admin.test.js', 'Reglage du cadrage dans un apercu au rapport reel'],
   ['apparence-tot.test.js', 'Apparence rejouee avant le premier affichage'],
   ['adresse-du-site.test.js', 'Toutes les pages nomment la meme adresse'],
-  ['cache-catalogue.test.js', 'Catalogue retenu chez Google, places toujours fraiches'],
   ['sync-sessions.test.js', 'Alignement des sessions du fichier sur la feuille'],
   ['fiche-a-jour.test.js', 'L en-tete d une fiche generee suit le catalogue'],
-  ['coherence-pays-mode.test.js', 'Le mode d une session correspond a ses pays'],
   ['accueil-a-jour.test.js', 'L accueil suit le catalogue et le pays du visiteur'],
   ['photo-retiree.test.js', 'Une photo retiree rend celle d origine'],
   ['places-source-unique.test.js', 'Les places se deduisent toujours des inscrits'],
   ['sync-formations.test.js', 'Alignement des formations du fichier sur la feuille'],
   ['page-introuvable.test.js', 'Une adresse inconnue repond introuvable'],
   ['pied-domaines.test.js', 'Les domaines du pied se remplissent sur toutes les pages'],
-  ['pays-ferme.test.js', 'Fermer un pays ne ferme pas le site'],
-  ['formulaire-abus.test.js', 'Le formulaire public n est pas une porte d abus'],
   ['fichiers-publies.test.js', 'Ni documents internes ni photos de travail en ligne'],
   ['noms-uniques.test.js', 'Aucun nom de fonction declare deux fois']
 ];

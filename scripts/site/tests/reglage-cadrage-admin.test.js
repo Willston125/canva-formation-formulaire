@@ -33,7 +33,8 @@ const lire = (f) => fs.readFileSync(path.join(RACINE, f), 'utf8');
 const SOURCE = lire('admin/admin.js');
 const CSS = lire('admin/admin.css');
 const COMMUN = lire('site-common.js');
-const GS = lire('scripts/apps-script/impactali-inscriptions.gs');
+const API_ECRITURES = lire('api/_lib/ecritures.js');
+const { normaliserCadrage } = require('../../../api/_lib/ecritures');
 
 const resultats = [];
 const verifier = (libelle, obtenu, attendu) => {
@@ -209,22 +210,22 @@ verifier('l’enregistrement envoie la charge entière, adresses ET cadrages',
 verifier('et la charge est bien celle que chargeVisuels a composée',
   corps.rendreVisuels.indexOf('chargeVisuels(etat.visuelsDeclares') !== -1, true);
 
-/* Les deux clés envoyées et les deux arguments lus par le script Google vivent
-   dans deux fichiers : renommer d'un côté ferait disparaître les cadrages sans
-   la moindre erreur. On les rattache. */
-const luParLeScript = /case 'admin\.images\.save':\s*return repondre\(enregistrerImages\(d\.(\w+), d\.(\w+)\)/
-  .exec(GS);
-verifier('la lecture du script Google est bien retrouvée', !!luParLeScript, true);
-if (luParLeScript && typeof f.chargeVisuels === 'function') {
-  verifier('le tableau de bord envoie exactement les deux clés que le script Google lit',
-    Object.keys(f.chargeVisuels([], () => null)), [luParLeScript[1], luParLeScript[2]]);
+/* Les deux clés envoyées et les deux arguments lus par l'API vivent dans deux
+   fichiers : renommer d'un côté ferait disparaître les cadrages sans la
+   moindre erreur. On les rattache. */
+const luParLApi = /'admin\.images\.save': commande\('admin\.images\.save', \(tx, d\) => enregistrerVisuels\(tx, d\.(\w+), d\.(\w+)\)/
+  .exec(API_ECRITURES);
+verifier('la lecture de l’API est bien retrouvée', !!luParLApi, true);
+if (luParLApi && typeof f.chargeVisuels === 'function') {
+  verifier('le tableau de bord envoie exactement les deux clés que l’API lit',
+    Object.keys(f.chargeVisuels([], () => null)), [luParLApi[1], luParLApi[2]]);
 }
 
-/* Et le script Google traite bien la charge comme faisant autorité : c'est ce
-   qui rend l'envoi des cadrages obligatoire. Si sa signature perdait son second
+/* Et l'API traite bien la charge comme faisant autorité : c'est ce qui rend
+   l'envoi des cadrages obligatoire. Si sa signature perdait son second
    argument, tout ce qui précède deviendrait sans objet. */
-verifier('le script Google attend bien des cadrages à côté des adresses',
-  /function enregistrerImages\(donnees, cadrages\)/.test(GS), true);
+verifier('l’API attend bien des cadrages à côté des adresses',
+  /async function enregistrerVisuels\(tx, donnees, cadrages\)/.test(API_ECRITURES), true);
 
 // ============ 3. PIÈGE 2 : le cadrage de la fenêtre arrive au bloc ============
 /* `prete.cadrage` arrive avec l'image préparée ; l'adresse qui lui donne un
@@ -448,15 +449,15 @@ if (typeof styleDuSite === 'function' && typeof f.styleCadrage === 'function') {
    à l'écran, et le site en posait un autre. */
 const curseurBloc = /class="cadrage__zoom" min="(\d+)" max="(\d+)"/.exec(SOURCE);
 const curseurFenetre = /class="recadrage__zoom" min="(\d+)" max="(\d+)"/.exec(SOURCE);
-const gsMin = /var CADRAGE_ZOOM_MIN = (\d+);/.exec(GS);
-const gsMax = /var CADRAGE_ZOOM_MAX = (\d+);/.exec(GS);
-verifier('les deux curseurs et les bornes du script Google sont retrouvés',
-  !!curseurBloc && !!curseurFenetre && !!gsMin && !!gsMax, true);
+const gsMin = [null, String(normaliserCadrage({ x: 0, y: 0, zoom: -1e9 }).zoom)];
+const gsMax = [null, String(normaliserCadrage({ x: 0, y: 0, zoom: 1e9 }).zoom)];
+verifier('les deux curseurs et les bornes de l’API sont retrouvés',
+  !!curseurBloc && !!curseurFenetre && gsMin[1] !== 'undefined' && gsMax[1] !== 'undefined', true);
 
-if (curseurBloc && curseurFenetre && gsMin && gsMax) {
+if (curseurBloc && curseurFenetre) {
   verifier('le curseur du bloc propose la même plage que celui de la fenêtre',
     [curseurBloc[1], curseurBloc[2]], [curseurFenetre[1], curseurFenetre[2]]);
-  verifier('et la même que celle que le script Google enregistre',
+  verifier('et la même que celle que l’API enregistre',
     [Number(curseurBloc[1]), Number(curseurBloc[2])], [Number(gsMin[1]), Number(gsMax[1])]);
 
   /* Et le bornage du tableau de bord, EXÉCUTÉ : lire les nombres dans le source

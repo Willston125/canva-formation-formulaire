@@ -9,16 +9,12 @@
     "build:fiches": "node scripts/build-fiches.js",
     "watch:css": "tailwindcss -c tailwind.config.js -i tailwind.src.css -o tailwind.css --watch",
     "serve": "serve -l 5173 .",
-    "test:api": "node scripts/apps-script/tests/run.js",
+    "test:site": "node scripts/site/tests/run.js",
     "sync:sessions": "node scripts/sync-sessions.js",
     "sync:formations": "node scripts/sync-formations.js",
     "sync": "npm run sync:formations && npm run sync:sessions",
     "test:base": "node scripts/supabase/tests/run.js",
-    "import:catalogue": "node scripts/supabase/import-catalogue.js",
-    "import:inscriptions": "node scripts/supabase/import-inscriptions.js",
-    "bascule": "node scripts/supabase/bascule.js",
     "sonde": "node scripts/supabase/sonde.js",
-    "comparer": "node scripts/supabase/comparer.js",
     "banc": "node scripts/supabase/banc-local.js"
   },
   "devDependencies": {

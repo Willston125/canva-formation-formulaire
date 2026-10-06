@@ -1,10 +1,11 @@
 /* Les enregistrements du tableau de bord : formations, sessions, pays,
  * portfolio, réglages, textes, visuels.
  *
- * MÊMES RÈGLES, MÊMES MESSAGES que le script Google, repris fonction par
- * fonction (enregistrerFormation, enregistrerSession, enregistrerPays… dans
- * scripts/apps-script/impactali-inscriptions.gs) : le tableau de bord ne doit
- * pas changer de comportement en changeant de base.
+ * MÊMES RÈGLES, MÊMES MESSAGES que l'ancien script Google, repris fonction par
+ * fonction (enregistrerFormation, enregistrerSession, enregistrerPays…) : le
+ * tableau de bord ne devait pas changer de comportement en changeant de base.
+ * Ce script est retiré depuis le 6 octobre 2026 ; son code reste dans
+ * l'historique du dépôt (git show 0d4e06e:scripts/apps-script/impactali-inscriptions.gs).
  *
  * CE QUI N'EST PAS MENTIONNÉ N'EST PAS EFFACÉ. Comme ecrireLigne, une
  * modification ne touche que les clés qu'elle porte ; les autres gardent leur

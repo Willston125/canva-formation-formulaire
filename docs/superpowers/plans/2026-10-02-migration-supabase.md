@@ -279,15 +279,15 @@ Ce qui était prévu :
 - Documentation réécrite : `README`, `TABLEAU-DE-BORD`, `DEPANNAGE`, `SCRIPT-GOOGLE` (devenu une archive), et `BASE-SUPABASE` (nouveau).
 - L'épreuve de connexion Google est supprimée. Celles qui restent vérifient que la mécanique de version et le repli JSONP ne reviennent pas.
 
-**Gardé volontairement :**
-- Le script Google, sa feuille, `scripts/apps-script/` et son banc d'essai : c'est le retour arrière, et ce dossier contient aussi des épreuves du **site** à déplacer avant de le supprimer.
-- `scripts/supabase/google.js` et `npm run comparer`, tant que le script existe.
+**Le propriétaire a décidé le 6/10 de ne rien garder de Google** (pas d'inscription réelle à conserver) : le ménage est fait tout de suite, sans attendre l'archivage.
+- Supprimés : `scripts/apps-script/` (le script, son manifeste, son émulateur), onze épreuves qui n'éprouvaient que lui, `docs/SCRIPT-GOOGLE.md`, `scripts/supabase/{google,comparer,bascule,import-inscriptions}.js` et leurs épreuves, et la ligne de commande de `import-catalogue.js`.
+- Déplacées : les 26 épreuves du **site**, vers `scripts/site/tests/` (`npm run test:site`). Les contrôles qui comparaient le site au script Google comparent désormais au code de l'API (bornes du cadrage, colonnes, lecture des visuels…).
+- Le code de l'ancien script reste dans l'historique : `git show 0d4e06e:scripts/apps-script/impactali-inscriptions.gs`.
+- **Le retour arrière n'existe plus** : il aurait fallu rouvrir le script, la feuille et le dépôt tels qu'ils étaient.
 
-**Reste, côté propriétaire :** archiver le déploiement Apps Script quand le retour arrière ne sera plus voulu, garder la feuille en lecture seule, et éventuellement rendre le dépôt privé.
+**Reste, côté propriétaire :** archiver le déploiement Apps Script chez Google (il répond encore à l'ancienne adresse, avec l'ancien mot de passe partagé), et éventuellement rendre le dépôt privé.
 
-**Reste, côté code, après l'archivage :** supprimer `scripts/apps-script/` en déplaçant d'abord ses épreuves du site, puis `google.js` et `comparer`.
-
-- **Fini quand :** plus aucun appel ne part vers `script.google.com`. C'est le cas pour le site ; il reste l'archivage.
+- **Fini quand :** plus aucun appel ne part vers `script.google.com`. C'est le cas pour le site ET pour le dépôt ; il reste l'archivage chez Google.
 
 **Total estimé : 6 à 9 séances, sur 2 à 4 semaines, avec une vérification en ligne
 à chaque phase.**

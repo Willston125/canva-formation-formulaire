@@ -118,7 +118,7 @@ Lancez les bancs d'essai :
 
 ```bash
 npm run test:base
-npm run test:api
+npm run test:site
 ```
 
 S'ils passent, le défaut est dans les données ou dans le déploiement, pas dans le

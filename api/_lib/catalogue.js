@@ -1,9 +1,9 @@
 /* Le catalogue tel que le site le reçoit : la réponse de `?action=catalogue`.
  *
- * Même forme, mêmes clés que celle du script Google (lireCatalogue dans
- * scripts/apps-script/impactali-inscriptions.gs) : le site et le tableau de bord
- * la lisent sans changer une ligne. Une épreuve le vérifie en important le
- * catalogue réel puis en le relisant ici.
+ * Même forme, mêmes clés que celle de l'ancien script Google (retiré le
+ * 6 octobre 2026) : le site et le tableau de bord la lisent sans changer une
+ * ligne. Une épreuve le vérifie en important le catalogue réel du 2 octobre 2026
+ * puis en le relisant ici.
  *
  * `db.query(texte, valeurs)` rend `{ rows }` : c'est la forme de PGlite, la base
  * des épreuves, comme de node-postgres en production. */

@@ -4,8 +4,9 @@ Site de formation statique, déployé sur Vercel, adossé à une base **Supabase
 par une petite API qui vit dans le dépôt (`api/`). Administration à `/admin`.
 
 Depuis le **5 octobre 2026**, plus rien ne passe par Google : ni le catalogue, ni
-les inscriptions, ni les photos. L'ancien script Apps Script n'est plus qu'une
-archive ([SCRIPT-GOOGLE.md](SCRIPT-GOOGLE.md)).
+les inscriptions, ni les photos. L'ancien script Apps Script et ses épreuves ont
+été retirés du dépôt le 6 octobre ; son code reste dans l'historique git
+(`git show 0d4e06e:scripts/apps-script/impactali-inscriptions.gs`).
 
 ---
 
@@ -67,7 +68,7 @@ fonctions. Une épreuve (`fichiers-publies`) le vérifie.
 
 ```bash
 npm run test:base        # l'API et la base, sur un vrai Postgres en mémoire
-npm run test:api         # le site et le tableau de bord (37 suites)
+npm run test:site         # le site et le tableau de bord (26 suites)
 npm run banc             # le site + la vraie API sur une base d'essai, en local
 npm run sonde            # la base vue de l'extérieur : tout doit être fermé
 npm run sync             # réaligne formations ET sessions de formations-data.js sur la base
@@ -98,7 +99,7 @@ npm run build:fiches -- --nettoyer     # retire les fiches sans formation dans l
 Une base injoignable **arrête** la génération. Se rabattre sur le fichier
 écraserait ce qui a été saisi depuis le tableau de bord, et rien ne le dirait.
 
-Chaque contrôle des deux bancs d'essai a été prouvé en régression : on remet le
+Chaque contrôle des deux bancs d’essai a été prouvé en régression : on remet le
 défaut, on vérifie qu'il échoue, on restaure.
 
 ---
@@ -112,5 +113,9 @@ défaut, on vérifie qu'il échoue, on restaure.
   à tous.
 - **Le certificat de la base expire en avril 2031.** `api/_lib/supabase-ca-2021.crt`
   est à remplacer avant : sans cela, l'API ne se connecte plus.
-- **Archiver le script Google** quand le retour arrière ne sera plus voulu :
-  voir [SCRIPT-GOOGLE.md](SCRIPT-GOOGLE.md).
+- **Recharger une sauvegarde** : la copie envoyée chaque nuit est lisible (une
+  liste par table), mais aucun outil ne la transforme encore en SQL à coller. À
+  écrire le jour où il servira, en la testant sur une base d'essai.
+- **Le script Google, encore déployé chez Google**, doit être archivé par le
+  propriétaire (Apps Script → Déployer → Gérer les déploiements). Le site ne s'en
+  sert plus.
