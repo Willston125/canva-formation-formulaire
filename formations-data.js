@@ -684,16 +684,7 @@ window.PAYS = Object.freeze([
  * scripts/supabase/google.js.
  */
 window.SITE_ENDPOINTS = Object.freeze({
-  registration: '/api',
-  /**
-   * Version du script Google attendue par ce site (VERSION dans le fichier .gs).
-   * Google continue de servir l'ANCIEN code tant qu'on n'a pas publié une
-   * NOUVELLE VERSION du déploiement — sans le moindre avertissement, et c'est
-   * l'erreur la plus coûteuse de tout ce montage. Le tableau de bord compare
-   * donc ce numéro à celui réellement servi, et le dit franchement.
-   * Une épreuve du banc d'essai vérifie que les deux restent alignés.
-   */
-  versionScript: '2026-10-02-statut-en-attente'
+  registration: '/api'
 });
 
 /**

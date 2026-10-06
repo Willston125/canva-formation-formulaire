@@ -1,6 +1,6 @@
 /* =========================================
    IMPACTALI — Moteur d'inscription commun à toutes les formations
-   Multi-étapes, validation, sauvegarde locale, Google Sheets.
+   Multi-étapes, validation, sauvegarde locale, envoi à l'API du site.
    Chargé sur chaque fiche formation (après formations-data.js et site-common.js).
    La formation de la page est lue sur <main id="inscription" data-formation-id="…"> ;
    l'URL (?trainingId= / ?trainingSlug= / ?formation= / ?sessionId=) peut la préciser.
@@ -16,7 +16,7 @@
     /* Adresse du script Google : une seule source, formations-data.js.
        Aucune valeur de repli — une adresse erronée enverrait les inscriptions
        vers un autre script, ce qui est pire que ne pas les envoyer du tout. */
-    const GOOGLE_SHEETS_URL = (window.SITE_ENDPOINTS && window.SITE_ENDPOINTS.registration) || '';
+    const URL_INSCRIPTION = (window.SITE_ENDPOINTS && window.SITE_ENDPOINTS.registration) || '';
     const TOTAL_STEPS = 4;
     // Réassignable : le catalogue peut être mis à jour depuis le tableau de bord
     let FORMATIONS = Array.isArray(window.FORMATIONS) ? window.FORMATIONS : [];
@@ -1475,7 +1475,7 @@
 
         const formation = FORMATIONS.find(item => item.formId === data.formation) || selectedFormation;
         const now = new Date();
-        // Clés historiques conservées telles quelles (la feuille Google les lit) ; les nouvelles sont additives.
+        // Clés historiques conservées telles quelles (l'API les lit encore) ; les nouvelles sont additives.
         const payload = {
             horodateur: now.toLocaleString('fr-FR'),
             formationId: data.formation,
@@ -1533,20 +1533,20 @@
     /**
      * Envoie l'inscription et attend la confirmation du serveur.
      * Le corps part en `text/plain` : c'est une requête simple, donc sans requête
-     * préalable — Google Apps Script ne sait pas traiter celle-ci, et c'est
+     * préalable — ce que Google Apps Script ne savait pas traiter, et c'est
      * précisément ce qui imposait autrefois `no-cors`, mode où la réponse est
      * illisible. Ici la réponse est lue : un échec est un échec, jamais un succès.
      * @returns {Promise<Object>} la réponse du serveur si, et seulement si, elle confirme.
      */
     function envoyerInscription(payload) {
-        if (!GOOGLE_SHEETS_URL) {
+        if (!URL_INSCRIPTION) {
             return Promise.reject(new Error('Aucune adresse d’envoi n’est configurée.'));
         }
 
         const expiration = new Promise((_, rejeter) =>
             setTimeout(() => rejeter(new Error('Le serveur met trop de temps à répondre.')), 25000));
 
-        const envoi = fetch(GOOGLE_SHEETS_URL, {
+        const envoi = fetch(URL_INSCRIPTION, {
             method: 'POST',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             body: JSON.stringify(payload)

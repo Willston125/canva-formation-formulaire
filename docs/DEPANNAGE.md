@@ -2,59 +2,97 @@
 
 Les pannes déjà rencontrées, leur cause réelle, et ce qui les règle.
 
----
+**Premier réflexe, toujours :** ouvrez `https://www.impactali.site/api?action=version`.
+Cette page dit si le site est publié, si la base répond, et ce qui est réglé dans
+Vercel — sans jamais montrer une valeur :
 
-## « Mot de passe incorrect » alors que je suis sûr de ma phrase
-
-**Cause la plus fréquente :** un caractère qui ne se voit pas. Une espace
-emportée par un copier-coller, une espace insécable venue d'un traitement de
-texte, une apostrophe courbe `’` là où le clavier tape `'`.
-
-**Ce qui règle :** ouvrez le fichier `.gs` et **relisez la ligne 112**. C'est le
-seul endroit qui fasse foi, et il est en clair. Réécrivez la phrase au clavier
-— sans la coller — puis enregistrez et **redéployez une nouvelle version**.
-
-Le champ du tableau de bord retire maintenant les espaces de début et de fin, et
-le script fait le même nettoyage : ce piège-là ne peut plus se reproduire.
-
----
-
-## L'écran de connexion reste sur « Vérification… »
-
-**Ce qui est normal :** quelques secondes. Google met du temps à réveiller un
-script inactif, surtout la première fois de la journée.
-
-**Ce qui ne l'est pas :** au-delà d'une dizaine de secondes. La vérification est
-désormais bornée à 8 secondes et laisse passer au-delà — c'est l'envoi suivant
-qui rapporte l'échec, avec son message.
-
-Si le problème persiste, vérifiez que l'adresse `/exec` répond :
-
-```
-https://VOTRE_ADRESSE/exec?action=version
+```json
+{"version":"0d4e06e","base":"ok","ms":3,"courriel":"configuré","admin":"configuré","cle":"configurée"}
 ```
 
 ---
 
-## « Rester connecté » semble ne rien faire
+## Je n'arrive pas à me connecter au tableau de bord
 
-**Corrigé.** La case n'était ni mémorisée ni restaurée : elle repartait décochée
-à chaque visite, et l'enregistrement suivant reléguait la phrase dans un stockage
-effacé à la fermeture du navigateur.
+**Vérifiez d'abord** que vous utilisez l'e-mail et le mot de passe de votre
+**compte Supabase**, pas un ancien mot de passe du tableau de bord : il n'existe
+plus.
 
-Votre choix est maintenant retenu, et la case est cochée par défaut.
+**Si le message dit « Connexion requise » juste après une connexion réussie :**
+`/api?action=version` doit afficher `"admin":"configuré"`.
+- `"absent"` → la variable `ADMIN_EMAIL` n'est pas réglée dans Vercel.
+- `"pas un e-mail"` → elle est réglée avec autre chose qu'un e-mail (une clé
+  collée par erreur, par exemple).
+- Dans les deux cas, corrigez-la puis **redéployez** : une variable ne vaut
+  qu'après un redéploiement. Sans elle, personne n'entre — c'est voulu.
+
+**Si `"cle"` n'affiche pas `"configurée"`** : `SUPABASE_PUBLISHABLE_KEY` est
+absente ou n'est pas une clé « publishable ». Même remède.
+
+**Mot de passe oublié :** Supabase → Authentication → Users → votre compte →
+« Send password recovery », ou définissez-en un nouveau.
+
+**L'écran reste sur « Vérification… » ou sur une étape de la connexion :** le
+bouton affiche l'étape en cours (« Connexion à Supabase… », « Lecture du
+catalogue… »). Au-delà de 20 secondes, un message le dit. Vérifiez alors
+`/api?action=version` : `"base"` doit valoir `"ok"`.
+
+---
+
+## `/api?action=version` dit que la base est injoignable
+
+Le `code` affiché oriente, sans rien révéler :
+
+| Code | Cause probable |
+|---|---|
+| `28P01` | Le mot de passe de `DATABASE_URL` est faux (changé dans Supabase ?). |
+| `ENOTFOUND` | L'adresse de `DATABASE_URL` est fausse. |
+| `SELF_SIGNED_CERT_IN_CHAIN`, `CERT_HAS_EXPIRED` | Le certificat vérifié (`api/_lib/supabase-ca-2021.crt`) ne correspond plus : **expire en avril 2031**. |
+| `57P01`, délai dépassé | Le projet Supabase est **en pause** (une semaine sans activité). Réveillez-le depuis le tableau de bord de Supabase. La tâche quotidienne est là pour l'éviter. |
+
+---
+
+## « Une table manque dans la base »
+
+Un fichier de `supabase/migrations/` n'a pas été collé dans Supabase. Ouvrez-le,
+copiez-le en entier, collez-le dans **SQL Editor** → **Run**. Rien n'a été
+modifié par la commande refusée.
+
+---
+
+## « La base a refusé cet enregistrement (règle « … »)»
+
+Une saisie que le tableau de bord n'a pas su refuser avant la base : une valeur
+hors limites, un lien qui n'est pas une page du site, un nombre trop grand. **Rien
+n'a été modifié.** Le nom de la règle dit laquelle (`supabase/migrations/`).
+
+---
+
+## Je ne reçois plus la sauvegarde quotidienne
+
+1. Regardez dans les courriers indésirables.
+2. `/api?action=version` doit afficher `"courriel":"configuré"`. Sinon,
+   `RESEND_API_KEY` manque ou n'a pas été redéployée.
+3. Dans Supabase, la table `sauvegardes` porte une ligne par nuit, avec
+   `envoyee` à `true` ou l'erreur d'envoi.
+4. Resend (resend.com) : la clé a-t-elle expiré ? Les enregistrements DNS du
+   domaine sont-ils toujours « Verified » ?
+
+---
+
+## Une session est refusée : « annonce 12 séances… »
+
+Ce n'est pas une panne : une session ne peut pas annoncer plus de séances que ses
+dates n'en contiennent. Le message donne le calcul. Corrigez le volume, les jours
+ou les dates. Voir [TABLEAU-DE-BORD.md](TABLEAU-DE-BORD.md).
 
 ---
 
 ## J'ai modifié quelque chose, le site n'a pas changé
 
 **Attendez une minute et actualisez.** Chaque page garde le catalogue une minute
-en mémoire d'onglet pour ne pas rappeler le serveur à chaque navigation.
-
-**Si ça persiste :** regardez le bandeau en bas du tableau de bord. S'il affiche
-**« Script périmé »**, Google sert encore l'ancien code — vous avez collé le
-fichier sans publier une nouvelle version. Voir
-[SCRIPT-GOOGLE.md](SCRIPT-GOOGLE.md).
+en mémoire d'onglet pour ne pas rappeler le serveur à chaque navigation, et le
+réseau de Vercel le garde 15 secondes de plus.
 
 ---
 
@@ -74,37 +112,17 @@ Les formats sont dans [VISUELS.md](VISUELS.md).
 
 ---
 
-## « You do not have permission to call DriveApp »
-
-L'étape des autorisations a été sautée à l'installation. Apps Script conserve les
-anciennes permissions et n'en redemande jamais.
-
-Ouvrez l'éditeur, choisissez **`testerInstallation`** dans le menu du haut,
-cliquez ▶, et acceptez les autorisations demandées. Le journal doit afficher
-« Autorisation Drive : accordée. »
-
----
-
-## Je veux tout remettre à zéro
-
-**Ne le faites pas avec « Importer le catalogue du site ».** Ce bouton écrase la
-feuille par ce qui est écrit dans le code : vos tarifs, vos moyens de paiement et
-vos pays saisis à la main seraient perdus.
-
-Il n'est là que pour l'amorçage d'une installation neuve.
-
----
-
 ## Avant de signaler un problème
 
-Lancez le banc d'essai :
+Lancez les bancs d'essai :
 
 ```bash
+npm run test:base
 npm run test:api
 ```
 
-S'il passe, le défaut est dans les données ou dans le déploiement, pas dans le
-code. S'il échoue, le message nomme le contrôle qui tombe.
+S'ils passent, le défaut est dans les données ou dans le déploiement, pas dans le
+code. S'ils échouent, le message nomme le contrôle qui tombe.
 
 ---
 
@@ -169,10 +187,10 @@ secondes, puis la nouvelle la remplace.
 
 Cause : le fichier HTML porte une photo — celle du dernier déploiement — que le
 navigateur peint tout de suite. La vraie photo, elle, n'est connue qu'après
-interrogation de la feuille Google. Mesuré sur le site publié avant
-correction : photo du fichier peinte à **384 ms**, vraie photo demandée à
-**569 ms** seulement. Et sur une visite à froid, la réponse d'Apps Script
-dépassait **3,5 secondes**.
+interrogation de la base. Mesuré sur le site publié avant correction (au temps
+de Google) : photo du fichier peinte à **384 ms**, vraie photo demandée à
+**569 ms** seulement, et la réponse dépassait **3,5 secondes** à froid. L'API
+actuelle répond en une à deux secondes, mais l'ordre des choses reste le même.
 
 Deux mécanismes corrigent cela, et les deux doivent rester en place.
 
@@ -197,7 +215,7 @@ recopié à l'identique dans `index.html` et `formations/_template/fiche.html`.
 
 Le cache des données vit lui aussi dans `localStorage` — dans `sessionStorage`
 il mourait avec l'onglet, donc précisément entre deux visites. Il est appliqué
-tout de suite **même périmé**, puis la feuille est interrogée et corrige en
+tout de suite **même périmé**, puis la base est interrogée et corrige en
 silence ce qui a bougé.
 
 ### Vérifier

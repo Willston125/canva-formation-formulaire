@@ -3,20 +3,19 @@
 Adresse : **`/admin`** sur votre site.
 
 Tout ce qui s'affiche sur le site public se règle depuis cet écran. Vous n'avez
-jamais à ouvrir la feuille Google ni à toucher au code.
+jamais à toucher au code.
 
 ---
 
 ## Se connecter
 
-Tapez votre phrase de passe et laissez **« Rester connecté sur cet appareil »**
-cochée : elle l'est par défaut, et votre choix est retenu d'une visite à l'autre.
+Entrez l'**e-mail et le mot de passe de votre compte Supabase** — le compte du
+propriétaire, le seul autorisé. La session reste ouverte tant que l'onglet l'est :
+fermez-le, et il faudra vous reconnecter. C'est voulu, pour qu'un appareil oublié
+n'ouvre pas le tableau de bord.
 
-L'ouverture prend quelques secondes — Google met du temps à réveiller le script.
-C'est normal la première fois de la journée.
-
-Si l'écran affiche **« Mot de passe incorrect »** alors que vous êtes sûr de
-vous, voyez [DEPANNAGE.md](DEPANNAGE.md).
+Un mot de passe oublié ou à changer se règle dans Supabase (Authentication →
+Users). Si l'écran refuse la bonne connexion, voyez [DEPANNAGE.md](DEPANNAGE.md).
 
 ---
 
@@ -24,12 +23,7 @@ vous, voyez [DEPANNAGE.md](DEPANNAGE.md).
 
 ### Vue d'ensemble
 Le nombre de formations publiées, de sessions ouvertes, d'inscriptions reçues et
-de places encore libres. Le bouton **« Importer le catalogue du site »** n'est à
-utiliser qu'une seule fois, à l'installation : il **écrase** ce qui est dans la
-feuille par ce qui est écrit dans le code du site.
-
-> ⚠️ Ne l'utilisez jamais « pour remettre à zéro » : vos tarifs, vos moyens de
-> paiement et vos pays saisis à la main seraient perdus.
+de places encore libres.
 
 ### Formations
 Le catalogue. Pour chaque formation : titre, description, programme, questions
@@ -44,6 +38,11 @@ un montant approché.
 Les dates. Voir [SESSIONS-PAR-PAYS.md](SESSIONS-PAR-PAYS.md) : une même session
 peut se tenir en présentiel ici et en ligne ailleurs, à un tarif différent.
 
+**Une session ne peut pas annoncer plus de séances que ses dates n'en
+contiennent.** « 12 séances, mardi et vendredi, du 6 au 13 octobre » n'en compte
+que 3 : l'enregistrement est refusé, avec le calcul. Corrigez le volume, les
+jours ou les dates.
+
 ### Inscriptions
 Les candidats reçus, les plus récents d'abord. Vous pouvez changer leur statut
 et leur écrire sur WhatsApp d'un clic. C'est le seul onglet qui contient des
@@ -56,6 +55,11 @@ le compteur du site baisse à ce moment-là, pas avant.
 ### Pays
 Les marchés desservis. Pour chacun : devise, indicatif téléphonique, format des
 numéros, moyens de paiement, et votre numéro de contact local.
+
+**Un changement de moyen de paiement vous est signalé par e-mail**, sur
+infos@impactali.site, avec l'ancien et le nouveau numéro côte à côte. Si vous
+recevez ce message sans avoir rien changé, changez aussitôt le mot de passe de
+votre compte Supabase.
 
 Le champ **« Exemple affiché sous le champ du candidat »** attend un **gabarit**
 en X (`77XXXXXX`), jamais un vrai numéro : c'est ce que le candidat a sous les
@@ -91,8 +95,9 @@ navigation.
 
 ## Ce qui n'est pas dans le tableau de bord
 
-- **Le mot de passe** : il vit dans le script Google. Voir
-  [SCRIPT-GOOGLE.md](SCRIPT-GOOGLE.md).
+- **Le mot de passe** : il vit dans Supabase (Authentication → Users).
+- **Les sauvegardes** : une copie de la base arrive chaque nuit par e-mail. Voir
+  [BASE-SUPABASE.md](BASE-SUPABASE.md).
 - **Les pages elles-mêmes** (structure, mise en page) : elles sont dans le code.
 - **Le réglage du cadrage des photos** : commencé, non terminé. Voir
   [VISUELS.md](VISUELS.md).

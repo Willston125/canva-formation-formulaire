@@ -267,15 +267,27 @@ Ce qui était prévu :
 - **Retour arrière :** remettre l'adresse du script Google. Les inscriptions reçues entre-temps sont recopiées dans la feuille ; il y en aura peu.
 - **Fini quand :** le site, le formulaire et toutes les rubriques du tableau de bord fonctionnent sur la nouvelle base.
 
-### Phase 5 — Fin de Google (1 séance)
+### Phase 5 — Fin de Google : faite le 6/10, sauf l'archivage
 
-- **Moi :**
-  - `build:fiches` et `sync` lisent `/api` ;
-  - la mécanique de version (« Script périmé ») est retirée : le code part désormais avec le site ;
-  - la documentation et la mémoire du projet sont mises à jour ;
-  - les épreuves liées à Sheets sont retirées.
-- **Vous :** archiver le déploiement Apps Script, et garder la feuille en lecture seule comme archive.
-- **Fini quand :** plus aucun appel ne part vers `script.google.com`.
+**La bascule a eu lieu le 5/10.** Le fichier `exports/bascule.sql` a été collé dans Supabase, avec les comptes 5 / 5 / 2 / 6 / 1 attendus. `npm run comparer` a dit IDENTIQUE, puis le site a été publié (commit `0d4e06e`). Le propriétaire a ensuite rapatrié les 19 photos et corrigé les dates de ses 4 sessions.
+
+**Fait le 6/10 :**
+- `build:fiches` et `sync` lisent `/api` (adresse relative complétée hors du navigateur).
+- La mécanique de version est retirée : plus de `versionScript`, plus de « Script périmé » ni de « Drive autorisé ». Le code part avec le site.
+- Le chemin Google du tableau de bord est retiré : mot de passe partagé, vérification d'API, « Rester connecté », amorçage depuis les fichiers du site. Il ne reste que la connexion par compte.
+- Défaut trouvé en route et corrigé : une modification enregistrée ne prévenait pas les pages du site d'oublier leur mémoire d'une minute.
+- Documentation réécrite : `README`, `TABLEAU-DE-BORD`, `DEPANNAGE`, `SCRIPT-GOOGLE` (devenu une archive), et `BASE-SUPABASE` (nouveau).
+- L'épreuve de connexion Google est supprimée. Celles qui restent vérifient que la mécanique de version et le repli JSONP ne reviennent pas.
+
+**Gardé volontairement :**
+- Le script Google, sa feuille, `scripts/apps-script/` et son banc d'essai : c'est le retour arrière, et ce dossier contient aussi des épreuves du **site** à déplacer avant de le supprimer.
+- `scripts/supabase/google.js` et `npm run comparer`, tant que le script existe.
+
+**Reste, côté propriétaire :** archiver le déploiement Apps Script quand le retour arrière ne sera plus voulu, garder la feuille en lecture seule, et éventuellement rendre le dépôt privé.
+
+**Reste, côté code, après l'archivage :** supprimer `scripts/apps-script/` en déplaçant d'abord ses épreuves du site, puis `google.js` et `comparer`.
+
+- **Fini quand :** plus aucun appel ne part vers `script.google.com`. C'est le cas pour le site ; il reste l'archivage.
 
 **Total estimé : 6 à 9 séances, sur 2 à 4 semaines, avec une vérification en ligne
 à chaque phase.**

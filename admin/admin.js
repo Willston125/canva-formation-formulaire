@@ -7,22 +7,17 @@
 (function () {
   'use strict';
 
-  /* LA NOUVELLE BASE, depuis la bascule
+  /* LA BASE DU SITE (Supabase), depuis la bascule du 5 octobre 2026
      (docs/superpowers/plans/2026-10-02-migration-supabase.md).
      Le tableau de bord parle à l'API du site (/api), qui range tout dans la
-     base Supabase. On s'y connecte avec son compte (e-mail et mot de passe
-     Supabase), et la session ne vit que dans l'onglet.
-     Le chemin de l'ancien script Google (mot de passe partagé) reste dans ce
-     fichier jusqu'à la phase 5, mais n'est plus emprunté. « ?essai », resté
-     dans un favori, ne change plus rien. */
-  var NOUVELLE_BASE = true;
-  var API = NOUVELLE_BASE ? '/api' : ((window.SITE_ENDPOINTS && window.SITE_ENDPOINTS.registration) || '');
-  var CLE_MDP = 'impactali_admin_mdp';
+     base. On s'y connecte avec son compte (e-mail et mot de passe Supabase), et
+     la session ne vit que dans l'onglet. L'ancien chemin, par le script Google
+     et un mot de passe partagé, a été retiré. */
+  var API = '/api';
   var CLE_SESSION = 'impactali_admin_session';
 
   /** État courant, rechargé à chaque écriture depuis la réponse de l'API. */
   var etat = {
-    motDePasse: '',
     catalogue: { formations: [], sessions: [], pays: [], portfolio: [], reglages: {} },
     inscriptions: [],
     vue: 'apercu',
@@ -144,14 +139,11 @@
 
   /**
    * Appel d'écriture. Le corps part en text/plain : requête simple, donc sans
-   * requête préalable — Apps Script ne sait pas traiter celle-ci.
+   * requête préalable.
    * La réponse est lue : un échec est un échec, jamais un succès silencieux.
    */
-  /* Délais d'attente. Une écriture ordinaire répond en quelques secondes ;
-     l'amorçage écrit quatorze lignes d'un coup sur un projet Google qui démarre
-     à froid, et mérite plus de patience. Abandonner trop tôt laisserait croire
-     que rien ne s'est passé alors que le serveur travaille encore. */
-  var DELAIS = { 'admin.importer': 120000 };
+  /* Délais d'attente propres à certaines commandes (30 s par défaut). */
+  var DELAIS = {};
 
   // ----------------------------- SESSION SUPABASE ------------------------------
 
@@ -280,45 +272,14 @@
           throw erreurSession();
         }
         if (!d || d.ok !== true) throw new Error(d && d.erreur ? d.erreur : 'Le serveur a refusé la demande.');
-        if (d.catalogue) etat.catalogue = d.catalogue;
+        if (d.catalogue) { etat.catalogue = d.catalogue; signalerModification(); }
         return d;
       });
     });
   }
 
   function appeler(action, charge) {
-    if (NOUVELLE_BASE) return appelerNouvelleBase(action, charge);
-    if (!API) return Promise.reject(new Error('Adresse de l’API non configurée dans formations-data.js.'));
-    var corps = Object.assign({ action: action, motDePasse: etat.motDePasse }, charge || {});
-    var expiration = new Promise(function (_, rejeter) {
-      /* Ce délai abandonne l'ATTENTE, pas la requête : Google a pu écrire quand
-         même. Annoncer un échec sec ferait recommencer une modification déjà
-         passée — on dit donc quoi faire avant de réessayer. */
-      window.setTimeout(function () {
-        rejeter(new Error('Le serveur met trop de temps à répondre. La modification est '
-          + 'peut-être passée quand même : actualisez la page avant de réessayer.'));
-      },
-        DELAIS[action] || 30000);
-    });
-    var envoi = fetch(API, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify(corps)
-    }).then(function (r) {
-      if (!r.ok) throw new Error('Le serveur a répondu ' + r.status + '.');
-      return r.text();
-    }).then(function (t) {
-      var d;
-      try { d = JSON.parse(t); } catch (e) { throw new Error('Réponse inattendue du serveur.'); }
-      if (!d || d.ok !== true) {
-        var err = new Error(d && d.erreur ? nettoyerErreur(d.erreur) : 'Le serveur a refusé la demande.');
-        if (d && d.authentification === false) err.authentification = false;
-        throw err;
-      }
-      if (d.catalogue) { etat.catalogue = d.catalogue; signalerModification(); }
-      return d;
-    });
-    return Promise.race([envoi, expiration]);
+    return appelerNouvelleBase(action, charge);
   }
 
   /**
@@ -333,11 +294,6 @@
    */
   function signalerModification() {
     try { localStorage.setItem('impactali_maj', String(Date.now())); } catch (e) { /* stockage refusé */ }
-  }
-
-  /** Apps Script préfixe ses erreurs par « Error: » : inutile de l'infliger à l'utilisateur. */
-  function nettoyerErreur(brut) {
-    return String(brut).replace(/^Error:\s*/, '').replace(/^Exception:\s*/, '');
   }
 
   function messageLisible(err) {
@@ -362,21 +318,18 @@
     return champ ? String(champ.value || '').trim() : '';
   }
 
-  /** Connexion par compte Supabase (le nom date du mode essai, d'avant la bascule). */
-  function initConnexionEssai() {
+  /** Ouverture de la page : session encore valable dans cet onglet, ou formulaire. */
+  function initConnexion() {
     window.addEventListener('error', function (ev) { signalerImprevu(ev.message || 'erreur de script'); });
     window.addEventListener('unhandledrejection', function (ev) {
       signalerImprevu((ev.reason && ev.reason.message) || String(ev.reason));
     });
-    $('#champ-email').hidden = false;
     $('#email-connexion').required = true;
-    var rester = $('#rester-connecte');
-    if (rester && rester.closest('label')) rester.closest('label').hidden = true;
     var aide = $('.connexion__aide');
     if (aide) aide.textContent = 'Espace réservé à l’administration du site. Connectez-vous avec votre compte.';
     // Une session encore ouverte dans cet onglet : on entre sans la redemander
     if (sessionCompteLue()) { connecter(true); return; }
-    $('#form-connexion').addEventListener('submit', soumettreEssai);
+    $('#form-connexion').addEventListener('submit', soumettre);
   }
 
   /* L'étape en cours s'écrit dans le bouton : si la connexion bloque, on sait
@@ -398,7 +351,7 @@
     erreur.hidden = false;
   }
 
-  function soumettreEssai(e) {
+  function soumettre(e) {
     e.preventDefault();
     var bouton = $('#btn-connexion');
     var erreur = $('#erreur-connexion');
@@ -414,130 +367,14 @@
       });
   }
 
-  function initConnexion() {
-    if (NOUVELLE_BASE) return initConnexionEssai();
-    restaurerChoixRester();
-    var memorise = '';
-    try { memorise = localStorage.getItem(CLE_MDP) || sessionStorage.getItem(CLE_MDP) || ''; } catch (e) { }
-    if (memorise) {
-      etat.motDePasse = memorise;
-      connecter(true);
-      return;
-    }
-    $('#form-connexion').addEventListener('submit', function (e) {
-      e.preventDefault();
-      etat.motDePasse = motDePasseSaisi();
-      connecter(false);
-    });
-  }
-
-  /**
-   * Vérifie que le script Google déployé connaît bien l'API d'administration.
-   * Sans ce contrôle, une version antérieure du script prendrait la commande de
-   * connexion pour une inscription : elle écrirait une ligne vide dans la feuille
-   * et enverrait un email parasite. On préfère refuser et le dire clairement.
-   * En cas d'injoignabilité, on laisse passer : l'envoi rapportera lui-même l'échec.
-   */
-  /** Un contrôle d'API réussi vaut pour toute la session du navigateur. */
-  var CLE_API_VUE = 'impactali_api_verifiee';
-
-  /** Le choix « rester connecté », qui doit survivre à la fermeture du navigateur. */
-  var CLE_RESTER = 'impactali_admin_rester';
-
-  /**
-   * Range la phrase de passe là où l'utilisateur l'a demandé.
-   *
-   * La case « Rester connecté » n'était NI mémorisée NI restaurée : elle
-   * repartait décochée à chaque visite. Après une ouverture automatique, cet
-   * enregistrement redescendait donc la phrase de localStorage vers le stockage
-   * de session — effacé à la fermeture du navigateur. On la retapait le
-   * lendemain en croyant que la case ne servait à rien.
-   *
-   * L'ancienne place est toujours effacée : deux stockages qui se contredisent
-   * finissent par rendre la valeur périmée.
-   */
-  function memoriserMotDePasse(phrase) {
-    var case_ = $('#rester-connecte');
-    var durable = !!(case_ && case_.checked);
-    try {
-      localStorage.setItem(CLE_RESTER, durable ? '1' : '0');
-      (durable ? localStorage : sessionStorage).setItem(CLE_MDP, phrase);
-      (durable ? sessionStorage : localStorage).removeItem(CLE_MDP);
-    } catch (e) { /* stockage refusé : la session en cours reste ouverte */ }
-  }
-
-  /** Remet la case dans l'état choisi la dernière fois. */
-  function restaurerChoixRester() {
-    var case_ = $('#rester-connecte');
-    if (!case_) return;
-    try {
-      var garde = localStorage.getItem(CLE_RESTER);
-      /* Jamais répondu : on coche. Une phrase déjà rangée dans localStorage
-         vient forcément d'un « rester connecté », et la décocher la
-         reléguerait au premier enregistrement venu. */
-      case_.checked = garde === null ? true : garde === '1';
-    } catch (e) { /* stockage refusé : on laisse la case telle quelle */ }
-  }
-
-  /**
-   * Ce contrôle interrogeait `action=catalogue` : une lecture COMPLÈTE du
-   * classeur — six onglets, seize kilo-octets, quatre à cinq secondes — juste
-   * pour savoir si le script connaît l'administration. Et la commande de
-   * connexion qui suit relit le même catalogue. On attendait donc deux fois
-   * la même chose, et l'écran restait sur « Vérification… » une dizaine de
-   * secondes avant de s'ouvrir.
-   *
-   * `action=version` répond la même information en 129 octets. Le verdict est
-   * retenu pour la session : un aller-retour, une fois, pas à chaque connexion.
-   *
-   * Un délai d'attente le borne enfin. Sans lui, une requête qui n'aboutissait
-   * jamais laissait le bouton sur « Vérification… » indéfiniment, sans message
-   * ni moyen de réessayer. Passé ce délai on laisse passer : c'est l'envoi
-   * suivant qui rapportera l'échec, avec son propre message.
-   */
-  function verifierApi() {
-    if (!API) return Promise.resolve(true);
-    try { if (sessionStorage.getItem(CLE_API_VUE) === '1') return Promise.resolve(true); }
-    catch (e) { /* stockage refusé : on interroge */ }
-
-    var cible = API + (API.indexOf('?') >= 0 ? '&' : '?') + 'action=version';
-    var essai = fetch(cible, { method: 'GET' })
-      .then(function (r) { return r.ok ? r.json() : null; })
-      .then(function (d) {
-        /* Un script d'avant l'administration ne connaît pas cette action et
-           répond « action inconnue » : pas de version, donc pas d'API. */
-        var connue = !!(d && d.version);
-        if (connue) { try { sessionStorage.setItem(CLE_API_VUE, '1'); } catch (e) { } }
-        /* La réponse est gardée : le bandeau d'état du script la demandait une
-           seconde fois, juste après, pour exactement la même information. */
-        if (d) etat.etatScript = d;
-        return connue;
-      })
-      .catch(function () { return true; });
-
-    var abandon = new Promise(function (resoudre) {
-      window.setTimeout(function () { resoudre(true); }, 8000);
-    });
-    return Promise.race([essai, abandon]);
-  }
-
   function connecter(silencieux) {
     var bouton = $('#btn-connexion');
     var erreur = $('#erreur-connexion');
     erreur.hidden = true;
     attente(bouton, true);
+    etape('Lecture du catalogue…');
 
-    (NOUVELLE_BASE ? Promise.resolve(true) : verifierApi()).then(function (apiPrete) {
-      if (!apiPrete) {
-        var e = new Error('Le script Google n’est pas encore à jour : il ne connaît pas l’administration. '
-          + 'Installez la nouvelle version du script, puis déployez une nouvelle version.');
-        e.apiObsolete = true;
-        return Promise.reject(e);
-      }
-      if (NOUVELLE_BASE) etape('Lecture du catalogue sur la nouvelle base…');
-      return appeler('admin.login', {});
-    }).then(function () {
-      if (!NOUVELLE_BASE) memoriserMotDePasse(etat.motDePasse);
+    appeler('admin.login', {}).then(function () {
       /* `appeler` a déjà rangé le catalogue rendu par la connexion. On le note
          ici plutôt que de tester `etat.catalogue`, qui part d'un objet vide
          mais non nul : le tester rendrait toujours vrai, même sans réponse. */
@@ -547,25 +384,14 @@
       demarrer();
     }).catch(function (err) {
       attente(bouton, false);
-      /* Une coupure de réseau, ou un script pas encore republié, ne rend pas le
-         mot de passe faux. L'oublier obligeait à le retaper — et, en ouverture
-         silencieuse, sans le moindre message : une seconde de connexion perdue
-         suffisait. On ne l'oublie donc que si le serveur l'a vraiment refusé. */
+      /* Une coupure de réseau ne rend pas la session invalide : on ne l'oublie
+         que si le serveur l'a vraiment refusée. */
       var refuse = !!(err && err.authentification === false);
-      if (refuse) {
-        etat.motDePasse = '';
-        if (NOUVELLE_BASE) sessionCompteRangee(null);
-        try { localStorage.removeItem(CLE_MDP); sessionStorage.removeItem(CLE_MDP); } catch (e) { }
-      }
+      if (refuse) sessionCompteRangee(null);
       if (silencieux) {
         // On redonne la main sur le formulaire
-        $('#form-connexion').addEventListener('submit', NOUVELLE_BASE ? soumettreEssai : function (e) {
-          e.preventDefault();
-          etat.motDePasse = motDePasseSaisi();
-          connecter(false);
-        });
-        /* Un mot de passe devenu invalide se passe de commentaire : le champ est
-           là, il suffit de le retaper. Tout le reste doit s'expliquer. */
+        $('#form-connexion').addEventListener('submit', soumettre);
+        // Une session expirée se passe de commentaire : le formulaire est là
         if (refuse) return;
       }
       erreur.textContent = messageLisible(err);
@@ -574,12 +400,7 @@
   }
 
   function deconnecter() {
-    if (NOUVELLE_BASE) {
-      deconnexionCompte().then(function () { window.location.reload(); });
-      return;
-    }
-    try { localStorage.removeItem(CLE_MDP); sessionStorage.removeItem(CLE_MDP); } catch (e) { }
-    window.location.reload();
+    deconnexionCompte().then(function () { window.location.reload(); });
   }
 
   // ------------------------------ DÉMARRAGE ------------------------------
@@ -602,70 +423,18 @@
       if (!$('#panneau').hidden) fermerPanneau();
       else if (!$('#confirmation').hidden) fermerConfirmation();
     });
-    var importer = $('#btn-importer');
-    if (importer) importer.addEventListener('click', importerCatalogueDuSite);
-
     afficherEtatDuScript();
     /* Le catalogue est arrivé avec la réponse de connexion : inutile de le
        redemander pour ouvrir l'écran. */
     rafraichirTout(etat.catalogueDeConnexion === true);
   }
 
-  /**
-   * Affiche, en pied de menu, la version du script réellement servie par Google
-   * et l'état de l'autorisation Drive. Sans cela, « j'ai collé le code mais rien
-   * ne change » est indiscernable d'un défaut du tableau de bord.
-   */
+  /** Pied de menu : d'où viennent les données. */
   function afficherEtatDuScript() {
     var pied = $('#etat-script');
-    if (!pied || !API) return;
-    if (NOUVELLE_BASE) {
-      // Pas de script Google à surveiller : le code de l'API part avec le site
-      pied.innerHTML = '<span class="etiquette etiquette--ouvert">Base du site</span>'
-        + '<span class="etat-script__version">Supabase</span>';
-      return;
-    }
-    /* La vérification d'API vient d'interroger cette même adresse : on reprend
-       sa réponse plutôt que de la redemander. Deux allers-retours chez Google
-       pour la même information, c'est deux secondes et demie de plus sur un
-       écran qui met déjà du temps à s'ouvrir. */
-    var dejaLu = etat.etatScript ? Promise.resolve(etat.etatScript) : null;
-    (dejaLu || fetch(API + (API.indexOf('?') >= 0 ? '&' : '?') + 'action=version', { method: 'GET' })
-      .then(function (r) { return r.ok ? r.json() : null; }))
-      .then(function (d) {
-        if (!d || !d.version) {
-          pied.innerHTML = '<span class="etiquette etiquette--alerte">Script à mettre à jour</span>';
-          return;
-        }
-        /* Version servie ≠ version attendue : Google sert encore l'ancien code.
-           C'est invisible autrement — les commandes répondent, mais avec les
-           règles d'hier. On le dit avant tout le reste. */
-        var attendue = (window.SITE_ENDPOINTS && window.SITE_ENDPOINTS.versionScript) || '';
-        var perime = attendue && d.version !== attendue;
-
-        var drive = d.drive
-          ? '<span class="etiquette etiquette--ouvert">Drive autorisé</span>'
-          : '<span class="etiquette etiquette--alerte">Drive non autorisé</span>';
-        pied.innerHTML = (perime ? '<span class="etiquette etiquette--alerte">Script périmé</span>' : drive)
-          + '<span class="etat-script__version">script ' + echapper(d.version) + '</span>';
-
-        if (perime) {
-          afficherMessage('#erreur-globale',
-            'Google sert encore l’ancienne version du script : ' + d.version
-            + ', alors que le site attend ' + attendue + '. Vos modifications passeront peut-être, '
-            + 'mais avec les règles d’avant. Dans l’éditeur Apps Script : collez le fichier, '
-            + 'ENREGISTREZ (Ctrl+S), puis Déployer → Gérer les déploiements → crayon → '
-            + 'Version : « Nouvelle version » → Déployer.');
-          return;
-        }
-        if (!d.drive) {
-          afficherMessage('#erreur-globale',
-            'L’envoi d’images ne fonctionnera pas : l’autorisation Google Drive n’a pas été accordée. '
-            + 'Dans l’éditeur Apps Script, lancez la fonction testerInstallation, acceptez l’autorisation, '
-            + 'puis republiez une nouvelle version du déploiement.');
-        }
-      })
-      .catch(function () { /* diagnostic indisponible : sans conséquence */ });
+    if (!pied) return;
+    pied.innerHTML = '<span class="etiquette etiquette--ouvert">Base du site</span>'
+      + '<span class="etat-script__version">Supabase</span>';
   }
 
   /**
@@ -724,7 +493,6 @@
     $('#compte-inscriptions').textContent = etat.inscriptions.length || '';
     $('#compte-pays').textContent = (etat.catalogue.pays || []).length || '';
     $('#compte-portfolio').textContent = (etat.catalogue.portfolio || []).length || '';
-    $('#bloc-amorcage').hidden = f.length > 0;
 
     var actions = { apercu: '', formations: '', sessions: '', inscriptions: '', pays: '', portfolio: '', visuels: '', textes: '', reglages: '' };
     actions.formations = '<button class="bouton bouton--primaire" type="button" id="btn-nouvelle-formation">'
@@ -973,18 +741,9 @@
   function rendrePays() {
     var p = listePays();
     if (!p.length) {
-      /* Base créée avant les pays : les formations sont déjà là, donc l'import
-         général de la vue d'ensemble est masqué. On propose ici un amorçage qui
-         n'écrit QUE les pays — le catalogue tenu à jour ici n'est pas touché. */
       $('#liste-pays').innerHTML = '<div class="bloc"><h2>Aucun pays enregistré</h2>'
         + '<p class="aide">Les pays portent la devise, l’indicatif, le format des numéros et les moyens '
-        + 'de paiement. Reprenez ceux du site pour démarrer — vos formations et sessions ne sont pas '
-        + 'modifiées — puis ajustez les tarifs formation par formation.</p>'
-        + '<button class="bouton bouton--primaire" type="button" id="btn-importer-pays">'
-        + '<span class="material-symbols-outlined" aria-hidden="true">download</span>'
-        + 'Reprendre les pays du site</button></div>';
-      var b = $('#btn-importer-pays');
-      if (b) b.addEventListener('click', function () { importerPaysDuSite(b); });
+        + 'de paiement. Ajoutez-en un avec « Nouveau pays », puis saisissez les tarifs de chaque formation.</p></div>';
       return;
     }
     $('#liste-pays').innerHTML = tableau(
@@ -1018,29 +777,6 @@
     });
     $$('[data-supprimer-pays]').forEach(function (b) {
       b.addEventListener('click', function () { demanderSuppressionPays(b.dataset.supprimerPays); });
-    });
-  }
-
-  /** Reprend les pays déclarés dans le fichier du site, sans toucher au reste. */
-  function importerPaysDuSite(bouton) {
-    var pays = (window.PAYS || []).map(function (p, i) {
-      var copie = Object.assign({}, p);
-      copie.paymentMethods = (p.paymentMethods || []).map(function (m) { return Object.assign({}, m); });
-      if (typeof copie.ordre !== 'number') copie.ordre = i;
-      return copie;
-    });
-    if (!pays.length) {
-      afficherMessage('#erreur-globale', 'Le fichier du site ne déclare aucun pays.', 6000);
-      return;
-    }
-    bouton.disabled = true;
-    appeler('admin.importer', { donnees: { pays: pays } }).then(function (d) {
-      afficherMessage('#succes-globale', (d.pays || 0) + ' pays repris. '
-        + 'Saisissez maintenant les tarifs de chaque formation.', 7000);
-      rendre();
-    }).catch(function (err) {
-      bouton.disabled = false;
-      afficherMessage('#erreur-globale', messageLisible(err), 9000);
     });
   }
 
@@ -2743,7 +2479,7 @@
   }
 
   function blocRapatriement() {
-    var n = NOUVELLE_BASE ? photosSurDrive(etat.catalogue).length : 0;
+    var n = photosSurDrive(etat.catalogue).length;
     if (!n) return '';
     return '<div class="bloc" id="bloc-drive"><h2>' + n + (n > 1 ? ' photos encore' : ' photo encore')
       + ' sur Google Drive</h2>'
@@ -3707,47 +3443,6 @@
   }
 
   function fermerConfirmation() { $('#confirmation').hidden = true; }
-
-  // ------------------------------- AMORÇAGE ------------------------------
-
-  /** Reprend le catalogue actuellement publié pour amorcer la base. */
-  function importerCatalogueDuSite() {
-    var bouton = $('#btn-importer');
-    bouton.disabled = true;
-    var donnees = {
-      formations: (window.FORMATIONS || []).map(function (f, i) {
-        var copie = Object.assign({}, f);
-        if (typeof copie.ordre !== 'number') copie.ordre = i;
-        return copie;
-      }),
-      sessions: (window.SESSIONS || []).map(function (s) { return Object.assign({}, s); }),
-      pays: (window.PAYS || []).map(function (p, i) {
-        var copie = Object.assign({}, p);
-        copie.paymentMethods = (p.paymentMethods || []).map(function (m) { return Object.assign({}, m); });
-        if (typeof copie.ordre !== 'number') copie.ordre = i;
-        return copie;
-      }),
-      portfolio: (window.PORTFOLIO || []).map(function (r, i) {
-        var copie = Object.assign({}, r);
-        if (typeof copie.ordre !== 'number') copie.ordre = i;
-        delete copie.placeholder; // déduit de l'absence d'image, plus simple à tenir
-        return copie;
-      }),
-      reglages: Object.assign({}, window.SITE_CONTACT || {}, {
-        defaultLocation: (window.SESSIONS && window.SESSIONS[0] && window.SESSIONS[0].location) || ''
-      })
-    };
-    appeler('admin.importer', { donnees: donnees }).then(function (d) {
-      bouton.disabled = false;
-      afficherMessage('#succes-globale',
-        d.formations + ' formation(s), ' + d.sessions + ' session(s), '
-        + (d.pays || 0) + ' pays et ' + (d.portfolio || 0) + ' réalisation(s) importés.', 6000);
-      rafraichirTout();
-    }).catch(function (err) {
-      bouton.disabled = false;
-      afficherMessage('#erreur-globale', messageLisible(err), 9000);
-    });
-  }
 
   // ------------------------------- DÉPART --------------------------------
 

@@ -325,7 +325,7 @@
 
     /* ---------- Places réellement disponibles ----------
        Le site est statique : il ne peut pas se réécrire. Le nombre d'inscrits
-       vit dans la feuille Google, seule source qui le connaisse. On l'interroge
+       vit dans la base, seule source qui le connaisse. On l'interroge
        au chargement et on en déduit les places restantes. Tant que la réponse
        n'est pas là (ou si l'appel échoue), les valeurs de formations-data.js
        servent de repli : aucune page ne dépend de cet appel pour s'afficher. */

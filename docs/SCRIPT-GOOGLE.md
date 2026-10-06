@@ -1,165 +1,74 @@
-# Le script Google — installer, mettre à jour, dépanner
+# L'ancien script Google — archive
 
-Le site est statique : il ne sait rien faire tout seul. C'est un script Apps
-Script, attaché à une feuille Google, qui reçoit les inscriptions et sert de
-base de données au tableau de bord.
-
-Fichier : **`scripts/apps-script/impactali-inscriptions.gs`**
-
----
-
-## Mettre à jour le script — les DEUX étapes
-
-C'est l'erreur la plus coûteuse de tout ce montage, et elle ne prévient pas.
-
-1. **Coller le fichier** dans l'éditeur Apps Script, puis **Ctrl+S**.
-2. **Déployer → Gérer les déploiements → crayon → Version : « Nouvelle version »
-   → Déployer.**
-
-> ⚠️ **Coller ne suffit pas.** Google continue de servir l'ancien code tant
-> qu'une nouvelle version n'est pas publiée. Les commandes répondent, le site
-> semble marcher — mais avec les règles d'hier.
-
-N'utilisez jamais **« Nouveau déploiement »** pour une mise à jour : il crée une
-**autre adresse**, et le site continuerait d'appeler la précédente.
-
-### Vérifier que c'est bien parti
-
-Ouvrez dans le navigateur :
-
-```
-https://VOTRE_ADRESSE/exec?action=version
-```
-
-Le numéro affiché doit être celui écrit en haut du fichier que vous venez de
-coller. Le tableau de bord le vérifie aussi tout seul, et affiche **« Script
-périmé »** si les deux ne correspondent pas.
+**Le site ne s'en sert plus depuis le 5 octobre 2026.** Le catalogue, les
+inscriptions et les photos passent par la base Supabase
+([BASE-SUPABASE.md](BASE-SUPABASE.md)). Cette page dit ce qui reste de l'ancien
+montage, comment revenir en arrière si besoin, et comment le fermer pour de bon.
 
 ---
 
-## Le mot de passe
+## Ce qui reste
 
-Il est **ligne 112** du fichier, en clair :
+| Chose | Où | État |
+|---|---|---|
+| Le script déployé chez Google | Apps Script, ancien projet | **Toujours en ligne**, sans plus aucun appel du site |
+| La feuille Google | Google Sheets | Gelée au 5 octobre : ne reçoit plus rien |
+| Les photos d'avant | Google Drive | Copiées dans la base ; les originaux restent dans Drive |
+| Le code du script | `scripts/apps-script/impactali-inscriptions.gs` | Gardé pour le retour arrière |
+| Son banc d'essai | `scripts/apps-script/tests/` | Gardé : il contient aussi des épreuves du **site** |
+| L'adresse du script | `scripts/supabase/google.js` | Sert au retour arrière et à `npm run comparer` |
 
-```js
-var MOT_DE_PASSE_ADMIN = 'CHANGEZ-MOI-avant-de-deployer';
-```
-
-C'est la **seule** ligne à renseigner. Rien à ouvrir dans les réglages, rien à
-cocher ailleurs.
-
-### Vous n'avez pas à la réécrire à chaque mise à jour
-
-Le script garde une copie de votre phrase de son côté. Si vous recollez un
-fichier dont la ligne 112 est restée sur sa valeur d'usine, cette copie reprend
-la main : **vous entrez comme d'habitude**.
-
-| Ligne 112 du fichier collé | Ce qui se passe |
-|---|---|
-| Laissée sur `CHANGEZ-MOI-avant-de-deployer` | Votre phrase mémorisée reprend la main |
-| Réécrite avec votre phrase | C'est elle qui fait loi, et la copie est mise à jour |
-
-Pour **changer** de mot de passe, il faut donc bien l'écrire ligne 112 : la copie
-ne se met à jour que par le fichier.
-
-### Choisir une bonne phrase
-
-Longue, propre à ce site, jamais réutilisée ailleurs, en **lettres, chiffres et
-tirets**. Tapez-la au clavier plutôt que de la coller : un copier-coller apporte
-des caractères qui ne se voient pas — espace insécable, apostrophe courbe — et
-qu'il faudrait ensuite retaper à l'identique.
+**Un ancien déploiement est un risque tant qu'il répond.** Il porte l'ancien mot
+de passe partagé, et quiconque en connaît l'adresse peut encore l'interroger.
+Fermez-le dès que le retour arrière n'est plus voulu.
 
 ---
 
-## Première installation, sur un compte neuf
+## Revenir en arrière
 
-1. Créer un classeur Google Sheets vide. N'y créer **aucun onglet** : le script
-   les crée lui-même.
-2. Dans ce classeur : **Extensions → Apps Script**.
-3. Coller le fichier, écrire le mot de passe ligne 112, enregistrer.
-4. **⚙ Paramètres du projet** → cocher « Afficher le fichier manifeste
-   appsscript.json », l'ouvrir, y recopier `scripts/apps-script/appsscript.json`.
-5. Lancer **`testerInstallation`** (menu déroulant du haut, puis ▶). Google
-   demande alors les autorisations, Drive compris. Le journal doit afficher
-   « Autorisation Drive : accordée. »
-6. **Déployer → Nouveau déploiement → Application web**, exécuter en tant que
-   « Moi », accès « Tout le monde ». Copier l'adresse `/exec`.
-7. Reporter cette adresse dans `window.SITE_ENDPOINTS.registration`
-   (`formations-data.js`), publier le site.
-8. Ouvrir `/admin` → Vue d'ensemble → **« Importer le catalogue du site »**.
+Possible tant que le script est en ligne et la feuille intacte.
 
-> L'étape 4 n'est pas facultative. Apps Script conserve les anciennes
-> autorisations et n'en redemande jamais : sans elle, le premier envoi d'image
-> échoue sur « You do not have permission to call DriveApp… ».
+1. Dans le dépôt, annulez la bascule : `git revert` du commit
+   « Bascule : le site, le formulaire et le tableau de bord passent sur la base »
+   et des commits de nettoyage qui l'ont suivi, ou remettez simplement dans
+   `formations-data.js` l'adresse de `scripts/supabase/google.js`.
+2. Publiez. Le site relit la feuille.
+3. **Les inscriptions reçues depuis le 5 octobre sont dans la nouvelle base, pas
+   dans la feuille.** Recopiez-les à la main dans l'onglet Inscriptions.
 
-**Préférez un compte Google personnel.** Un compte Workspace peut interdire par
-politique la publication « accessible à tout le monde », ce qui empêcherait le
-site d'enregistrer les inscriptions.
+Plus le temps passe, plus ce retour coûte : les modifications faites depuis dans
+le tableau de bord ne sont pas, elles non plus, dans la feuille.
 
 ---
 
-## Ce que le script protège
+## Fermer pour de bon
 
-- **Les 18 commandes du tableau de bord** exigent toutes le mot de passe.
-- **Le formulaire public** est ouvert — il le doit — mais gardé : nom, téléphone
-  et formation obligatoires, champs trop longs tronqués, statut toujours
-  « En attente » quoi que dise la requête (seul le tableau de bord le fait
-  avancer), montants non numériques écartés, requêtes de plus de 1,5 Mo refusées.
-- **Les alertes email** sont plafonnées à 60 par jour. Au-delà, les inscriptions
-  continuent d'être enregistrées, sans email : épuiser le quota de Google ferait
-  perdre les alertes des inscriptions suivantes — les vraies.
+À faire quand vous êtes sûr de ne plus revenir en arrière — quelques jours de
+fonctionnement normal suffisent en général.
 
-**Limite connue, assumée :** Apps Script n'expose pas l'adresse IP du visiteur.
-Aucune limitation par IP n'est donc possible. Les garde-fous arrêtent le bruit,
-pas un acharnement ciblé.
-
----
-
-## Le banc d'essai
-
-```bash
-npm run test:api
-```
-
-Il exécute le **vrai** script dans un bac à sable, avec les services Google
-simulés. Lancez-le après toute modification du fichier `.gs`.
+1. **Archivez le déploiement.** Éditeur Apps Script → Déployer → Gérer les
+   déploiements → l'ancien déploiement → l'archiver. L'adresse cesse de répondre.
+2. **Gardez la feuille** en lecture seule, comme archive des inscriptions
+   d'avant le 5 octobre.
+3. **Allégez le dépôt**, si vous le souhaitez : le dossier
+   `scripts/apps-script/` (le `.gs` et son émulateur), `scripts/supabase/google.js`
+   et la commande `npm run comparer` n'ont plus d'usage. Attention : plusieurs
+   épreuves de ce dossier vérifient le **site** (noms de fonctions, fichiers
+   publiés, formulaires, textes…) et doivent être déplacées avant de le supprimer.
 
 ---
 
-## Le catalogue est retenu en mémoire (depuis `2026-09-20-catalogue-en-cache`)
+## Ce que l'ancien montage avait comme limites
 
-Mesuré depuis le site publié : un appel « catalogue » prenait **3,9 à 5,5
-secondes**, de façon constante sur trois essais consécutifs. Ce n'était donc
-pas un démarrage à froid, mais le même travail refait pour chaque visiteur —
-huit onglets rouverts, un aller-retour réseau chacun.
+Pour mémoire, et parce que la base les lève :
 
-Le script garde désormais le catalogue en mémoire chez Google. Au banc
-d'essai, le second appel consomme **1 accès à la feuille au lieu de 8**.
-
-### Ce qui paraît tout de suite, et ce qui attend
-
-| Modification | Délai avant de paraître sur le site |
-|---|---|
-| Faite depuis le **tableau de bord** | **immédiat** — toute écriture jette le cache |
-| **Places restantes** (une inscription) | **immédiat** — jamais mises en cache |
-| Faite **à la main dans la feuille Google** | **jusqu'à 5 minutes** |
-
-Cette dernière ligne est le compromis assumé : rien ne prévient le script
-qu'une cellule a été corrigée à la main. La durée est volontairement courte
-(Google en permet six heures, on en prend cinq minutes) pour qu'une correction
-saisie le matin ne se voie pas seulement en fin de journée.
-
-**Si vous corrigez une cellule directement et voulez la voir tout de suite**,
-faites ensuite n'importe quel enregistrement depuis le tableau de bord : cela
-jette le cache.
-
-### Les places restantes ne sont jamais mises en cache
-
-C'est délibéré et il ne faut pas y toucher : une valeur périmée ferait
-promettre deux fois la dernière place. Elles sont recomptées à chaque appel,
-même quand tout le reste vient de la mémoire.
-
-### Le tableau de bord ne lit jamais ce cache
-
-Celui qui vient d'enregistrer doit voir ce qu'il a écrit, sans quoi il
-croirait sa modification perdue et la referait.
+- un mot de passe partagé, essayable sans limite, gardé en clair dans le
+  navigateur → remplacé par un compte Supabase, avec une session qui expire ;
+- aucune limitation du formulaire public par visiteur (Apps Script n'expose pas
+  l'adresse) → 20 envois par heure et par connexion ;
+- un statut d'inscription que le visiteur pouvait forger (« Payé ») → toute
+  inscription arrive « En attente » ;
+- des sessions qui annonçaient plus de séances que le calendrier n'en permet →
+  désormais refusées ;
+- une feuille qui transformait un numéro `+253…` en formule `#ERROR!` → plus de
+  feuille.

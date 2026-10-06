@@ -182,11 +182,21 @@ verifier('« countryCode » n’est toujours pas une colonne : on ne peut donc p
 verifier('« telephoneInternational », lui, en est une',
   /telephoneInternational/.test(blocColonnes), true);
 
-// --- 9. Un échec d'ouverture n'efface pas le mot de passe mémorisé ---
+// --- 9. Un échec d'ouverture n'efface pas la session ---
 
-verifier('le mot de passe n’est oublié que si le serveur l’a refusé',
+verifier('la session n’est oubliée que si le serveur l’a refusée',
   /var refuse = !!\(err && err\.authentification === false\);/.test(admin)
-  && /if \(refuse\) \{\s*\n\s*etat\.motDePasse = '';/.test(admin), true);
+  && /if \(refuse\) sessionCompteRangee\(null\);/.test(admin), true);
+
+/* Une modification enregistrée doit prévenir les pages du site d'oublier le
+   catalogue qu'elles gardent une minute en mémoire. Le chemin de la nouvelle
+   base ne le faisait pas : on modifiait un tarif, on actualisait le site, et
+   l'ancien revenait jusqu'à une minute plus tard — au point de croire
+   l'enregistrement perdu. */
+const appelNouvelleBase = admin.slice(admin.indexOf('function appelerNouvelleBase'),
+  admin.indexOf('function signalerModification'));
+verifier('une modification enregistrée prévient les pages du site',
+  /etat\.catalogue = d\.catalogue; signalerModification\(\);/.test(appelNouvelleBase), true);
 
 // --- 10. Échap ne ferme que la fenêtre du dessus ---
 
@@ -541,13 +551,10 @@ verifier('et retombe sur les communs pour une fiche générée',
 verifier('la fiche les réactualise sans régénération',
   /remplir\('prerequis-section', blocs\.aDesPrerequis\?\.\(formation\)/.test(formulaire), true);
 
-/* Une colonne ajoutée au serveur oblige à republier : la version doit changer
-   des DEUX côtés, sinon le tableau de bord ne saura pas le dire. */
-const versionGs = /var VERSION = '([^']+)'/.exec(gs);
-const versionSite = /versionScript: '([^']+)'/.exec(donneesSite);
-verifier('le script et le site annoncent la même version',
-  versionGs && versionSite ? versionGs[1] === versionSite[1] : false, true);
-resultats.push('NOTE  version attendue en production : ' + (versionGs ? versionGs[1] : '?'));
+/* Depuis la bascule, le code de l'API part avec le site : plus aucune version
+   de script à tenir alignée, ni à surveiller depuis le tableau de bord. */
+verifier('le site ne guette plus la version d’un script',
+  /versionScript/.test(donneesSite) || /versionScript/.test(admin), false);
 
 // --- 24. Une formation ajoutée plus tard peut avoir sa vraie fiche ---
 

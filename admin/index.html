@@ -25,8 +25,8 @@
             <h1>Tableau de bord</h1>
             <p class="connexion__aide">Espace réservé à l’administration du site.</p>
 
-            <!-- Mode essai (/admin/?essai) : connexion par compte, sur la nouvelle base -->
-            <label class="champ" id="champ-email" hidden>
+            <!-- Connexion par compte Supabase -->
+            <label class="champ" id="champ-email">
                 <span class="champ__label">E-mail</span>
                 <input type="email" id="email-connexion" name="email" autocomplete="username"
                     placeholder="L’e-mail de votre compte">
@@ -36,11 +36,6 @@
                 <span class="champ__label">Mot de passe</span>
                 <input type="password" id="mot-de-passe" name="password" autocomplete="current-password" required
                     placeholder="Votre mot de passe d’administration">
-            </label>
-
-            <label class="case">
-                <input type="checkbox" id="rester-connecte">
-                <span>Rester connecté sur cet appareil</span>
             </label>
 
             <button class="bouton bouton--primaire" type="submit" id="btn-connexion">
@@ -118,14 +113,6 @@
                 <div class="bloc">
                     <h2>Dernières inscriptions</h2>
                     <div id="apercu-inscriptions"></div>
-                </div>
-                <div class="bloc" id="bloc-amorcage" hidden>
-                    <h2>Première mise en route</h2>
-                    <p class="aide">La base est vide. Importez le catalogue actuellement publié sur le site pour
-                        commencer à le gérer depuis ici. Cette opération ne modifie rien sur le site.</p>
-                    <button class="bouton bouton--primaire" type="button" id="btn-importer">
-                        <span class="material-symbols-outlined" aria-hidden="true">download</span>
-                        Importer le catalogue du site</button>
                 </div>
             </section>
 
