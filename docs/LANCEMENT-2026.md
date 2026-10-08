@@ -3,6 +3,12 @@
 Décidé le 8 octobre 2026. Tout se saisit dans le **tableau de bord** (`/admin`) ;
 le site se met à jour dans la minute.
 
+> **Fait le 8 octobre 2026.** Tarifs et durée des 5 formations, les 5 sessions existantes
+> **modifiées** (aucune supprimée : c'est la règle), les 5 sessions de Djibouti créées
+> (`<formation>-dj-2026`), Djibouti activé. Vérifié sur le site dans les deux pays.
+> Une inscription « En attente » (Marketing digital) a vu sa session passer du 7 au
+> 9 novembre : la personne est à prévenir.
+
 ## Les règles du lancement
 
 - **Un seul créneau : 18h30 – 20h30**, un seul formateur. Aucune date ne sert deux sessions.
@@ -50,7 +56,9 @@ et 7 500 FDJ. **Ne remplissez pas « Tarif de cette session »** : le tarif de l
   « 12 jours · 24 heures · 4 modules · 3 séances/semaine » par
   « 12 jours · 12 heures · 4 modules ». Quatre modules en 6 séances est serré : à vous de voir.
 
-## 3. Sessions → supprimer les 5 actuelles, créer ces 10
+## 3. Sessions → modifier les 5 actuelles (Comores), créer les 5 de Djibouti
+
+On ne supprime jamais une session : une inscription y est peut-être rattachée.
 
 Champs communs : **Nombre de places** 20 · **Inscriptions ouvertes** coché ·
 **Tarif de cette session** vide · volume : `6 séances · 12 heures`.
