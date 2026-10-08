@@ -238,7 +238,11 @@
         const sessionMeta = document.getElementById('selected-session-meta');
         if (title) title.textContent = formation.title;
         if (meta) {
-            meta.textContent = [formation.duration, formation.mode].filter(v => v && !/^à confirmer$/i.test(v)).join(' · ')
+            /* Même règle que l'en-tête de fiche : le mode est celui de la session
+               dans le pays du candidat, celui de la formation n'est que le repli.
+               Un Djiboutien lisait « Présentiel » au-dessus d'une session en ligne. */
+            const modeSession = displaySession ? sessionMode(displaySession) : '';
+            meta.textContent = [formation.duration, modeSession || formation.mode].filter(v => v && !/^à confirmer$/i.test(v)).join(' · ')
                 || 'Informations pratiques à annoncer';
         }
         if (sessionMeta) {

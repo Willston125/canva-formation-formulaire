@@ -52,13 +52,26 @@
         return badges.map(badge => `<span class="badge badge--${badge.tone}">${escapeHtml(badge.label)}</span>`).join('');
     }
 
+    /**
+     * Mode annoncé pour une formation : celui de sa prochaine session DANS LE PAYS
+     * du visiteur, celui de la formation n'étant que le repli. La formation dit
+     * « Présentiel » pour les Comores, alors que ses sessions de Djibouti sont en ligne.
+     */
+    function modeAffiche(formation) {
+        const { session } = common.sessionState(formation.formId);
+        const code = common.paysActif?.()?.code;
+        const mode = session && common.modeDeSession ? common.modeDeSession(session, code) : '';
+        return isKnown(mode) ? mode : formation.mode;
+    }
+
     /** Métadonnées confirmées uniquement ; repli sobre si rien n'est encore défini. */
     function cardMeta(formation) {
         const items = [];
         if (isKnown(formation.duration)) items.push(['schedule', formation.duration]);
         if (typeof formation.modules === 'number') items.push(['view_module', `${formation.modules} modules`]);
         if (isKnown(formation.level)) items.push(['signal_cellular_alt', formation.level]);
-        if (isKnown(formation.mode)) items.push(['co_present', formation.mode]);
+        const mode = modeAffiche(formation);
+        if (isKnown(mode)) items.push(['co_present', mode]);
         if (!items.length) items.push(['pending', 'Durée, niveau et format à annoncer']);
         return `<ul class="course-card__meta" aria-label="Informations pratiques">${items.map(([icon, label]) =>
             `<li><span class="material-symbols-outlined" aria-hidden="true">${icon}</span>${escapeHtml(label)}</li>`).join('')}</ul>`;
@@ -492,7 +505,8 @@
         if (isKnown(formation.duration)) facts.push(['schedule', 'Durée', formation.duration]);
         if (typeof formation.modules === 'number') facts.push(['view_module', 'Programme', `${formation.modules} modules`]);
         if (isKnown(formation.level)) facts.push(['signal_cellular_alt', 'Niveau', formation.level]);
-        if (isKnown(formation.mode)) facts.push(['co_present', 'Mode', formation.mode]);
+        const mode = modeAffiche(formation);
+        if (isKnown(mode)) facts.push(['co_present', 'Mode', mode]);
         if (typeof prixDe(formation) === 'number') facts.push(['payments', 'Tarif', formatPrixDe(formation)]);
         const session = upcomingSessions().find(item => item.formId === formation.formId);
         if (session) facts.push(['event', 'Prochaine session', formatSessionDate(session.startDate)]);
