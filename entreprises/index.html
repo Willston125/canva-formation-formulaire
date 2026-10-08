@@ -17,6 +17,9 @@
     <link rel="preload" href="/assets/fonts/plus-jakarta-sans-latin.woff2?v=a389d97d" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="/assets/fonts/inter-latin.woff2?v=f11d729b" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="/assets/fonts/material-symbols-outlined.woff2?v=d51842d3" as="font" type="font/woff2" crossorigin>
+    <link rel="icon" href="/favicon.ico" sizes="48x48">
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/brand/icone-32.png">
+    <link rel="apple-touch-icon" href="/assets/brand/icone-180.png">
     <link rel="stylesheet" href="/fonts.css">
     <link rel="canonical" href="https://www.impactali.site/entreprises/">
     <link rel="stylesheet" href="/tailwind.css">
@@ -81,8 +84,8 @@
 
             <form class="pro-form" id="entreprise-form" novalidate aria-labelledby="pro-form-title">
                 <h2 id="pro-form-title" data-texte="entreprises.page.formulaire" data-texte-groupe="Page entreprises" data-texte-libelle="Titre du formulaire">Demander une formation sur mesure</h2>
-                <p class="pro-form__hint" data-texte="entreprises.formulaire.avis" data-texte-groupe="Page entreprises" data-texte-libelle="Avis sous le formulaire">Ce formulaire prépare un message que vous enverrez vous-même via WhatsApp. Aucune
-                    donnée n’est transmise sans votre action.</p>
+                <p class="pro-form__hint" data-texte="entreprises.formulaire.avis" data-texte-groupe="Page entreprises" data-texte-libelle="Avis sous le formulaire">Ce formulaire prépare un e-mail que vous envoyez vous-même depuis votre messagerie.
+                    Rien n’est transmis sans votre action.</p>
 
                 <div class="field-group">
                     <label for="pro-organisation" class="field-label">Organisation <span class="text-primary">*</span></label>
@@ -96,7 +99,7 @@
                 </div>
                 <div class="field-group">
                     <label for="pro-telephone" class="field-label">Téléphone <span class="text-primary">*</span></label>
-                    <input class="field-input" id="pro-telephone" name="telephone" type="tel" required autocomplete="tel" placeholder="+253 77 XX XX XX" aria-describedby="pro-telephone-error">
+                    <input class="field-input" id="pro-telephone" name="telephone" type="tel" required autocomplete="tel" placeholder="Avec l’indicatif de votre pays" aria-describedby="pro-telephone-error">
                     <span class="field-error" id="pro-telephone-error" role="alert"></span>
                 </div>
                 <div class="field-group">
@@ -108,11 +111,10 @@
                     <select class="field-input field-select" id="pro-theme" name="theme">
                         <option value="">Choisir une thématique</option>
                         <option>Canva Pro &amp; Création de contenu</option>
-                        <option>Community Management &amp; Stratégie digitale</option>
-                        <option>Graphisme &amp; Identité visuelle</option>
-                        <option>Photo &amp; Vidéo professionnelle</option>
-                        <option>Montage vidéo : CapCut Pro &amp; DaVinci Resolve</option>
-                        <option>Réalisation audiovisuelle &amp; Court-métrage</option>
+                        <option>Graphisme &amp; identité visuelle</option>
+                        <option>Réalisation et Montage vidéo</option>
+                        <option>Création de site web avec iA</option>
+                        <option>Marketing digital</option>
                         <option>Autre / plusieurs thématiques</option>
                     </select>
                 </div>
@@ -200,6 +202,19 @@
                     + '?subject=' + encodeURIComponent('Demande de formation pour une organisation')
                     + '&body=' + encodeURIComponent(message);
             });
+            /* Les thématiques suivent le catalogue publié : une formation ajoutée ou
+               retirée dans le tableau de bord se retrouve ici sans retoucher la page. */
+            const theme = document.getElementById('pro-theme');
+            const synchroniserThemes = () => {
+                const titres = (window.FORMATIONS || []).map(f => f && f.title).filter(Boolean);
+                if (!theme || !titres.length) return;
+                const choix = theme.value;
+                theme.replaceChildren(new Option('Choisir une thématique', ''),
+                    ...titres.map(titre => new Option(titre, titre)), new Option('Autre / plusieurs thématiques', 'Autre / plusieurs thématiques'));
+                if ([...theme.options].some(o => o.value === choix)) theme.value = choix;
+            };
+            document.addEventListener('impactali:catalogue', synchroniserThemes);
+
             form.querySelectorAll('input, textarea').forEach(field => field.addEventListener('input', () => showError(field.id, '')));
         })();
     </script>

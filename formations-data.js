@@ -181,7 +181,7 @@ window.FORMATIONS = Object.freeze([
     imageAlt: 'Le formateur à son bureau avec des planches de charte graphique, un nuancier et des ouvrages de design',
     poster: 'https://lh3.googleusercontent.com/d/1QXK4d9K3D8ScZ5C5-26RaZgJngEl-aGH=w1200-rw',
     duration: '12 séances',
-    level: 'Débuant',
+    level: 'Débutant',
     mode: 'Présentiel',
     price: 7500,
     prices: {"DJ":7500,"KM":15000},

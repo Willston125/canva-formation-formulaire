@@ -388,6 +388,19 @@ async function principal() {
     console.log(`formations/${formation.slug}/index.html`);
   }
 
+  /* Le plan du site suit les fiches qu'on vient d'écrire : une formation ajoutée
+     ou retirée y entre ou en sort sans retoucher un fichier à la main. Aucune
+     date de modification : on n'en connaît pas de fiable, et l'inventer ferait
+     passer pour récente une page qui ne l'est pas. */
+  const adresses = ['/', ...formations.filter(f => f.slug).map(f => `/formations/${f.slug}/`),
+    '/entreprises/', '/mentions-legales/'];
+  fs.writeFileSync(path.join(ROOT, 'sitemap.xml'),
+    '<?xml version="1.0" encoding="UTF-8"?>\n'
+    + '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+    + adresses.map(a => `  <url><loc>${SITE_URL}${a}</loc></url>`).join('\n')
+    + '\n</urlset>\n');
+  console.log('sitemap.xml');
+
   /* Une fiche générée n'est atteignable que si la formation annonce qu'elle en
      a une. Sans cela, son lien continue de pointer vers l'inscription
      générique, et la page qu'on vient d'écrire ne sert à personne. */
