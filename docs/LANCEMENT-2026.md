@@ -28,8 +28,7 @@ Création de site web avec iA, Réalisation et Montage vidéo.
 ## Avant de commencer
 
 1. **Onglet Inscriptions** : regardez si quelqu'un est déjà inscrit aux anciennes
-   sessions (13 octobre, 19 octobre, 7 novembre). Prévenez-les avant de supprimer
-   quoi que ce soit.
+   sessions (13 octobre, 19 octobre, 7 novembre). Prévenez-les de leurs nouvelles dates.
 2. **Onglet Réglages** : le « lieu proposé par défaut » est *Saalam Tower, 5ème étage,
    Djibouti*. Il préremplit le lieu des nouvelles sessions. **Pour chaque session des
    Comores, remplacez-le par « American corner ».**
