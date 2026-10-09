@@ -22,7 +22,7 @@
  *  - une écriture à la fois, sous verrou, comme le LockService du script. */
 'use strict';
 
-const { FORMATION, SESSION, PAYS, MOYEN_PAIEMENT, REALISATION, colonnes } = require('./champs');
+const { FORMATION, SESSION, PAYS, MOYEN_PAIEMENT, REALISATION, ANNONCE, colonnes } = require('./champs');
 const { lireCatalogue, compterInscrits, objetSession } = require('./catalogue');
 const { joursDepuisHoraires, seancesDepuisDuree, seancesPossibles, NOMS_JOURS } = require('./calendrier');
 const { dateEnFrancais } = require('./prix');
@@ -91,6 +91,18 @@ const REGLES = {
     // Audit T4 : un « ; » ajoutait n'importe quel style à la page
     image_position: [v => /^[0-9]{1,3}% [0-9]{1,3}%$/.test(v),
       'Le cadrage de l’image s’écrit en deux pourcentages, comme « 50% 18% ».']
+  },
+  annonces: {
+    type: [v => v === 'promotion' || v === 'partenaire',
+      'Type d’annonce inconnu : choisissez « Formation à la une » ou « Publicité d’un partenaire ».'],
+    titre: [v => v.length <= 120, 'Le titre tient en 120 caractères au plus.'],
+    annonceur: [v => v.length <= 80, 'Le nom de l’annonceur tient en 80 caractères au plus.'],
+    image: [estAdresse, 'L’affiche doit être une adresse https:// ou un fichier du site (/assets/…).'],
+    image_large: [estAdresse, 'L’affiche large doit être une adresse https:// ou un fichier du site (/assets/…).'],
+    image_alt: [v => v.length <= 300, 'La description de l’affiche tient en 300 caractères au plus.'],
+    // Même garde que l'audit T2 : jamais de lien « javascript: »
+    lien: [v => /^(\/[^/]|https?:\/\/)/.test(v), 'Le lien doit être une page du site (/…) ou une adresse http(s)://.'],
+    bouton: [v => v.length <= 40, 'Le texte du bouton tient en 40 caractères au plus.']
   }
 };
 
@@ -243,12 +255,21 @@ async function supprimerFormation(tx, id) {
       + 'Désactivez-la plutôt que de la supprimer, pour ne pas perdre le lien avec ces candidats.');
   }
   const sessions = await tx.query('delete from sessions where form_id = $1 returning id', [formId]);
+  // Ses annonces partent avec elle (on delete cascade) : on garde leurs affiches pour les effacer ensuite
+  const annonces = (await tx.query('select id, image, image_large from annonces where formation = $1', [formId])).rows;
   await tx.query('delete from formations where id = $1', [String(id)]);
   // Ses visuels n'ont plus d'usage : on ne les laisse pas dans la base (si rien d'autre ne s'en sert)
   await supprimerSiInutile(tx, rows[0].image);
   await supprimerSiInutile(tx, rows[0].poster);
+  for (const a of annonces) {
+    await supprimerSiInutile(tx, a.image);
+    await supprimerSiInutile(tx, a.image_large);
+  }
   const sessionsSupprimees = sessions.rows.length;
-  return { sessionsSupprimees, cible: String(id), journal: { sessions: sessions.rows.map(r => r.id) } };
+  return {
+    sessionsSupprimees, cible: String(id),
+    journal: { sessions: sessions.rows.map(r => r.id), annonces: annonces.map(a => a.id) }
+  };
 }
 
 // -------------------------------------------------------------- SESSIONS ----
@@ -639,6 +660,77 @@ async function supprimerRealisation(tx, id) {
   return { cible: String(id) };
 }
 
+// ------------------------------------------------------------- ANNONCES ----
+
+/** Les pays visés, quelle que soit leur écriture (« KM,DJ » ou une liste), sans doublon. */
+function codesVises(brut) {
+  if (vide(brut) || (Array.isArray(brut) && !brut.length)) return [];
+  if (!Array.isArray(brut) && typeof brut !== 'string') throw new Error('Les pays visés sont illisibles.');
+  const codes = (Array.isArray(brut) ? brut : brut.split(','))
+    .map(c => String(c || '').trim().toUpperCase()).filter(Boolean);
+  for (const c of codes) if (!/^[A-Z]{2}$/.test(c)) throw new Error('Pays visé illisible : « ' + c + ' ».');
+  return [...new Set(codes)];
+}
+
+async function enregistrerAnnonce(tx, donnees) {
+  const a = estObjet(donnees) ? Object.assign({}, donnees) : null;
+  if (!a || !a.id) throw new Error('Identifiant d’annonce manquant.');
+  a.id = String(a.id);
+  if (!/^[a-z0-9-]{1,60}$/.test(a.id)) throw new Error('Identifiant d’annonce invalide.');
+  // Un type laissé vide est une formation à la une, comme le veut la colonne
+  if (possede(a, 'type') && vide(a.type)) a.type = 'promotion';
+
+  const valeurs = versColonnes(a, ANNONCE, 'annonces');
+
+  /* Ce qui est obligatoire se juge sur l'annonce TELLE QU'ELLE SERA : une
+     modification partielle garde ce qu'elle ne mentionne pas. */
+  const avant = (await tx.query(
+    'select type, titre, annonceur, image, debut::text as debut, fin::text as fin from annonces where id = $1 for update',
+    [a.id])).rows[0] || {};
+  const apres = col => (possede(valeurs, col) ? valeurs[col] : avant[col]);
+  if (vide(apres('titre'))) throw new Error('Le titre est obligatoire.');
+  if (vide(apres('image'))) {
+    throw new Error('L’affiche verticale est obligatoire : c’est elle que voient les téléphones, '
+      + 'et les ordinateurs quand il n’y a pas d’affiche large.');
+  }
+  if (apres('type') === 'partenaire' && vide(apres('annonceur'))) {
+    throw new Error('Une publicité nomme son annonceur : le visiteur doit savoir pour qui elle est faite.');
+  }
+  const debut = apres('debut'), fin = apres('fin');
+  if (debut && fin && fin < debut) throw new Error('La date de fin précède la date de début.');
+
+  if (possede(valeurs, 'formation') && valeurs.formation !== null) {
+    const f = await tx.query('select 1 from formations where form_id = $1', [valeurs.formation]);
+    if (!f.rows.length) throw new Error('Formation introuvable : « ' + valeurs.formation + ' ».');
+  }
+
+  /* Les pays visés existent : un code inconnu ne viserait personne, et
+     l'annonce ne s'afficherait nulle part sans que rien ne le dise. */
+  if (possede(a, 'pays')) {
+    const codes = codesVises(a.pays);
+    if (codes.length) {
+      const { rows } = await tx.query('select code from pays where code = any($1::text[])', ['{' + codes.join(',') + '}']);
+      const connus = rows.map(r => r.code);
+      const inconnus = codes.filter(c => connus.indexOf(c) < 0);
+      if (inconnus.length) throw new Error('Pays inconnu : ' + inconnus.join(', ') + '.');
+    }
+    valeurs.pays = { v: '{' + codes.join(',') + '}', cast: 'text[]' };
+  }
+
+  const cree = await ecrireLigne(tx, 'annonces', 'id', a.id, valeurs);
+  return { cree, cible: a.id, journal: { cree } };
+}
+
+async function supprimerAnnonce(tx, id) {
+  if (!id) throw new Error('Identifiant manquant.');
+  const { rows } = await tx.query('delete from annonces where id = $1 returning image, image_large', [String(id)]);
+  if (!rows.length) throw new Error('Annonce introuvable.');
+  // Une annonce est faite pour finir : ses affiches ne restent pas dans la base
+  await supprimerSiInutile(tx, rows[0].image);
+  await supprimerSiInutile(tx, rows[0].image_large);
+  return { cible: String(id) };
+}
+
 // --------------------------------------------- RÉGLAGES, TEXTES, VISUELS ----
 
 /* Ce que le script relisait d'une cellule (valeurReglage) : « true » devient
@@ -773,6 +865,8 @@ const ECRITURES = {
   'admin.pays.delete': commande('admin.pays.delete', (tx, d) => supprimerPays(tx, d.code)),
   'admin.portfolio.save': commande('admin.portfolio.save', (tx, d) => enregistrerRealisation(tx, d.donnees), avecCree),
   'admin.portfolio.delete': commande('admin.portfolio.delete', (tx, d) => supprimerRealisation(tx, d.id)),
+  'admin.annonce.save': commande('admin.annonce.save', (tx, d) => enregistrerAnnonce(tx, d.donnees), avecCree),
+  'admin.annonce.delete': commande('admin.annonce.delete', (tx, d) => supprimerAnnonce(tx, d.id)),
   'admin.reglages.save': commande('admin.reglages.save',
     (tx, d) => ecrirePaires(tx, 'reglages', d.donnees, 'Réglages invalides.', versReglage)),
   'admin.textes.save': commande('admin.textes.save',

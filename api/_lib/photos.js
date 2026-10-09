@@ -67,6 +67,7 @@ async function utilisations(db, url) {
       (select count(*) from visuels where url = $1)
     + (select count(*) from formations where image = $1 or poster = $1)
     + (select count(*) from realisations where image = $1)
+    + (select count(*) from annonces where image = $1 or image_large = $1)
     + (select count(*) from moyens_paiement where image = $1)
     + (select count(*) from reglages where $2 <> '' and strpos(valeur::text, $2) > 0)
     + (select count(*) from textes where $2 <> '' and strpos(valeur, $2) > 0) as n`, [url, id]);
@@ -130,7 +131,7 @@ async function supprimer(db, url, qui) {
 async function remplacerPartout(tx, ancienne, nouvelle) {
   let n = 0;
   for (const [table, col] of [['visuels', 'url'], ['formations', 'image'], ['formations', 'poster'],
-    ['realisations', 'image'], ['moyens_paiement', 'image']]) {
+    ['realisations', 'image'], ['annonces', 'image'], ['annonces', 'image_large'], ['moyens_paiement', 'image']]) {
     n += (await tx.query(`update ${table} set ${col} = $2 where ${col} = $1 returning 1`, [ancienne, nouvelle])).rows.length;
   }
   return n;

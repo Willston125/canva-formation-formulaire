@@ -43,7 +43,7 @@ const pagesGenerees = fs.readdirSync(path.join(RACINE, 'formations'))
   .map(d => `formations/${d}/index.html`);
 const PAGES = ['index.html', 'entreprises/index.html', 'mentions-legales/index.html', '404.html',
   'inscription/index.html', 'formations/_template/fiche.html'].concat(pagesGenerees);
-const SCRIPTS = ['formations-data.js', 'site-common.js', 'script.js', 'landing.js', 'fiche-blocs.js'];
+const SCRIPTS = ['formations-data.js', 'site-common.js', 'script.js', 'landing.js', 'fiche-blocs.js', 'annonces.js'];
 
 /* Un numéro de téléphone ou de compte, sous toutes ses formes : avec indicatif,
    dans un lien wa.me, ou les numéros réellement en service. */

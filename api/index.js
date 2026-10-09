@@ -157,7 +157,8 @@ function creerGestionnaire(obtenirBase, { envoyer = envoyerCourriel, sel = selPa
         const ip = String((req.headers && (req.headers['x-forwarded-for'] || req.headers['x-real-ip'])) || '')
           .split(',')[0].trim();
 
-        /* Un signal de la mesure d'audience ({ mesure, formation, pays }) : ni
+        /* Un signal de la mesure d'audience ({ mesure, formation, pays }, ou
+           { mesure, annonce, pays } pour la fenêtre d'annonce) : ni
            une commande, ni une inscription. Le site ne lit pas la réponse — il
            l'envoie en tâche de fond —, d'où un 204 sans corps, que le signal
            ait été compté ou écarté. */

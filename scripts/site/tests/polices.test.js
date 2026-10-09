@@ -150,7 +150,8 @@ verifier('le générateur relève les sources du tableau de bord',
 const SOURCES_ICONES = [
   'index.html', 'entreprises/index.html', 'mentions-legales/index.html', 'admin/index.html',
   'formations/_template/fiche.html', 'inscription/index.html', 'script.js', 'site-common.js',
-  'landing.js', 'admin/admin.js', 'fiche-blocs.js', 'formations-data.js', 'scripts/build-fiches.js'
+  'landing.js', 'admin/admin.js', 'fiche-blocs.js', 'formations-data.js', 'scripts/build-fiches.js',
+  'annonces.js'
 ];
 const MOTIFS_ICONES = [
   /material-symbols-outlined[^>]*>\s*([a-z0-9_]+)\s*</g,

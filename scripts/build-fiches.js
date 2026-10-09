@@ -482,6 +482,9 @@ generique = generique.replace(/<section[^>]*id="prerequis-section"[\s\S]*?<\/sec
   '<section class="fiche-block reveal-on-scroll" id="prerequis-section" aria-labelledby="prerequis-title" hidden></section>');
 generique = generique.replace(/<meta name="robots"[^>]*>/i, '');
 generique = generique.replace('</head>', '    <meta name="robots" content="noindex, follow">\n</head>');
+/* On vient ici pour s'inscrire, et pour rien d'autre : la fenêtre d'annonce n'a
+   pas à interrompre ce parcours (décision du propriétaire, 9 octobre 2026). */
+generique = generique.replace(/\n[ \t]*<script src="\/annonces\.js"><\/script>/, '');
 
 fs.mkdirSync(path.join(ROOT, 'inscription'), { recursive: true });
 fs.writeFileSync(path.join(ROOT, 'inscription', 'index.html'), generique);

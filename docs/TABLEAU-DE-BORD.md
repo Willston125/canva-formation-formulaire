@@ -19,7 +19,7 @@ Users). Si l'écran refuse la bonne connexion, voyez [DEPANNAGE.md](DEPANNAGE.md
 
 ---
 
-## Les dix onglets
+## Les onze onglets
 
 ### Vue d'ensemble
 Le nombre de formations publiées, de sessions ouvertes, d'inscriptions reçues et
@@ -124,6 +124,49 @@ Rien ne se charge chez YouTube avant que le visiteur touche la vidéo : la page
 reste légère sur une connexion mobile. Sous les vidéos, une phrase dit à chaque
 visiteur comment se tiennent SES séances : « en présentiel » aux Comores, « en
 ligne, en direct » à Djibouti.
+
+### Annonces
+La fenêtre qui s'ouvre à l'arrivée sur le site, et qu'une croix referme. Deux
+usages :
+
+- **Formation à la une** : une formation d'IMPACTALI mise en avant. Choisissez-la
+  dans « Formation mise en avant » : le bouton mène à sa fiche, et l'annonce ne
+  s'ouvre pas sur cette fiche-là. Une formation désactivée retire son annonce.
+- **Publicité d'un partenaire** : toujours signalée **« Publicité · nom de
+  l'annonceur »** (le nom est obligatoire). Son lien s'ouvre dans un nouvel
+  onglet.
+
+**Quand elle s'ouvre** (décisions du 9 octobre 2026) : 4 secondes après
+l'arrivée ; à chaque arrivée sur l'accueil ; une fois par visite au plus sur les
+fiches formation. Jamais sur la page d'inscription, les mentions légales ou ce
+tableau de bord, ni devant un visiteur qui a commencé à remplir le formulaire,
+qui tape dans un champ, regarde une vidéo ou a ouvert le menu. Plusieurs
+annonces en ligne passent à tour de rôle (« Ordre de passage »).
+
+**Les affiches** se montrent entières, jamais rognées ni retouchées : le texte
+que vous y mettez est celui que le visiteur lit.
+
+| Affiche | Taille conseillée | Pour |
+|---|---|---|
+| verticale (obligatoire) | 1080 × 1350 px (4:5, comme un post Instagram) | les téléphones, et les ordinateurs s'il n'y a pas de large |
+| large (facultative) | 1600 × 900 px (16:9) | les écrans d'ordinateur |
+
+**Les pays visés** : comme le reste de l'offre, une annonce ne part qu'aux
+visiteurs des pays cochés — le serveur ne l'envoie pas ailleurs. Aucun pays
+coché = tout le monde, y compris les visiteurs des pays non ouverts. Une affiche
+qui porte un prix, un numéro ou une adresse doit donc viser **son seul pays**.
+
+**Les dates** (« Du », « Au ») se comptent en jours de Moroni et de Djibouti,
+bornes comprises. Pour retirer une annonce en gardant ses résultats, décochez
+**« Annonce active »** ; « Supprimer » efface aussi ses affiches et ses
+résultats.
+
+**Les résultats**, sur 7 jours, 30 jours, 3 mois ou un an : les **vues** (la
+fenêtre réellement ouverte devant un visiteur), les **clics** sur l'affiche ou
+le bouton, avec leur part des vues, et les **fermetures**. Des totaux par jour,
+anonymes, comme l'Audience (table `annonces_mesures`) : de quoi rendre compte
+à un annonceur. « Une table manque dans la base » veut dire que
+`supabase/migrations/20261009180000_annonces.sql` n'a pas été collé.
 
 ### Visuels du site
 Les photos remplaçables. Voir [VISUELS.md](VISUELS.md).

@@ -18,12 +18,14 @@
 
   /** État courant, rechargé à chaque écriture depuis la réponse de l'API. */
   var etat = {
-    catalogue: { formations: [], sessions: [], pays: [], portfolio: [], reglages: {} },
+    catalogue: { formations: [], sessions: [], pays: [], portfolio: [], annonces: [], reglages: {} },
     inscriptions: [],
     vue: 'apercu',
     filtreInscriptions: '',
     /** Onglet Audience : période et pays choisis, et les compteurs reçus pour cette période. */
     audience: { jours: 30, pays: '', donnees: null, erreur: '', enCours: false },
+    // Les compteurs des annonces (affichée, cliquée, fermée), chargés à l'ouverture de l'onglet
+    resultatsAnnonces: { jours: 30, donnees: null, erreur: '', enCours: false },
     /** Visuels remplacés, mis à la corbeille seulement après enregistrement. */
     imagesARetirer: [],
     /* Envois d'image en cours. Enregistrer pendant un envoi faisait partir la
@@ -477,6 +479,7 @@
       audience: ['Audience', 'Le parcours des visiteurs, de la fiche à l’inscription'],
       pays: ['Pays', 'Devise, indicatif et moyens de paiement de chaque marché'],
       portfolio: ['Réalisations', 'Les travaux mis en avant sur l’accueil'],
+      annonces: ['Annonces', 'La fenêtre qui s’ouvre à l’arrivée : formations à la une et publicités'],
       visuels: ['Visuels du site', 'Les images de l’accueil et des fiches'],
       textes: ['Textes du site', 'Les mots affichés sur la page d’accueil'],
       reglages: ['Réglages', 'Contact et lieu habituel']
@@ -496,8 +499,10 @@
     $('#compte-inscriptions').textContent = etat.inscriptions.length || '';
     $('#compte-pays').textContent = (etat.catalogue.pays || []).length || '';
     $('#compte-portfolio').textContent = (etat.catalogue.portfolio || []).length || '';
+    // La pastille compte les annonces EN LIGNE : c'est ce que voient les visiteurs
+    $('#compte-annonces').textContent = listeAnnonces().filter(function (a) { return etatAnnonce(a).code === 'en-ligne'; }).length || '';
 
-    var actions = { apercu: '', formations: '', sessions: '', inscriptions: '', audience: '', pays: '', portfolio: '', visuels: '', textes: '', reglages: '' };
+    var actions = { apercu: '', formations: '', sessions: '', inscriptions: '', audience: '', pays: '', portfolio: '', annonces: '', visuels: '', textes: '', reglages: '' };
     actions.audience = '<button class="bouton bouton--discret" type="button" id="btn-audience-actualiser">'
       + '<span class="material-symbols-outlined" aria-hidden="true">refresh</span>Actualiser</button>';
     actions.formations = '<button class="bouton bouton--primaire" type="button" id="btn-nouvelle-formation">'
@@ -506,6 +511,10 @@
       + '<span class="material-symbols-outlined" aria-hidden="true">add</span>Nouvelle session</button>';
     actions.portfolio = '<button class="bouton bouton--primaire" type="button" id="btn-nouvelle-realisation">'
       + '<span class="material-symbols-outlined" aria-hidden="true">add</span>Nouvelle réalisation</button>';
+    actions.annonces = '<button class="bouton bouton--discret" type="button" id="btn-annonces-actualiser">'
+      + '<span class="material-symbols-outlined" aria-hidden="true">refresh</span>Actualiser</button>'
+      + '<button class="bouton bouton--primaire" type="button" id="btn-nouvelle-annonce">'
+      + '<span class="material-symbols-outlined" aria-hidden="true">add</span>Nouvelle annonce</button>';
     actions.pays = '<button class="bouton bouton--primaire" type="button" id="btn-nouveau-pays">'
       + '<span class="material-symbols-outlined" aria-hidden="true">add</span>Nouveau pays</button>';
     actions.inscriptions = etat.inscriptions.length
@@ -520,6 +529,8 @@
     if ((b = $('#btn-nouvelle-session'))) b.addEventListener('click', function () { ouvrirSession(null); });
     if ((b = $('#btn-nouveau-pays'))) b.addEventListener('click', function () { ouvrirPays(null); });
     if ((b = $('#btn-nouvelle-realisation'))) b.addEventListener('click', function () { ouvrirRealisation(null); });
+    if ((b = $('#btn-nouvelle-annonce'))) b.addEventListener('click', function () { ouvrirAnnonce(null); });
+    if ((b = $('#btn-annonces-actualiser'))) b.addEventListener('click', function () { chargerResultatsAnnonces(); });
     if ((b = $('#btn-export'))) b.addEventListener('click', exporterCsv);
     if ((b = $('#btn-audience-actualiser'))) b.addEventListener('click', function () { chargerAudience(); });
     if ((b = $('#btn-rafraichir'))) b.addEventListener('click', function () {
@@ -534,6 +545,7 @@
     if (etat.vue === 'audience') rendreAudience();
     if (etat.vue === 'pays') rendrePays();
     if (etat.vue === 'portfolio') rendrePortfolio();
+    if (etat.vue === 'annonces') rendreAnnonces();
     if (etat.vue === 'visuels') rendreVisuels();
     if (etat.vue === 'textes') rendreTextes();
     if (etat.vue === 'reglages') rendreReglages();
@@ -850,6 +862,234 @@
           rendre();
         }).catch(function (err) { fini(messageLisible(err)); });
       });
+  }
+
+  // ------------------------------- ANNONCES -------------------------------
+
+  /* La fenêtre qui s'ouvre à l'arrivée sur le site (annonces.js). Le serveur
+     n'envoie à chaque visiteur que les annonces de SON pays, en ligne ce
+     jour-là (api/_lib/marche.js) : ce que cet onglet appelle « En ligne » est
+     exactement ce que le site recevra. */
+
+  function listeAnnonces() {
+    return (etat.catalogue.annonces || []).filter(function (a) { return a && a.id; });
+  }
+
+  /** Le jour à Moroni et à Djibouti (UTC+3), comme le compte le serveur. */
+  function jourLocal() {
+    return new Date(Date.now() + 3 * 3600 * 1000).toISOString().slice(0, 10);
+  }
+
+  /** Ce que le public en voit aujourd'hui, avec la raison quand il n'en voit rien. */
+  function etatAnnonce(a) {
+    var jour = jourLocal();
+    if (a.active === false) return { code: 'desactivee', libelle: 'Désactivée', classe: 'ferme' };
+    if (a.formation) {
+      var f = (etat.catalogue.formations || []).filter(function (x) { return x.formId === a.formation; })[0];
+      if (!f || f.active === false) return { code: 'formation', libelle: 'Formation non publiée', classe: 'alerte' };
+    }
+    var vises = codesPays(a.pays);
+    if (vises.length && !listePays().some(function (p) { return vises.indexOf(p.code) >= 0 && p.active !== false; })) {
+      return { code: 'pays', libelle: 'Pays fermé', classe: 'alerte' };
+    }
+    if (a.fin && a.fin < jour) return { code: 'terminee', libelle: 'Terminée', classe: 'ferme' };
+    if (a.debut && a.debut > jour) return { code: 'programmee', libelle: 'Programmée', classe: 'info' };
+    return { code: 'en-ligne', libelle: 'En ligne', classe: 'ouvert' };
+  }
+
+  function periodeAnnonce(a) {
+    if (a.debut && a.fin) return 'Du ' + dateFr(a.debut) + ' au ' + dateFr(a.fin);
+    if (a.debut) return 'À partir du ' + dateFr(a.debut);
+    if (a.fin) return 'Jusqu’au ' + dateFr(a.fin);
+    return 'Sans date de fin';
+  }
+
+  function chargerResultatsAnnonces() {
+    var r = etat.resultatsAnnonces;
+    r.enCours = true;
+    r.erreur = '';
+    if (etat.vue === 'annonces') rendreAnnonces();
+    return appeler('admin.annonces.mesures', { jours: r.jours })
+      .then(function (d) { r.donnees = d; })
+      .catch(function (err) { r.donnees = null; r.erreur = messageLisible(err); })
+      .then(function () { r.enCours = false; if (etat.vue === 'annonces') rendreAnnonces(); });
+  }
+
+  function resultatsAnnonce(id) {
+    var lignes = (etat.resultatsAnnonces.donnees && etat.resultatsAnnonces.donnees.lignes) || [];
+    var somme = function (evenement) {
+      return lignes.reduce(function (n, l) { return n + (l.annonce === id && l.evenement === evenement ? l.n : 0); }, 0);
+    };
+    return { vues: somme('vue'), clics: somme('clic'), fermees: somme('fermee') };
+  }
+
+  function rendreAnnonces() {
+    var r = etat.resultatsAnnonces;
+    if (!r.donnees && !r.enCours && !r.erreur) { chargerResultatsAnnonces(); return; }
+
+    var liste = listeAnnonces();
+    var enLigne = liste.filter(function (a) { return etatAnnonce(a).code === 'en-ligne'; }).length;
+    var nomsPays = {};
+    listePays().forEach(function (p) { nomsPays[p.code] = p.nom || p.code; });
+    var titreFormation = function (formId) {
+      var f = (etat.catalogue.formations || []).filter(function (x) { return x.formId === formId; })[0];
+      return f ? (f.shortTitle || f.title) : formId;
+    };
+
+    var aide = '<p class="aide">La fenêtre s’ouvre 4 secondes après l’arrivée : à chaque arrivée sur l’accueil, '
+      + 'une fois par visite sur une fiche formation. Jamais sur la page d’inscription, ni pendant qu’un visiteur '
+      + 'remplit le formulaire. Plusieurs annonces en ligne passent à tour de rôle. Chaque visiteur ne reçoit que '
+      + 'celles de son pays : une affiche qui porte un prix, un numéro ou une adresse doit viser son seul pays.</p>'
+      + '<p class="aide"><strong>' + (enLigne
+        ? enLigne + (enLigne > 1 ? ' annonces en ligne.' : ' annonce en ligne.')
+        : 'Aucune annonce en ligne : la fenêtre ne s’ouvre pas.') + '</strong></p>';
+
+    if (!liste.length) {
+      $('#liste-annonces').innerHTML = aide + vide('campaign',
+        'Aucune annonce. Créez-en une pour mettre une formation à la une, ou afficher la publicité d’un partenaire.');
+      return;
+    }
+
+    var periodes = [[7, '7 jours'], [30, '30 jours'], [90, '3 mois'], [365, '1 an']];
+    var filtres = '<div class="filtres"><span class="aide" style="margin:0;align-self:center">Résultats sur</span>'
+      + periodes.map(function (p) {
+        return '<button class="filtre' + (r.jours === p[0] ? ' is-actif' : '') + '" type="button" data-annonces-jours="'
+          + p[0] + '">' + p[1] + '</button>';
+      }).join('') + '</div>';
+
+    var resultats = function (a) {
+      if (r.erreur) return '<span class="cellule-sous">Indisponibles</span>';
+      if (!r.donnees) return '<span class="cellule-sous">…</span>';
+      var n = resultatsAnnonce(a.id);
+      var taux = n.vues > 0 ? ' (' + Math.round(n.clics * 100 / n.vues) + ' %)' : '';
+      return '<div class="cellule-titre">' + n.vues + (n.vues > 1 ? ' vues' : ' vue') + '</div>'
+        + '<div class="cellule-sous">' + n.clics + (n.clics > 1 ? ' clics' : ' clic') + taux + ' · '
+        + n.fermees + (n.fermees > 1 ? ' fermées' : ' fermée') + '</div>';
+    };
+
+    $('#liste-annonces').innerHTML = aide + filtres
+      + (r.erreur ? '<div class="message message--erreur" role="alert">' + echapper(r.erreur) + '</div>' : '')
+      + tableau(
+        ['Affiche', 'Annonce', 'Pays visés', 'Période', 'Résultats', 'Actions'],
+        liste.map(function (a) {
+          var e = etatAnnonce(a);
+          var vises = codesPays(a.pays);
+          return [
+            a.image
+              ? '<img src="' + echapper(a.image) + '" alt="" class="vignette" loading="lazy">'
+              : '<span class="etiquette etiquette--alerte">À fournir</span>',
+            '<div class="cellule-titre">' + echapper(a.titre || '(sans titre)') + '</div>'
+            + '<div class="cellule-sous">' + (a.type === 'partenaire'
+              ? 'Publicité · ' + echapper(a.annonceur || '?')
+              : 'Formation à la une' + (a.formation ? ' · ' + echapper(titreFormation(a.formation)) : '')) + '</div>',
+            vises.length
+              ? echapper(vises.map(function (c) { return nomsPays[c] || c; }).join(', '))
+              : '<span class="cellule-sous">Tous les visiteurs</span>',
+            '<span class="etiquette etiquette--' + e.classe + '">' + echapper(e.libelle) + '</span>'
+            + '<div class="cellule-sous">' + echapper(periodeAnnonce(a)) + '</div>',
+            resultats(a),
+            '<div class="cellule-actions">'
+            + '<button class="bouton bouton--discret bouton--petit" type="button" data-modifier-annonce="' + echapper(a.id) + '">Modifier</button>'
+            + '<button class="bouton bouton--discret bouton--petit" type="button" data-supprimer-annonce="' + echapper(a.id) + '">Supprimer</button>'
+            + '</div>'
+          ];
+        })
+      )
+      + '<p class="aide" style="margin-top:10px">Une vue = la fenêtre réellement ouverte devant un visiteur. '
+      + 'Le pourcentage est la part des vues suivies d’un clic. Rien n’identifie personne : seulement des totaux par jour.</p>';
+
+    $$('[data-annonces-jours]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var n = Number(b.dataset.annoncesJours);
+        if (n === r.jours) return;
+        r.jours = n;
+        r.donnees = null;
+        chargerResultatsAnnonces();
+      });
+    });
+    $$('[data-modifier-annonce]').forEach(function (b) {
+      b.addEventListener('click', function () { ouvrirAnnonce(b.dataset.modifierAnnonce); });
+    });
+    $$('[data-supprimer-annonce]').forEach(function (b) {
+      b.addEventListener('click', function () { demanderSuppressionAnnonce(b.dataset.supprimerAnnonce); });
+    });
+  }
+
+  /* Calculés à l'ouverture : la liste des formations vient du catalogue. */
+  function champsAnnonce() {
+    return [
+      { section: 'L’annonce' },
+      { cle: 'type', libelle: 'Type', type: 'select', requis: true,
+        optionsObjets: [
+          { valeur: 'promotion', libelle: 'Formation à la une (IMPACTALI)' },
+          { valeur: 'partenaire', libelle: 'Publicité d’un partenaire' }
+        ],
+        aide: 'Une publicité est toujours signalée « Publicité » aux visiteurs, avec le nom de l’annonceur.' },
+      { cle: 'titre', libelle: 'Titre', type: 'text', requis: true, large: true, exemple: 'Canva Pro · session de novembre',
+        aide: 'Pour vous retrouver dans la liste, et lu aux personnes malvoyantes. Les visiteurs, eux, voient l’affiche.' },
+      { cle: 'annonceur', libelle: 'Annonceur', type: 'text', exemple: 'Nom de l’entreprise',
+        aide: 'Obligatoire pour une publicité : affiché à côté de « Publicité ».' },
+      { cle: 'formation', libelle: 'Formation mise en avant', type: 'select', videLibelle: 'Aucune',
+        optionsObjets: (etat.catalogue.formations || []).filter(function (f) { return f && f.formId; })
+          .map(function (f) { return { valeur: f.formId, libelle: f.shortTitle || f.title || f.formId }; }),
+        aide: 'Le bouton mène alors à sa fiche, et l’annonce ne s’ouvre pas sur cette fiche-là.' },
+      { cle: 'lien', libelle: 'Lien (facultatif)', type: 'url', exemple: 'https://…',
+        aide: 'Pour un partenaire : son site, sa page Facebook, un lien wa.me/… Il s’ouvre dans un nouvel onglet. '
+          + 'Vide avec une formation : sa fiche. Sans lien ni formation, la fenêtre n’a pas de bouton.' },
+      { cle: 'bouton', libelle: 'Texte du bouton (facultatif)', type: 'text', exemple: 'Je m’inscris',
+        aide: 'Par défaut : « Découvrir la formation », ou « En savoir plus » pour une publicité.' },
+
+      { section: 'Affiches' },
+      { cle: 'image', libelle: 'Affiche verticale, pour les téléphones (obligatoire)', type: 'image', format: 'annonce',
+        requis: true, large: true,
+        aide: '1080 × 1350 px conseillé (format 4:5, celui d’un post Instagram). Elle s’affiche entière, jamais '
+          + 'rognée ni retouchée : le texte que vous y mettez est celui que le visiteur lira.' },
+      { cle: 'imageLarge', libelle: 'Affiche large, pour les ordinateurs (facultative)', type: 'image',
+        format: 'paysage', large: true,
+        aide: '1600 × 900 px conseillé (format 16:9). Sans elle, les ordinateurs montrent l’affiche verticale.' },
+      { cle: 'imageAlt', libelle: 'Ce que dit l’affiche', type: 'text', large: true,
+        aide: 'Lu aux personnes malvoyantes : recopiez l’essentiel du texte de l’affiche.' },
+
+      { section: 'Diffusion' },
+      { cle: 'pays', libelle: 'Pays visés', type: 'paysListe',
+        aide: 'Aucun coché = tous les visiteurs, y compris ceux des pays où vous n’êtes pas encore ouvert.' },
+      { cle: 'debut', libelle: 'Du', type: 'date', aide: 'Vide = dès l’enregistrement.' },
+      { cle: 'fin', libelle: 'Au (inclus)', type: 'date', aide: 'Vide = sans date de fin.' },
+      { cle: 'active', libelle: 'Annonce active', type: 'bool',
+        aide: 'Décochez pour la retirer du site sans la supprimer : ses résultats restent.' },
+      { cle: 'ordre', libelle: 'Ordre de passage', type: 'number', aide: 'Plus petit = montrée en premier.' }
+    ];
+  }
+
+  function ouvrirAnnonce(id) {
+    var a = id ? listeAnnonces().filter(function (x) { return x.id === id; })[0] : null;
+    var donnees = a ? Object.assign({}, a) : {
+      id: identifiant('annonce'), type: 'promotion', active: true, pays: [], ordre: listeAnnonces().length
+    };
+    ouvrirPanneau(a ? 'Modifier l’annonce' : 'Nouvelle annonce', champsAnnonce(), donnees,
+      function (valeurs, fini) {
+        valeurs.id = donnees.id;
+        appeler('admin.annonce.save', { donnees: valeurs }).then(function (d) {
+          viderCorbeilleImages();
+          fermerPanneau();
+          afficherMessage('#succes-globale', d.cree ? 'Annonce ajoutée.' : 'Annonce mise à jour.', 5000);
+          rendre();
+        }).catch(function (err) { fini(messageLisible(err)); });
+      });
+  }
+
+  function demanderSuppressionAnnonce(id) {
+    var a = listeAnnonces().filter(function (x) { return x.id === id; })[0];
+    if (!a) return;
+    confirmer('Supprimer l’annonce « ' + (a.titre || 'sans titre') + ' », ses affiches et ses résultats ? '
+      + 'Pour la retirer du site en gardant ses résultats, décochez plutôt « Annonce active ».',
+    function (fini) {
+      appeler('admin.annonce.delete', { id: id }).then(function () {
+        fermerConfirmation();
+        afficherMessage('#succes-globale', 'Annonce supprimée.', 5000);
+        rendre();
+      }).catch(function (err) { fini(messageLisible(err)); });
+    });
   }
 
   // --------------------------------- PAYS ---------------------------------
@@ -1755,7 +1995,10 @@
        CSS. Le survol et la visionneuse, eux, promettent l'affiche ENTIÈRE dans
        son format d'origine — une promesse qu'un rognage à l'envoi rendait
        intenable, puisque l'affiche entière n'existait alors plus nulle part. */
-    portfolio: { largeur: 1000, hauteur: null, libelle: 'largeur 1000 px, format d’origine conservé' }
+    portfolio: { largeur: 1000, hauteur: null, libelle: 'largeur 1000 px, format d’origine conservé' },
+    /* Affiche verticale de la fenêtre d'annonce : montrée ENTIÈRE, sur toute la
+       largeur d'un téléphone. Sa version large passe par « paysage ». */
+    annonce: { largeur: 1080, hauteur: null, libelle: 'largeur 1080 px, format d’origine conservé' }
   };
 
   /**
@@ -2622,6 +2865,7 @@
     Object.keys(c.images || {}).forEach(function (cle) { ajouter(c.images[cle]); });
     (c.formations || []).forEach(function (f) { ajouter(f.image); ajouter(f.poster); });
     (c.portfolio || []).forEach(function (r) { ajouter(r.image); });
+    (c.annonces || []).forEach(function (a) { ajouter(a.image); ajouter(a.imageLarge); });
     (c.pays || []).forEach(function (p) {
       (p.paymentMethods || []).forEach(function (m) { ajouter(m.image); });
     });
@@ -3106,6 +3350,24 @@
         return;
       }
 
+      /* Une case par pays, sans réglage : les pays visés par une annonce.
+         Aucune cochée = tous les visiteurs. */
+      if (c.type === 'paysListe') {
+        var vises = codesPays(v);
+        var tous = listePays();
+        html += '<div class="champ pleine-largeur"><span class="champ__label">' + echapper(c.libelle) + '</span>'
+          + '<div class="cases-pays" data-pays-liste="' + echapper(c.cle) + '">'
+          + (tous.length
+            ? tous.map(function (p) {
+              return '<label class="case"><input type="checkbox" data-pays-code="' + echapper(p.code) + '"'
+                + (vises.indexOf(p.code) >= 0 ? ' checked' : '') + '><span>' + echapper(p.nom)
+                + (p.active === false ? ' (fermé au public)' : '') + '</span></label>';
+            }).join('')
+            : '<p class="champ__aide">Aucun pays enregistré : l’annonce s’adresse à tous les visiteurs.</p>')
+          + '</div>' + (c.aide ? '<span class="champ__aide">' + echapper(c.aide) + '</span>' : '') + '</div>';
+        return;
+      }
+
       if (c.type === 'bool') {
         html += '<label class="case pleine-largeur"><input type="checkbox" id="' + id + '"'
           + (v === true ? ' checked' : '') + '><span>' + echapper(c.libelle)
@@ -3221,6 +3483,13 @@
     if (c.type === 'paiements') return lirePaiements(c.cle, racine);
     if (c.type === 'programme') return lireProgrammeChamp(c.cle, racine);
     if (c.type === 'faq') return lireFaqChamp(c.cle, racine);
+    if (c.type === 'paysListe') {
+      var liste = racine.querySelector('[data-pays-liste="' + c.cle + '"]');
+      if (!liste) return undefined;
+      return Array.prototype.slice.call(liste.querySelectorAll('[data-pays-code]'))
+        .filter(function (e) { return e.checked; })
+        .map(function (e) { return e.dataset.paysCode; });
+    }
     /* querySelector borné au conteneur, et non getElementById sur tout le
        document : c'est ce qui empêche de lire le champ homonyme d'ailleurs. */
     var el = racine.querySelector('[id="champ-' + form.prefixe + c.cle + '"]');

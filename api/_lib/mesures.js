@@ -24,6 +24,11 @@ const crypto = require('crypto');
 const EVENEMENTS = ['fiche_vue', 'formulaire_commence', 'etape_2', 'etape_3', 'etape_4',
   'inscription_envoyee', 'preuve_whatsapp', 'contact_whatsapp'];
 
+/* Les annonces ont leur table (annonces_mesures) : le site envoie « annonce_vue »,
+   la table range « vue ». Même règle : une épreuve compare les deux listes. */
+const EVENEMENTS_ANNONCE = { annonce_vue: 'vue', annonce_clic: 'clic', annonce_fermee: 'fermee' };
+const FORMAT_ANNONCE = /^[a-z0-9-]{1,60}$/;
+
 const FORMAT_FORMATION = /^[a-z0-9-]{0,60}$/;
 const FORMAT_PAYS = /^([A-Z]{2})?$/;
 /* Un signal tient en une centaine d'octets : au-delà, ce n'en est pas un. */
@@ -50,10 +55,14 @@ function depasse(cle, maintenant) {
 /** La mesure lisible dans ce qui est arrivé, ou null si ce n'en est pas une. */
 function lireMesure(charge) {
   if (!charge || typeof charge !== 'object' || Array.isArray(charge)) return null;
-  const { mesure, formation = '', pays = '' } = charge;
+  const { mesure, formation = '', pays = '', annonce } = charge;
+  if (typeof pays !== 'string' || !FORMAT_PAYS.test(pays)) return null;
+  if (typeof mesure === 'string' && Object.prototype.hasOwnProperty.call(EVENEMENTS_ANNONCE, mesure)) {
+    if (typeof annonce !== 'string' || !FORMAT_ANNONCE.test(annonce)) return null;
+    return { evenement: EVENEMENTS_ANNONCE[mesure], annonce, pays };
+  }
   if (typeof mesure !== 'string' || EVENEMENTS.indexOf(mesure) < 0) return null;
   if (typeof formation !== 'string' || !FORMAT_FORMATION.test(formation)) return null;
-  if (typeof pays !== 'string' || !FORMAT_PAYS.test(pays)) return null;
   return { evenement: mesure, formation, pays };
 }
 
@@ -66,6 +75,19 @@ async function recevoirMesure(db, charge, { ip = '', sel = 'local', maintenant =
   const m = lireMesure(charge);
   if (!m) return false;
   if (depasse(empreinte(ip, sel), maintenant())) return false;
+
+  // Une annonce : même principe, sa propre table. Elle doit exister, le pays aussi.
+  if (m.annonce) {
+    const { rows } = await db.query(
+      `insert into annonces_mesures (jour, annonce, evenement, pays)
+         select (now() at time zone 'UTC' + interval '3 hours')::date, $1, $2, $3
+          where exists (select 1 from annonces where id = $1)
+            and ($3 = '' or exists (select 1 from pays where code = $3))
+       on conflict (jour, annonce, evenement, pays)
+         do update set n = annonces_mesures.n + 1, derniere = now()
+       returning n`, [m.annonce, m.evenement, m.pays]);
+    return rows.length > 0;
+  }
 
   /* Un seul ordre, atomique : deux visiteurs au même instant ajoutent chacun
      leur 1, aucun n'écrase l'autre. La formation et le pays doivent exister —
@@ -98,8 +120,25 @@ async function lireAudience(db, jours) {
   return { ok: true, jours: n, lignes: rows, derniere: d ? new Date(d).toISOString() : null };
 }
 
+/**
+ * Les compteurs des annonces sur une période, pour l'onglet « Annonces » :
+ * totaux par annonce, événement et pays. Mêmes périodes que l'audience.
+ */
+async function lireMesuresAnnonces(db, jours) {
+  const n = [7, 30, 90, 365].indexOf(Number(jours)) >= 0 ? Number(jours) : 30;
+  const { rows } = await db.query(
+    `select annonce, evenement, pays, sum(n)::int as n
+       from annonces_mesures
+      where jour > (now() at time zone 'UTC' + interval '3 hours')::date - $1::int
+      group by annonce, evenement, pays`, [n]);
+  return { ok: true, jours: n, lignes: rows };
+}
+
 const MESURES = {
-  'admin.audience': async (db, d) => lireAudience(db, d.jours)
+  'admin.audience': async (db, d) => lireAudience(db, d.jours),
+  'admin.annonces.mesures': async (db, d) => lireMesuresAnnonces(db, d.jours)
 };
 
-module.exports = { EVENEMENTS, TAILLE_MAX_MESURE, lireMesure, recevoirMesure, lireAudience, MESURES };
+module.exports = {
+  EVENEMENTS, EVENEMENTS_ANNONCE, TAILLE_MAX_MESURE, lireMesure, recevoirMesure, lireAudience, lireMesuresAnnonces, MESURES
+};

@@ -38,6 +38,9 @@
     try { localStorage.removeItem('impactali_pays'); localStorage.removeItem('impactali_places'); } catch (e) { /* stockage indisponible */ }
     let MARCHE = null;
     let MARCHES = [];
+    /* Les annonces de la fenêtre d'arrivée (annonces.js), déjà triées par le
+       serveur pour CE marché : null tant qu'il n'a pas répondu. */
+    let ANNONCES = null;
 
     /** Pays présents dans le catalogue reçu : celui du marché, ou aucun. */
     function paysDisponibles() {
@@ -446,6 +449,8 @@
         MARCHES = Array.isArray(donnees.marches) ? donnees.marches.filter(m => m && m.code && m.nom) : [];
         PAYS = Array.isArray(donnees.pays) ? donnees.pays : [];
         window.PAYS = PAYS;
+        // Prises telles quelles, même vides : celles d'un autre marché ne doivent pas survivre
+        ANNONCES = Array.isArray(donnees.annonces) ? donnees.annonces.filter(a => a && a.id && a.image) : [];
         // Même garde pour les réalisations : une base vide n'efface pas l'accueil
         if (Array.isArray(donnees.portfolio) && donnees.portfolio.length) {
             window.PORTFOLIO = donnees.portfolio.map(item => Object.assign({}, item, {
@@ -936,6 +941,7 @@
                    un pays deviné. Sans cette issue, elle attendrait indéfiniment. */
                 if (!MARCHE) {
                     MARCHE = { code: null, nom: null, mode: null, source: 'indisponible' };
+                    ANNONCES = [];
                     window.setTimeout(() => document.dispatchEvent(new CustomEvent('impactali:catalogue')), 0);
                 }
                 return false;
@@ -1218,7 +1224,11 @@
                 sessionStorage.setItem(cle, '1');
             } catch (e) { /* stockage indisponible : on compte quand même */ }
         }
-        const corps = JSON.stringify({ mesure: evenement, formation: formId, pays: (paysActif() || {}).code || '' });
+        envoyerSignal({ mesure: evenement, formation: formId, pays: (paysActif() || {}).code || '' });
+    }
+
+    function envoyerSignal(signal) {
+        const corps = JSON.stringify(signal);
         const url = ENDPOINTS.registration;
         if (!url) return;
         try {
@@ -1228,19 +1238,47 @@
         } catch (e) { /* idem */ }
     }
 
+    /** Une annonce affichée (« vue »), cliquée (« clic ») ou fermée (« fermee »). */
+    function mesurerAnnonce(evenement, annonce) {
+        if (['vue', 'clic', 'fermee'].indexOf(evenement) < 0 || !/^[a-z0-9-]{1,60}$/.test(String(annonce || ''))) return;
+        envoyerSignal({ mesure: 'annonce_' + evenement, annonce: String(annonce), pays: (paysActif() || {}).code || '' });
+    }
+
+    /** Les annonces que le serveur destine à ce visiteur, ou null s'il n'a pas encore répondu. */
+    function annoncesDuVisiteur() {
+        return ANNONCES ? ANNONCES.slice() : null;
+    }
+
+    /* Le visiteur a commencé à remplir un formulaire d'inscription dans cet
+       onglet : la fenêtre d'annonce ne doit plus jamais l'interrompre. On le
+       lit dans la marque que pose la mesure « formulaire_commence ». */
+    function inscriptionCommencee() {
+        try {
+            for (let i = 0; i < sessionStorage.length; i++) {
+                if (String(sessionStorage.key(i)).indexOf('impactali_mesure:formulaire_commence:') === 0) return true;
+            }
+        } catch (e) { /* stockage indisponible */ }
+        return false;
+    }
+
     /* Une question posée sur WhatsApp, depuis n'importe quelle page : le bouton
        flottant, « Poser une question », la fiche. Le bouton de la preuve de
-       paiement a son propre signal (script.js). */
+       paiement a son propre signal (script.js), et le lien d'une annonce le sien
+       (annonces.js) : un partenaire joignable sur WhatsApp n'est pas une
+       question posée à IMPACTALI. */
     function initMesureWhatsapp() {
         document.addEventListener('click', event => {
             const lien = event.target && event.target.closest && event.target.closest('a[href*="wa.me/"]');
-            if (!lien || lien.id === 'btn-whatsapp') return;
+            if (!lien || lien.id === 'btn-whatsapp' || lien.closest('[data-annonce]')) return;
             mesurer('contact_whatsapp');
         }, true);
     }
 
     window.SiteCommon = Object.freeze({
         mesurer,
+        mesurerAnnonce,
+        annoncesDuVisiteur,
+        inscriptionCommencee,
         definirFormationMesuree,
         observeReveals,
         initAccordions,

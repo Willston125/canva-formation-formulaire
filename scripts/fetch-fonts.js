@@ -24,7 +24,9 @@ function fichiersSources() {
     'admin/index.html', 'admin/admin.js',
     /* Le balisage partagé des fiches et les données du site nomment eux aussi
        des icônes, en français (`icone:`) pour les modules du programme. */
-    'fiche-blocs.js', 'formations-data.js'
+    'fiche-blocs.js', 'formations-data.js',
+    // La fenêtre d'annonce : sa croix et la flèche de son bouton
+    'annonces.js'
   ];
   for (const dossier of fs.readdirSync('formations')) {
     const page = path.join('formations', dossier, 'index.html');

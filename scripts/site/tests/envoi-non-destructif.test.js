@@ -29,11 +29,11 @@ const RACINE = path.resolve(__dirname, '..', '..', '..');
 const FICHIER = 'admin/admin.js';
 const SOURCE = fs.readFileSync(path.join(RACINE, FICHIER), 'utf8');
 
-/* Les sept formats attendus, comptés à la main. C'est le garde-fou du contrôle
+/* Les huit formats attendus, comptés à la main. C'est le garde-fou du contrôle
    des hauteurs : celui-ci énumère les formats FAUTIFS, et une liste vide y vaut
    succès. Si l'extraction de la table devenait aveugle, il passerait au vert
    sur du vide en annonçant que plus aucune hauteur n'est imposée. */
-const FORMATS_ATTENDUS = ['image', 'poster', 'logo', 'paysage', 'portrait', 'carre', 'portfolio'];
+const FORMATS_ATTENDUS = ['image', 'poster', 'logo', 'paysage', 'portrait', 'carre', 'portfolio', 'annonce'];
 
 const resultats = [];
 const verifier = (libelle, obtenu, attendu) => {
@@ -93,7 +93,7 @@ verifier('la table FORMATS_IMAGE est bien délimitée', table.length > 200, true
    compter : sept entrées dont une renommée passerait un simple compte. */
 const formatsTrouves = [...table.matchAll(/^ {4}([a-z]+): \{ largeur: (\d+), hauteur: ([^,]+),/gm)]
   .map(m => ({ nom: m[1], largeur: Number(m[2]), hauteur: m[3].trim() }));
-verifier('les sept formats sont relevés, et ce sont bien ceux-là',
+verifier('les huit formats sont relevés, et ce sont bien ceux-là',
   formatsTrouves.map(f => f.nom), FORMATS_ATTENDUS);
 
 // ============ 1. Plus aucun rognage à l'envoi ============

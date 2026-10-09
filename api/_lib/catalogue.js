@@ -9,7 +9,7 @@
  * des épreuves, comme de node-postgres en production. */
 'use strict';
 
-const { FORMATION, SESSION, PAYS, MOYEN_PAIEMENT, REALISATION, colonnes, versObjet } = require('./champs');
+const { FORMATION, SESSION, PAYS, MOYEN_PAIEMENT, REALISATION, ANNONCE, colonnes, versObjet } = require('./champs');
 
 /** Statuts qui occupent une place : ceux que le propriétaire a validés. */
 const STATUTS_COMPTES = ['Confirmé', 'Payé'];
@@ -50,6 +50,20 @@ function objetSession(ligne, lignesPays) {
   return s;
 }
 
+/**
+ * Les annonces, dans l'ordre d'affichage.
+ *
+ * La table vient d'une migration collée À LA MAIN dans Supabase : tant qu'elle
+ * ne l'est pas, le catalogue part sans annonces plutôt que de ne pas partir du
+ * tout. Une requête qui échouerait ici rendrait le site entier muet.
+ */
+async function lireAnnonces(q) {
+  const [existe] = await q("select to_regclass('public.annonces') is not null as ok");
+  if (!existe || !existe.ok) return [];
+  const lignes = await q(`select ${colonnes(ANNONCE)} from annonces order by id`);
+  return lignes.map(ligne => versObjet(ligne, ANNONCE)).sort(parOrdre);
+}
+
 async function lireCatalogue(db) {
   const q = async (texte, valeurs) => (await db.query(texte, valeurs)).rows;
   const [formations, tarifs, sessions, sessionPays, pays, moyens, realisations,
@@ -66,6 +80,7 @@ async function lireCatalogue(db) {
     await q('select * from visuels order by cle'),
     await compterInscrits(db)
   ];
+  const annonces = await lireAnnonces(q);
 
   return {
     formations: formations.map(ligne => {
@@ -95,6 +110,11 @@ async function lireCatalogue(db) {
     }).sort(parOrdre),
 
     portfolio: realisations.map(ligne => versObjet(ligne, REALISATION)).sort(parOrdre),
+
+    /* TOUTES les annonces, avec leurs pays et leurs dates : c'est ce que lit le
+       tableau de bord. Le site, lui, n'en reçoit que la part de son marché
+       (catalogueDuMarche). */
+    annonces,
 
     reglages: Object.fromEntries(reglages.map(r => [r.cle, r.valeur])),
     textes: Object.fromEntries(textes.map(r => [r.cle, r.valeur])),

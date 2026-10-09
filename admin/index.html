@@ -79,6 +79,9 @@
                 <button class="onglet" type="button" data-vue="portfolio">
                     <span class="material-symbols-outlined" aria-hidden="true">photo_library</span>Réalisations
                     <span class="pastille" id="compte-portfolio"></span></button>
+                <button class="onglet" type="button" data-vue="annonces">
+                    <span class="material-symbols-outlined" aria-hidden="true">campaign</span>Annonces
+                    <span class="pastille" id="compte-annonces"></span></button>
                 <button class="onglet" type="button" data-vue="visuels">
                     <span class="material-symbols-outlined" aria-hidden="true">wallpaper</span>Visuels du site</button>
                 <button class="onglet" type="button" data-vue="textes">
@@ -150,6 +153,11 @@
             <!-- Réalisations affichées sur l'accueil -->
             <section class="vue" id="vue-portfolio">
                 <div id="liste-portfolio"></div>
+            </section>
+
+            <!-- Annonces : la fenêtre qui s'ouvre à l'arrivée sur le site -->
+            <section class="vue" id="vue-annonces">
+                <div id="liste-annonces"></div>
             </section>
 
             <!-- Visuels remplaçables du site -->

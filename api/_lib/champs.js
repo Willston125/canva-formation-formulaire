@@ -65,6 +65,15 @@ const REALISATION = [
   ['href', 'href'], ['video', 'video'], ['ordre', 'ordre', 'num']
 ];
 
+/* `pays` est un tableau de codes : il s'écrit à part (ecritures.js), comme les
+   jours d'une session. */
+const ANNONCE = [
+  ['id', 'id'], ['type', 'type'], ['titre', 'titre'], ['annonceur', 'annonceur'],
+  ['image', 'image'], ['imageLarge', 'image_large'], ['imageAlt', 'image_alt'],
+  ['lien', 'lien'], ['bouton', 'bouton'], ['formation', 'formation'], ['pays', 'pays', 'liste'],
+  ['debut', 'debut', 'date'], ['fin', 'fin', 'date'], ['active', 'active', 'bool'], ['ordre', 'ordre', 'num']
+];
+
 /** Liste de colonnes pour un SELECT : les dates reviennent en texte. */
 function colonnes(champs) {
   return champs.map(([, col, type]) => (type === 'date' ? `${col}::text as ${col}` : col)).join(', ');
@@ -81,4 +90,4 @@ function versObjet(ligne, champs) {
   return o;
 }
 
-module.exports = { FORMATION, SESSION, PAYS, MOYEN_PAIEMENT, REALISATION, colonnes, versObjet };
+module.exports = { FORMATION, SESSION, PAYS, MOYEN_PAIEMENT, REALISATION, ANNONCE, colonnes, versObjet };

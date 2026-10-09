@@ -90,12 +90,62 @@ function sessionDuMarche(s, marche) {
   return copie;
 }
 
+/** Le jour à Moroni et à Djibouti (UTC+3, sans heure d'été), en AAAA-MM-JJ. */
+const jourLocal = maintenant => new Date(maintenant + 3 * 3600 * 1000).toISOString().slice(0, 10);
+
+/* Une page n'en fait défiler qu'une à chaque arrivée : au-delà, aucune ne
+   serait jamais vue, et la réponse grossirait pour rien. */
+const ANNONCES_MAX = 10;
+
+/**
+ * Les annonces qu'un visiteur de ce marché peut voir aujourd'hui, réduites à
+ * ce qu'il faut pour les afficher.
+ *
+ * Une annonce qui vise des pays ne part QUE dans ces pays : une affiche faite
+ * pour Djibouti porte son prix, son lieu, parfois son numéro — elle n'a rien à
+ * faire chez un visiteur des Comores. Sans pays visé, elle part à tous, hors
+ * marché compris. Les pays visés, les dates et l'interrupteur ne quittent pas
+ * le serveur : seule la date de fin part, pour qu'une page restée en cache ne
+ * montre pas une offre expirée.
+ */
+function annoncesDuMarche(catalogue, marche, aujourdhui) {
+  const formations = new Map((catalogue.formations || []).map(f => [f.formId, f]));
+  const visibles = [];
+  for (const a of catalogue.annonces || []) {
+    if (!a || !a.id || !a.image || a.active === false) continue;
+    if (a.debut && a.debut > aujourdhui) continue;
+    if (a.fin && a.fin < aujourdhui) continue;
+    const vises = Array.isArray(a.pays) ? a.pays : [];
+    if (vises.length && (!marche || vises.indexOf(marche) < 0)) continue;
+
+    // Une formation retirée du catalogue n'a plus rien à promouvoir
+    const f = a.formation ? formations.get(a.formation) : null;
+    if (a.formation && (!f || f.active === false)) continue;
+
+    visibles.push({
+      id: a.id,
+      type: a.type === 'partenaire' ? 'partenaire' : 'promotion',
+      titre: a.titre,
+      annonceur: a.annonceur || null,
+      image: a.image,
+      imageLarge: a.imageLarge || null,
+      imageAlt: a.imageAlt || null,
+      lien: a.lien || (f && f.href) || null,
+      bouton: a.bouton || null,
+      formation: a.formation || null,
+      fin: a.fin || null
+    });
+    if (visibles.length >= ANNONCES_MAX) break;
+  }
+  return visibles;
+}
+
 /**
  * Le catalogue d'un marché. `marche` null = hors marché.
  * Les textes, les visuels et les réalisations ne dépendent d'aucun pays : ils
- * passent tels quels.
+ * passent tels quels. Les annonces, elles, en dépendent (annoncesDuMarche).
  */
-function catalogueDuMarche(catalogue, choix, horsMarcheMode = MODE_HORS_MARCHE) {
+function catalogueDuMarche(catalogue, choix, horsMarcheMode = MODE_HORS_MARCHE, { maintenant = Date.now() } = {}) {
   const marche = choix && choix.code ? choix.code : null;
   const ouverts = paysOuverts(catalogue);
   const pays = marche ? ouverts.filter(p => p.code === marche) : [];
@@ -123,6 +173,7 @@ function catalogueDuMarche(catalogue, choix, horsMarcheMode = MODE_HORS_MARCHE) 
 
   return Object.assign({}, catalogue, {
     formations, sessions, pays, places, reglages,
+    annonces: annoncesDuMarche(catalogue, marche, jourLocal(maintenant)),
     marche: {
       code: marche,
       nom: pays.length ? pays[0].nom : null,
@@ -148,4 +199,7 @@ async function placesDuMarche(db, compte, marche) {
   return Object.fromEntries(Object.entries(compte || {}).filter(([id]) => gardees.has(id)));
 }
 
-module.exports = { choisirMarche, catalogueDuMarche, placesDuMarche, modeDuMarche, MODE_HORS_MARCHE, REGLAGES_PUBLICS };
+module.exports = {
+  choisirMarche, catalogueDuMarche, annoncesDuMarche, placesDuMarche, modeDuMarche, jourLocal,
+  MODE_HORS_MARCHE, REGLAGES_PUBLICS
+};

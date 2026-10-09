@@ -880,3 +880,11 @@ select.statut:focus { outline: none; border-color: var(--brand); }
   line-height: 1.45;
   text-align: center;
 }
+
+/* Pays visés par une annonce : une case par pays, côte à côte. */
+.cases-pays {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 22px;
+}
+.cases-pays .case { margin: 4px 0 6px; }

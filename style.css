@@ -4896,3 +4896,145 @@ button.portfolio-card.has-video { cursor: pointer; }
   .visionneuse { padding: 12px; }
   .visionneuse__fermer { top: 4px; right: 4px; }
 }
+
+/* ---------- Fenêtre d'annonce (annonces.js) ----------
+   L'affiche garde SON rapport, entière : elle porte ses propres textes. Le
+   cadre se règle sur elle (--annonce-rapport, posé par le script) et tient
+   dans l'écran avec l'étiquette, la croix et le bouton : 150 px de hauteur
+   leur sont réservés. Verticale, elle ne dépasse pas 440 px de large ; large,
+   960 px. */
+.annonce {
+  position: fixed;
+  inset: 0;
+  z-index: 95;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  animation: annonce-entree 240ms ease-out;
+}
+
+.annonce__fond {
+  position: absolute;
+  inset: 0;
+  background: rgba(3, 5, 8, 0.82);
+}
+
+.annonce__boite {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(100%, var(--annonce-max, 440px), calc((100vh - 150px) * var(--annonce-rapport, 0.8)));
+}
+@supports (height: 100dvh) {
+  .annonce__boite {
+    width: min(100%, var(--annonce-max, 440px), calc((100dvh - 150px) * var(--annonce-rapport, 0.8)));
+  }
+}
+
+.annonce__entete {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+
+/* « À la une » aux couleurs du site ; « Publicité » en neutre, pour qu'on ne
+   confonde jamais l'annonce d'un partenaire avec une offre d'IMPACTALI. */
+.annonce__etiquette {
+  min-width: 0;
+  overflow: hidden;
+  padding: 6px 12px;
+  border: 1px solid rgba(203, 253, 0, 0.4);
+  border-radius: 999px;
+  background: rgba(203, 253, 0, 0.12);
+  color: #CBFD00;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.annonce__etiquette--pub {
+  border-color: rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.1);
+  color: #E5E5E5;
+}
+
+/* La croix se voit du premier coup d'œil, et se touche du pouce : 44 px. */
+.annonce__fermer {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 50%;
+  background: #F4F4F4;
+  color: #050709;
+  cursor: pointer;
+  transition: background-color 160ms ease;
+}
+.annonce__fermer:hover { background: #CBFD00; }
+.annonce__fermer:focus-visible,
+.annonce__bouton:focus-visible,
+.annonce__visuel:focus-visible {
+  outline: 3px solid #CBFD00;
+  outline-offset: 3px;
+}
+
+/* Le titre sert aux lecteurs d'écran : l'affiche, elle, porte déjà le sien. */
+.annonce__titre {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.annonce__visuel {
+  display: block;
+  overflow: hidden;
+  border-radius: 16px;
+  background: #11161f;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+}
+.annonce__visuel img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.annonce__bouton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 50px;
+  padding: 12px 18px;
+  border-radius: 14px;
+  background: #CBFD00;
+  color: #050709;
+  font-weight: 800;
+  text-align: center;
+  text-decoration: none;
+  transition: background-color 160ms ease;
+}
+.annonce__bouton:hover { background: #d8ff3d; }
+/* Sous une affiche large, un bouton de 960 px écraserait tout : il reprend sa taille. */
+.annonce__boite--large .annonce__bouton {
+  align-self: center;
+  min-width: 280px;
+  padding: 12px 32px;
+}
+
+@keyframes annonce-entree {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .annonce { animation: none; }
+}
