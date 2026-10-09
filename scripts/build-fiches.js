@@ -95,9 +95,15 @@ function sectionProgramme(f) {
   return `<section class="fiche-block reveal-on-scroll" id="programme-section" aria-labelledby="programme-title">${interieur}</section>`;
 }
 
-/** Prérequis saisis pour cette formation, dans leur section. */
+/**
+ * Prérequis saisis pour cette formation, dans leur section.
+ * Ils ne portent PAS les clés partagées « fiche.prerequis.N » : un texte modifié
+ * dans « Textes du site » remplacerait sinon, d'un coup, les prérequis propres
+ * de chaque formation — la fiche Vidéo annoncerait « un compte Canva gratuit ».
+ * `data-prerequis-propres` le dit à l'épreuve qui vérifie ces clés.
+ */
 function sectionPrerequis(f) {
-  return '<section class="fiche-block reveal-on-scroll" id="prerequis-section" aria-labelledby="prerequis-title">'
+  return '<section class="fiche-block reveal-on-scroll" id="prerequis-section" aria-labelledby="prerequis-title" data-prerequis-propres>'
     + BLOCS.prerequisInterieur(f) + '</section>';
 }
 

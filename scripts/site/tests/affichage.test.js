@@ -100,10 +100,17 @@ verifier('des fiches sont bien générées', fiches.length >= 5, true);
    formateur » portent désormais le même squelette que le gabarit, donc les
    mêmes clés — la quatrième ligne de prérequis et le titre du formateur
    compris. Un champ « Fiche formation » du tableau de bord change les six. */
+/* Une exception, voulue : des prérequis SAISIS pour une formation ne portent
+   pas les clés partagées « fiche.prerequis.* ». Un texte modifié dans « Textes
+   du site » remplacerait sinon ceux de toutes les formations à la fois. Le
+   générateur marque leur section `data-prerequis-propres`. */
+const prerequisPropres = f => /id="prerequis-section"[^>]*data-prerequis-propres/
+  .test(fs.readFileSync(path.join(RACINE, 'formations', f, 'index.html'), 'utf8'));
 const reference = clesDe('canva-pro');
 const manquantes = {};
 fiches.filter(f => f !== 'canva-pro').forEach(f => {
-  const absentes = reference.filter(c => clesDe(f).indexOf(c) < 0);
+  const attendues = prerequisPropres(f) ? reference.filter(c => !/"fiche\.prerequis\./.test(c)) : reference;
+  const absentes = attendues.filter(c => clesDe(f).indexOf(c) < 0);
   if (absentes.length) manquantes[f] = absentes;
 });
 verifier('chaque fiche expose TOUS les textes modifiables du gabarit', manquantes, {});
