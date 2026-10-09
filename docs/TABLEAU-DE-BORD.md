@@ -120,8 +120,21 @@ alors la grille des réalisations et s'affiche dans la bande des vidéos de clas
 au format vertical. Titre conseillé : la formation et l'année (« Promotion
 Canva Pro · 2025 »). La section reste invisible tant qu'aucune n'est saisie.
 
-Rien ne se charge chez YouTube avant que le visiteur touche la vidéo : la page
-reste légère sur une connexion mobile. Sous les vidéos, une phrase dit à chaque
+Comme sur les réseaux sociaux, une vidéo **démarre seule, sans le son, quand le
+visiteur arrive dessus**, dans son cadre (elle ne s'ouvre pas en grand), et
+s'arrête quand il la quitte. Le son, la pause et le plein écran se règlent sur
+le lecteur YouTube lui-même. Rien ne se charge chez YouTube pour qui ne descend
+pas jusqu'à la section ; et rien ne part seul sur un téléphone réglé en
+« économie de données » ou « animations réduites » : le visiteur touche alors la
+vidéo, qui se lit sur place.
+
+Le lecteur YouTube affiche **le titre de la vidéo sur YouTube** quand elle
+démarre : donnez-lui un vrai titre dans YouTube Studio (« Promotion 2026 · le
+cours ») plutôt que le nom du fichier envoyé. Réglez aussi sa langue sur le
+français : les sous-titres automatiques, affichés quand le son est coupé,
+suivent cette langue.
+
+Sous les vidéos, une phrase dit à chaque
 visiteur comment se tiennent SES séances : « en présentiel » aux Comores, « en
 ligne, en direct » à Djibouti.
 

@@ -695,15 +695,154 @@
                 : el.dataset.texteOrigine;
     }
 
+    /* LES VIDÉOS DE CLASSE SE LANCENT SEULES, SUR PLACE. Décision du
+       propriétaire (9 octobre 2026) : comme sur les réseaux sociaux, une vidéo
+       démarre quand on arrive dessus, sans le son, dans son propre cadre — elle
+       ne s'ouvre plus en grand — et s'arrête quand on la quitte. Le son, la
+       pause et le plein écran sont ceux du lecteur YouTube, qu'on touche
+       directement.
+
+       Le lecteur ne se charge qu'à l'approche : rien ne part chez YouTube pour
+       un visiteur qui ne descend pas jusqu'ici. Et rien ne se lance seul pour
+       qui a demandé à économiser ses données (réglage du téléphone) ou à
+       réduire les animations : il touche la vidéo, qui se lit sur place. */
+    const ORIGINE_YOUTUBE = 'https://www.youtube-nocookie.com';
+    // Part visible d'une vidéo pour qu'elle démarre ; en dessous, elle s'arrête
+    const PART_VISIBLE = 0.6;
+    // États du lecteur YouTube : 1 en lecture, 3 en chargement
+    const EN_LECTURE = [1, 3];
+    const lecteurs = new Map();
+    // Les cartes assez visibles pour jouer, que la page soit au premier plan ou non
+    const cartesEnVue = new Set();
+    let observateurClasses = null;
+    let signatureClasses = '';
+
+    function lectureAutomatiquePermise() {
+        const economie = !!(navigator.connection && navigator.connection.saveData);
+        const calme = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+        return !economie && !calme && 'IntersectionObserver' in window;
+    }
+
+    function commandeYoutube(lecteur, commande) {
+        if (!lecteur.pret || !lecteur.iframe.contentWindow) return;
+        lecteur.iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: commande, args: [] }), ORIGINE_YOUTUBE);
+    }
+
+    /** Le lecteur d'une carte, posé dans son cadre à la première demande. */
+    function lancerSurPlace(carte, { muet, visible }) {
+        let lecteur = lecteurs.get(carte);
+        if (lecteur) {
+            lecteur.visible = visible;
+            lecteur.arreteParNous = false;
+            commandeYoutube(lecteur, 'playVideo');
+            return lecteur;
+        }
+        const id = carte.dataset.video;
+        const reglages = new URLSearchParams({
+            autoplay: '1', mute: muet ? '1' : '0', playsinline: '1',
+            // En boucle, comme un Short : une seule vidéo, rejouée
+            loop: '1', playlist: id, rel: '0', enablejsapi: '1', origin: window.location.origin,
+            /* Lu sans le son, le lecteur affiche d'office les sous-titres
+               automatiques. Sans langue imposée, il les donnait en ANGLAIS —
+               des phrases sans rapport avec ce qui se dit (relevé le
+               9 octobre 2026). En français, ils suivent la classe. */
+            hl: 'fr', cc_lang_pref: 'fr'
+        });
+        const iframe = document.createElement('iframe');
+        iframe.className = 'classe-video__lecteur';
+        iframe.src = `${ORIGINE_YOUTUBE}/embed/${encodeURIComponent(id)}?${reglages}`;
+        iframe.title = carte.dataset.titre || 'Vidéo de classe';
+        iframe.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
+        iframe.referrerPolicy = 'strict-origin-when-cross-origin';
+        iframe.setAttribute('allowfullscreen', '');
+
+        lecteur = { iframe, pret: false, etat: null, visible, arreteParNous: false };
+        lecteurs.set(carte, lecteur);
+        iframe.addEventListener('load', () => {
+            lecteur.pret = true;
+            carte.classList.add('is-lue');
+            // Le lecteur dira désormais quand il joue, et quand on l'a mis en pause
+            iframe.contentWindow.postMessage(JSON.stringify({ event: 'listening', id: id, channel: 'widget' }), ORIGINE_YOUTUBE);
+            // Quittée pendant le chargement : elle ne doit pas jouer hors de la vue
+            if (!lecteur.visible || document.hidden) { commandeYoutube(lecteur, 'pauseVideo'); lecteur.arreteParNous = true; }
+        });
+        carte.querySelector('.classe-video__media').appendChild(iframe);
+        return lecteur;
+    }
+
+    /* Arrêter ce qui joue — on la quitte, ou la page passe en arrière-plan —
+       en notant que c'est NOUS : au retour, elle reprend. Une vidéo que le
+       visiteur a mise en pause lui-même, elle, reste en pause. */
+    function arreter(lecteur) {
+        if (lecteur.etat === null || EN_LECTURE.indexOf(lecteur.etat) >= 0) {
+            commandeYoutube(lecteur, 'pauseVideo');
+            lecteur.arreteParNous = true;
+        }
+    }
+    function reprendre(lecteur) {
+        if (!lecteur.arreteParNous) return;
+        lecteur.arreteParNous = false;
+        commandeYoutube(lecteur, 'playVideo');
+    }
+
+    // L'état que chaque lecteur annonce : lecture, pause, fin
+    window.addEventListener('message', event => {
+        if (event.origin !== ORIGINE_YOUTUBE || typeof event.data !== 'string') return;
+        let donnees;
+        try { donnees = JSON.parse(event.data); } catch (e) { return; }
+        const etat = !donnees ? undefined
+            : donnees.event === 'onStateChange' ? donnees.info
+                : donnees.event === 'infoDelivery' && donnees.info ? donnees.info.playerState : undefined;
+        if (typeof etat !== 'number') return;
+        lecteurs.forEach(lecteur => {
+            if (lecteur.iframe.contentWindow === event.source) lecteur.etat = etat;
+        });
+    });
+
+    /* La page passe en arrière-plan : tout s'arrête. Elle revient : ce qui est
+       sous les yeux repart — ou démarre, si l'on était arrivé sur la vidéo
+       pendant que la page était cachée. On ne compte pas sur un défilement
+       pour s'en apercevoir : l'observateur ne parle que lorsque la part
+       visible change. */
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) { lecteurs.forEach(arreter); return; }
+        cartesEnVue.forEach(carte => {
+            const lecteur = lecteurs.get(carte);
+            if (!lecteur) lancerSurPlace(carte, { muet: true, visible: true });
+            else reprendre(lecteur);
+        });
+    });
+
+    function observerClasses(piste) {
+        if (observateurClasses) observateurClasses.disconnect();
+        observateurClasses = null;
+        cartesEnVue.clear();
+        if (!lectureAutomatiquePermise()) return;
+        observateurClasses = new IntersectionObserver(entrees => {
+            entrees.forEach(entree => {
+                const carte = entree.target;
+                const visible = entree.isIntersecting && entree.intersectionRatio >= PART_VISIBLE;
+                if (visible) cartesEnVue.add(carte); else cartesEnVue.delete(carte);
+                const lecteur = lecteurs.get(carte);
+                if (visible && !document.hidden) {
+                    if (!lecteur) lancerSurPlace(carte, { muet: true, visible: true });
+                    else { lecteur.visible = true; reprendre(lecteur); }
+                } else if (lecteur) {
+                    lecteur.visible = visible;
+                    if (!visible) arreter(lecteur);
+                }
+            });
+        }, { threshold: [0, PART_VISIBLE] });
+        piste.querySelectorAll('.classe-video').forEach(carte => observateurClasses.observe(carte));
+    }
+
     function renderClasses() {
         const section = document.getElementById('en-classe');
         const piste = document.getElementById('classes-piste');
         if (!section || !piste) return;
 
-        const videos = PORTFOLIO.map((item, i) => [item, i])
-            .filter(([item]) => estEnClasse(item) && identifiantYoutube(item.video));
+        const videos = PORTFOLIO.filter(item => estEnClasse(item) && identifiantYoutube(item.video));
         section.hidden = !videos.length;
-        if (!videos.length) { piste.innerHTML = ''; return; }
 
         const marche = document.getElementById('classes-marche');
         if (marche) {
@@ -712,28 +851,41 @@
             marche.hidden = !texte;
         }
 
-        /* Rien ne part chez YouTube avant le toucher : l'aperçu est une simple
-           image, le lecteur ne se charge qu'à la demande. Sur une connexion
-           mobile chère, une page qui lirait seule ses vidéos coûterait cher. */
+        /* La bande n'est reconstruite que si ce qu'elle montre a changé : le
+           catalogue et le pays reviennent à chaque chargement, et tout
+           redessiner couperait la vidéo en cours de lecture. */
+        const signature = videos.map(item => [item.video, item.title, item.description, item.image].join('|')).join('§');
+        if (signature === signatureClasses && piste.children.length) return;
+        signatureClasses = signature;
+        lecteurs.clear();
+        cartesEnVue.clear();
+        if (!videos.length) {
+            piste.innerHTML = '';
+            if (observateurClasses) observateurClasses.disconnect();
+            return;
+        }
+
         /* L'aperçu de YouTube « hqdefault » est un 4/3 où le Short n'occupe
            qu'une bande centrale de 202 × 360 px : recadré au format vertical, il
            sort flou. « oardefault » est l'image du Short dans SON format
            (576 × 1024). S'il manque, on revient au 4/3 — YouTube rend alors
-           une erreur, ou une vignette grise de 120 px qu'il faut reconnaître. */
-        piste.innerHTML = videos.map(([item, i]) => {
+           une erreur, ou une vignette grise de 120 px qu'il faut reconnaître.
+           L'aperçu reste sous le lecteur : il couvre le temps du chargement. */
+        piste.innerHTML = videos.map(item => {
             const id = identifiantYoutube(item.video);
             const apercu = item.image || `https://i.ytimg.com/vi/${id}/oardefault.jpg`;
             const secours = item.image ? '' : `https://i.ytimg.com/vi/${id}/hqdefault.jpg`;
-            return `<button type="button" class="classe-video" data-realisation="${i}"
-                aria-label="${escapeHtml('Lire la vidéo : ' + item.title)}">
-                <span class="classe-video__media">
+            return `<figure class="classe-video" data-video="${escapeHtml(id)}" data-titre="${escapeHtml(item.title)}">
+                <div class="classe-video__media">
                     <img src="${escapeHtml(apercu)}" alt="" loading="lazy" decoding="async"${secours
                         ? ` data-secours="${escapeHtml(secours)}"` : ''}>
-                    <span class="classe-video__lecture" aria-hidden="true"><span class="material-symbols-outlined">play_arrow</span></span>
-                </span>
-                <span class="classe-video__legende"><strong>${escapeHtml(item.title)}</strong>${item.description
-                    ? `<span>${escapeHtml(item.description)}</span>` : ''}</span>
-            </button>`;
+                    <button type="button" class="classe-video__demarrer" aria-label="${escapeHtml('Lire la vidéo : ' + item.title)}">
+                        <span class="classe-video__lecture" aria-hidden="true"><span class="material-symbols-outlined">play_arrow</span></span>
+                    </button>
+                </div>
+                <figcaption class="classe-video__legende"><strong>${escapeHtml(item.title)}</strong>${item.description
+                    ? `<span>${escapeHtml(item.description)}</span>` : ''}</figcaption>
+            </figure>`;
         }).join('');
 
         piste.querySelectorAll('img[data-secours]').forEach(img => {
@@ -748,9 +900,14 @@
             img.addEventListener('load', () => { if (img.naturalWidth <= 120) repli(); });
         });
 
-        piste.querySelectorAll('[data-realisation]').forEach(carte => {
-            carte.addEventListener('click', () => ouvrirRealisation(PORTFOLIO[Number(carte.dataset.realisation)]));
+        // Touchée avant de partir seule : elle se lit sur place, avec le son
+        piste.querySelectorAll('.classe-video__demarrer').forEach(bouton => {
+            bouton.addEventListener('click', () => {
+                lancerSurPlace(bouton.closest('.classe-video'), { muet: false, visible: true });
+            });
         });
+
+        observerClasses(piste);
     }
 
     function renderPortfolio() {
@@ -807,8 +964,6 @@
         if (fermerVisionneuse) fermerVisionneuse();
 
         const video = identifiantYoutube(item.video);
-        // Une vidéo de classe est verticale (Short) : le lecteur prend son format, pas celui d'un film
-        const vertical = estEnClasse(item);
         const boite = document.createElement('div');
         boite.className = 'visionneuse';
         boite.innerHTML = `
@@ -817,7 +972,7 @@
                 <button type="button" class="visionneuse__fermer" data-fermer aria-label="Fermer">
                     <span class="material-symbols-outlined" aria-hidden="true">close</span></button>
                 ${video
-                ? `<div class="visionneuse__video${vertical ? ' visionneuse__video--vertical' : ''}"><iframe src="https://www.youtube-nocookie.com/embed/${escapeHtml(video)}?autoplay=1&rel=0&playsinline=1"
+                ? `<div class="visionneuse__video"><iframe src="https://www.youtube-nocookie.com/embed/${escapeHtml(video)}?autoplay=1&rel=0&playsinline=1"
                         title="${escapeHtml(item.title)}" frameborder="0" allow="accelerometer; autoplay; encrypted-media; picture-in-picture"
                         referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div>`
                 : `<img src="${escapeHtml(item.image)}" alt="${escapeHtml(item.imageAlt || item.title)}">`}
