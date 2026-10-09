@@ -949,6 +949,62 @@
         observerClasses(piste);
     }
 
+    /* « Vous formez une équipe ? » : l'entrée échelonnée quand la carte
+       arrive à l'écran, et un reflet qui suit le pointeur. Sous « animations
+       réduites », ou sans observateur, la carte s'affiche d'emblée, entière :
+       la classe « est-pret », qui cache les éléments avant leur entrée, n'est
+       alors jamais posée. */
+    function initEntreprise() {
+        const section = document.getElementById('entreprises');
+        const carte = document.getElementById('entreprise-carte');
+        if (!section || !carte) return;
+        const calme = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        if (!calme && 'IntersectionObserver' in window) {
+            section.classList.add('est-pret');
+            const observateur = new IntersectionObserver(entrees => {
+                if (!entrees.some(e => e.isIntersecting)) return;
+                section.classList.add('est-en-vue');
+                observateur.disconnect();
+            }, { threshold: 0.25 });
+            observateur.observe(carte);
+        } else {
+            section.classList.add('est-en-vue');
+        }
+
+        if (calme || !(window.matchMedia && window.matchMedia('(hover: hover)').matches)) return;
+        let image = 0;
+        carte.addEventListener('pointermove', event => {
+            if (image) return;
+            image = window.requestAnimationFrame(() => {
+                image = 0;
+                const b = carte.getBoundingClientRect();
+                carte.style.setProperty('--x', `${Math.round(event.clientX - b.left)}px`);
+                carte.style.setProperty('--y', `${Math.round(event.clientY - b.top)}px`);
+            });
+        });
+    }
+
+    /* Les thématiques qui défilent : celles du catalogue, jamais une liste
+       écrite à la main qui vieillirait. La liste est posée QUATRE fois — deux
+       moitiés identiques, chacune plus large que la carte : glisser d'une
+       moitié ramène la bande à son départ sans à-coup, ni trou à droite. Les
+       copies sont muettes pour les lecteurs d'écran. */
+    let signatureThematiques = '';
+    function renderThematiquesEntreprise() {
+        const bloc = document.getElementById('entreprise-thematiques');
+        const piste = document.getElementById('entreprise-thematiques-piste');
+        if (!bloc || !piste) return;
+        const noms = [...new Set(FORMATIONS.map(f => String(f.shortTitle || f.title || '').trim()).filter(Boolean))];
+        bloc.hidden = !noms.length;
+        const signature = noms.join('|');
+        if (!noms.length || signature === signatureThematiques) return;
+        signatureThematiques = signature;
+        const liste = (muette) => noms.map(nom =>
+            `<li${muette ? ' aria-hidden="true"' : ''}>${escapeHtml(nom)}</li>`).join('');
+        piste.innerHTML = liste(false) + liste(true) + liste(true) + liste(true);
+    }
+
     function renderPortfolio() {
         const grid = document.getElementById('portfolio-grid');
         if (!grid || !PORTFOLIO.length) return;
@@ -1067,6 +1123,7 @@
             renderSessions();
             renderPortfolio();
             renderClasses();
+            renderThematiquesEntreprise();
             renderModeMarche();
             if (contenuDuCarrousel() !== avant) initTrainingCarousel();
             common.observeReveals?.();
@@ -1089,6 +1146,8 @@
         renderSessions();
         renderPortfolio();
         renderClasses();
+        renderThematiquesEntreprise();
+        initEntreprise();
         renderModeMarche();
         // Le contenu créé ci-dessus n'existait pas au premier passage de l'observateur
         common.observeReveals?.();

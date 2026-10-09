@@ -1550,8 +1550,7 @@ a:focus-visible {
 }
 
 .catalogue__heading h2,
-.method__heading h2,
-.enterprise-cta h2 {
+.method__heading h2 {
   margin: 0;
   color: #090B10;
   font: 800 clamp(2.05rem, 4vw, 3.5rem)/1.02 'Plus Jakarta Sans', system-ui, sans-serif;
@@ -1811,31 +1810,6 @@ a:focus-visible {
 .method-step:nth-child(2) img { object-position: 50% 8%; }
 .method-step:nth-child(3) img { object-position: 23% 50%; }
 .method-step:hover img { transform: var(--cadrage, scale(1)) scale(1.02); }
-
-/* ---------- Entreprises ---------- */
-.enterprise-cta {
-  padding: 32px 0 74px;
-  background: #F2EEE5;
-}
-
-.enterprise-cta__inner {
-  min-height: 240px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 40px;
-  padding: clamp(30px, 5vw, 64px);
-  overflow: hidden;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  background:
-    radial-gradient(circle at 82% 10%, rgba(203, 253, 0, 0.22), transparent 28%),
-    var(--color-surface);
-  box-shadow: var(--shadow-soft);
-}
-
-.enterprise-cta h2 { color: var(--color-white); }
-.enterprise-cta p:not(.eyebrow) { margin: 12px 0 0; color: var(--color-muted); }
 
 /* ---------- Fiche formation (dialog) ---------- */
 .training-dialog {
@@ -2255,7 +2229,6 @@ a:focus-visible {
   .method__steps { grid-template-columns: 1fr; }
   .method-step__copy { min-height: auto; }
   .method-step img { height: 220px; }
-  .enterprise-cta__inner { align-items: flex-start; flex-direction: column; }
   .training-dialog[open] { display: block; }
   .training-dialog > img { height: 230px; min-height: 0; }
   .training-dialog__content { padding: 30px 24px; }
@@ -2274,8 +2247,7 @@ a:focus-visible {
   .hero-benefits li { padding-inline: 10px 8px; font-size: 0.65rem; }
   .landing-hero__visual { min-height: 400px; }
   .catalogue__heading h2,
-  .method__heading h2,
-  .enterprise-cta h2 { font-size: 2rem; }
+  .method__heading h2 { font-size: 2rem; }
   .training-card { flex-basis: min(80vw, 280px); }
   .reassurance strong { font-size: 0.78rem; }
   .selected-training-summary { grid-template-columns: auto 1fr; }
@@ -2967,10 +2939,350 @@ a:focus-visible {
 .sessions-empty p { margin: 0; font: 700 1.1rem/1.3 'Plus Jakarta Sans', system-ui, sans-serif; }
 .sessions-empty small { color: var(--color-muted); font-size: 0.72rem; }
 
-/* ---------- 10. Entreprises (déjà stylé) — largeur du bouton ---------- */
-.enterprise-cta { padding: 0 0 84px; background: var(--color-background); }
-.enterprise-cta__inner > div { max-width: 640px; }
-.enterprise-cta .button { flex: 0 0 auto; }
+/* ---------- 10. Entreprises : « Vous formez une équipe ? » ----------
+   Une carte en deux temps : le message à gauche, la démarche à droite — trois
+   étapes qui s'allument tour à tour —, et les thématiques du catalogue qui
+   défilent en bas. Le mouvement reste lent et discret : deux lueurs qui
+   dérivent, une entrée échelonnée à l'arrivée (landing.js pose « est-en-vue »),
+   un reflet qui suit le pointeur. Rien de tout cela sous « animations
+   réduites » : la carte s'affiche alors simplement, entière. */
+.enterprise-cta {
+  padding: 0 0 96px;
+  background: var(--color-background);
+}
+
+.enterprise-cta__inner {
+  --x: 70%;
+  --y: 20%;
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
+  gap: clamp(32px, 5vw, 72px);
+  align-items: center;
+  padding: clamp(32px, 5.5vw, 72px);
+  overflow: hidden;
+  isolation: isolate;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 32px;
+  background: linear-gradient(160deg, #0B1420 0%, #070C14 100%);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.35);
+}
+
+/* Le reflet du pointeur : une lumière douce là où passe la souris */
+.enterprise-cta__inner::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: radial-gradient(420px circle at var(--x) var(--y), rgba(203, 253, 0, 0.07), transparent 65%);
+  opacity: 0;
+  transition: opacity 400ms ease;
+  pointer-events: none;
+}
+.enterprise-cta__inner:hover::after { opacity: 1; }
+
+/* Deux lueurs qui dérivent lentement, derrière tout le reste */
+.enterprise-cta__lueurs {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  overflow: hidden;
+  pointer-events: none;
+}
+.enterprise-cta__lueurs span {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(60px);
+  will-change: transform;
+}
+.enterprise-cta__lueurs span:first-child {
+  top: -30%;
+  right: -8%;
+  width: 52%;
+  aspect-ratio: 1;
+  background: radial-gradient(circle, rgba(203, 253, 0, 0.30), transparent 68%);
+  animation: entreprise-lueur 16s ease-in-out infinite alternate;
+}
+.enterprise-cta__lueurs span:last-child {
+  bottom: -45%;
+  left: 18%;
+  width: 46%;
+  aspect-ratio: 1;
+  background: radial-gradient(circle, rgba(56, 120, 255, 0.16), transparent 70%);
+  animation: entreprise-lueur 20s ease-in-out infinite alternate-reverse;
+}
+
+@keyframes entreprise-lueur {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to { transform: translate3d(-12%, 10%, 0) scale(1.15); }
+}
+
+/* ----- Le message ----- */
+.enterprise-cta .eyebrow { margin-bottom: 22px; }
+
+.enterprise-cta h2 {
+  margin: 0;
+  color: var(--color-white);
+  font: 800 clamp(2.1rem, 3.4vw, 3.15rem)/1.04 'Plus Jakarta Sans', system-ui, sans-serif;
+  letter-spacing: -0.04em;
+  text-wrap: balance;
+}
+.enterprise-cta h2 span { color: var(--color-primary); }
+
+.enterprise-cta__texte {
+  max-width: 520px;
+  margin: 20px 0 0;
+  color: var(--color-muted);
+  font-size: 1.05rem;
+  line-height: 1.65;
+}
+
+.enterprise-cta__atouts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 30px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.enterprise-cta__atouts li {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 16px 10px 12px;
+  color: var(--color-white);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 0.86rem;
+  font-weight: 600;
+  transition: border-color 200ms ease, background-color 200ms ease;
+}
+.enterprise-cta__atouts li:hover {
+  border-color: rgba(203, 253, 0, 0.45);
+  background: rgba(203, 253, 0, 0.06);
+}
+.enterprise-cta__atouts .material-symbols-outlined {
+  color: var(--color-primary);
+  font-size: 20px;
+}
+
+/* ----- La démarche ----- */
+.enterprise-cta__parcours {
+  padding: clamp(24px, 3vw, 34px);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 24px;
+  background: rgba(5, 7, 9, 0.55);
+  backdrop-filter: blur(6px);
+}
+
+.enterprise-cta__parcours-titre {
+  margin: 0 0 22px;
+  color: rgba(255, 255, 255, 0.7);
+  font: 700 0.7rem/1 'Inter', system-ui, -apple-system, sans-serif;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.enterprise-cta__etapes {
+  position: relative;
+  display: grid;
+  gap: 22px;
+  margin: 0 0 28px;
+  padding: 0;
+  list-style: none;
+}
+/* Le fil qui relie les étapes, tracé de haut en bas à l'arrivée */
+.enterprise-cta__etapes::before {
+  content: '';
+  position: absolute;
+  top: 20px;
+  bottom: 20px;
+  left: 19px;
+  width: 2px;
+  border-radius: 2px;
+  background: linear-gradient(var(--color-primary), rgba(203, 253, 0, 0.15));
+  transform-origin: top;
+}
+
+.enterprise-cta__etapes li {
+  position: relative;
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.enterprise-cta__numero {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  color: var(--color-white);
+  border: 1px solid rgba(203, 253, 0, 0.4);
+  border-radius: 50%;
+  background: #0B1420;
+  font: 800 0.95rem/1 'Plus Jakarta Sans', system-ui, sans-serif;
+}
+
+.enterprise-cta__etapes strong {
+  display: block;
+  margin-top: 2px;
+  color: var(--color-white);
+  font: 800 1.02rem/1.3 'Plus Jakarta Sans', system-ui, sans-serif;
+}
+.enterprise-cta__etapes li span:not(.enterprise-cta__numero) {
+  display: block;
+  margin-top: 4px;
+  color: var(--color-muted);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+/* Chaque étape s'allume à son tour, en boucle lente : 9 s pour les trois */
+.enterprise-cta.est-en-vue .enterprise-cta__numero {
+  animation: entreprise-etape 9s ease-in-out infinite;
+}
+.enterprise-cta.est-en-vue .enterprise-cta__etapes li:nth-child(2) .enterprise-cta__numero { animation-delay: 3s; }
+.enterprise-cta.est-en-vue .enterprise-cta__etapes li:nth-child(3) .enterprise-cta__numero { animation-delay: 6s; }
+
+@keyframes entreprise-etape {
+  0%, 36%, 100% { color: var(--color-white); background: #0B1420; box-shadow: none; }
+  8%, 28% { color: #050709; background: var(--color-primary); box-shadow: 0 0 0 6px rgba(203, 253, 0, 0.16), 0 0 28px rgba(203, 253, 0, 0.35); }
+}
+
+.enterprise-cta__bouton {
+  position: relative;
+  width: 100%;
+  min-height: 54px;
+  overflow: hidden;
+  font-size: 0.9rem;
+}
+/* Un reflet qui traverse le bouton au survol */
+.enterprise-cta__bouton::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, 0.55) 50%, transparent 70%);
+  transform: translateX(-120%);
+  pointer-events: none;
+}
+.enterprise-cta__bouton:hover::before { transform: translateX(120%); transition: transform 700ms ease; }
+.enterprise-cta__bouton .material-symbols-outlined { transition: transform 200ms ease; }
+.enterprise-cta__bouton:hover .material-symbols-outlined { transform: translateX(4px); }
+
+/* ----- Les thématiques qui défilent ----- */
+.enterprise-cta__defile {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding-top: 26px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.enterprise-cta__defile-titre {
+  flex: none;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.55);
+  font: 700 0.68rem/1 'Inter', system-ui, -apple-system, sans-serif;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+.enterprise-cta__fenetre {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+}
+.enterprise-cta__piste {
+  display: flex;
+  gap: 12px;
+  width: max-content;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  animation: entreprise-defile 38s linear infinite;
+}
+.enterprise-cta__fenetre:hover .enterprise-cta__piste { animation-play-state: paused; }
+.enterprise-cta__piste li {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 16px;
+  color: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 999px;
+  font-size: 0.84rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.enterprise-cta__piste li::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-primary);
+}
+
+/* La liste est écrite deux fois : glisser d'une moitié la ramène à son départ, sans à-coup */
+@keyframes entreprise-defile {
+  from { transform: translateX(0); }
+  to { transform: translateX(calc(-50% - 6px)); }
+}
+
+/* ----- L'entrée : chaque élément arrive à son tour ----- */
+.enterprise-cta.est-pret .enterprise-cta__copy > *,
+.enterprise-cta.est-pret .enterprise-cta__parcours,
+.enterprise-cta.est-pret .enterprise-cta__etapes li,
+.enterprise-cta.est-pret .enterprise-cta__defile {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 700ms ease, transform 700ms cubic-bezier(.22, .75, .25, 1);
+}
+.enterprise-cta.est-pret .enterprise-cta__etapes::before {
+  transform: scaleY(0);
+  transition: transform 1100ms cubic-bezier(.22, .75, .25, 1) 650ms;
+}
+.enterprise-cta.est-en-vue .enterprise-cta__copy > *,
+.enterprise-cta.est-en-vue .enterprise-cta__parcours,
+.enterprise-cta.est-en-vue .enterprise-cta__etapes li,
+.enterprise-cta.est-en-vue .enterprise-cta__defile {
+  opacity: 1;
+  transform: none;
+}
+.enterprise-cta.est-en-vue .enterprise-cta__etapes::before { transform: scaleY(1); }
+
+.enterprise-cta__copy > :nth-child(2) { transition-delay: 90ms; }
+.enterprise-cta__copy > :nth-child(3) { transition-delay: 180ms; }
+.enterprise-cta__copy > :nth-child(4) { transition-delay: 270ms; }
+.enterprise-cta__parcours { transition-delay: 200ms; }
+.enterprise-cta__etapes li:nth-child(1) { transition-delay: 450ms; }
+.enterprise-cta__etapes li:nth-child(2) { transition-delay: 650ms; }
+.enterprise-cta__etapes li:nth-child(3) { transition-delay: 850ms; }
+.enterprise-cta__defile { transition-delay: 500ms; }
+
+@media (max-width: 1023px) {
+  .enterprise-cta__inner { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 640px) {
+  .enterprise-cta { padding-bottom: 72px; }
+  .enterprise-cta__inner { border-radius: 26px; }
+  .enterprise-cta h2 { font-size: 2rem; }
+  .enterprise-cta__defile { flex-direction: column; align-items: stretch; gap: 14px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .enterprise-cta__lueurs span,
+  .enterprise-cta.est-en-vue .enterprise-cta__numero,
+  .enterprise-cta__piste { animation: none; }
+  .enterprise-cta__piste { flex-wrap: wrap; width: auto; }
+  .enterprise-cta__fenetre { -webkit-mask-image: none; mask-image: none; }
+  .enterprise-cta__bouton::before { display: none; }
+}
 
 /* ---------- 11. FAQ ---------- */
 .faq {

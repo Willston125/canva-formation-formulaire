@@ -448,16 +448,54 @@
 
     <!-- ====== 10. OFFRE POUR LES ENTREPRISES ====== -->
     <section class="enterprise-cta" id="entreprises" aria-labelledby="enterprise-title">
-        <div class="landing-shell enterprise-cta__inner reveal-on-scroll">
-            <div>
-                <p class="eyebrow" data-texte="entreprises.surtitre" data-texte-groupe="Section entreprises" data-texte-libelle="Surtitre">VOUS FORMEZ UNE ÉQUIPE ?</p>
-                <h2 id="enterprise-title" data-texte="entreprises.titre" data-texte-groupe="Section entreprises" data-texte-libelle="Titre">Des formations adaptées aux besoins de votre organisation</h2>
-                <p data-texte="entreprises.texte" data-texte-groupe="Section entreprises" data-texte-libelle="Texte">Nous concevons des programmes pratiques pour les entreprises, associations et institutions.</p>
+        <div class="landing-shell">
+            <div class="enterprise-cta__inner" id="entreprise-carte">
+                <div class="enterprise-cta__lueurs" aria-hidden="true"><span></span><span></span></div>
+
+                <div class="enterprise-cta__copy">
+                    <p class="eyebrow" data-texte="entreprises.surtitre" data-texte-groupe="Section entreprises" data-texte-libelle="Surtitre">VOUS FORMEZ UNE ÉQUIPE ?</p>
+                    <h2 id="enterprise-title" data-texte-html="entreprises.titre" data-texte-groupe="Section entreprises" data-texte-libelle="Titre">Des formations adaptées aux besoins <span>de votre organisation</span></h2>
+                    <p class="enterprise-cta__texte" data-texte="entreprises.texte" data-texte-groupe="Section entreprises" data-texte-libelle="Texte">Nous concevons des programmes pratiques pour les entreprises, associations et institutions.</p>
+                    <ul class="enterprise-cta__atouts">
+                        <li><span class="material-symbols-outlined" aria-hidden="true">groups</span><span data-texte="entreprises.atout.1" data-texte-groupe="Section entreprises" data-texte-libelle="Atout 1">Programme sur mesure</span></li>
+                        <li><span class="material-symbols-outlined" aria-hidden="true">location_on</span><span data-texte="entreprises.atout.2" data-texte-groupe="Section entreprises" data-texte-libelle="Atout 2">Dans vos locaux ou en ligne</span></li>
+                        <li><span class="material-symbols-outlined" aria-hidden="true">folder_special</span><span data-texte="entreprises.atout.3" data-texte-groupe="Section entreprises" data-texte-libelle="Atout 3">Livrables concrets</span></li>
+                    </ul>
+                </div>
+
+                <div class="enterprise-cta__parcours">
+                    <p class="enterprise-cta__parcours-titre" data-texte="entreprises.parcours" data-texte-groupe="Section entreprises" data-texte-libelle="Démarche — titre">Comment ça se passe</p>
+                    <ol class="enterprise-cta__etapes">
+                        <li>
+                            <span class="enterprise-cta__numero" aria-hidden="true">1</span>
+                            <div><strong data-texte="entreprises.etape.1.titre" data-texte-groupe="Section entreprises" data-texte-libelle="Étape 1 — titre">Vous décrivez votre besoin</strong>
+                                <span data-texte="entreprises.etape.1.texte" data-texte-groupe="Section entreprises" data-texte-libelle="Étape 1 — texte">Thématique, nombre de participants, objectifs.</span></div>
+                        </li>
+                        <li>
+                            <span class="enterprise-cta__numero" aria-hidden="true">2</span>
+                            <div><strong data-texte="entreprises.etape.2.titre" data-texte-groupe="Section entreprises" data-texte-libelle="Étape 2 — titre">Nous vous proposons un programme</strong>
+                                <span data-texte="entreprises.etape.2.texte" data-texte-groupe="Section entreprises" data-texte-libelle="Étape 2 — texte">Objectifs, durée et format, définis avec vous.</span></div>
+                        </li>
+                        <li>
+                            <span class="enterprise-cta__numero" aria-hidden="true">3</span>
+                            <div><strong data-texte="entreprises.etape.3.titre" data-texte-groupe="Section entreprises" data-texte-libelle="Étape 3 — titre">Votre équipe se forme</strong>
+                                <span data-texte="entreprises.etape.3.texte" data-texte-groupe="Section entreprises" data-texte-libelle="Étape 3 — texte">Sur ses propres supports, dans vos locaux ou en ligne.</span></div>
+                        </li>
+                    </ol>
+                    <a class="button button--primary enterprise-cta__bouton" href="/entreprises/#entreprise-form">
+                        <span data-texte="entreprises.bouton" data-texte-groupe="Section entreprises" data-texte-libelle="Bouton">Demander une formation sur mesure</span>
+                        <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+                    </a>
+                </div>
+
+                <!-- Les thématiques, tirées du catalogue (landing.js) : elles défilent doucement -->
+                <div class="enterprise-cta__defile" id="entreprise-thematiques" hidden>
+                    <p class="enterprise-cta__defile-titre" data-texte="entreprises.thematiques" data-texte-groupe="Section entreprises" data-texte-libelle="Thématiques — titre">Thématiques</p>
+                    <div class="enterprise-cta__fenetre">
+                        <ul class="enterprise-cta__piste" id="entreprise-thematiques-piste"></ul>
+                    </div>
+                </div>
             </div>
-            <a class="button button--primary" href="/entreprises/">
-                Demander une formation sur mesure
-                <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
-            </a>
         </div>
     </section>
 

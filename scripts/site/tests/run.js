@@ -33,7 +33,8 @@ const EPREUVES = [
   ['fichiers-publies.test.js', 'Ni documents internes ni photos de travail en ligne'],
   ['noms-uniques.test.js', 'Aucun nom de fonction declare deux fois'],
   ['annonces.test.js', 'La fenetre d annonce : ou, quand, et ce qu elle compte'],
-  ['classes.test.js', 'Les videos de classe se lancent seules, sur place']
+  ['classes.test.js', 'Les videos de classe se lancent seules, sur place'],
+  ['entreprises-accueil.test.js', 'La carte Entreprises de l accueil : animee, jamais cachee']
 ];
 
 /* La liste ci-dessus est écrite à la main : une épreuve ajoutée dans le dossier
