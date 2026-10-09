@@ -2607,34 +2607,102 @@ a:focus-visible {
 .portfolio-card.is-placeholder { border-style: dashed; background: rgba(255, 255, 255, 0.6); }
 
 /* ---------- En classe : vidéos verticales (Shorts) ----------
+   Disposition voulue par le propriétaire (maquette du 9 octobre 2026) : le
+   texte à gauche, les vidéos à droite, la seconde légèrement plus bas. Sur
+   téléphone, le texte d'abord, puis les vidéos qui défilent au doigt.
    L'aperçu est la photo telle quelle — ni voile, ni dégradé posé dessus (règle
-   du site) : la légende vit SOUS la vidéo, pas sur elle. La bande se centre
-   quand les vidéos sont peu nombreuses, et défile au doigt quand elles débordent. */
+   du site) : seules deux petites pastilles s'y posent, la légende vit SOUS la
+   vidéo. */
 .classes {
-  padding: 84px 0 90px;
+  padding: 88px 0 96px;
   color: var(--color-white);
   background: var(--color-background);
 }
 
-.classes__marche {
-  max-width: 640px;
-  margin: -18px auto 28px;
-  color: var(--color-primary-light);
-  font-size: 0.92rem;
-  font-weight: 700;
-  line-height: 1.5;
-  text-align: center;
+.classes__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  align-items: center;
+  gap: 56px;
 }
 
+.classes__surtitre {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 22px;
+  color: rgba(255, 255, 255, 0.78);
+  font: 700 0.72rem/1 'Inter', system-ui, -apple-system, sans-serif;
+  letter-spacing: 0.22em;
+}
+.classes__surtitre::before {
+  content: '';
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--color-primary);
+}
+
+.classes__texte h2 {
+  margin: 0;
+  color: var(--color-white);
+  font: 800 clamp(2.4rem, 4.6vw, 4.1rem)/1 'Plus Jakarta Sans', system-ui, sans-serif;
+  letter-spacing: -0.045em;
+  text-wrap: balance;
+}
+.classes__texte h2 span { display: block; color: var(--color-primary); }
+
+.classes__intro {
+  max-width: 520px;
+  margin: 24px 0 0;
+  color: var(--color-muted);
+  font-size: 1.05rem;
+  line-height: 1.65;
+}
+
+.classes__atouts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 28px;
+  margin: 28px 0 32px;
+  padding: 0;
+  list-style: none;
+}
+.classes__atouts li {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  color: var(--color-white);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+.classes__atouts .material-symbols-outlined {
+  display: grid;
+  width: 46px;
+  height: 46px;
+  place-items: center;
+  color: var(--color-primary);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-surface-secondary);
+  font-size: 24px;
+}
+
+.classes__formations {
+  margin: 18px 0 0;
+  color: var(--color-muted);
+  font-size: 0.88rem;
+}
+
+/* Les vidéos : côte à côte, la seconde décalée — un rythme plutôt qu'une grille */
 .classes__piste {
   display: grid;
   grid-auto-flow: column;
-  grid-auto-columns: 220px;
-  gap: 16px;
-  width: fit-content;
-  max-width: 100%;
-  margin-inline: auto;
-  padding: 4px 4px 14px;
+  grid-auto-columns: minmax(250px, 300px);
+  align-items: start;
+  justify-content: end;
+  gap: 28px;
+  padding: 4px 4px 34px;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
@@ -2643,19 +2711,23 @@ a:focus-visible {
 .classe-video {
   display: flex;
   flex-direction: column;
-  gap: 10px;
   margin: 0;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 24px;
+  background: var(--color-surface-secondary);
   scroll-snap-align: start;
+  transition: border-color 200ms ease;
 }
+.classe-video:nth-child(even) { margin-top: 28px; }
+.classe-video:hover { border-color: var(--color-primary); }
 
 .classe-video__media {
   position: relative;
   display: block;
   aspect-ratio: 9 / 16;
   overflow: hidden;
-  border: 1px solid var(--color-border);
-  border-radius: 20px;
-  background: var(--color-surface-secondary);
+  background: #070b11;
 }
 
 /* Pas de zoom au survol : il écraserait le cadrage réglé dans le tableau de bord */
@@ -2666,12 +2738,50 @@ a:focus-visible {
   object-fit: cover;
 }
 
-.classe-video:hover .classe-video__media { border-color: var(--color-primary); }
+/* Les pastilles laissent passer le doigt : on touche la vidéo, pas elles */
+.classe-video__etiquette,
+.classe-video__promo {
+  position: absolute;
+  z-index: 3;
+  left: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: calc(100% - 28px);
+  padding: 7px 12px;
+  overflow: hidden;
+  color: var(--color-white);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  background: rgba(5, 7, 9, 0.72);
+  pointer-events: none;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.classe-video__etiquette {
+  top: 14px;
+  font: 800 0.68rem/1 'Inter', system-ui, -apple-system, sans-serif;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.classe-video__etiquette::before {
+  content: '';
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-primary);
+}
+.classe-video__promo {
+  bottom: 14px;
+  font: 700 0.78rem/1 'Plus Jakarta Sans', system-ui, sans-serif;
+}
 
 /* Le bouton couvre l'aperçu tant que le lecteur n'est pas là ; ensuite il
    s'efface, et c'est le lecteur YouTube qu'on touche (son, pause, plein écran). */
 .classe-video__demarrer {
   position: absolute;
+  z-index: 2;
   inset: 0;
   display: block;
   width: 100%;
@@ -2680,11 +2790,32 @@ a:focus-visible {
   background: none;
   cursor: pointer;
 }
+.classe-video__demarrer:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -4px;
+}
+
+.classe-video__lecture {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  width: 74px;
+  height: 74px;
+  place-items: center;
+  color: var(--color-background);
+  border-radius: 50%;
+  background: var(--color-primary);
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.35);
+  transform: translate(-50%, -50%);
+}
+.classe-video__lecture .material-symbols-outlined { font-size: 40px; }
 
 /* Posé par-dessus l'aperçu, invisible jusqu'à son chargement : pas d'écran
    noir entre l'image et la vidéo. */
 .classe-video__lecteur {
   position: absolute;
+  z-index: 1;
   inset: 0;
   width: 100%;
   height: 100%;
@@ -2695,45 +2826,61 @@ a:focus-visible {
 .classe-video.is-lue .classe-video__lecteur { opacity: 1; }
 .classe-video.is-lue .classe-video__demarrer { display: none; }
 
-.classe-video__lecture {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  display: grid;
-  width: 58px;
-  height: 58px;
-  place-items: center;
-  color: var(--color-background);
-  border-radius: 50%;
-  background: var(--color-primary);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
-  transform: translate(-50%, -50%);
-}
-
-.classe-video__lecture .material-symbols-outlined { font-size: 34px; }
-
 .classe-video__legende {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 6px;
+  padding: 18px 20px 20px;
   color: var(--color-muted);
-  font-size: 0.8rem;
+  font-size: 0.86rem;
   line-height: 1.45;
 }
-
 .classe-video__legende strong {
   color: var(--color-white);
-  font: 800 0.92rem/1.3 'Plus Jakarta Sans', system-ui, sans-serif;
+  font: 800 1.15rem/1.25 'Plus Jakarta Sans', system-ui, sans-serif;
+  letter-spacing: -0.01em;
 }
 
-.classe-video__demarrer:focus-visible {
+.classe-video__regarder {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  width: fit-content;
+  margin-top: 10px;
+  padding: 4px 0;
+  color: var(--color-white);
+  border: 0;
+  background: none;
+  font: 700 0.92rem/1.2 'Inter', system-ui, -apple-system, sans-serif;
+  cursor: pointer;
+}
+.classe-video__regarder .material-symbols-outlined { font-size: 20px; transition: transform 200ms ease; }
+.classe-video__regarder:hover { color: var(--color-primary); }
+.classe-video__regarder:hover .material-symbols-outlined { transform: translateX(3px); }
+.classe-video__regarder:focus-visible {
   outline: 2px solid var(--color-primary);
-  outline-offset: -4px;
-  border-radius: 20px;
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+@media (max-width: 1023px) {
+  /* minmax(0, …) : sans cela, la bande de vidéos élargit la colonne au-delà de
+     l'écran, et le texte au-dessus déborde avec elle. */
+  .classes__layout { grid-template-columns: minmax(0, 1fr); gap: 40px; }
+  .classes__piste { justify-content: start; }
 }
 
 @media (max-width: 640px) {
-  .classes__piste { grid-auto-columns: 62vw; }
+  .classes { padding: 64px 0 72px; }
+  .classes__piste { grid-auto-columns: 74vw; gap: 16px; }
+  /* Au doigt, les cartes défilent côte à côte : le décalage n'y aurait aucun sens */
+  .classe-video:nth-child(even) { margin-top: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .classe-video,
+  .classe-video__lecteur,
+  .classe-video__regarder .material-symbols-outlined { transition: none; }
 }
 
 /* ---------- 9. Sessions ---------- */

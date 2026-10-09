@@ -405,13 +405,22 @@
          Les réalisations de catégorie « En classe » (tableau de bord), avec un
          lien YouTube. Section masquée tant qu'aucune n'est saisie. -->
     <section class="classes" id="en-classe" aria-labelledby="classes-title" hidden>
-        <div class="landing-shell">
-            <div class="section-heading section-heading--light">
-                <p class="eyebrow" data-texte="classes.surtitre" data-texte-groupe="Section en classe" data-texte-libelle="Surtitre">EN CLASSE</p>
-                <h2 id="classes-title" data-texte="classes.titre" data-texte-groupe="Section en classe" data-texte-libelle="Titre">Nos élèves, en pleine pratique</h2>
-                <p data-texte="classes.texte" data-texte-groupe="Section en classe" data-texte-libelle="Texte">Des extraits filmés pendant nos promotions précédentes, avec Ali William.</p>
+        <div class="landing-shell classes__layout">
+            <div class="classes__texte">
+                <p class="classes__surtitre" data-texte="classes.surtitre" data-texte-groupe="Section en classe" data-texte-libelle="Surtitre">L’APPRENTISSAGE EN ACTION</p>
+                <h2 id="classes-title" data-texte-html="classes.titre" data-texte-groupe="Section en classe" data-texte-libelle="Titre">Nos élèves, en pleine <span>pratique.</span></h2>
+                <p class="classes__intro" data-texte="classes.texte" data-texte-groupe="Section en classe" data-texte-libelle="Texte">Des extraits de nos promotions précédentes. Découvrez l’ambiance des cours et les démonstrations avec Ali William.</p>
+                <ul class="classes__atouts">
+                    <!-- Le mode du PAYS du visiteur : en présentiel ici, en ligne ailleurs (landing.js) -->
+                    <li id="classes-mode" hidden><span class="material-symbols-outlined" aria-hidden="true">groups</span><span id="classes-mode-texte"></span></li>
+                    <li><span class="material-symbols-outlined" aria-hidden="true">person</span><span data-texte="classes.formateur" data-texte-groupe="Section en classe" data-texte-libelle="Atout — formateur">Avec Ali William</span></li>
+                </ul>
+                <a class="button button--primary" href="#formations">
+                    Découvrir les formations
+                    <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+                </a>
+                <p class="classes__formations" data-texte="classes.formations" data-texte-groupe="Section en classe" data-texte-libelle="Formations des extraits">Canva Pro · Identité visuelle · Marketing digital</p>
             </div>
-            <p class="classes__marche" id="classes-marche" hidden></p>
             <div class="classes__piste" id="classes-piste"></div>
         </div>
     </section>

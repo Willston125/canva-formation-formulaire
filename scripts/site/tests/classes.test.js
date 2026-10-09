@@ -75,7 +75,38 @@ verifier('rien ne part seul sans autorisation', /if \(!lectureAutomatiquePermise
 verifier('la bande n’est reconstruite que si son contenu change',
   /if \(signature === signatureClasses && piste\.children\.length\) return;/.test(rendu), true);
 verifier('et chaque vidéo a un vrai bouton de lecture, nommé',
-  /class="classe-video__demarrer" aria-label="\$\{escapeHtml\('Lire la vidéo : ' \+ item\.title\)\}"/.test(rendu), true);
+  /class="classe-video__demarrer" aria-label="\$\{escapeHtml\('Lire la vidéo : ' \+ titre\)\}"/.test(rendu), true);
+verifier('« Regarder l’extrait » la lit sur place, avec le son',
+  /'\.classe-video__demarrer, \.classe-video__regarder'/.test(rendu) && /regarderAvecLeSon\(/.test(rendu), true);
+
+// --- 5. La maquette du 9 octobre 2026 : étiquette, badge, atout du pays -------------
+
+/* On EXÉCUTE les deux règles de lecture des données : une règle lue dans le
+   texte du source passerait devant une implémentation fausse. */
+const vm = require('vm');
+const bac = {};
+vm.createContext(bac);
+vm.runInContext([
+  landing.match(/const estEnClasse = [^\n]+/)[0],
+  corpsDe(landing, 'function etiquetteDeClasse('),
+  corpsDe(landing, 'function decouperTitreDeClasse('),
+  'globalThis.r = { estEnClasse, etiquetteDeClasse, decouperTitreDeClasse };'
+].join('\n'), bac);
+verifier('« En classe » et « En classe · Sur Canva » vont tous deux dans la section',
+  ['En classe', 'En classe · Sur Canva', 'en classe', 'Vidéo', 'Classe'].map(c => bac.r.estEnClasse({ category: c })),
+  [true, true, true, false, false]);
+verifier('l’étiquette vient de la catégorie',
+  ['En classe', 'En classe · Sur Canva'].map(bac.r.etiquetteDeClasse), ['En classe', 'Sur Canva']);
+verifier('le badge et le titre viennent du titre',
+  [bac.r.decouperTitreDeClasse('Promotion 2026 · Le cours, en pratique'), bac.r.decouperTitreDeClasse('Le cours')],
+  [{ promo: 'Promotion 2026', titre: 'Le cours, en pratique' }, { promo: '', titre: 'Le cours' }]);
+verifier('l’atout « Cours en… » est celui du pays du visiteur, et rien hors marché',
+  /if \(mode === 'Présentiel'\) return 'Cours en présentiel';/.test(landing)
+  && /if \(mode === 'En ligne'\) return 'Cours en ligne, en direct';/.test(landing)
+  && /mode\.hidden = !texte;/.test(rendu), true);
+verifier('les pastilles ne recouvrent pas la vidéo d’un voile',
+  /<span class="classe-video__etiquette">/.test(rendu) && !/gradient/.test(
+    (fs.readFileSync(path.join(RACINE, 'style.css'), 'utf8').match(/\.classe-video__(etiquette|promo|media)[^{]*\{[^}]*\}/g) || []).join('')), true);
 verifier('le lecteur a un titre pour les lecteurs d’écran', /iframe\.title = /.test(lancer), true);
 
 console.log(resultats.join('\n'));

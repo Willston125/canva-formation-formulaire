@@ -789,11 +789,14 @@
 
   var CHAMPS_REALISATION = [
     { section: 'La réalisation' },
-    { cle: 'title', libelle: 'Titre', type: 'text', requis: true, large: true },
+    { cle: 'title', libelle: 'Titre', type: 'text', requis: true, large: true,
+      aide: 'Pour une vidéo « En classe » : « Promotion 2026 · Le cours, en pratique » — ce qui précède « · » '
+        + 'devient le badge posé en bas de la vidéo, la suite le titre sous la vidéo.' },
     { cle: 'category', libelle: 'Catégorie', type: 'text',
       aide: 'Affichée au-dessus du titre. Ex. Affiche, Vidéo, Identité visuelle. « En classe » + une vidéo '
         + 'YouTube (un Short vertical) : la vidéo quitte cette grille et s’affiche dans la section « En classe » '
-        + 'de l’accueil, au format vertical. Titre conseillé : la formation et l’année, ex. « Promotion Canva Pro · 2025 ».' },
+        + 'de l’accueil, au format vertical, avec l’étiquette « En classe ». « En classe · Sur Canva » change '
+        + 'l’étiquette en « Sur Canva ».' },
     { cle: 'href', libelle: 'Lien (facultatif)', type: 'url', aide: 'Vers le projet publié, si vous en avez un. Ignoré si une vidéo est renseignée.' },
     { cle: 'video', libelle: 'Vidéo YouTube (facultatif)', type: 'url', large: true,
       aide: 'Collez le lien de la vidéo : youtube.com/watch?v=…, youtu.be/… ou youtube.com/shorts/… La carte affiche alors '

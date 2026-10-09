@@ -668,15 +668,33 @@
     /* « En classe » : les vidéos verticales des promotions précédentes. Ce sont
        des réalisations de catégorie « En classe » (onglet Réalisations du tableau
        de bord) : elles quittent la grille des réalisations — travaux du
-       formateur — pour former leur propre bande, au format des Shorts. */
-    const estEnClasse = item => /^\s*en\s+classe\s*$/i.test(String((item && item.category) || ''));
+       formateur — pour former leur propre bande, au format des Shorts.
 
-    /** Ce que le visiteur doit savoir de SES séances, selon le mode de son pays. */
-    function texteClassesDuMarche() {
+       Tout se règle depuis la réalisation, sans champ de plus :
+       - Catégorie « En classe » → étiquette « En classe » sur la vidéo ;
+         « En classe · Sur Canva » → étiquette « Sur Canva » ;
+       - Titre « Promotion 2026 · Le cours, en pratique » → badge
+         « Promotion 2026 » sur la vidéo, titre « Le cours, en pratique » ;
+       - Description → la ligne sous le titre. */
+    const estEnClasse = item => /^\s*en\s+classe\s*(?:$|[·•|—-])/i.test(String((item && item.category) || ''));
+
+    function etiquetteDeClasse(categorie) {
+        const m = /^\s*en\s+classe\s*[·•|—-]\s*(.+)$/i.exec(String(categorie || ''));
+        return m ? m[1].trim() : 'En classe';
+    }
+
+    function decouperTitreDeClasse(titre) {
+        const t = String(titre || '').trim();
+        const i = t.indexOf(' · ');
+        return i > 0 ? { promo: t.slice(0, i).trim(), titre: t.slice(i + 3).trim() } : { promo: '', titre: t };
+    }
+
+    /** Comment se tiennent les séances DANS LE PAYS du visiteur — rien hors marché. */
+    function modeClassesDuMarche() {
         const marche = common.marcheActif ? common.marcheActif() : null;
         const mode = marche && marche.mode;
-        if (mode === 'Présentiel') return 'Vos séances se déroulent en présentiel, avec le même formateur.';
-        if (mode === 'En ligne') return 'Vos séances se suivent en ligne, en direct, avec le même formateur et les mêmes exercices.';
+        if (mode === 'Présentiel') return 'Cours en présentiel';
+        if (mode === 'En ligne') return 'Cours en ligne, en direct';
         return '';
     }
 
@@ -756,18 +774,31 @@
         iframe.referrerPolicy = 'strict-origin-when-cross-origin';
         iframe.setAttribute('allowfullscreen', '');
 
-        lecteur = { iframe, pret: false, etat: null, visible, arreteParNous: false };
+        lecteur = { iframe, pret: false, etat: null, visible, arreteParNous: false, sonDemande: false };
         lecteurs.set(carte, lecteur);
         iframe.addEventListener('load', () => {
             lecteur.pret = true;
             carte.classList.add('is-lue');
             // Le lecteur dira désormais quand il joue, et quand on l'a mis en pause
             iframe.contentWindow.postMessage(JSON.stringify({ event: 'listening', id: id, channel: 'widget' }), ORIGINE_YOUTUBE);
+            // « Regarder l'extrait » touché pendant le chargement : le son, dès qu'il est prêt
+            if (lecteur.sonDemande) { commandeYoutube(lecteur, 'unMute'); commandeYoutube(lecteur, 'playVideo'); return; }
             // Quittée pendant le chargement : elle ne doit pas jouer hors de la vue
             if (!lecteur.visible || document.hidden) { commandeYoutube(lecteur, 'pauseVideo'); lecteur.arreteParNous = true; }
         });
         carte.querySelector('.classe-video__media').appendChild(iframe);
         return lecteur;
+    }
+
+    /* « Regarder l'extrait » : la vidéo, avec le son, sur place. Partie seule
+       et muette, elle reprend le son ; pas encore chargée, elle part avec. */
+    function regarderAvecLeSon(carte) {
+        const lecteur = lecteurs.get(carte);
+        if (!lecteur) { lancerSurPlace(carte, { muet: false, visible: true }); return; }
+        lecteur.arreteParNous = false;
+        if (!lecteur.pret) { lecteur.sonDemande = true; return; }
+        commandeYoutube(lecteur, 'unMute');
+        commandeYoutube(lecteur, 'playVideo');
     }
 
     /* Arrêter ce qui joue — on la quitte, ou la page passe en arrière-plan —
@@ -844,17 +875,19 @@
         const videos = PORTFOLIO.filter(item => estEnClasse(item) && identifiantYoutube(item.video));
         section.hidden = !videos.length;
 
-        const marche = document.getElementById('classes-marche');
-        if (marche) {
-            const texte = texteClassesDuMarche();
-            marche.textContent = texte;
-            marche.hidden = !texte;
+        // L'atout « Cours en présentiel » ou « en ligne » : celui du pays du visiteur, ou aucun
+        const mode = document.getElementById('classes-mode');
+        const modeTexte = document.getElementById('classes-mode-texte');
+        if (mode && modeTexte) {
+            const texte = modeClassesDuMarche();
+            modeTexte.textContent = texte;
+            mode.hidden = !texte;
         }
 
         /* La bande n'est reconstruite que si ce qu'elle montre a changé : le
            catalogue et le pays reviennent à chaque chargement, et tout
            redessiner couperait la vidéo en cours de lecture. */
-        const signature = videos.map(item => [item.video, item.title, item.description, item.image].join('|')).join('§');
+        const signature = videos.map(item => [item.video, item.category, item.title, item.description, item.image].join('|')).join('§');
         if (signature === signatureClasses && piste.children.length) return;
         signatureClasses = signature;
         lecteurs.clear();
@@ -870,21 +903,29 @@
            sort flou. « oardefault » est l'image du Short dans SON format
            (576 × 1024). S'il manque, on revient au 4/3 — YouTube rend alors
            une erreur, ou une vignette grise de 120 px qu'il faut reconnaître.
-           L'aperçu reste sous le lecteur : il couvre le temps du chargement. */
+           L'aperçu reste sous le lecteur : il couvre le temps du chargement.
+           L'étiquette et le badge sont de petites pastilles posées sur la
+           vidéo — ni voile ni dégradé : l'image reste telle quelle. */
         piste.innerHTML = videos.map(item => {
             const id = identifiantYoutube(item.video);
             const apercu = item.image || `https://i.ytimg.com/vi/${id}/oardefault.jpg`;
             const secours = item.image ? '' : `https://i.ytimg.com/vi/${id}/hqdefault.jpg`;
-            return `<figure class="classe-video" data-video="${escapeHtml(id)}" data-titre="${escapeHtml(item.title)}">
+            const { promo, titre } = decouperTitreDeClasse(item.title);
+            return `<figure class="classe-video" data-video="${escapeHtml(id)}" data-titre="${escapeHtml(titre)}">
                 <div class="classe-video__media">
                     <img src="${escapeHtml(apercu)}" alt="" loading="lazy" decoding="async"${secours
                         ? ` data-secours="${escapeHtml(secours)}"` : ''}>
-                    <button type="button" class="classe-video__demarrer" aria-label="${escapeHtml('Lire la vidéo : ' + item.title)}">
+                    <span class="classe-video__etiquette">${escapeHtml(etiquetteDeClasse(item.category))}</span>
+                    ${promo ? `<span class="classe-video__promo">${escapeHtml(promo)}</span>` : ''}
+                    <button type="button" class="classe-video__demarrer" aria-label="${escapeHtml('Lire la vidéo : ' + titre)}">
                         <span class="classe-video__lecture" aria-hidden="true"><span class="material-symbols-outlined">play_arrow</span></span>
                     </button>
                 </div>
-                <figcaption class="classe-video__legende"><strong>${escapeHtml(item.title)}</strong>${item.description
-                    ? `<span>${escapeHtml(item.description)}</span>` : ''}</figcaption>
+                <figcaption class="classe-video__legende">
+                    <strong>${escapeHtml(titre)}</strong>${item.description ? `<span>${escapeHtml(item.description)}</span>` : ''}
+                    <button type="button" class="classe-video__regarder" aria-label="${escapeHtml('Regarder l’extrait avec le son : ' + titre)}">Regarder l’extrait
+                        <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></button>
+                </figcaption>
             </figure>`;
         }).join('');
 
@@ -900,11 +941,9 @@
             img.addEventListener('load', () => { if (img.naturalWidth <= 120) repli(); });
         });
 
-        // Touchée avant de partir seule : elle se lit sur place, avec le son
-        piste.querySelectorAll('.classe-video__demarrer').forEach(bouton => {
-            bouton.addEventListener('click', () => {
-                lancerSurPlace(bouton.closest('.classe-video'), { muet: false, visible: true });
-            });
+        // Touchée avant de partir seule, ou « Regarder l'extrait » : sur place, avec le son
+        piste.querySelectorAll('.classe-video__demarrer, .classe-video__regarder').forEach(bouton => {
+            bouton.addEventListener('click', () => regarderAvecLeSon(bouton.closest('.classe-video')));
         });
 
         observerClasses(piste);
