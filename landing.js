@@ -715,19 +715,38 @@
         /* Rien ne part chez YouTube avant le toucher : l'aperçu est une simple
            image, le lecteur ne se charge qu'à la demande. Sur une connexion
            mobile chère, une page qui lirait seule ses vidéos coûterait cher. */
+        /* L'aperçu de YouTube « hqdefault » est un 4/3 où le Short n'occupe
+           qu'une bande centrale de 202 × 360 px : recadré au format vertical, il
+           sort flou. « oardefault » est l'image du Short dans SON format
+           (576 × 1024). S'il manque, on revient au 4/3 — YouTube rend alors
+           une erreur, ou une vignette grise de 120 px qu'il faut reconnaître. */
         piste.innerHTML = videos.map(([item, i]) => {
             const id = identifiantYoutube(item.video);
-            const apercu = item.image || `https://i.ytimg.com/vi/${id}/hqdefault.jpg`;
+            const apercu = item.image || `https://i.ytimg.com/vi/${id}/oardefault.jpg`;
+            const secours = item.image ? '' : `https://i.ytimg.com/vi/${id}/hqdefault.jpg`;
             return `<button type="button" class="classe-video" data-realisation="${i}"
                 aria-label="${escapeHtml('Lire la vidéo : ' + item.title)}">
                 <span class="classe-video__media">
-                    <img src="${escapeHtml(apercu)}" alt="" loading="lazy" decoding="async">
+                    <img src="${escapeHtml(apercu)}" alt="" loading="lazy" decoding="async"${secours
+                        ? ` data-secours="${escapeHtml(secours)}"` : ''}>
                     <span class="classe-video__lecture" aria-hidden="true"><span class="material-symbols-outlined">play_arrow</span></span>
                 </span>
                 <span class="classe-video__legende"><strong>${escapeHtml(item.title)}</strong>${item.description
                     ? `<span>${escapeHtml(item.description)}</span>` : ''}</span>
             </button>`;
         }).join('');
+
+        piste.querySelectorAll('img[data-secours]').forEach(img => {
+            const repli = () => {
+                const adresse = img.dataset.secours;
+                if (!adresse) return;
+                img.removeAttribute('data-secours');
+                img.src = adresse;
+            };
+            img.addEventListener('error', repli);
+            // Posées dans la même tâche que l'image : son chargement ne peut pas les avoir précédées
+            img.addEventListener('load', () => { if (img.naturalWidth <= 120) repli(); });
+        });
 
         piste.querySelectorAll('[data-realisation]').forEach(carte => {
             carte.addEventListener('click', () => ouvrirRealisation(PORTFOLIO[Number(carte.dataset.realisation)]));
