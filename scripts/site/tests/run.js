@@ -34,7 +34,8 @@ const EPREUVES = [
   ['noms-uniques.test.js', 'Aucun nom de fonction declare deux fois'],
   ['annonces.test.js', 'La fenetre d annonce : ou, quand, et ce qu elle compte'],
   ['classes.test.js', 'Les videos de classe se lancent seules, sur place'],
-  ['entreprises-accueil.test.js', 'La carte Entreprises de l accueil : animee, jamais cachee']
+  ['entreprises-accueil.test.js', 'La carte Entreprises de l accueil : animee, jamais cachee'],
+  ['faq-accueil.test.js', 'La FAQ de l accueil : reponses justes, accordeon qui ne cache rien']
 ];
 
 /* La liste ci-dessus est écrite à la main : une épreuve ajoutée dans le dossier

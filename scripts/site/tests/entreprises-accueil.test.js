@@ -38,7 +38,9 @@ verifier('la section est retrouvée', section.length > 500, true);
 
 // --- 1. Rien ne reste caché ---------------------------------------------------
 
-const init = corpsDe(landing, 'function initEntreprise(');
+// L'entrée est partagée avec la FAQ : c'est la fonction commune qu'on éprouve
+const init = corpsDe(landing, 'function entreeEchelonnee(');
+verifier('la carte passe par l’entrée commune', /entreeEchelonnee\(section, carte,/.test(corpsDe(landing, 'function initEntreprise(')), true);
 verifier('l’état « caché avant l’entrée » n’est posé que si l’animation peut jouer',
   /if \(!calme && 'IntersectionObserver' in window\) \{\s*section\.classList\.add\('est-pret'\);/.test(init), true);
 verifier('sinon la carte s’affiche d’emblée', /\} else \{\s*section\.classList\.add\('est-en-vue'\);/.test(init), true);

@@ -1088,6 +1088,32 @@
        Appelable après coup : le programme et les questions fréquentes sont
        réécrits quand le catalogue modifié depuis le tableau de bord arrive, et
        les nouveaux dépliants seraient sinon inertes. */
+    /* Ouvrir et fermer en douceur : la hauteur glisse au lieu de sauter.
+       L'état reste porté par `hidden` (et par la classe « hidden » des fiches) :
+       sans animation possible — « animations réduites », navigateur ancien —,
+       on bascule simplement, comme avant. Un second clic pendant le mouvement
+       l'annule et repart dans l'autre sens, au lieu de finir à contretemps. */
+    function basculerCorps(body, ouvrir) {
+        const poser = visible => { body.classList.toggle('hidden', !visible); body.hidden = !visible; };
+        if (body._mouvement) { body._mouvement.cancel(); body._mouvement = null; body.style.overflow = ''; }
+        const calme = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (calme || typeof body.animate !== 'function') { poser(ouvrir); return; }
+
+        if (ouvrir) poser(true);
+        const style = window.getComputedStyle(body);
+        const plein = { height: `${body.scrollHeight}px`, paddingTop: style.paddingTop, paddingBottom: style.paddingBottom, opacity: 1 };
+        const ferme = { height: '0px', paddingTop: '0px', paddingBottom: '0px', opacity: 0 };
+        body.style.overflow = 'hidden';
+        const mouvement = body.animate(ouvrir ? [ferme, plein] : [plein, ferme],
+            { duration: ouvrir ? 320 : 240, easing: 'cubic-bezier(.22, .75, .25, 1)' });
+        body._mouvement = mouvement;
+        mouvement.onfinish = () => {
+            body._mouvement = null;
+            body.style.overflow = '';
+            if (!ouvrir) poser(false);
+        };
+    }
+
     function initAccordions(root) {
         (root || document).querySelectorAll('.programme-accordion .accordion-header, .faq-item .faq-question').forEach(header => {
             if (header.dataset.accordeon === 'cable') return;
@@ -1098,10 +1124,7 @@
                 const isOpen = header.getAttribute('aria-expanded') === 'true';
                 header.setAttribute('aria-expanded', String(!isOpen));
                 item.classList.toggle('accordion-open', !isOpen);
-                if (body) {
-                    body.classList.toggle('hidden', isOpen);
-                    body.hidden = isOpen;
-                }
+                if (body) basculerCorps(body, !isOpen);
             });
         });
     }

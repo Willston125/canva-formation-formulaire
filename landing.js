@@ -954,23 +954,34 @@
        réduites », ou sans observateur, la carte s'affiche d'emblée, entière :
        la classe « est-pret », qui cache les éléments avant leur entrée, n'est
        alors jamais posée. */
-    function initEntreprise() {
-        const section = document.getElementById('entreprises');
-        const carte = document.getElementById('entreprise-carte');
-        if (!section || !carte) return;
-        const calme = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
+    /**
+     * Une entrée échelonnée, quand `cible` arrive à l'écran : la section reçoit
+     * « est-en-vue », et la feuille de style fait arriver ses éléments l'un
+     * après l'autre. « est-pret », qui les cache avant leur entrée, n'est posé
+     * que si l'animation peut jouer : sinon la section s'affiche d'emblée.
+     * @returns {boolean} vrai si le visiteur a demandé moins d'animations
+     */
+    function entreeEchelonnee(section, cible, seuil) {
+        const calme = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
         if (!calme && 'IntersectionObserver' in window) {
             section.classList.add('est-pret');
             const observateur = new IntersectionObserver(entrees => {
                 if (!entrees.some(e => e.isIntersecting)) return;
                 section.classList.add('est-en-vue');
                 observateur.disconnect();
-            }, { threshold: 0.25 });
-            observateur.observe(carte);
+            }, { threshold: seuil });
+            observateur.observe(cible);
         } else {
             section.classList.add('est-en-vue');
         }
+        return calme;
+    }
+
+    function initEntreprise() {
+        const section = document.getElementById('entreprises');
+        const carte = document.getElementById('entreprise-carte');
+        if (!section || !carte) return;
+        const calme = entreeEchelonnee(section, carte, 0.25);
 
         if (calme || !(window.matchMedia && window.matchMedia('(hover: hover)').matches)) return;
         let image = 0;
@@ -983,6 +994,26 @@
                 carte.style.setProperty('--y', `${Math.round(event.clientY - b.top)}px`);
             });
         });
+    }
+
+    function initFaq() {
+        const section = document.getElementById('faq');
+        const grille = section && section.querySelector('.faq__layout');
+        if (grille) entreeEchelonnee(section, grille, 0.12);
+    }
+
+    /* FAQ, « présentiel ou en ligne ? » : la réponse générale vaut pour tous ;
+       cette ligne dit ce qu'il en est DANS LE PAYS du visiteur. Rien hors
+       marché : le site n'y promet encore aucune session. */
+    function renderFaqPays() {
+        const el = document.getElementById('faq-mode-pays');
+        if (!el) return;
+        const marche = common.marcheActif ? common.marcheActif() : null;
+        const mode = marche && marche.code ? marche.mode : null;
+        const texte = mode === 'Présentiel' ? 'Dans votre pays : en présentiel, avec le formateur.'
+            : mode === 'En ligne' ? 'Dans votre pays : en ligne, en direct avec le formateur.' : '';
+        el.textContent = texte;
+        el.hidden = !texte;
     }
 
     /* Les thématiques qui défilent : celles du catalogue, jamais une liste
@@ -1124,6 +1155,7 @@
             renderPortfolio();
             renderClasses();
             renderThematiquesEntreprise();
+            renderFaqPays();
             renderModeMarche();
             if (contenuDuCarrousel() !== avant) initTrainingCarousel();
             common.observeReveals?.();
@@ -1137,6 +1169,7 @@
             renderCatalogueGrid();
             renderSessions();
             renderClasses();
+            renderFaqPays();
             renderModeMarche();
             if (contenuDuCarrousel() !== avant) initTrainingCarousel();
             common.observeReveals?.();
@@ -1148,6 +1181,8 @@
         renderClasses();
         renderThematiquesEntreprise();
         initEntreprise();
+        renderFaqPays();
+        initFaq();
         renderModeMarche();
         // Le contenu créé ci-dessus n'existait pas au premier passage de l'observateur
         common.observeReveals?.();
