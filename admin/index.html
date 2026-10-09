@@ -71,6 +71,8 @@
                 <button class="onglet" type="button" data-vue="inscriptions">
                     <span class="material-symbols-outlined" aria-hidden="true">group</span>Inscriptions
                     <span class="pastille" id="compte-inscriptions"></span></button>
+                <button class="onglet" type="button" data-vue="audience">
+                    <span class="material-symbols-outlined" aria-hidden="true">trending_up</span>Audience</button>
                 <button class="onglet" type="button" data-vue="pays">
                     <span class="material-symbols-outlined" aria-hidden="true">public</span>Pays
                     <span class="pastille" id="compte-pays"></span></button>
@@ -133,6 +135,11 @@
             <section class="vue" id="vue-inscriptions">
                 <div class="filtres" id="filtres-inscriptions"></div>
                 <div id="liste-inscriptions"></div>
+            </section>
+
+            <!-- Audience : l'entonnoir d'inscription, compté par le site -->
+            <section class="vue" id="vue-audience">
+                <div id="audience"></div>
             </section>
 
             <!-- Pays : devise, indicatif, format des numéros et moyens de paiement -->

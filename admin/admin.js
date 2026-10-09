@@ -22,6 +22,8 @@
     inscriptions: [],
     vue: 'apercu',
     filtreInscriptions: '',
+    /** Onglet Audience : période et pays choisis, et les compteurs reçus pour cette période. */
+    audience: { jours: 30, pays: '', donnees: null, erreur: '', enCours: false },
     /** Visuels remplacés, mis à la corbeille seulement après enregistrement. */
     imagesARetirer: [],
     /* Envois d'image en cours. Enregistrer pendant un envoi faisait partir la
@@ -472,6 +474,7 @@
       formations: ['Formations', 'Le catalogue publié sur le site'],
       sessions: ['Sessions', 'Les dates ouvertes à l’inscription'],
       inscriptions: ['Inscriptions', 'Les candidats et leur suivi'],
+      audience: ['Audience', 'Le parcours des visiteurs, de la fiche à l’inscription'],
       pays: ['Pays', 'Devise, indicatif et moyens de paiement de chaque marché'],
       portfolio: ['Réalisations', 'Les travaux mis en avant sur l’accueil'],
       visuels: ['Visuels du site', 'Les images de l’accueil et des fiches'],
@@ -494,7 +497,9 @@
     $('#compte-pays').textContent = (etat.catalogue.pays || []).length || '';
     $('#compte-portfolio').textContent = (etat.catalogue.portfolio || []).length || '';
 
-    var actions = { apercu: '', formations: '', sessions: '', inscriptions: '', pays: '', portfolio: '', visuels: '', textes: '', reglages: '' };
+    var actions = { apercu: '', formations: '', sessions: '', inscriptions: '', audience: '', pays: '', portfolio: '', visuels: '', textes: '', reglages: '' };
+    actions.audience = '<button class="bouton bouton--discret" type="button" id="btn-audience-actualiser">'
+      + '<span class="material-symbols-outlined" aria-hidden="true">refresh</span>Actualiser</button>';
     actions.formations = '<button class="bouton bouton--primaire" type="button" id="btn-nouvelle-formation">'
       + '<span class="material-symbols-outlined" aria-hidden="true">add</span>Nouvelle formation</button>';
     actions.sessions = '<button class="bouton bouton--primaire" type="button" id="btn-nouvelle-session">'
@@ -516,6 +521,7 @@
     if ((b = $('#btn-nouveau-pays'))) b.addEventListener('click', function () { ouvrirPays(null); });
     if ((b = $('#btn-nouvelle-realisation'))) b.addEventListener('click', function () { ouvrirRealisation(null); });
     if ((b = $('#btn-export'))) b.addEventListener('click', exporterCsv);
+    if ((b = $('#btn-audience-actualiser'))) b.addEventListener('click', function () { chargerAudience(); });
     if ((b = $('#btn-rafraichir'))) b.addEventListener('click', function () {
       afficherMessage('#succes-globale', 'Actualisation…', 1200);
       rafraichirTout();
@@ -525,6 +531,7 @@
     if (etat.vue === 'formations') rendreFormations();
     if (etat.vue === 'sessions') rendreSessions();
     if (etat.vue === 'inscriptions') rendreInscriptions();
+    if (etat.vue === 'audience') rendreAudience();
     if (etat.vue === 'pays') rendrePays();
     if (etat.vue === 'portfolio') rendrePortfolio();
     if (etat.vue === 'visuels') rendreVisuels();
@@ -587,6 +594,147 @@
 
   function compterSession(id) {
     return etat.inscriptions.filter(function (i) { return i.sessionId === id; }).length;
+  }
+
+  // ------------------------------- AUDIENCE -------------------------------
+
+  /* L'entonnoir d'inscription, compté par le site (api/_lib/mesures.js) : une
+     étape compte au plus une fois par visiteur et par onglet, sans cookie ni
+     identifiant. Les visiteurs, leur provenance et les pages vues, eux, sont
+     dans Vercel Analytics. */
+  var ETAPES_AUDIENCE = [
+    ['fiche_vue', 'Fiche vue'],
+    ['formulaire_commence', 'Formulaire commencé'],
+    ['etape_2', 'Étape 2 · Objectifs'],
+    ['etape_3', 'Étape 3 · Paiement'],
+    ['etape_4', 'Étape 4 · Validation'],
+    ['inscription_envoyee', 'Inscription envoyée'],
+    ['preuve_whatsapp', 'Preuve sur WhatsApp']
+  ];
+
+  function chargerAudience() {
+    var a = etat.audience;
+    a.enCours = true;
+    a.erreur = '';
+    if (etat.vue === 'audience') rendreAudience();
+    return appeler('admin.audience', { jours: a.jours })
+      .then(function (d) { a.donnees = d; })
+      .catch(function (err) { a.donnees = null; a.erreur = messageLisible(err); })
+      .then(function () { a.enCours = false; if (etat.vue === 'audience') rendreAudience(); });
+  }
+
+  function rendreAudience() {
+    var a = etat.audience;
+    var boite = $('#audience');
+    if (!a.donnees && !a.enCours && !a.erreur) { chargerAudience(); return; }
+
+    var periodes = [[7, '7 jours'], [30, '30 jours'], [90, '3 mois'], [365, '1 an']];
+    var pays = (etat.catalogue.pays || []).filter(function (p) { return p && p.code; });
+    var filtres = '<div class="filtres">'
+      + periodes.map(function (p) {
+        return '<button class="filtre' + (a.jours === p[0] ? ' is-actif' : '') + '" type="button" data-audience-jours="'
+          + p[0] + '">' + p[1] + '</button>';
+      }).join('') + '</div>'
+      + (pays.length > 1 ? '<div class="filtres">'
+        + ['<button class="filtre' + (a.pays ? '' : ' is-actif') + '" type="button" data-audience-pays="">Tous les pays</button>']
+          .concat(pays.map(function (p) {
+            return '<button class="filtre' + (a.pays === p.code ? ' is-actif' : '') + '" type="button" data-audience-pays="'
+              + echapper(p.code) + '">' + echapper(p.nom || p.code) + '</button>';
+          })).join('') + '</div>' : '');
+
+    var corps;
+    if (a.erreur) {
+      corps = '<div class="message message--erreur" role="alert">' + echapper(a.erreur) + '</div>';
+    } else if (!a.donnees) {
+      corps = vide('trending_up', 'Chargement des compteurs…');
+    } else {
+      corps = tableauAudience(a);
+    }
+
+    boite.innerHTML = filtres + corps
+      + '<p class="aide" style="margin-top:16px">Chaque étape compte au plus une fois par visiteur et par onglet. '
+      + 'Rien n’identifie personne : ni cookie, ni adresse, seulement des totaux par jour. Les inscriptions réelles, '
+      + 'avec leur statut, sont dans l’onglet Inscriptions.</p>'
+      + '<p class="aide">Nombre de visiteurs, d’où ils viennent (Facebook, WhatsApp, Google…), pays et pages vues : '
+      + '<a href="https://vercel.com/dashboard" target="_blank" rel="noopener">Vercel Analytics</a>, '
+      + 'onglet « Analytics » du projet.</p>';
+
+    $$('[data-audience-jours]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var n = Number(b.dataset.audienceJours);
+        if (n === a.jours) return;
+        a.jours = n;
+        a.donnees = null;
+        chargerAudience();
+      });
+    });
+    $$('[data-audience-pays]').forEach(function (b) {
+      b.addEventListener('click', function () { a.pays = b.dataset.audiencePays; rendreAudience(); });
+    });
+  }
+
+  function tableauAudience(a) {
+    var lignes = (a.donnees.lignes || []).filter(function (l) { return !a.pays || l.pays === a.pays; });
+    var somme = function (evenement, formation) {
+      return lignes.reduce(function (n, l) {
+        return n + (l.evenement === evenement && (formation === undefined || l.formation === formation) ? Number(l.n) || 0 : 0);
+      }, 0);
+    };
+    var formations = (etat.catalogue.formations || []).filter(function (f) { return f && f.formId; });
+    var vues = somme('fiche_vue');
+    var envoyees = somme('inscription_envoyee');
+
+    var cartes = '<div class="cartes">'
+      + carte(vues, 'Fiches vues', 'accent')
+      + carte(somme('formulaire_commence'), 'Formulaires commencés', '')
+      + carte(envoyees, 'Inscriptions envoyées', '')
+      + carte(vues ? Math.round(envoyees * 1000 / vues) / 10 + ' %' : '—', 'Des fiches vues à l’inscription', '')
+      + carte(somme('contact_whatsapp'), 'Questions sur WhatsApp', '')
+      + '</div>';
+
+    var derniere = a.donnees.derniere
+      ? 'Dernière mesure reçue le ' + echapper(dateHeureFr(a.donnees.derniere)) + '.'
+      : 'Aucune mesure reçue pour l’instant : les compteurs se remplissent dès qu’un visiteur ouvre une fiche.';
+
+    if (!lignes.length) {
+      return cartes + vide('trending_up', 'Rien de mesuré sur cette période. ' + derniere.replace(/<[^>]+>/g, ''));
+    }
+
+    var cellule = function (n, base, avecTaux) {
+      var pct = avecTaux && base > 0 ? '<div class="cellule-sous">' + Math.round(n * 100 / base) + ' %</div>' : '';
+      return '<div style="text-align:right">' + n + pct + '</div>';
+    };
+    var ligneDe = function (titre, formation) {
+      var base = somme('fiche_vue', formation);
+      return '<tr><td><div class="cellule-titre">' + titre + '</div></td>'
+        + ETAPES_AUDIENCE.map(function (e, i) {
+          return '<td>' + cellule(somme(e[0], formation), base, i > 0) + '</td>';
+        }).join('')
+        + '</tr>';
+    };
+
+    /* Le plus gros abandon, sur le total : la marche de l'entonnoir où l'on perd
+       le plus de monde. C'est là qu'une amélioration rapporte le plus. Pas avant
+       20 fiches vues : sur trois visiteurs, « 100 % s'arrêtent » ne dit rien. */
+    var perte = null;
+    for (var i = 1; vues >= 20 && i < ETAPES_AUDIENCE.length - 1; i++) {
+      var avant = somme(ETAPES_AUDIENCE[i - 1][0]), apres = somme(ETAPES_AUDIENCE[i][0]);
+      if (avant > 0 && (!perte || (avant - apres) / avant > perte.taux)) {
+        perte = { taux: (avant - apres) / avant, de: ETAPES_AUDIENCE[i - 1][1], a: ETAPES_AUDIENCE[i][1] };
+      }
+    }
+    var constat = perte && perte.taux > 0
+      ? '<p class="aide">Le plus gros abandon : entre « ' + echapper(perte.de) + ' » et « ' + echapper(perte.a)
+        + ' », ' + Math.round(perte.taux * 100) + ' % des visiteurs s’arrêtent.</p>' : '';
+
+    return cartes + constat
+      + '<div class="tableau-boite"><div class="tableau-defile"><table class="tableau"><thead><tr><th>Formation</th>'
+      + ETAPES_AUDIENCE.map(function (e) { return '<th style="text-align:right">' + echapper(e[1]) + '</th>'; }).join('')
+      + '</tr></thead><tbody>'
+      + formations.map(function (f) { return ligneDe(echapper(f.shortTitle || f.title), f.formId); }).join('')
+      + ligneDe('<strong>Total</strong>')
+      + '</tbody></table></div></div>'
+      + '<p class="aide" style="margin-top:10px">' + derniere + ' Les pourcentages se lisent par rapport aux fiches vues.</p>';
   }
 
   // ----------------------------- RÉALISATIONS -----------------------------

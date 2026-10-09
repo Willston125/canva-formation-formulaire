@@ -19,7 +19,7 @@ Users). Si l'écran refuse la bonne connexion, voyez [DEPANNAGE.md](DEPANNAGE.md
 
 ---
 
-## Les neuf onglets
+## Les dix onglets
 
 ### Vue d'ensemble
 Le nombre de formations publiées, de sessions ouvertes, d'inscriptions reçues et
@@ -51,6 +51,27 @@ données personnelles.
 Toute inscription arrive **« En attente »** et ne prend aucune place. C'est en
 la passant à **« Confirmé »** ou **« Payé »** que vous lui réservez sa place :
 le compteur du site baisse à ce moment-là, pas avant.
+
+### Audience
+Le parcours des visiteurs, de la fiche à l'inscription, formation par formation :
+fiche vue → formulaire commencé → étape 2 → paiement → validation → inscription
+envoyée → preuve envoyée sur WhatsApp, et les questions posées sur WhatsApp. Sur
+7 jours, 30 jours, 3 mois ou un an, pour tous les pays ou un seul.
+
+Ce sont des **compteurs anonymes** : ni cookie, ni adresse, seulement des totaux
+par jour (table `mesures`). Une étape compte au plus une fois par visiteur et par
+onglet. Dès 20 fiches vues, l'écran nomme **la marche où l'on perd le plus de
+monde** : c'est là qu'une amélioration rapporte le plus.
+
+« Dernière mesure reçue » doit dater de la journée. Si elle date de plusieurs
+jours alors que le site a des visiteurs, le comptage est cassé : voir
+[DEPANNAGE.md](DEPANNAGE.md). « Une table manque dans la base » veut dire que
+`supabase/migrations/20261009120000_mesures.sql` n'a pas été collé.
+
+Le nombre de visiteurs, leur provenance (Facebook, WhatsApp, Google…) et les
+pages vues sont dans **Vercel → le projet → Analytics** (gratuit jusqu'à 50 000
+pages vues par mois ; au-delà, la collecte s'arrête jusqu'au mois suivant, sans
+rien facturer).
 
 ### Pays
 Les marchés desservis. Pour chacun : devise, indicatif téléphonique, format des

@@ -22,7 +22,7 @@ const { verifier, bilan } = verificateur();
   const tables = (await q(`select c.relname as nom, c.relrowsecurity as rls
     from pg_class c join pg_namespace n on n.oid = c.relnamespace
     where n.nspname = 'public' and c.relkind = 'r' order by 1`));
-  verifier('les quatorze tables existent (photos comprises)', tables.length, 14);
+  verifier('les quinze tables existent (photos et mesures comprises)', tables.length, 15);
   /* LE CŒUR DE L'AFFAIRE. Une table ajoutée plus tard sans RLS serait lisible
      par tout navigateur muni de la clé publique : ce contrôle la verrait. */
   verifier('la RLS est activée sur chaque table', tables.filter(t => !t.rls).map(t => t.nom), []);

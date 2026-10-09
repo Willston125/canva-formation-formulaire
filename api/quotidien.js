@@ -18,7 +18,7 @@ const { base } = require('./_lib/base');
 const { envoyer: envoyerCourriel } = require('./_lib/courriel');
 
 const TABLES = ['pays', 'moyens_paiement', 'formations', 'formation_tarifs', 'sessions', 'session_pays',
-  'realisations', 'reglages', 'textes', 'visuels', 'inscriptions', 'journal', 'sauvegardes', 'photos'];
+  'realisations', 'reglages', 'textes', 'visuels', 'inscriptions', 'journal', 'sauvegardes', 'photos', 'mesures'];
 
 /* Les photos ne partent pas dans l'e-mail : quelques centaines de Ko chacune,
    chaque jour, la copie dépasserait vite ce qu'un e-mail transporte. La copie

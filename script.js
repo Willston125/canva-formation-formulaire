@@ -207,6 +207,9 @@
         if (!formation) return;
 
         selectedFormation = formation;
+        // Mesure d'audience : les signaux de la page se rattachent à cette formation
+        common?.definirFormationMesuree?.(formation.formId);
+        common?.mesurer?.('fiche_vue');
         const input = document.getElementById('formation');
         if (input) input.value = formation.formId;
 
@@ -883,6 +886,13 @@
         // Submit
         form.addEventListener('submit', handleSubmit);
 
+        /* Mesure d'audience : la première saisie, quelle qu'elle soit (un champ
+           tapé, une carte choisie), marque un formulaire commencé. */
+        const commencer = () => common?.mesurer?.('formulaire_commence');
+        form.addEventListener('input', commencer, { once: true });
+        form.addEventListener('change', commencer, { once: true });
+        document.getElementById('btn-whatsapp')?.addEventListener('click', () => common?.mesurer?.('preuve_whatsapp'));
+
         /* ---- Choix du pays ----
            Premier champ du formulaire, parce qu'il commande tout le reste :
            tarif, devise, format du numéro et moyens de paiement. */
@@ -1039,6 +1049,8 @@
 
             currentStep = step;
             const nextSection = sections[currentStep - 1];
+            // Mesure d'audience : une étape atteinte en avançant (revenir en arrière ne compte pas)
+            if (direction > 0) common?.mesurer?.('etape_' + currentStep);
 
             // Animate in
             nextSection.style.opacity = '0';
@@ -1522,6 +1534,7 @@
             if (hamsterOverlay) hamsterOverlay.classList.add('hidden');
             masquerEchecEnvoi();
             showSuccessScreen();
+            common?.mesurer?.('inscription_envoyee');
             clearSavedData();
         } catch (error) {
             console.error('Erreur soumission:', error);

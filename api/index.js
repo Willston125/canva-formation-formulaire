@@ -2,6 +2,7 @@
  * Google, avec les mêmes réponses :
  *   GET  ?action=catalogue | places | version | config
  *   GET  ?photo=<identifiant> : une photo téléversée depuis le tableau de bord
+ *   POST { mesure, … }     : un signal anonyme de la mesure d'audience (204)
  *   POST (sans « action ») : une inscription du formulaire public
  *   POST avec « action »   : une commande du tableau de bord (session Supabase)
  *
@@ -18,6 +19,7 @@ const { recevoirInscription } = require('./_lib/inscription');
 const { alerteInscription, envoyer: envoyerCourriel } = require('./_lib/courriel');
 const { executer: executerCommande, SUPABASE_URL } = require('./_lib/admin');
 const { lirePhoto } = require('./_lib/photos');
+const { recevoirMesure, TAILLE_MAX_MESURE } = require('./_lib/mesures');
 
 /* Les places changent à chaque confirmation : 15 secondes de cache partagé,
    pas plus (audit P1). Le script Google relisait toute la feuille à chaque
@@ -139,11 +141,23 @@ function creerGestionnaire(obtenirBase, { envoyer = envoyerCourriel, sel = selPa
           const issue = await executerCommande(obtenirBase(), charge, jeton, Object.assign({ envoyer }, admin));
           return repondre(res, issue.statut, issue.corps);
         }
+        const ip = String((req.headers && (req.headers['x-forwarded-for'] || req.headers['x-real-ip'])) || '')
+          .split(',')[0].trim();
+
+        /* Un signal de la mesure d'audience ({ mesure, formation, pays }) : ni
+           une commande, ni une inscription. Le site ne lit pas la réponse — il
+           l'envoie en tâche de fond —, d'où un 204 sans corps, que le signal
+           ait été compté ou écarté. */
+        if (charge && typeof charge === 'object' && Object.prototype.hasOwnProperty.call(charge, 'mesure')) {
+          if (brut.length <= TAILLE_MAX_MESURE) await recevoirMesure(obtenirBase(), charge, { ip, sel: sel() });
+          res.statusCode = 204;
+          res.setHeader('Cache-Control', 'no-store');
+          return res.end();
+        }
+
         // Seul le tableau de bord a droit à un envoi volumineux
         if (brut.length > TAILLE_MAX) return tropGros();
 
-        const ip = String((req.headers && (req.headers['x-forwarded-for'] || req.headers['x-real-ip'])) || '')
-          .split(',')[0].trim();
         const issue = await recevoirInscription(obtenirBase(), charge, { ip, sel: sel() });
         if (issue.ligne && issue.alerter) {
           // Une alerte qui échoue ne doit jamais faire perdre l'inscription : elle est déjà enregistrée

@@ -18,6 +18,7 @@
 const { lireCatalogue } = require('./catalogue');
 const { ECRITURES } = require('./ecritures');
 const { PHOTOS } = require('./photos');
+const { MESURES } = require('./mesures');
 const { noter } = require('./journal');
 
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://isxkyikakrssekrxudjw.supabase.co';
@@ -104,7 +105,7 @@ const COMMANDES = Object.assign({
   'admin.catalogue': async db => ({ ok: true, catalogue: await lireCatalogue(db) }),
   'admin.inscriptions': async (db, d) => ({ ok: true, inscriptions: await lireInscriptions(db, d.formationId) }),
   'admin.inscription.statut': async (db, d, qui) => changerStatut(db, d.ligne, d.statut, qui)
-}, ECRITURES, PHOTOS);
+}, ECRITURES, PHOTOS, MESURES);
 
 /* Les classes 22 (valeur mal formée) et 23 (règle d'intégrité) de Postgres :
    une saisie que l'API n'a pas su refuser avant la base. L'administrateur doit

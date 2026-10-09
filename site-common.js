@@ -1181,7 +1181,57 @@
         }
     }
 
+    /* ====== MESURE D'AUDIENCE ======
+       Un signal anonyme à chaque étape du parcours d'inscription : l'API ajoute
+       1 au compteur du jour (api/_lib/mesures.js). Ni cookie, ni identifiant :
+       on compte, on ne suit personne. Envoyé en tâche de fond (sendBeacon) —
+       une mesure ne doit jamais ralentir ni bloquer une page. */
+    const ETAPES_UNIQUES_PAR_ONGLET = new Set(['fiche_vue', 'formulaire_commence', 'etape_2', 'etape_3',
+        'etape_4', 'preuve_whatsapp', 'contact_whatsapp']);
+    let formationMesuree = '';
+
+    /** La formation à laquelle se rattachent les signaux de cette page (fiche, formulaire). */
+    function definirFormationMesuree(formId) {
+        formationMesuree = /^[a-z0-9-]{1,60}$/.test(String(formId || '')) ? String(formId) : '';
+    }
+
+    function mesurer(evenement, formation) {
+        const formId = formation === undefined ? formationMesuree : String(formation || '');
+        /* Recharger la page, revenir d'une étape, rouvrir la fiche dans le même
+           onglet : une étape ne compte qu'une fois par onglet. Une inscription
+           envoyée, elle, compte chaque fois — « Inscrire une autre personne »
+           en est une vraie de plus. */
+        if (ETAPES_UNIQUES_PAR_ONGLET.has(evenement)) {
+            const cle = 'impactali_mesure:' + evenement + ':' + formId;
+            try {
+                if (sessionStorage.getItem(cle)) return;
+                sessionStorage.setItem(cle, '1');
+            } catch (e) { /* stockage indisponible : on compte quand même */ }
+        }
+        const corps = JSON.stringify({ mesure: evenement, formation: formId, pays: (paysActif() || {}).code || '' });
+        const url = ENDPOINTS.registration;
+        if (!url) return;
+        try {
+            if (navigator.sendBeacon && navigator.sendBeacon(url, new Blob([corps], { type: 'text/plain;charset=UTF-8' }))) return;
+            fetch(url, { method: 'POST', body: corps, keepalive: true, headers: { 'Content-Type': 'text/plain;charset=UTF-8' } })
+                .catch(() => { /* une mesure perdue n'empêche rien */ });
+        } catch (e) { /* idem */ }
+    }
+
+    /* Une question posée sur WhatsApp, depuis n'importe quelle page : le bouton
+       flottant, « Poser une question », la fiche. Le bouton de la preuve de
+       paiement a son propre signal (script.js). */
+    function initMesureWhatsapp() {
+        document.addEventListener('click', event => {
+            const lien = event.target && event.target.closest && event.target.closest('a[href*="wa.me/"]');
+            if (!lien || lien.id === 'btn-whatsapp') return;
+            mesurer('contact_whatsapp');
+        }, true);
+    }
+
     window.SiteCommon = Object.freeze({
+        mesurer,
+        definirFormationMesuree,
         observeReveals,
         initAccordions,
         formatSessionDate,
@@ -1227,6 +1277,7 @@
         initAccordions();
         initScrollReveals();
         initWhatsappLinks();
+        initMesureWhatsapp();
         initReplisImages();
         /* Le pied est le même sur toutes les pages : ses domaines s’y remplissent
            donc ici, et non dans landing.js qui ne sert que l’accueil. */

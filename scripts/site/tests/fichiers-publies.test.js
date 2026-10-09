@@ -124,6 +124,9 @@ function resoudre(ref, depuis) {
   else if (/^[a-z][a-z0-9+.-]*:/i.test(u) || u.startsWith('//')) return null; // autre site, mailto:, data:…
   u = u.split('#')[0].split('?')[0];
   if (!u) return null;
+  /* /_vercel/… est servi par Vercel lui-même (Web Analytics), jamais par le
+     dépôt : il n'a pas à y exister. */
+  if (/^\/_vercel\//.test(u)) return null;
   try { u = decodeURIComponent(u); } catch (e) { /* laissée telle quelle */ }
   let chemin = u.startsWith('/') ? u.slice(1) : path.posix.join(path.posix.dirname(depuis), u);
   if (chemin === '' || chemin.endsWith('/')) chemin += 'index.html';
