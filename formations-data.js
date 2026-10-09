@@ -66,8 +66,8 @@ window.FORMATIONS = Object.freeze([
     level: 'Tous niveaux',
     levelSubject: 'Canva',
     mode: 'Présentiel',
-    price: 7500,
-    prices: {"DJ":7500,"KM":15000},
+    price: null,
+    prices: {},
     learnings: [
       "Créer un Brand Kit et maîtriser l’interface Canva Pro",
       "Concevoir posts, carrousels et Reels qui captent l’attention",
@@ -183,8 +183,8 @@ window.FORMATIONS = Object.freeze([
     duration: '12 séances',
     level: 'Débutant',
     mode: 'Présentiel',
-    price: 7500,
-    prices: {"DJ":7500,"KM":15000},
+    price: null,
+    prices: {},
     learnings: [
       "Nourrir votre créativité et vos partis pris visuels",
       "Construire une identité de marque cohérente",
@@ -218,8 +218,8 @@ window.FORMATIONS = Object.freeze([
     duration: '1 Mois',
     level: 'Débutant',
     mode: 'Présentiel',
-    price: 7500,
-    prices: {"DJ":7500,"KM":15000},
+    price: null,
+    prices: {},
     learnings: [
       "Préparer et mener un tournage",
       "Monter vos séquences avec du rythme",
@@ -254,8 +254,8 @@ window.FORMATIONS = Object.freeze([
     level: 'Débutant',
     levelSubject: 'Quel est votre niveau de compréhension du vibecoding',
     mode: 'Présentiel',
-    price: 7500,
-    prices: {"DJ":7500,"KM":15000},
+    price: null,
+    prices: {},
     learnings: [
       "Prendre en main les principaux outils d’IA",
       "Gagner du temps sur vos tâches répétitives",
@@ -286,8 +286,8 @@ window.FORMATIONS = Object.freeze([
     duration: '12 séances',
     level: 'Débutant',
     mode: 'Présentiel',
-    price: 7500,
-    prices: {"DJ":7500,"KM":15000},
+    price: null,
+    prices: {},
     learnings: [
       "Définir une stratégie digitale claire",
       "Lancer des campagnes qui convertissent",
@@ -312,7 +312,7 @@ window.FORMATIONS = Object.freeze([
  * @property {string|null} endDate   ISO (YYYY-MM-DD)
  * @property {string} schedule       Ex. « Jeudi, vendredi et samedi · 18h – 20h »
  * @property {string} duration       Ex. « 12 jours · 24 heures »
- * @property {string} location       Ex. « Saalam Tower, 5ème étage, Djibouti »
+ * @property {string} location       Ex. « Salle de formation, 2e étage »
  * @property {string} mode           Présentiel / En ligne / Hybride
  * @property {string} [pays]         Code du pays où elle se tient (voir `window.PAYS`).
  *                                   La session n'est proposée qu'aux candidats de ce pays ;
@@ -326,7 +326,7 @@ window.FORMATIONS = Object.freeze([
 
 /**
  * @typedef {Object} PaymentMethod
- * @property {'Waafi Mobile Money'|'Cacpay'|'Espèces'} value  Valeur enregistrée (inchangée : la feuille Google la lit)
+ * @property {string} value  Valeur enregistrée (inchangée : la feuille Google la lit)
  * @property {string} label
  * @property {'mobile'|'cash'} kind
  * @property {string} [image]          Logo (moyens mobiles)
@@ -356,95 +356,16 @@ window.FORMATIONS = Object.freeze([
  * {
  *   id: 'canva-pro-2026-11', formId: 'canva-pro', startDate: '2026-11-05', endDate: '2026-11-28',
  *   schedule: 'Jeudi, vendredi et samedi · 18h – 20h', duration: '12 jours · 24 heures',
- *   location: 'Saalam Tower, 5ème étage, Djibouti', mode: 'Présentiel', price: 7500,
+ *   location: 'Salle de formation', mode: 'Présentiel', price: 10000,
  *   placesTotal: 20, placesAvailable: 20, registrationOpen: true
  * }
  * Une formation reste au catalogue même sans session, ou avec des sessions passées :
  * la fiche affiche alors « aucune session annoncée » sans jamais inventer de date.
  * @type {ReadonlyArray<Readonly<Session>>}
  */
-window.SESSIONS = Object.freeze([
-  Object.freeze({
-    id: 'canva-pro-2026-11',
-    formId: 'canva-pro',
-    startDate: '2026-10-10',
-    endDate: '2026-10-30',
-    schedule: 'Lundi et mercredi · 18h – 20h',
-    duration: '15 séances · 24 heures',
-    location: 'American corner - Ifere',
-    mode: 'Présentiel',
-    pays: 'DJ,KM',
-    price: 15000,
-    placesTotal: 20,
-    placesAvailable: 20,
-    registrationOpen: true,
-    parPays: {"DJ":{"mode":"En ligne","tarif":7500},"KM":{"mode":"Présentiel","lieu":"American corner","tarif":15000}}
-  }),
-  Object.freeze({
-    id: 'marketing-digital-2026-11',
-    formId: 'marketing-digital',
-    startDate: '2026-11-07',
-    endDate: '2026-12-16',
-    schedule: 'Mercredi et samedi · 18h – 20h',
-    duration: '12 séances · 24 heures',
-    location: 'American corner - Ifere',
-    mode: 'Présentiel',
-    pays: 'KM',
-    price: 15000,
-    placesTotal: 20,
-    placesAvailable: 20,
-    registrationOpen: true,
-    parPays: {"KM":{"lieu":"American corner","tarif":15000}}
-  }),
-  Object.freeze({
-    id: 'photo-video-2027-01',
-    formId: 'photo-video',
-    startDate: '2026-10-19',
-    endDate: '2026-11-01',
-    schedule: 'Lundi et jeudi · 18h – 20h',
-    duration: '12 séances · 24 heures',
-    location: 'American corner - Ifere',
-    mode: 'Présentiel',
-    pays: 'KM',
-    price: 15000,
-    placesTotal: 20,
-    placesAvailable: 20,
-    registrationOpen: true,
-    parPays: {"KM":{"mode":"Présentiel","lieu":"American corner","tarif":15000}}
-  }),
-  Object.freeze({
-    id: 'identite-visuelle-2027-01',
-    formId: 'identite-visuelle',
-    startDate: '2026-10-06',
-    endDate: '2026-10-13',
-    schedule: 'Mardi et vendredi · 18h – 20h',
-    duration: '12 séances',
-    location: 'American corner - Ifere',
-    mode: 'Présentiel',
-    pays: 'KM',
-    price: 15000,
-    placesTotal: 20,
-    placesAvailable: 20,
-    registrationOpen: true,
-    parPays: {"KM":{"mode":"Présentiel","lieu":"American corner","tarif":15000}}
-  }),
-  Object.freeze({
-    id: 'ia-appliquee-2027-01',
-    formId: 'ia-appliquee',
-    startDate: '2026-10-19',
-    endDate: '2026-11-02',
-    schedule: 'Mercredi et vendredi · 18h – 20h',
-    duration: '12 séances',
-    location: 'American corner - Ifere',
-    mode: 'Présentiel',
-    pays: 'KM',
-    price: 15000,
-    placesTotal: 20,
-    placesAvailable: 20,
-    registrationOpen: true,
-    parPays: {"KM":{"mode":"Présentiel","lieu":"American corner","tarif":15000}}
-  })
-]);
+/* Les sessions ne viennent QUE du serveur, déjà réduites au pays du visiteur
+   (api/_lib/marche.js). En écrire ici les montrerait à tous, de tous les pays. */
+window.SESSIONS = Object.freeze([]);
 
 /**
  * @typedef {Object} PortfolioItem
@@ -537,8 +458,8 @@ window.PORTFOLIO = Object.freeze([
  * @typedef {Object} Pays
  * @property {string} code               Code ISO à deux lettres (DJ, KM…), identifiant du pays
  * @property {string} nom                Nom affiché dans le sélecteur du formulaire
- * @property {string} devise             Devise locale, affichée après le montant (FDJ, KMF…)
- * @property {string} indicatif          Indicatif téléphonique, ex. « +253 »
+ * @property {string} devise             Devise locale, affichée après le montant (trois lettres)
+ * @property {string} indicatif          Indicatif téléphonique, ex. « +33 »
  * @property {string} [motifTelephone]   Règle de saisie du numéro local (expression régulière)
  * @property {string} [aideTelephone]    Message affiché quand le numéro ne respecte pas la règle
  * @property {string} [exempleTelephone] Exemple affiché dans le champ, ex. « 77XXXXXX »
@@ -559,119 +480,12 @@ window.PORTFOLIO = Object.freeze([
  * n'est pas saisi, la fiche affiche « À confirmer » plutôt qu'un chiffre inventé.
  * @type {ReadonlyArray<Readonly<Pays>>}
  */
-window.PAYS = Object.freeze([
-  Object.freeze({
-    code: 'DJ',
-    nom: 'Djibouti',
-    // Marche d'origine : en tete de liste, avant les marches ouverts ensuite
-    ordre: 0,
-    devise: 'FDJ',
-    indicatif: '+253',
-    motifTelephone: '^(77|67)\\d{6}$',
-    aideTelephone: 'Format invalide. Utilisez 77XXXXXX ou 67XXXXXX',
-    exempleTelephone: '77XXXXXX',
-    longueurTelephone: 8,
-    /* FERMÉ pour l’instant : le marché comorien s’ouvre seul, les autres
-       suivront. Un pays fermé n’apparaît nulle part — ni dans le sélecteur du
-       formulaire, ni dans les tarifs, ni dans les sessions. Tout le reste de sa
-       fiche est conservé : il se rouvre sans rien ressaisir. */
-    defaut: false,
-    active: false,
-    /* Contact propre au pays : un visiteur djiboutien voit un numéro djiboutien.
-       Vide = on retombe sur le contact général du site. */
-    whatsappNumber: '25377145306',
-    whatsappDisplay: '+253 77 14 53 06',
-    /* Reconnaissance du pays du visiteur, sans aucune requête ni service tiers :
-       le fuseau horaire et la région de la langue sont déjà dans le navigateur.
-       Rien n'est envoyé nulle part, et le visiteur garde la main via le
-       sélecteur du formulaire d'inscription. */
-    fuseaux: Object.freeze(['Africa/Djibouti']),
-    regions: Object.freeze(['DJ']),
-    paymentMethods: Object.freeze([
-      Object.freeze({ value: 'Waafi Mobile Money', label: 'Waafi', kind: 'mobile', image: '/assets/images/waafi.png', numberLabel: 'Numéro', number: '+253 77 55 63 44', accountName: 'Ali William' }),
-      Object.freeze({ value: 'Cacpay', label: 'Cacpay', kind: 'mobile', image: '/assets/images/cacpay.png', numberLabel: 'Numéro de compte', number: '11000012127', accountName: 'Ali William' }),
-      Object.freeze({ value: 'Espèces', label: 'Espèces', kind: 'cash', recipient: 'Ali William', place: 'Saalam Tower, 5ème étage', phone: '+253 77 14 53 06' })
-    ])
-  }),
-  Object.freeze({
-    /* Comores : le marché est ouvert, mais ni les tarifs ni les coordonnées de
-       paiement n'y sont encore arrêtés. Ils se saisissent dans le tableau de bord
-       (Pays, puis Formations → Tarifs par pays). Tant qu'ils sont vides, le site
-       le dit franchement au lieu d'afficher des montants djiboutiens. */
-    code: 'KM',
-    nom: 'Comores',
-    ordre: 1,
-    devise: 'KMF',
-    indicatif: '+269',
-    motifTelephone: '^\\d{7}$',
-    aideTelephone: 'Format invalide. Le numéro comorien compte 7 chiffres',
-    exempleTelephone: 'XXXXXXX',
-    longueurTelephone: 7,
-    // Seul marché ouvert : c’est donc lui que voit un visiteur qui n’a rien choisi.
-    defaut: true,
-    active: true,
-    /* Contact sur place : c'est lui que voit un visiteur reconnu comorien, à la
-       place du contact général djiboutien. */
-    whatsappNumber: '2693804648',
-    whatsappDisplay: '+269 380 46 48',
-    fuseaux: Object.freeze(['Indian/Comoro']),
-    regions: Object.freeze(['KM']),
-    paymentMethods: Object.freeze([])
-  }),
-
-  /* ---------------------------------------------------------------------------
-     MARCHÉS FRANCOPHONES OUVERTS AUX FORMATIONS EN LIGNE
-
-     Chacun ne porte QUE des faits publics : code ISO, devise, indicatif,
-     fuseaux horaires, code de région. Rien d'autre n'est inventé —
-     ni tarif, ni numéro de contact, ni coordonnées de paiement.
-
-     Conséquences, voulues et visibles :
-      · sans tarif saisi, le site annonce « À confirmer » plutôt qu'un montant ;
-      · sans contact propre, le numéro général du site s'affiche ;
-      · sans moyen de paiement, le formulaire le dit et renvoie vers le contact.
-
-     Le format des numéros est laissé LIBRE (chiffres uniquement) : un motif
-     approximatif refuserait des numéros valables, et les plans de numérotation
-     bougent d'un pays à l'autre. À resserrer depuis le tableau de bord, pays
-     par pays, le jour où l'un d'eux s'ouvre vraiment.
-     --------------------------------------------------------------------------- */
-  ...[
-    ['FR', 'France', 'EUR', '+33', ['Europe/Paris']],
-    ['SN', 'Sénégal', 'XOF', '+221', ['Africa/Dakar']],
-    ['CI', 'Côte d’Ivoire', 'XOF', '+225', ['Africa/Abidjan']],
-    ['CM', 'Cameroun', 'XAF', '+237', ['Africa/Douala']],
-    ['MG', 'Madagascar', 'MGA', '+261', ['Indian/Antananarivo']],
-    ['MA', 'Maroc', 'MAD', '+212', ['Africa/Casablanca']],
-    ['BJ', 'Bénin', 'XOF', '+229', ['Africa/Porto-Novo']],
-    ['TG', 'Togo', 'XOF', '+228', ['Africa/Lome']],
-    ['GA', 'Gabon', 'XAF', '+241', ['Africa/Libreville']],
-    ['CD', 'République démocratique du Congo', 'CDF', '+243', ['Africa/Kinshasa', 'Africa/Lubumbashi']],
-    ['TN', 'Tunisie', 'TND', '+216', ['Africa/Tunis']],
-    ['ML', 'Mali', 'XOF', '+223', ['Africa/Bamako']]
-  ].map(([code, nom, devise, indicatif, fuseaux], rang) => Object.freeze({
-    code: code,
-    nom: nom,
-    devise: devise,
-    indicatif: indicatif,
-    // Vide = chiffres uniquement : on n'invente pas un plan de numérotation
-    motifTelephone: '',
-    aideTelephone: 'Entrez votre numéro sans l’indicatif, en chiffres uniquement.',
-    exempleTelephone: '',
-    longueurTelephone: null,
-    defaut: false,
-    // Fermés : ils se rouvriront un par un depuis le tableau de bord.
-    active: false,
-    // Vide = le contact général du site s'affiche pour ces visiteurs
-    whatsappNumber: '',
-    whatsappDisplay: '',
-    fuseaux: Object.freeze(fuseaux),
-    regions: Object.freeze([code]),
-    // Vide = le formulaire annonce que le règlement en ligne n'est pas ouvert ici
-    paymentMethods: Object.freeze([]),
-    ordre: 2 + rang
-  }))
-]);
+/* Les pays — devise, indicatif, numéro WhatsApp, moyens de paiement — ne
+   viennent QUE du serveur, réduits au marché du visiteur : celui de son adresse
+   IP, ou celui qu'il a choisi en bas de page. Ce fichier est chargé par toutes
+   les pages : un numéro écrit ici partirait chez les visiteurs de l'autre pays.
+   Un pays s'ouvre dans le tableau de bord (onglet Pays). */
+window.PAYS = Object.freeze([]);
 
 /**
  * L'API du site (dossier api/, base Supabase), depuis la bascule.
@@ -685,13 +499,13 @@ window.SITE_ENDPOINTS = Object.freeze({
 });
 
 /**
- * Contact officiel du site (numéro déjà en usage).
+ * Contact officiel du site, commun à tous les pays.
  * Tout ce qui dépend du marché — devise, indicatif, format des numéros, moyens
  * de paiement — vit maintenant dans `window.PAYS`, pays par pays.
  */
 window.SITE_CONTACT = Object.freeze({
-  whatsappNumber: '25377145306',
-  whatsappDisplay: '+253 77 14 53 06',
+  /* Aucun numéro ici : le WhatsApp joignable est celui du pays du visiteur, servi
+     par le serveur. Hors des pays ouverts, on écrit à l'adresse ci-dessous. */
   contactName: 'Ali William',
   /* Voie de contact publique du site. WhatsApp ne paraît plus qu'au moment de
      l'inscription, avec le numéro du pays du candidat : partout ailleurs, c'est

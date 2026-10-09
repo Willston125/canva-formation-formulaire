@@ -42,9 +42,12 @@
     function cardBadges(formation) {
         const badges = [];
         const { state, session } = common.sessionState(formation.formId);
+        // Le pays du visiteur n'est pas encore connu : on n'annonce rien plutôt qu'un état faux
+        if (state === 'attente') return '';
         if (state === 'open') badges.push({ label: 'Inscriptions ouvertes', tone: 'accent' });
         else if (state === 'full') badges.push({ label: 'Session complète', tone: 'alert' });
         else if (state === 'closed') badges.push({ label: 'Inscriptions fermées', tone: 'muted' });
+        else if (state === 'hors-marche') badges.push({ label: 'En ligne · bientôt', tone: 'muted' });
         else badges.push({ label: 'Programme en préparation', tone: 'muted' });
         if (session && typeof session.placesAvailable === 'number' && session.placesAvailable > 0 && session.placesAvailable <= 5) {
             badges.push({ label: 'Places limitées', tone: 'alert' });
@@ -61,6 +64,8 @@
         const { session } = common.sessionState(formation.formId);
         const code = common.paysActif?.()?.code;
         const mode = session && common.modeDeSession ? common.modeDeSession(session, code) : '';
+        // Tant que le serveur n'a pas dit le pays, aucun mode : celui du fichier n'est celui de personne
+        if (!(common.marcheActif && common.marcheActif())) return '';
         return isKnown(mode) ? mode : formation.mode;
     }
 
@@ -646,11 +651,81 @@
         return m ? m[1] : null;
     }
 
+    /* « En classe » : les vidéos verticales des promotions précédentes. Ce sont
+       des réalisations de catégorie « En classe » (onglet Réalisations du tableau
+       de bord) : elles quittent la grille des réalisations — travaux du
+       formateur — pour former leur propre bande, au format des Shorts. */
+    const estEnClasse = item => /^\s*en\s+classe\s*$/i.test(String((item && item.category) || ''));
+
+    /** Ce que le visiteur doit savoir de SES séances, selon le mode de son pays. */
+    function texteClassesDuMarche() {
+        const marche = common.marcheActif ? common.marcheActif() : null;
+        const mode = marche && marche.mode;
+        if (mode === 'Présentiel') return 'Vos séances se déroulent en présentiel, avec le même formateur.';
+        if (mode === 'En ligne') return 'Vos séances se suivent en ligne, en direct, avec le même formateur et les mêmes exercices.';
+        return '';
+    }
+
+    /* La mention du mode, sous l'accroche du catalogue : celle du PAYS du
+       visiteur. « Présentiel & en ligne » disait à un Djiboutien que la
+       formation se tenait aussi en salle — chez lui, elle est en ligne. Le texte
+       d'origine revient tant que le pays n'a pas de mode unique. */
+    function renderModeMarche() {
+        const el = document.querySelector('[data-texte="accueil.chiffre.4"]');
+        if (!el) return;
+        if (!el.dataset.texteOrigine) el.dataset.texteOrigine = el.textContent;
+        const marche = common.marcheActif ? common.marcheActif() : null;
+        const mode = marche && marche.mode;
+        el.textContent = mode === 'Présentiel' ? 'Cours en présentiel'
+            : mode === 'En ligne' ? 'Cours en ligne, en direct'
+                : el.dataset.texteOrigine;
+    }
+
+    function renderClasses() {
+        const section = document.getElementById('en-classe');
+        const piste = document.getElementById('classes-piste');
+        if (!section || !piste) return;
+
+        const videos = PORTFOLIO.map((item, i) => [item, i])
+            .filter(([item]) => estEnClasse(item) && identifiantYoutube(item.video));
+        section.hidden = !videos.length;
+        if (!videos.length) { piste.innerHTML = ''; return; }
+
+        const marche = document.getElementById('classes-marche');
+        if (marche) {
+            const texte = texteClassesDuMarche();
+            marche.textContent = texte;
+            marche.hidden = !texte;
+        }
+
+        /* Rien ne part chez YouTube avant le toucher : l'aperçu est une simple
+           image, le lecteur ne se charge qu'à la demande. Sur une connexion
+           mobile chère, une page qui lirait seule ses vidéos coûterait cher. */
+        piste.innerHTML = videos.map(([item, i]) => {
+            const id = identifiantYoutube(item.video);
+            const apercu = item.image || `https://i.ytimg.com/vi/${id}/hqdefault.jpg`;
+            return `<button type="button" class="classe-video" data-realisation="${i}"
+                aria-label="${escapeHtml('Lire la vidéo : ' + item.title)}">
+                <span class="classe-video__media">
+                    <img src="${escapeHtml(apercu)}" alt="" loading="lazy" decoding="async">
+                    <span class="classe-video__lecture" aria-hidden="true"><span class="material-symbols-outlined">play_arrow</span></span>
+                </span>
+                <span class="classe-video__legende"><strong>${escapeHtml(item.title)}</strong>${item.description
+                    ? `<span>${escapeHtml(item.description)}</span>` : ''}</span>
+            </button>`;
+        }).join('');
+
+        piste.querySelectorAll('[data-realisation]').forEach(carte => {
+            carte.addEventListener('click', () => ouvrirRealisation(PORTFOLIO[Number(carte.dataset.realisation)]));
+        });
+    }
+
     function renderPortfolio() {
         const grid = document.getElementById('portfolio-grid');
         if (!grid || !PORTFOLIO.length) return;
 
         grid.innerHTML = PORTFOLIO.map((item, i) => {
+            if (estEnClasse(item)) return '';
             const video = identifiantYoutube(item.video);
             /* Miniature : celle qu'on a téléversée, sinon celle de YouTube.
                Rien n'est chargé chez YouTube tant qu'on n'a pas cliqué : le
@@ -699,6 +774,8 @@
         if (fermerVisionneuse) fermerVisionneuse();
 
         const video = identifiantYoutube(item.video);
+        // Une vidéo de classe est verticale (Short) : le lecteur prend son format, pas celui d'un film
+        const vertical = estEnClasse(item);
         const boite = document.createElement('div');
         boite.className = 'visionneuse';
         boite.innerHTML = `
@@ -707,7 +784,7 @@
                 <button type="button" class="visionneuse__fermer" data-fermer aria-label="Fermer">
                     <span class="material-symbols-outlined" aria-hidden="true">close</span></button>
                 ${video
-                ? `<div class="visionneuse__video"><iframe src="https://www.youtube-nocookie.com/embed/${escapeHtml(video)}?autoplay=1&rel=0"
+                ? `<div class="visionneuse__video${vertical ? ' visionneuse__video--vertical' : ''}"><iframe src="https://www.youtube-nocookie.com/embed/${escapeHtml(video)}?autoplay=1&rel=0&playsinline=1"
                         title="${escapeHtml(item.title)}" frameborder="0" allow="accelerometer; autoplay; encrypted-media; picture-in-picture"
                         referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div>`
                 : `<img src="${escapeHtml(item.image)}" alt="${escapeHtml(item.imageAlt || item.title)}">`}
@@ -762,6 +839,8 @@
             renderDomains();
             renderSessions();
             renderPortfolio();
+            renderClasses();
+            renderModeMarche();
             if (contenuDuCarrousel() !== avant) initTrainingCarousel();
             common.observeReveals?.();
         });
@@ -773,6 +852,8 @@
             const avant = contenuDuCarrousel();
             renderCatalogueGrid();
             renderSessions();
+            renderClasses();
+            renderModeMarche();
             if (contenuDuCarrousel() !== avant) initTrainingCarousel();
             common.observeReveals?.();
         });
@@ -780,6 +861,8 @@
         initTrainingDialog();
         renderSessions();
         renderPortfolio();
+        renderClasses();
+        renderModeMarche();
         // Le contenu créé ci-dessus n'existait pas au premier passage de l'observateur
         common.observeReveals?.();
     });

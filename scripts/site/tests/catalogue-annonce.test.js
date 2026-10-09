@@ -73,7 +73,7 @@ verifier('le motif du report est expliqué sur place',
 /* La course n'existe que parce que le cache s'applique sans attendre. Si cette
    branche disparaissait, le report ci-dessus perdrait sa raison d'être — et ce
    contrôle doit alors être relu, pas supprimé. */
-const corpsRefresh = corpsDe(commun, 'function refreshPlaces(force)');
+const corpsRefresh = corpsDe(commun, 'function refreshPlaces(force, choix)');
 const poseDuCache = corpsRefresh.indexOf('appliquer(cache.releve)');
 verifier('le cache est bien appliqué sans attendre', poseDuCache >= 0, true);
 verifier('et avant tout appel réseau',

@@ -15,11 +15,11 @@ vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'fiche-blocs.js'), 'utf8'), s
    le site : ecrire le meme HTML ici l'aurait fait diverger a la premiere retouche. */
 const BLOCS = sandbox.window.FicheBlocs;
 const FORMATIONS = sandbox.window.FORMATIONS || [];
-const PAYS = sandbox.window.PAYS || [];
-/* Pays de référence des pages générées : le visiteur peut en changer dans le
-   formulaire, et script.js réécrit alors tarif et devise. Ce qui est écrit ici
-   n'est donc qu'un point de départ, celui du marché par défaut. */
-const PAYS_DEFAUT = PAYS.find(p => p.defaut && p.active !== false) || PAYS[0] || null;
+/* AUCUN PAYS DANS LES PAGES GÉNÉRÉES. Une page est la même pour tous les
+   visiteurs : un tarif, un mode ou un numéro écrit ici partirait chez ceux de
+   l'autre pays (et chez Google). Tout ce qui dépend du pays — tarif, mode,
+   horaires, lieu, contact — est posé par script.js, depuis le catalogue que le
+   serveur a réduit au marché du visiteur (api/_lib/marche.js). */
 
 /** Adresse absolue pour les aperçus de partage : une image déjà absolue (Drive) est laissée telle quelle. */
 const absolue = u => (/^https?:/i.test(String(u || '')) ? String(u) : SITE_URL + String(u || ''));
@@ -27,17 +27,6 @@ const absolue = u => (/^https?:/i.test(String(u || '')) ? String(u) : SITE_URL +
 const esc = value => String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;')
   .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const known = value => typeof value === 'string' && value.trim() && !/^à confirmer$/i.test(value.trim());
-/** Tarif du pays par défaut : `prices` s'il existe, sinon l'ancien champ `price`. */
-const priceOf = f => {
-  const table = f && f.prices;
-  if (PAYS_DEFAUT && table && typeof table === 'object' && typeof table[PAYS_DEFAUT.code] === 'number') {
-    return table[PAYS_DEFAUT.code];
-  }
-  return f && typeof f.price === 'number' ? f.price : null;
-};
-const price = value => typeof value === 'number'
-  ? `${value.toLocaleString('fr-FR')} ${(PAYS_DEFAUT && PAYS_DEFAUT.devise) || ''}`.trim()
-  : 'À confirmer';
 
 function replace(html, pattern, value, label) {
   if (!pattern.test(html)) throw new Error(`Zone introuvable dans le template : ${label}`);
@@ -61,15 +50,17 @@ function facts(f) {
   const rows = [
     ['timelapse', 'Durée', known(f.duration) ? duree : '', 'fiche-duration', 'formation'],
     ['signal_cellular_alt', 'Niveau', known(f.level) ? f.level : '', 'fiche-level', 'formation'],
-    ['co_present', 'Mode', known(f.mode) ? f.mode : '', 'fiche-mode', 'formation'],
+    // Le mode dépend du pays (présentiel ici, en ligne là) : posé par script.js, jamais écrit
+    ['co_present', 'Mode', '', 'fiche-mode', 'formation'],
     ['schedule', 'Horaires', '', 'fiche-schedule', 'session'],
     ['location_on', 'Lieu', '', 'fiche-location', 'session'],
-    ['payments', 'Participation', price(priceOf(f)), 'fiche-price', ''],
+    ['payments', 'Participation', '', 'fiche-price', 'pays'],
     ['event', 'Prochaine session', 'Dates à annoncer', 'fiche-next-session', '']
   ];
   return `<dl class="fiche-facts" aria-label="Informations clés">${rows.map(([icon, label, value, id, genre]) => {
     const attrs = genre === 'session' ? ' data-session-fact hidden'
-      : genre === 'formation' ? ` data-fiche-fact${value ? '' : ' hidden'}` : '';
+      : genre === 'formation' ? ` data-fiche-fact${value ? '' : ' hidden'}`
+        : genre === 'pays' ? ' hidden' : '';
     return `<div${attrs}><dt><span class="material-symbols-outlined" aria-hidden="true">${icon}</span>${esc(label)}</dt><dd id="${id}">${esc(value)}</dd></div>`;
   }).join('')}</dl>`;
 }
@@ -190,9 +181,9 @@ function sectionFaq(f) {
   return `<section class="fiche-block reveal-on-scroll" id="faq-section" aria-labelledby="faq-title">${BLOCS.faqInterieur(source)}</section>`;
 }
 
-/** Métadonnées du bandeau « Formation choisie » : uniquement des valeurs confirmées. */
+/** Métadonnées du bandeau « Formation choisie » : la durée seule — le mode dépend du pays, script.js l'ajoute. */
 function metaShort(f) {
-  return [f.duration, f.mode].filter(known).join(' · ') || 'Informations pratiques à annoncer';
+  return [f.duration].filter(known).join(' · ') || 'Informations pratiques à annoncer';
 }
 
 /** Libellés de la question de niveau, dérivés du sujet déclaré dans les données. */
@@ -332,7 +323,7 @@ function render(template, f) {
       `$1Photo du formateur · toutes les fiches$2`);
   }
   // Bouton WhatsApp flottant : message propre à la formation, pour toutes les fiches.
-  html = replace(html, /(<a href="https:\/\/wa\.me\/[^"]*") data-whatsapp-float/,
+  html = replace(html, /(<a href="#") data-whatsapp-float/,
     `$1 data-whatsapp-message="${esc(`Bonjour, je suis en train de m’inscrire à la formation ${f.title} mais j’ai une question.`)}"`,
     'bouton WhatsApp flottant');
   html = replace(html, /(<img src="[^"]*" alt=")Affiche de la formation(" id="poster-validation")/,

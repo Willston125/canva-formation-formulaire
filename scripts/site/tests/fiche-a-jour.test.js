@@ -133,7 +133,8 @@ function fauxDocument() {
   };
 }
 
-const bac = { displaySession: null, sessionMode: () => '' };
+/* `common` : le marché du visiteur, tel que le serveur l'a fixé (site-common.js). */
+const bac = { displaySession: null, sessionMode: () => '', common: { marcheActif: () => ({ code: 'KM', mode: 'Présentiel' }) } };
 vm.createContext(bac);
 vm.runInContext([
   corpsDe(fiche, 'function poserFait(id, valeur)'),
@@ -188,6 +189,16 @@ bac.sessionMode = () => '';
 bac.__faits({ duration: '', level: '', mode: 'Hybride' });
 verifier('sans session affichée, le mode de la formation sert de repli',
   faux.lignes['fiche-mode'].el.textContent, 'Hybride');
+
+/* AVANT LA RÉPONSE DU SERVEUR, AUCUN MODE. Le mode écrit dans le fichier n'est
+   celui de personne : « Présentiel » s'afficherait une seconde à un visiteur de
+   Djibouti, dont les séances sont en ligne. */
+faux = fauxDocument();
+bac.document = faux.document;
+bac.common = { marcheActif: () => null };
+bac.__faits({ duration: '', level: '', mode: 'Présentiel' });
+verifier('tant que le pays n’est pas connu, le mode du fichier ne s’affiche pas',
+  faux.lignes['fiche-mode'].ligne.hidden, true);
 
 // ---------------------------------- BILAN ----------------------------------
 resultats.forEach(l => console.log(l));

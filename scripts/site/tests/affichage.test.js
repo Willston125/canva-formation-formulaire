@@ -152,10 +152,16 @@ verifier('le paiement en espèces se reconnaît à sa nature, pas à son libell�
   /\} else if \(method \? method\.kind === 'cash' : value === 'Espèces'\) \{/.test(formulaire), true);
 
 /* Le repli sur le libellé ne vaut que pour une donnée ancienne sans `kind` :
-   la nature doit rester déclarée dans les données du site. */
+   la nature reste déclarée — par la BASE, qui la rend obligatoire. Les moyens
+   de paiement ne sont plus dans le fichier du site : chargé par tous les
+   visiteurs de tous les pays, il montrait les numéros de l'un à l'autre. Ils
+   viennent du serveur, au seul pays concerné (api/_lib/marche.js). */
 const donneesSite = lire('formations-data.js');
-verifier('les moyens de paiement déclarent leur nature',
-  /kind: 'cash'/.test(donneesSite) && /kind: 'mobile'/.test(donneesSite), true);
+const schemaBase = lire('supabase/migrations/20261002120000_schema.sql');
+verifier('les moyens de paiement déclarent leur nature (règle de la base)',
+  /kind\s+text not null check \(kind in \('mobile', 'cash'\)\)/.test(schemaBase), true);
+verifier('et le fichier du site n’en porte aucun',
+  /kind: '(cash|mobile)'/.test(donneesSite), false);
 
 // --- 7. L'aperçu d'un visuel doit pointer où il faut ---
 
@@ -369,10 +375,16 @@ verifier('le survol montre bien l’affiche entière',
 verifier('un choix du pays est greffé au pied de page',
   /function initChoixPays\(\)/.test(commun)
   && /document\.querySelector\('\.site-footer__brand'\)/.test(commun), true);
-verifier('il n’apparaît pas quand un seul pays est desservi',
-  /if \(dispo\.length < 2\) \{ if \(ancien\) ancien\.remove\(\); return; \}/.test(commun), true);
-verifier('il reste d’accord avec celui du formulaire',
-  /document\.addEventListener\('impactali:pays', \(\) => \{\s*\n\s*const select = document\.getElementById\('choix-pays-pied'\);/.test(commun), true);
+/* Le pays est désormais DÉTECTÉ par le serveur ; ce sélecteur n'est qu'un
+   recours (VPN, itinérance). Il n'apparaît qu'une fois le serveur entendu, et
+   ne porte que des NOMS : l'offre d'un autre pays n'est demandée qu'une fois
+   ce pays choisi. */
+verifier('il n’apparaît qu’une fois le serveur entendu',
+  /if \(!MARCHE \|\| !MARCHES\.length\) return;/.test(commun), true);
+verifier('il ne porte que des noms de pays',
+  /MARCHES\.map\(m => `<option value="\$\{escapeHtml\(m\.code\)\}">\$\{escapeHtml\(m\.nom\)\}<\/option>`\)/.test(commun), true);
+verifier('il se redessine quand le pays change',
+  /document\.addEventListener\('impactali:pays', initChoixPays\);/.test(commun), true);
 
 /* Le greffon ne tient que si ce pied existe sur TOUTES les pages, fiches
    générées comprises — sinon le sélecteur manquerait là où il sert le plus. */

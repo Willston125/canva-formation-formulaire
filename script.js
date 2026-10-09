@@ -245,7 +245,9 @@
                dans le pays du candidat, celui de la formation n'est que le repli.
                Un Djiboutien lisait « Présentiel » au-dessus d'une session en ligne. */
             const modeSession = displaySession ? sessionMode(displaySession) : '';
-            meta.textContent = [formation.duration, modeSession || formation.mode].filter(v => v && !/^à confirmer$/i.test(v)).join(' · ')
+            // Le mode de la formation est celui du MARCHÉ (serveur) : rien tant qu'il n'est pas connu
+            const modeRepli = common?.marcheActif?.() ? formation.mode : '';
+            meta.textContent = [formation.duration, modeSession || modeRepli].filter(v => v && !/^à confirmer$/i.test(v)).join(' · ')
                 || 'Informations pratiques à annoncer';
         }
         if (sessionMeta) {
@@ -390,7 +392,10 @@
            n’est pas la sienne. Le mode de la formation n’est que le repli,
            quand aucune session n’est affichée. */
         const modeSession = displaySession ? sessionMode(displaySession) : '';
-        poserFait('fiche-mode', connu(modeSession) ? modeSession : (connu(formation.mode) ? formation.mode : ''));
+        /* Avant la réponse du serveur, le mode du FICHIER n'est celui de personne :
+           « Présentiel » s'afficherait une seconde à un visiteur de Djibouti. */
+        const marcheConnu = !!common?.marcheActif?.();
+        poserFait('fiche-mode', connu(modeSession) ? modeSession : (marcheConnu && connu(formation.mode) ? formation.mode : ''));
     }
 
     /** Une ligne « fait de formation » : remplie et montrée, ou masquée. */
@@ -459,8 +464,15 @@
         set('fiche-next-session', s ? [formatSessionDate(s.startDate), s.schedule].filter(Boolean).join(' · ') : '');
         set('fiche-schedule', s?.schedule || '');
         set('fiche-location', s ? sessionLieu(s) : '');
+        /* Sans pays (hors marché, ou en attendant le serveur), aucun tarif n'existe
+           pour ce visiteur : la ligne se masque plutôt que d'afficher « À confirmer ». */
         const priceEl = document.getElementById('fiche-price');
-        if (priceEl) priceEl.textContent = formatPrice(currentPrice());
+        if (priceEl) {
+            const ligne = priceEl.closest('div');
+            const pays = currentPays();
+            priceEl.textContent = pays ? formatPrice(currentPrice()) : '';
+            if (ligne && ligne !== priceEl) ligne.hidden = !pays;
+        }
     }
 
     /**
@@ -474,6 +486,15 @@
         const requestedSessionId = new URLSearchParams(window.location.search).get('sessionId');
         const { state, session } = common.sessionState(selectedFormation?.formId, requestedSessionId || selectedSession?.id || undefined);
         const isOpen = state === 'open';
+        /* En attendant que le serveur dise le pays, les boutons de la fiche
+           gardent leur libellé : basculer sur « Être informé(e) » une fraction
+           de seconde, puis revenir, serait un clignotement pour rien. */
+        if (state === 'attente') {
+            card.hidden = false;
+            formContainer.classList.add('is-unavailable');
+            card.innerHTML = '<p class="registration-state__attente">Chargement des sessions de votre pays…</p>';
+            return;
+        }
         card.hidden = isOpen;
         document.getElementById('sidebar')?.classList.toggle('is-unavailable', !isOpen);
         document.getElementById('mobile-progress')?.classList.toggle('is-unavailable', !isOpen);
@@ -505,16 +526,25 @@
             inactive: {
                 icon: 'block', heading: 'Formation indisponible',
                 text: 'Cette formation n’est pas ouverte aux inscriptions actuellement.'
+            },
+            /* Hors des pays ouverts : les formations se suivent en ligne, mais ni
+               tarif ni moyen de paiement n'existent encore pour ce pays. On le
+               dit, et on donne le recours — sans jamais montrer l'offre d'un
+               autre pays. */
+            'hors-marche': {
+                icon: 'public', heading: 'Inscriptions en ligne bientôt ouvertes dans votre pays',
+                text: `« ${title} » se suit en ligne. Les tarifs et les moyens de paiement de votre pays ne sont pas encore ouverts : écrivez-nous, nous vous préviendrons dès l’ouverture. Vous êtes dans un pays où nous sommes déjà présents ? Choisissez-le tout en bas de la page.`
             }
         };
         const m = messages[state] || messages.none;
         const askMessage = `Bonjour, je souhaite être informé(e) de la prochaine session de la formation « ${title} ».`;
+        const libelle = state === 'hors-marche' ? 'Nous écrire' : 'Être informé(e) de l’ouverture';
         card.innerHTML = `
             <span class="registration-state__icon material-symbols-outlined" aria-hidden="true">${m.icon}</span>
             <h3>${escapeHtml(m.heading)}</h3>
             <p>${escapeHtml(m.text)}</p>
             <div class="registration-state__actions">
-                <a class="button button--primary" href="${common.whatsappUrl(askMessage)}" target="_blank" rel="noopener noreferrer">Être informé(e) de l’ouverture<span class="material-symbols-outlined" aria-hidden="true">notifications</span></a>
+                <a class="button button--primary" href="${escapeHtml(common.whatsappUrl(askMessage))}" target="_blank" rel="noopener noreferrer">${libelle}<span class="material-symbols-outlined" aria-hidden="true">notifications</span></a>
                 <a class="button button--secondary" href="/#catalogue">Voir les autres formations</a>
             </div>`;
     }
@@ -589,27 +619,20 @@
     }
 
     /**
-     * Sélecteur de pays (étape 1). Les options viennent des données, donc un pays
-     * ajouté depuis le tableau de bord apparaît sans toucher au HTML. Avec un seul
-     * pays desservi, le champ reste masqué : un choix unique n'est pas un choix.
+     * Le pays de l'inscription : celui du MARCHÉ, fixé par le serveur d'après
+     * l'adresse IP (ou choisi en bas de page). Il ne se choisit plus ici — un
+     * menu dans le formulaire laissait passer d'une offre à l'autre en un clic.
+     * Le champ reste dans la page, masqué, pour porter la valeur envoyée.
      */
     function renderPaysSelector() {
         const groupe = document.getElementById('field-pays');
         const champ = document.getElementById('pays');
-        if (!groupe || !champ || !common) return;
-
-        const liste = common.paysDisponibles();
+        if (!groupe || !champ) return;
         const actif = currentPays();
-        groupe.hidden = liste.length < 2;
-        champ.disabled = liste.length < 2;
-
-        const valeurs = liste.map(p => p.code).join('|');
-        if (champ.dataset.pays !== valeurs) {
-            champ.innerHTML = liste.map(p =>
-                `<option value="${escapeHtml(p.code)}">${escapeHtml(p.nom)}</option>`).join('');
-            champ.dataset.pays = valeurs;
-        }
-        if (actif) champ.value = actif.code;
+        groupe.hidden = true;
+        champ.innerHTML = actif ? `<option value="${escapeHtml(actif.code)}">${escapeHtml(actif.nom)}</option>` : '';
+        champ.value = actif ? actif.code : '';
+        champ.disabled = true;
     }
 
     /**
@@ -892,16 +915,6 @@
         form.addEventListener('input', commencer, { once: true });
         form.addEventListener('change', commencer, { once: true });
         document.getElementById('btn-whatsapp')?.addEventListener('click', () => common?.mesurer?.('preuve_whatsapp'));
-
-        /* ---- Choix du pays ----
-           Premier champ du formulaire, parce qu'il commande tout le reste :
-           tarif, devise, format du numéro et moyens de paiement. */
-        const champPays = document.getElementById('pays');
-        if (champPays && common) {
-            champPays.addEventListener('change', () => {
-                if (!common.choisirPays(champPays.value)) renderPaysSelector();
-            });
-        }
 
         /* ---- Moyens de paiement ----
            Les cartes sont reconstruites à chaque changement de pays : l'écoute se

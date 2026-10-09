@@ -13,32 +13,35 @@
        remplace dès que la réponse de l'API arrive. */
     let FORMATIONS = Array.isArray(window.FORMATIONS) ? window.FORMATIONS : [];
     let SESSIONS = Array.isArray(window.SESSIONS) ? window.SESSIONS : [];
-    let PAYS = Array.isArray(window.PAYS) ? window.PAYS : [];
-    /* Les pays tels que le FICHIER les déclare. Le catalogue de la feuille les
-       remplace, mais une feuille créée avant l'ajout d'une colonne ne peut pas
-       la renseigner : les repères techniques (fuseaux horaires, codes de
-       région) seraient alors perdus, et la reconnaissance du visiteur avec eux.
-       On les récupère d'ici quand la feuille n'a rien à dire. */
-    const PAYS_FICHIER = Array.isArray(window.PAYS) ? window.PAYS.slice() : [];
-    let CONTACT = window.SITE_CONTACT || { whatsappNumber: '25377145306', whatsappDisplay: '+253 77 14 53 06', contactName: 'Ali William' };
+    /* Les pays ne viennent QUE du serveur, déjà réduits au marché du visiteur
+       (api/_lib/marche.js). Le fichier n'en déclare aucun : un numéro ou un tarif
+       écrit dans une page partirait chez tous les visiteurs, de tous les pays. */
+    let PAYS = [];
+    /* Le contact de départ ne porte AUCUN numéro : le WhatsApp joignable est
+       celui du marché du visiteur, et rien d'autre. */
+    let CONTACT = Object.assign({ contactName: 'Ali William' }, window.SITE_CONTACT || {});
+    delete CONTACT.whatsappNumber;
+    delete CONTACT.whatsappDisplay;
 
-    /* ---------- Pays desservis ----------
-       Le pays détermine la devise, l'indicatif, le format des numéros, les
-       moyens de paiement et — surtout — le tarif. Rien n'est converti d'une
-       devise à l'autre : chaque montant est celui qui a été saisi pour ce pays.
-       Le choix du visiteur est conservé d'une page à l'autre, pour qu'il n'ait
-       pas à le refaire en revenant au catalogue. */
-    const CLE_PAYS = 'impactali_pays';
-    let codePays = null;
+    /* ---------- Le marché du visiteur ----------
+       C'EST LE SERVEUR QUI LE DÉCIDE, comme sur les grandes plateformes : le
+       pays de l'adresse IP (Vercel), ou celui que le visiteur a choisi en bas de
+       page. Le catalogue reçu ne contient que ce pays — tarifs, sessions,
+       moyens de paiement, numéro WhatsApp. Trois états, et aucun n'est un pays
+       par défaut :
+       - MARCHE === null       : le serveur n'a pas encore répondu → page neutre ;
+       - MARCHE.code === null  : hors marché (pays non ouvert, ou illisible) →
+                                 formations en ligne, sans tarif ni numéro ;
+       - MARCHE.code = 'KM'…   : l'offre de ce pays, et elle seule. */
+    const CLE_MARCHE = 'impactali_marche';
+    // L'ancien choix (sélecteur du formulaire, devinette par fuseau) ne vaut plus rien
+    try { localStorage.removeItem('impactali_pays'); localStorage.removeItem('impactali_places'); } catch (e) { /* stockage indisponible */ }
+    let MARCHE = null;
+    let MARCHES = [];
 
-    /** Pays réellement proposés (un pays peut être préparé sans être ouvert). */
+    /** Pays présents dans le catalogue reçu : celui du marché, ou aucun. */
     function paysDisponibles() {
         return PAYS.filter(p => p && p.code && p.active !== false);
-    }
-
-    function paysParDefaut() {
-        const liste = paysDisponibles();
-        return liste.find(p => p.defaut) || liste[0] || null;
     }
 
     function trouverPays(code) {
@@ -47,69 +50,46 @@
         return paysDisponibles().find(p => String(p.code).toUpperCase() === cible) || null;
     }
 
-    /**
-     * Pays deviné à partir du navigateur, sans aucune requête ni service tiers.
-     *
-     * Deux indices, déjà présents sur l'appareil : le fuseau horaire déclaré
-     * (« Indian/Comoro », « Africa/Djibouti ») et la région de la langue
-     * (« fr-KM »). Rien n'est envoyé nulle part — contrairement à une
-     * géolocalisation par adresse IP, qui confierait la position du visiteur à
-     * un service extérieur pour un résultat guère plus sûr.
-     *
-     * Une supposition n'est jamais définitive : le sélecteur du formulaire
-     * d'inscription reste maître, et son choix est mémorisé.
-     * @returns {Object|null}
-     */
-    function paysDevine() {
-        const liste = paysDisponibles();
-        if (!liste.length) return null;
-
-        let fuseau = '';
-        try { fuseau = Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (e) { /* non géré */ }
-        if (fuseau) {
-            const parFuseau = liste.find(p => (p.fuseaux || []).some(f => String(f).toLowerCase() === fuseau.toLowerCase()));
-            if (parFuseau) return parFuseau;
-        }
-
-        const langues = []
-            .concat(Array.isArray(navigator.languages) ? navigator.languages : [])
-            .concat(navigator.language ? [navigator.language] : []);
-        for (const langue of langues) {
-            // « fr-KM » → « KM » ; « fr » seul ne dit rien du pays
-            const region = String(langue).split('-')[1];
-            if (!region || region.length !== 2) continue;
-            const parRegion = liste.find(p => (p.regions || []).some(r => String(r).toUpperCase() === region.toUpperCase())
-                || String(p.code).toUpperCase() === region.toUpperCase());
-            if (parRegion) return parRegion;
-        }
-        return null;
-    }
-
-    /**
-     * Pays courant : le choix explicite du visiteur d'abord, sinon celui que
-     * son navigateur laisse deviner, sinon le pays par défaut.
-     */
+    /** Le pays du visiteur, tel que le serveur l'a fixé. null tant qu'il ne l'a pas dit, et hors marché. */
     function paysActif() {
-        if (codePays === null) {
-            let memorise = null;
-            try { memorise = localStorage.getItem(CLE_PAYS); } catch (e) { /* stockage indisponible */ }
-            codePays = trouverPays(memorise) ? String(memorise).toUpperCase() : '';
-        }
-        return trouverPays(codePays) || paysDevine() || paysParDefaut();
+        return MARCHE && MARCHE.code ? trouverPays(MARCHE.code) : null;
+    }
+
+    /* Repère de prixDe() pour l'ancien tarif unique : c'est désormais le pays du
+       marché. Le serveur n'envoie plus ce tarif (il appartenait à un autre pays) ;
+       la règle reste écrite pour garder prixDe() identique à son double serveur. */
+    function paysParDefaut() {
+        return paysActif();
+    }
+
+    /** { code, nom, mode, source } tel que le serveur l'a fixé, ou null en attendant sa réponse. */
+    function marcheActif() {
+        return MARCHE;
+    }
+
+    /** Le choix fait en bas de page : un code, « aucun », ou '' (automatique). */
+    function choixMarche() {
+        try { return localStorage.getItem(CLE_MARCHE) || ''; } catch (e) { return ''; }
     }
 
     /**
-     * Change le pays courant. Les pages écoutent « impactali:pays » pour
-     * réafficher tarifs, devises et coordonnées SANS rechargement.
-     * @returns {boolean} true si le pays a réellement changé
+     * Le visiteur choisit son pays (pied de page). '' = revenir à la détection
+     * automatique. Le choix est envoyé au SERVEUR, qui renvoie le catalogue de
+     * ce pays : aucune donnée d'un autre pays n'était déjà dans la page.
+     * Les pages écoutent « impactali:pays » pour se redessiner.
      */
     function choisirPays(code) {
-        const pays = trouverPays(code);
-        if (!pays || (paysActif() && paysActif().code === pays.code)) return false;
-        codePays = pays.code;
-        try { localStorage.setItem(CLE_PAYS, pays.code); } catch (e) { /* stockage indisponible */ }
-        document.dispatchEvent(new CustomEvent('impactali:pays', { detail: { pays: pays } }));
-        return true;
+        const brut = String(code || '').trim();
+        const valeur = brut.toLowerCase() === 'aucun' ? 'aucun'
+            : (/^[A-Za-z]{2}$/.test(brut) ? brut.toUpperCase() : '');
+        try {
+            if (valeur) localStorage.setItem(CLE_MARCHE, valeur);
+            else localStorage.removeItem(CLE_MARCHE);
+        } catch (e) { /* stockage indisponible : le choix vaut pour cette page */ }
+        return refreshPlaces(true, valeur).then(() => {
+            document.dispatchEvent(new CustomEvent('impactali:pays', { detail: { pays: paysActif() } }));
+            return true;
+        });
     }
 
     function devise(pays) { return (pays || paysActif() || {}).devise || ''; }
@@ -330,7 +310,9 @@
        n'est pas là (ou si l'appel échoue), les valeurs de formations-data.js
        servent de repli : aucune page ne dépend de cet appel pour s'afficher. */
     const ENDPOINTS = window.SITE_ENDPOINTS || {};
-    const CACHE_PLACES = 'impactali_places';
+    /* v2 : le catalogue est réduit au marché du visiteur. Le relevé d'avant
+       contenait tous les pays ; il ne doit jamais être rejoué (effacé plus haut). */
+    const CACHE_PLACES = 'impactali_catalogue_v2';
     const DUREE_CACHE = 60000; // 1 minute : assez pour éviter un appel par page, assez court pour rester juste
 
     /* MÉMOIRE D'APPARENCE — l'adresse réellement posée sur chaque visuel.
@@ -456,24 +438,14 @@
         SESSIONS = Array.isArray(donnees.sessions) ? donnees.sessions : [];
         window.FORMATIONS = FORMATIONS;
         window.SESSIONS = SESSIONS;
-        /* Un catalogue sans pays laisse ceux du fichier en place : sans cette
-           garde, une base pas encore alimentée effacerait devises, indicatifs et
-           coordonnées de paiement, et le formulaire n'aurait plus rien à afficher. */
-        if (Array.isArray(donnees.pays) && donnees.pays.length) {
-            PAYS = donnees.pays.map(pays => {
-                const duFichier = PAYS_FICHIER.find(p =>
-                    String(p.code).toUpperCase() === String(pays.code).toUpperCase());
-                if (!duFichier) return pays;
-                // Repères techniques : ceux de la feuille s'ils existent, ceux du fichier sinon
-                const garder = (valeur, repli) =>
-                    (Array.isArray(valeur) && valeur.length) ? valeur : (repli || []);
-                return Object.assign({}, pays, {
-                    fuseaux: garder(pays.fuseaux, duFichier.fuseaux),
-                    regions: garder(pays.regions, duFichier.regions)
-                });
-            });
-            window.PAYS = PAYS;
-        }
+        /* Le marché fixé par le serveur, et SES pays : celui du visiteur, ou
+           aucun hors marché. Pris tels quels, même vides — un pays gardé d'une
+           réponse précédente afficherait le tarif et le numéro d'un autre marché. */
+        MARCHE = donnees.marche && typeof donnees.marche === 'object'
+            ? donnees.marche : { code: null, nom: null, mode: null, source: 'inconnu' };
+        MARCHES = Array.isArray(donnees.marches) ? donnees.marches.filter(m => m && m.code && m.nom) : [];
+        PAYS = Array.isArray(donnees.pays) ? donnees.pays : [];
+        window.PAYS = PAYS;
         // Même garde pour les réalisations : une base vide n'efface pas l'accueil
         if (Array.isArray(donnees.portfolio) && donnees.portfolio.length) {
             window.PORTFOLIO = donnees.portfolio.map(item => Object.assign({}, item, {
@@ -482,6 +454,9 @@
         }
         if (donnees.reglages && Object.keys(donnees.reglages).length) {
             CONTACT = Object.assign({}, CONTACT, donnees.reglages);
+            // Un numéro « général » n'est jamais un contact public : celui du marché seul l'est
+            delete CONTACT.whatsappNumber;
+            delete CONTACT.whatsappDisplay;
             window.SITE_CONTACT = CONTACT;
         }
         placesEnDirect.clear();
@@ -885,10 +860,12 @@
      * Interroge l'API : catalogue à jour et nombre d'inscrits par session.
      * Un seul appel sert les deux, pour ne pas doubler l'attente au chargement.
      * @param {boolean} force ignore le cache (après une inscription, par exemple)
+     * @param {string} [choix] le pays choisi en bas de page (sinon celui mémorisé ; '' = automatique)
      */
-    function refreshPlaces(force) {
+    function refreshPlaces(force, choix) {
         const url = ENDPOINTS.registration;
         if (!url) return Promise.resolve(false);
+        const marcheDemande = choix === undefined ? choixMarche() : choix;
 
         const appliquer = donnees => {
             // Les textes sont indépendants du catalogue : ils s'appliquent même
@@ -912,7 +889,9 @@
                    revient pendant une minute. */
                 let modifieLe = 0;
                 try { modifieLe = Number(localStorage.getItem('impactali_maj')) || 0; } catch (e) { }
-                if (cache && cache.horodatage > modifieLe) {
+                /* Un relevé ne vaut que pour le choix de pays qui l'a obtenu : sans
+                   cette garde, changer de pays rejouerait l'offre de l'autre. */
+                if (cache && cache.horodatage > modifieLe && (cache.choix || '') === marcheDemande) {
                     /* AFFICHER D'ABORD, VÉRIFIER ENSUITE. Le relevé retenu est
                        posé tout de suite, même s'il a passé sa minute : il vaut
                        toujours mieux que les valeurs du fichier, qui datent du
@@ -932,7 +911,8 @@
            site même, rien ne bloque sa lecture directe — et une balise
            <script> exécute ce qu'on lui sert, quand fetch ne fait que le lire. */
         const interroger = action => {
-            const cible = `${url}${url.includes('?') ? '&' : '?'}action=${action}`;
+            const cible = `${url}${url.includes('?') ? '&' : '?'}action=${action}`
+                + (marcheDemande ? `&marche=${encodeURIComponent(marcheDemande)}` : '');
             return fetch(cible, { method: 'GET' })
                 .then(reponse => (reponse.ok ? reponse.json() : Promise.reject(new Error('HTTP ' + reponse.status))));
         };
@@ -947,11 +927,19 @@
             })
             .then(donnees => {
                 try {
-                    localStorage.setItem(CACHE_PLACES, JSON.stringify({ horodatage: Date.now(), releve: donnees }));
+                    localStorage.setItem(CACHE_PLACES, JSON.stringify({ horodatage: Date.now(), releve: donnees, choix: marcheDemande }));
                 } catch (e) { /* stockage indisponible : sans conséquence */ }
                 return appliquer(donnees);
             })
-            .catch(() => false); // endpoint absent ou non déployé : on garde les valeurs du fichier
+            .catch(() => {
+                /* Serveur injoignable : la page reste NEUTRE (hors marché), jamais
+                   un pays deviné. Sans cette issue, elle attendrait indéfiniment. */
+                if (!MARCHE) {
+                    MARCHE = { code: null, nom: null, mode: null, source: 'indisponible' };
+                    window.setTimeout(() => document.dispatchEvent(new CustomEvent('impactali:catalogue')), 0);
+                }
+                return false;
+            });
     }
 
     function nextOpenSession(formId) {
@@ -959,24 +947,33 @@
     }
 
     /**
-     * Numéro WhatsApp joignable : celui du pays du visiteur quand il est
-     * renseigné, sinon le contact général du site. Un pays sans numéro propre
-     * ne doit pas rendre le site injoignable.
+     * Numéro WhatsApp joignable : celui du MARCHÉ du visiteur, et aucun autre.
+     * Il n'y a plus de numéro « général » de repli : c'était celui de Djibouti,
+     * servi à tout pays sans numéro propre. Hors marché, il n'y a pas de numéro.
      */
     function numeroWhatsapp() {
         const pays = paysActif();
-        const propre = pays && String(pays.whatsappNumber || '').replace(/\D/g, '');
-        return propre || String(CONTACT.whatsappNumber || '').replace(/\D/g, '');
+        return pays ? String(pays.whatsappNumber || '').replace(/\D/g, '') : '';
     }
 
-    /** Numéro tel qu'on l'écrit dans les pages, mêmes règles de repli. */
+    /** Numéro tel qu'on l'écrit dans les pages : celui du marché, ou rien. */
     function numeroWhatsappAffiche() {
         const pays = paysActif();
-        return (pays && String(pays.whatsappDisplay || '').trim()) || String(CONTACT.whatsappDisplay || '').trim();
+        return pays ? String(pays.whatsappDisplay || '').trim() : '';
     }
 
+    /**
+     * Lien de contact prérempli : WhatsApp au numéro du marché ; sans numéro
+     * (hors marché, ou pays sans WhatsApp), un e-mail à l'adresse du site, avec
+     * le même message. Jamais un lien WhatsApp sans destinataire.
+     */
     function whatsappUrl(message) {
-        return `https://wa.me/${numeroWhatsapp()}?text=${encodeURIComponent(message)}`;
+        const numero = numeroWhatsapp();
+        if (numero) return `https://wa.me/${numero}?text=${encodeURIComponent(message)}`;
+        const adresse = emailContact();
+        return adresse
+            ? `mailto:${adresse}?subject=${encodeURIComponent('Question sur vos formations')}&body=${encodeURIComponent(message)}`
+            : '#';
     }
 
     function formatPrice(price, currency) {
@@ -992,11 +989,16 @@
      *  - 'none'      : aucune session annoncée
      *  - 'inactive'  : la formation n'est pas publiée
      *  - 'invalid'   : la session demandée n'existe pas pour cette formation
-     * @returns {{state: 'open'|'full'|'closed'|'none'|'inactive'|'invalid', session: Session|null}}
+     *  - 'attente'   : le serveur n'a pas encore dit le pays du visiteur → rien à proposer encore
+     *  - 'hors-marche' : le visiteur n'est dans aucun pays ouvert → pas d'inscription en ligne
+     *                  (sans pays, ni tarif, ni moyen de paiement : le serveur la refuserait)
+     * @returns {{state: 'open'|'full'|'closed'|'none'|'inactive'|'invalid'|'attente'|'hors-marche', session: Session|null}}
      */
     function sessionState(formId, requestedSessionId) {
         const formation = findFormation(formId);
         if (!formation || formation.active === false) return { state: 'inactive', session: null };
+        if (!MARCHE) return { state: 'attente', session: null };
+        if (!MARCHE.code || !paysActif()) return { state: 'hors-marche', session: null };
         const sessions = upcomingSessions().filter(session => session.formId === (formation?.formId || formId));
 
         if (requestedSessionId) {
@@ -1166,19 +1168,27 @@
         }
     }
 
+    /* Les pages ne portent AUCUN numéro écrit en dur : tout vient d'ici, au
+       numéro du marché. Sans numéro, le lien devient un e-mail — sauf le bouton
+       flottant au logo WhatsApp, qui disparaît plutôt que de mentir. */
     function initWhatsappLinks() {
+        const brut = numeroWhatsapp();
         document.querySelectorAll('[data-whatsapp-message]').forEach(link => {
+            if (!brut && (link.hasAttribute('data-whatsapp-float') || link.id === 'whatsapp-float')) {
+                link.hidden = true;
+                link.removeAttribute('href');
+                return;
+            }
+            link.hidden = false;
             link.href = whatsappUrl(link.dataset.whatsappMessage);
         });
 
         const affiche = numeroWhatsappAffiche();
-        if (affiche) {
-            document.querySelectorAll('[data-whatsapp-affiche]').forEach(el => { el.textContent = affiche; });
-        }
-        const brut = numeroWhatsapp();
-        if (brut) {
-            document.querySelectorAll('[data-whatsapp-tel]').forEach(el => { el.href = `tel:+${brut}`; });
-        }
+        document.querySelectorAll('[data-whatsapp-affiche]').forEach(el => { el.textContent = affiche; });
+        document.querySelectorAll('[data-whatsapp-tel]').forEach(el => {
+            if (brut) el.href = `tel:+${brut}`;
+            else el.removeAttribute('href');
+        });
     }
 
     /* ====== MESURE D'AUDIENCE ======
@@ -1258,8 +1268,9 @@
         refreshPlaces,
         paysDisponibles,
         paysParDefaut,
-        paysDevine,
         paysActif,
+        marcheActif,
+        choixMarche,
         choisirPays,
         trouverPays,
         numeroWhatsapp,
@@ -1334,49 +1345,46 @@
     });
 
     /**
-     * Choix du pays, atteignable depuis n'importe quelle page.
+     * Le pays, en bas de page — discret, comme sur les grands sites.
      *
-     * Le seul sélecteur du site vivait dans le formulaire d'inscription — donc
-     * masqué précisément quand aucune session n'est ouverte, c'est-à-dire au
-     * moment où un visiteur mal reconnu n'avait plus aucun recours : il voyait
-     * les tarifs et le numéro d'un autre pays sans pouvoir rien y changer.
-     * Le pied de page existe sur toutes les pages, y compris les fiches
-     * générées : on s'y greffe, sans toucher à neuf fichiers HTML.
+     * Le pays est DÉTECTÉ par le serveur ; ce sélecteur n'est qu'un recours pour
+     * le visiteur mal reconnu (VPN, itinérance) ou qui cherche délibérément
+     * l'offre d'un autre pays. Il ne porte que des NOMS de pays : l'offre d'un
+     * autre pays n'est demandée au serveur qu'une fois choisie. Le pied de page
+     * existe sur toutes les pages, fiches générées comprises : on s'y greffe.
      */
     function initChoixPays() {
-        const dispo = paysDisponibles();
         const hote = document.querySelector('.site-footer__brand');
         if (!hote) return;
-
         const ancien = hote.querySelector('.choix-pays');
-        // Un seul pays desservi : il n'y a rien à choisir, on n'encombre pas
-        if (dispo.length < 2) { if (ancien) ancien.remove(); return; }
         if (ancien) ancien.remove();
+        // Rien à proposer tant que le serveur n'a pas dit quels pays sont ouverts
+        if (!MARCHE || !MARCHES.length) return;
 
+        const choix = choixMarche();
+        const detecte = choix ? '' : (MARCHE.code ? MARCHE.nom : 'autre pays');
         const boite = document.createElement('div');
         boite.className = 'choix-pays';
         boite.innerHTML =
-            '<label class="choix-pays__label" for="choix-pays-pied">Votre pays</label>'
+            '<label class="choix-pays__label" for="choix-pays-pied">Pays</label>'
             + '<select class="choix-pays__select" id="choix-pays-pied">'
-            + dispo.map(p => `<option value="${escapeHtml(p.code)}">${escapeHtml(p.nom)}`
-                + (p.devise ? ` (${escapeHtml(p.devise)})` : '') + '</option>').join('')
+            + `<option value="">${escapeHtml('Automatique' + (detecte ? ` (${detecte})` : ''))}</option>`
+            + MARCHES.map(m => `<option value="${escapeHtml(m.code)}">${escapeHtml(m.nom)}</option>`).join('')
+            + '<option value="aucun">Autre pays</option>'
             + '</select>'
-            + '<span class="choix-pays__aide">Les tarifs et le numéro de contact affichés suivent ce choix.</span>';
+            + '<span class="choix-pays__aide">Les formations, tarifs et contacts affichés sont ceux de ce pays.</span>';
         hote.appendChild(boite);
 
         const select = boite.querySelector('select');
-        const actif = paysActif();
-        if (actif) select.value = actif.code;
-        select.addEventListener('change', () => { choisirPays(select.value); });
+        select.value = [...select.options].some(o => o.value === choix) ? choix : '';
+        select.addEventListener('change', () => {
+            select.disabled = true;
+            choisirPays(select.value).then(() => { select.disabled = false; });
+        });
     }
 
-    /* Le pays peut changer depuis le formulaire d'inscription : le sélecteur du
-       pied doit dire la même chose, sinon les deux se contrediraient à l'écran. */
-    document.addEventListener('impactali:pays', () => {
-        const select = document.getElementById('choix-pays-pied');
-        const actif = paysActif();
-        if (select && actif && select.value !== actif.code) select.value = actif.code;
-    });
+    // Le pays a changé : le sélecteur se redessine (le libellé « Automatique » suit le pays détecté)
+    document.addEventListener('impactali:pays', initChoixPays);
 
     // La liste des pays vient de la feuille : elle peut changer en cours de route
     document.addEventListener('impactali:catalogue', initChoixPays);

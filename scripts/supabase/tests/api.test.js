@@ -13,6 +13,7 @@ const tls = require('tls');
 const { baseNeuve, verificateur } = require('./outils');
 const { catalogueVersSql } = require('../import-catalogue');
 const { lireCatalogue } = require('../../../api/_lib/catalogue');
+const { catalogueDuMarche } = require('../../../api/_lib/marche');
 const { creerGestionnaire } = require('../../../api/index.js');
 const { RACINE_SUPABASE } = require('../../../api/_lib/base');
 
@@ -36,7 +37,8 @@ async function appeler(gestionnaire, methode, url, corps) {
     setHeader(k, v) { this.entetes[k.toLowerCase()] = v; },
     end(corps) { this.corps = corps || ''; }
   };
-  await gestionnaire({ method: methode, url, body: corps, headers: { 'x-forwarded-for': '41.223.0.10' } }, res);
+  /* Un visiteur des Comores : Vercel joint le pays de l'adresse IP à chaque requête. */
+  await gestionnaire({ method: methode, url, body: corps, headers: { 'x-forwarded-for': '41.223.0.10', 'x-vercel-ip-country': 'KM' } }, res);
   let json = null;
   try { json = JSON.parse(res.corps); } catch (e) { /* corps vide ou non JSON */ }
   return { statut: res.statusCode, entetes: res.entetes, json };
@@ -61,7 +63,9 @@ const sansMaj = c => { const { maj, ...reste } = c || {}; return reste; };
   const cat = await appeler(api, 'GET', '/api?action=catalogue');
   verifier('catalogue : réponse 200', cat.statut, 200);
   verifier('catalogue : en JSON', cat.entetes['content-type'], 'application/json; charset=utf-8');
-  verifier('catalogue : le même que la base', sansMaj(cat.json), sansMaj(await lireCatalogue(db)));
+  verifier('catalogue : celui de la base, réduit au marché du visiteur (Comores)', sansMaj(cat.json),
+    sansMaj(catalogueDuMarche(await lireCatalogue(db), { code: 'KM', source: 'ip' })));
+  verifier('catalogue : une copie par pays dans le réseau de Vercel', cat.entetes['vary'], 'X-Vercel-IP-Country');
   verifier('catalogue : daté', typeof (cat.json && cat.json.maj), 'string');
   /* Contre-contrôle : une comparaison de deux réponses vides passerait seule. */
   verifier('catalogue : 5 formations, réellement', cat.json && cat.json.formations.length, 5);

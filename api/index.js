@@ -14,12 +14,16 @@
 
 const crypto = require('crypto');
 const { base } = require('./_lib/base');
-const { lireCatalogue, compterInscrits } = require('./_lib/catalogue');
+const { lireCatalogue } = require('./_lib/catalogue');
 const { recevoirInscription } = require('./_lib/inscription');
 const { alerteInscription, envoyer: envoyerCourriel } = require('./_lib/courriel');
 const { executer: executerCommande, SUPABASE_URL } = require('./_lib/admin');
 const { lirePhoto } = require('./_lib/photos');
 const { recevoirMesure, TAILLE_MAX_MESURE } = require('./_lib/mesures');
+const { choisirMarche, catalogueDuMarche, placesDuMarche } = require('./_lib/marche');
+
+/** Un en-tête de la requête, en texte ('' s'il manque). */
+const entete = (req, nom) => String((req.headers && req.headers[nom]) || '');
 
 /* Les places changent à chaque confirmation : 15 secondes de cache partagé,
    pas plus (audit P1). Le script Google relisait toute la feuille à chaque
@@ -110,8 +114,17 @@ function creerGestionnaire(obtenirBase, { envoyer = envoyerCourriel, sel = selPa
     try {
       if (req.method === 'GET' || req.method === 'HEAD') {
         if (parametres.has('photo')) return servirPhoto(res, await lirePhoto(obtenirBase(), parametres.get('photo')));
-        if (action === 'catalogue') return repondre(res, 200, await lireCatalogue(obtenirBase()), CACHE_COURT);
-        if (action === 'places') return repondre(res, 200, { sessions: await compterInscrits(obtenirBase()) }, CACHE_COURT);
+        /* Le catalogue et les places ne partent que pour le MARCHÉ du visiteur :
+           le pays de son adresse IP, ou celui qu'il a choisi (api/_lib/marche.js).
+           Le réseau de Vercel garde une copie par pays, jamais celle d'un autre. */
+        if (action === 'catalogue' || action === 'places') {
+          const indices = { demande: parametres.get('marche') || '', ip: entete(req, 'x-vercel-ip-country') };
+          res.setHeader('Vary', 'X-Vercel-IP-Country');
+          const complet = await lireCatalogue(obtenirBase());
+          const choix = choisirMarche(complet, indices);
+          if (action === 'catalogue') return repondre(res, 200, catalogueDuMarche(complet, choix), CACHE_COURT);
+          return repondre(res, 200, { sessions: await placesDuMarche(obtenirBase(), complet.places, choix.code) }, CACHE_COURT);
+        }
         if (action === 'version') return repondre(res, 200, await etat(obtenirBase));
         /* Ce dont la page de connexion a besoin pour parler à Supabase Auth.
            La clé « publishable » est publique par conception : avec la RLS

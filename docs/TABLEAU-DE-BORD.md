@@ -77,6 +77,29 @@ rien facturer).
 Les marchés desservis. Pour chacun : devise, indicatif téléphonique, format des
 numéros, moyens de paiement, et votre numéro de contact local.
 
+**Chaque visiteur ne voit que l'offre de SON pays.** C'est le serveur qui le
+reconnaît, d'après son adresse IP (Vercel la localise pour chaque visite), et qui
+ne lui envoie que ce pays : ses sessions, ses tarifs, ses moyens de paiement, son
+numéro WhatsApp. Un visiteur de Djibouti ne reçoit jamais le numéro, les tarifs
+ni les sessions des Comores — même dans le code de la page —, et inversement.
+
+| Le visiteur est… | Il voit |
+|---|---|
+| dans un pays **ouvert** (actif) | l'offre de ce pays, et elle seule |
+| ailleurs (France, Mayotte…) ou impossible à situer | les formations présentées **en ligne**, sans tarif, sans session, sans numéro ; contact par e-mail |
+
+Tout en bas de chaque page, un sélecteur discret « Pays » permet à un visiteur
+mal reconnu (VPN, téléphone en itinérance) de choisir son pays lui-même. Il ne
+montre que des noms de pays.
+
+**Ouvrir un nouveau pays** (France, Madagascar…) : créez-le ici avec sa devise,
+son indicatif, ses moyens de paiement et son WhatsApp, cochez-le **actif**, puis
+donnez-lui des tarifs (onglet Formations) et des sessions en ligne. Ses visiteurs
+le reçoivent aussitôt — sans rien publier.
+
+Le **numéro WhatsApp général** des Réglages n'est plus montré à personne : seul
+le numéro du pays du visiteur l'est.
+
 **Un changement de moyen de paiement vous est signalé par e-mail**, sur
 infos@impactali.site, avec l'ancien et le nouveau numéro côte à côte. Si vous
 recevez ce message sans avoir rien changé, changez aussitôt le mot de passe de
@@ -89,6 +112,18 @@ yeux pendant qu'il tape le sien. Votre vrai numéro se saisit dans
 
 ### Réalisations
 Le portfolio affiché sur l'accueil.
+
+**Les vidéos de vos classes** (section « En classe » de l'accueil) se rangent
+ici aussi : une réalisation de catégorie **« En classe »**, avec le lien YouTube
+de la vidéo (un Short vertical, mis en ligne en « non répertorié »). Elle quitte
+alors la grille des réalisations et s'affiche dans la bande des vidéos de classe,
+au format vertical. Titre conseillé : la formation et l'année (« Promotion
+Canva Pro · 2025 »). La section reste invisible tant qu'aucune n'est saisie.
+
+Rien ne se charge chez YouTube avant que le visiteur touche la vidéo : la page
+reste légère sur une connexion mobile. Sous les vidéos, une phrase dit à chaque
+visiteur comment se tiennent SES séances : « en présentiel » aux Comores, « en
+ligne, en direct » à Djibouti.
 
 ### Visuels du site
 Les photos remplaçables. Voir [VISUELS.md](VISUELS.md).

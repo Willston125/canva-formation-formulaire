@@ -779,10 +779,12 @@
     { section: 'La réalisation' },
     { cle: 'title', libelle: 'Titre', type: 'text', requis: true, large: true },
     { cle: 'category', libelle: 'Catégorie', type: 'text',
-      aide: 'Affichée au-dessus du titre. Ex. Affiche, Vidéo, Identité visuelle.' },
+      aide: 'Affichée au-dessus du titre. Ex. Affiche, Vidéo, Identité visuelle. « En classe » + une vidéo '
+        + 'YouTube (un Short vertical) : la vidéo quitte cette grille et s’affiche dans la section « En classe » '
+        + 'de l’accueil, au format vertical. Titre conseillé : la formation et l’année, ex. « Promotion Canva Pro · 2025 ».' },
     { cle: 'href', libelle: 'Lien (facultatif)', type: 'url', aide: 'Vers le projet publié, si vous en avez un. Ignoré si une vidéo est renseignée.' },
     { cle: 'video', libelle: 'Vidéo YouTube (facultatif)', type: 'url', large: true,
-      aide: 'Collez le lien de la vidéo : youtube.com/watch?v=… ou youtu.be/… La carte affiche alors '
+      aide: 'Collez le lien de la vidéo : youtube.com/watch?v=…, youtu.be/… ou youtube.com/shorts/… La carte affiche alors '
         + 'un bouton de lecture, et la vidéo s’ouvre sur le site. Sans visuel téléversé, la miniature '
         + 'de YouTube est utilisée.' },
     { cle: 'description', libelle: 'Description', type: 'textarea', large: true },
