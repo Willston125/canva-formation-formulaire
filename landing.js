@@ -470,8 +470,22 @@
         reducedMotion.addEventListener?.('change', startAuto, { signal });
         window.addEventListener('resize', () => window.requestAnimationFrame(() => positionTrack(false)), { signal, passive: true });
 
+        /* Le démarrage est PROGRAMMÉ (image suivante, et 120 ms plus tard en
+           secours) : un carrousel reconstruit entre-temps doit l'annuler. Sinon
+           l'ancien démarrait quand même, après sa destruction, et son minuteur
+           pilotait des cartes retirées de la page : deux minuteurs se
+           disputaient la piste, et le défilement paraissait figé. C'est ce qui
+           arrivait à chaque chargement depuis que les cartes sont redessinées à
+           la réponse du serveur (le pays du visiteur décide de leurs badges). */
+        let detruit = false;
+        let imageDeDemarrage = 0;
+        let secoursDeDemarrage = 0;
+
         carrouselActif = {
             detruire() {
+                detruit = true;
+                window.cancelAnimationFrame(imageDeDemarrage);
+                window.clearTimeout(secoursDeDemarrage);
                 controleur.abort();
                 stopAuto();
                 window.clearTimeout(state.restartTimer);
@@ -479,10 +493,10 @@
             }
         };
 
-        const boot = () => { positionTrack(false); startAuto(); };
-        window.requestAnimationFrame(boot);
+        const boot = () => { if (detruit) return; positionTrack(false); startAuto(); };
+        imageDeDemarrage = window.requestAnimationFrame(boot);
         // Onglet ouvert en arrière-plan : requestAnimationFrame attend l'affichage, on positionne quand même
-        window.setTimeout(boot, 120);
+        secoursDeDemarrage = window.setTimeout(boot, 120);
     }
 
     // ---------- Fiche rapide (formations sans page dédiée) ----------

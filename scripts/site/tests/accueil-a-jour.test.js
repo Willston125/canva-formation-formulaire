@@ -137,6 +137,19 @@ bac.common = { paysActif: () => null };
 verifier('sans résolution disponible, les valeurs de la session servent de repli',
   lieuEtMode({ location: 'Saalam Tower', mode: 'Présentiel' }), 'Saalam Tower · Présentiel');
 
+// ------------- 4. UN CARROUSEL RECONSTRUIT NE LAISSE PAS DE FANTÔME -------------
+
+/* Le démarrage du carrousel est programmé (image suivante, et 120 ms plus tard
+   en secours). Reconstruit entre-temps — ce qui arrive à chaque chargement,
+   quand la réponse du serveur redessine les badges —, l'ancien démarrait quand
+   même : deux minuteurs se disputaient la piste et le défilement paraissait
+   figé (mesuré le 10 octobre 2026 : deux minuteurs actifs au lieu d'un). */
+verifier('un carrousel détruit annule son démarrage programmé',
+  /window\.cancelAnimationFrame\(imageDeDemarrage\);/.test(init)
+  && /window\.clearTimeout\(secoursDeDemarrage\);/.test(init), true);
+verifier('et ne démarre plus, même si l’annonce arrive trop tard',
+  /const boot = \(\) => \{ if \(detruit\) return;/.test(init), true);
+
 // ---------------------------------- BILAN ----------------------------------
 resultats.forEach(l => console.log(l));
 const echecs = resultats.filter(l => l.indexOf('ÉCHEC') === 0).length;
