@@ -119,7 +119,7 @@
      * Une même session se tient en présentiel à Djibouti et en ligne ailleurs ;
      * son lieu n'a de sens que là où elle est physique, et son tarif change de
      * montant ET de devise d'un pays à l'autre. Un seul jeu de valeurs pour
-     * tous les pays affichait donc « Saalam Tower » à un candidat comorien qui
+     * tous les pays affichait donc l'adresse d'un autre pays à un candidat qui
      * suit la formation depuis chez lui.
      *
      * Rend toujours un objet, jamais `null` : l'appelant lit ses champs sans
@@ -192,8 +192,8 @@
             /* Une session ne porte qu'UN prix, donc une seule devise. Dès qu'elle
                est proposée dans plusieurs pays, ce montant ne peut pas valoir
                pour tous : on l'écarte, et le tarif de la formation — saisi pays
-               par pays — reprend la main. Sans cela, ouvrir aux Comores une
-               session djiboutienne à 7 500 FDJ affichait « 7 500 KMF ». */
+               par pays — reprend la main. Sans cela, ouvrir à un second pays une
+               session tarifée pour le premier affichait son montant dans la devise du second. */
             if (codesSession.length > 1) return null;
             return sessionOuverteAu(objet, pays.code) && typeof objet.price === 'number' ? objet.price : null;
         }
@@ -201,8 +201,8 @@
         /* `price` est le tarif unique d'avant les tarifs par pays. Il ne vaut
            QUE pour un objet qui n'a aucune table : en sortir un montant parce
            que le pays demandé se trouve être celui par défaut faisait afficher
-           les 7 500 FDJ djiboutiens en « 7 500 KMF » dès qu'on désignait les
-           Comores par défaut. Personne n'a saisi ce tarif. Un tarif non fixé
+           le montant d'un pays dans la devise d'un autre, dès qu'on changeait
+           de pays par défaut. Personne n'a saisi ce tarif. Un tarif non fixé
            s'annonce « À confirmer » — jamais converti, jamais recopié. */
         if (objet.prices && typeof objet.prices === 'object') return null;
 
@@ -211,7 +211,7 @@
         return null;
     }
 
-    /** « 7 500 FDJ » pour la formation ou la session donnée, dans le pays courant. */
+    /** Le montant suivi de la devise, pour la formation ou la session donnée, dans le pays courant. */
     function formatPrixDe(objet, code) {
         const pays = trouverPays(code) || paysActif();
         return formatPrice(prixDe(objet, pays && pays.code), devise(pays));

@@ -284,8 +284,8 @@
             if (s.schedule) lignes.push(['schedule', s.schedule]);
             /* Mode et lieu se résolvent POUR LE PAYS du candidat : une même
                session se tient en présentiel ici et en ligne ailleurs. Lire
-               s.location directement annonçait « Saalam Tower » à un Comorien
-               qui suit la formation depuis chez lui. */
+               s.location directement annonçait l'adresse d'un autre pays à un
+               candidat qui suit la formation depuis chez lui. */
             const lieu = sessionLieu(s);
             const mode = sessionMode(s);
             if (lieu) lignes.push(['location_on', lieu]);
@@ -1218,7 +1218,7 @@
             // un moyen ajouté pour un nouveau pays doit être validé comme les autres.
             const paiementValue = paiementSelect.value;
             const choisi = currentPaymentMethods().find(method => method.value === paiementValue);
-            if (choisi ? choisi.kind === 'mobile' : ['Waafi Mobile Money', 'Cacpay', 'D-Money'].includes(paiementValue)) {
+            if (choisi && choisi.kind === 'mobile') {
                 const telPaiement = document.getElementById('tel-paiement');
                 if (!telPaiement.value.trim()) {
                     showFieldError(telPaiement, 'Veuillez entrer votre numéro de paiement');
@@ -1337,7 +1337,8 @@
     function handlePaymentChange() {
         const value = paiementSelect.value;
         const method = currentPaymentMethods().find(item => item.value === value);
-        const isMobile = method ? method.kind === 'mobile' : ['Waafi Mobile Money', 'Cacpay'].includes(value);
+        // La base exige la nature de chaque moyen (mobile ou espèces) : plus de liste de noms
+        const isMobile = !!method && method.kind === 'mobile';
 
         if (isMobile) {
             show(telPaiementGroup);

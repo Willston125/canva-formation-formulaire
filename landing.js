@@ -268,11 +268,11 @@
     let carrouselActif = null;
 
     /**
-     * « American corner · Présentiel » — pour le PAYS du visiteur.
+     * « <lieu> · Présentiel » — pour le PAYS du visiteur.
      *
      * La carte annonçait `session.location` et `session.mode` bruts. Une même
      * session se tient en présentiel ici et en ligne ailleurs : un candidat
-     * comorien lisait donc l'adresse djiboutienne, alors que la fiche, elle,
+     * lisait donc l'adresse d'un autre pays, alors que la fiche, elle,
      * avait déjà été corrigée. Sans lieu connu, on n'écrit que le mode — et
      * jamais un séparateur tout seul.
      */

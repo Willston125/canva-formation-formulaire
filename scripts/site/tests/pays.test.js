@@ -58,12 +58,13 @@ const numerosDans = f => NUMEROS.flatMap(m => (lire(f).match(m) || []).map(x => 
 verifier('aucun numéro de téléphone ni de compte dans les pages', PAGES.flatMap(numerosDans), []);
 verifier('ni dans les scripts publics, commentaires compris', SCRIPTS.flatMap(numerosDans), []);
 
-/* Ce qui ne vaut que pour UN pays, dans ce que la page montre. Les scripts en
-   parlent dans leurs explications (« un Comorien lisait Saalam Tower ») : ce
-   n'est pas une offre ; les pages, elles, n'en écrivent aucune. */
-const D_UN_PAYS = /Waafi|Cacpay|Mvola|Saalam|American corner|\bFDJ\b|\bKMF\b/g;
-verifier('aucun moyen de paiement, lieu ni devise d’un pays dans les pages',
-  PAGES.flatMap(f => (lire(f).match(D_UN_PAYS) || []).map(x => `${f} : ${x}`)), []);
+/* Ce qui ne vaut que pour UN pays : un moyen de paiement, un lieu, une devise.
+   Ni les pages ni les scripts publics n'en nomment — pas même dans un
+   commentaire : le code d'un script se lit dans n'importe quel navigateur. */
+const D_UN_PAYS = /Waafi|Cacpay|D-Money|Mvola|Saalam|American corner|\bFDJ\b|\bKMF\b/g;
+const nommes = f => (lire(f).match(D_UN_PAYS) || []).map(x => `${f} : ${x}`);
+verifier('aucun moyen de paiement, lieu ni devise d’un pays dans les pages', PAGES.flatMap(nommes), []);
+verifier('ni dans les scripts publics', SCRIPTS.flatMap(nommes), []);
 
 // --- 3. Le site ne devine plus le pays : il le reçoit ---------------------------
 
