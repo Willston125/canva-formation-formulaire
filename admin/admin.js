@@ -936,7 +936,7 @@
       return f ? (f.shortTitle || f.title) : formId;
     };
 
-    var aide = '<p class="aide">La fenêtre s’ouvre 4 secondes après l’arrivée : à chaque arrivée sur l’accueil, '
+    var aide = '<p class="aide">La fenêtre s’ouvre 5 secondes après l’arrivée : à chaque arrivée sur l’accueil, '
       + 'une fois par visite sur une fiche formation. Jamais sur la page d’inscription, ni pendant qu’un visiteur '
       + 'remplit le formulaire. Plusieurs annonces en ligne passent à tour de rôle. Chaque visiteur ne reçoit que '
       + 'celles de son pays : une affiche qui porte un prix, un numéro ou une adresse doit viser son seul pays.</p>'

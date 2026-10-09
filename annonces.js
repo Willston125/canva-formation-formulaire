@@ -11,7 +11,7 @@
  * part jamais ailleurs. Ce fichier ne choisit que laquelle montrer, et quand.
  *
  * QUAND. Décisions du propriétaire (9 octobre 2026) :
- * - 4 secondes après l'arrivée — le temps de voir où l'on est ;
+ * - 5 secondes après l'arrivée — le temps de voir où l'on est ;
  * - sur l'accueil, à chaque arrivée, en faisant tourner les annonces ;
  * - sur une fiche formation, une fois par visite au plus ;
  * - jamais pendant une inscription : un visiteur qui a commencé à remplir le
@@ -33,9 +33,10 @@
     const common = window.SiteCommon;
     if (!common || !common.annoncesDuVisiteur) return;
 
-    const DELAI_MS = 4000;
-    // Au-delà, le visiteur est déjà ailleurs : une fenêtre tardive le couperait en pleine lecture
-    const ATTENTE_MAX_MS = 15000;
+    const DELAI_MS = 5000;
+    /* Au-delà, le visiteur est déjà ailleurs : une fenêtre tardive le couperait
+       en pleine lecture. Assez large pour un réseau mobile lent. */
+    const ATTENTE_MAX_MS = 20000;
     const CHARGEMENT_MAX_MS = 8000;
     const ECRAN_LARGE = '(min-width: 900px)';
     // Par visiteur seulement : quelle annonce vient ensuite, et si une fiche en a déjà montré une
@@ -238,7 +239,16 @@
     function tenter() {
         if (!permise()) return;
         const annonce = choisir();
-        if (!annonce) return;
+        /* Rien à montrer POUR L'INSTANT n'est pas « rien à montrer ». La page
+           pose d'abord le catalogue gardé de la visite précédente, puis celui
+           du serveur quand il arrive — lentement sur un réseau mobile. Une
+           copie d'avant la création de l'annonce n'en contient aucune : s'y
+           arrêter, c'était ne jamais ouvrir l'annonce sur la première page de
+           la visite, et l'ouvrir seulement sur la suivante (relevé le
+           9 octobre 2026 : elle s'ouvrait sur les fiches, pas sur l'accueil).
+           On attend donc la réponse du serveur, tant que la fenêtre
+           d'ouverture n'est pas passée. */
+        if (!annonce) { attendreLeCatalogue(); return; }
         charger(versionPour(annonce))
             .then(img => {
                 // Le chargement a pris du temps : on revérifie que le visiteur est toujours disponible
@@ -247,9 +257,8 @@
             .catch(() => { /* affiche introuvable : pas de fenêtre, et rien de compté */ });
     }
 
-    /** Le catalogue a peut-être déjà répondu ; sinon on l'attend, mais pas indéfiniment. */
-    function quandLeCatalogueEstLa() {
-        if (common.annoncesDuVisiteur() !== null) { tenter(); return; }
+    /** Le prochain catalogue reçu relance l'essai — mais pas indéfiniment. */
+    function attendreLeCatalogue() {
         const surCatalogue = () => {
             document.removeEventListener('impactali:catalogue', surCatalogue);
             if (Date.now() - depart <= ATTENTE_MAX_MS) tenter();
@@ -266,12 +275,12 @@
                 if (document.hidden) return;
                 document.removeEventListener('visibilitychange', auRetour);
                 depart = Date.now();
-                window.setTimeout(quandLeCatalogueEstLa, DELAI_MS);
+                window.setTimeout(tenter, DELAI_MS);
             };
             document.addEventListener('visibilitychange', auRetour);
             return;
         }
-        window.setTimeout(quandLeCatalogueEstLa, DELAI_MS);
+        window.setTimeout(tenter, DELAI_MS);
     }
 
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', programmer);

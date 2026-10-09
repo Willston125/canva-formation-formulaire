@@ -1,6 +1,6 @@
 /* La fenêtre d'annonce : où elle s'ouvre, et ce qu'elle promet.
  *
- * Décisions du propriétaire (9 octobre 2026) : 4 secondes après l'arrivée, sur
+ * Décisions du propriétaire (9 octobre 2026) : 5 secondes après l'arrivée, sur
  * l'accueil et les fiches formation seulement — jamais sur la page
  * d'inscription, les mentions légales ou le tableau de bord —, une publicité
  * toujours signalée comme telle, et trois compteurs : affichée, cliquée,
@@ -42,7 +42,14 @@ verifier('et le script se tait de lui-même sur la page d’inscription',
 
 // --- 2. Quand -----------------------------------------------------------------
 
-verifier('elle s’ouvre 4 secondes après l’arrivée', /const DELAI_MS = 4000;/.test(annonces), true);
+verifier('elle s’ouvre 5 secondes après l’arrivée', /const DELAI_MS = 5000;/.test(annonces), true);
+/* Le défaut relevé le 9 octobre 2026 : la page pose d'abord le catalogue gardé
+   de la visite précédente. Antérieur à l'annonce, il n'en contenait aucune, et
+   la fenêtre renonçait avant que la réponse du serveur n'arrive — elle ne
+   s'ouvrait donc jamais sur la première page de la visite. Une liste vide doit
+   faire ATTENDRE le catalogue suivant, pas renoncer. */
+verifier('une liste encore vide fait attendre la réponse du serveur, au lieu de renoncer',
+  /if \(!annonce\) \{ attendreLeCatalogue\(\); return; \}/.test(annonces), true);
 verifier('jamais pendant une inscription commencée', /common\.inscriptionCommencee\(\)/.test(annonces), true);
 verifier('une fiche n’en montre qu’une par visite', /page === 'fiche' && lire\(sessionStorage, CLE_FICHE\)/.test(annonces), true);
 verifier('une fiche ne promeut pas sa propre formation', /a\.formation === formation/.test(annonces), true);

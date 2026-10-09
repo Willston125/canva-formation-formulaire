@@ -136,7 +136,7 @@ usages :
   l'annonceur »** (le nom est obligatoire). Son lien s'ouvre dans un nouvel
   onglet.
 
-**Quand elle s'ouvre** (décisions du 9 octobre 2026) : 4 secondes après
+**Quand elle s'ouvre** (décisions du 9 octobre 2026) : 5 secondes après
 l'arrivée ; à chaque arrivée sur l'accueil ; une fois par visite au plus sur les
 fiches formation. Jamais sur la page d'inscription, les mentions légales ou ce
 tableau de bord, ni devant un visiteur qui a commencé à remplir le formulaire,
