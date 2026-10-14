@@ -1,0 +1,795 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Campagne IMPACTALI · maquettes</title>
+<!--
+  Les maquettes de la campagne : 10 par formation, dessinées ici, photographiées par rendre.js.
+  Une adresse = une maquette : campagne.html?f=canva-pro&v=annonce&m=km
+  Textes : donnees.js · dates, tarifs, numéros, places : ../rendus/campagne/_live.json (lu sur impactali.site)
+-->
+<style>
+  @font-face { font-family: 'Plus Jakarta Sans'; font-weight: 300 800; src: url(../../assets/fonts/plus-jakarta-sans-latin.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+  @font-face { font-family: 'Plus Jakarta Sans'; font-weight: 300 800; src: url(../../assets/fonts/plus-jakarta-sans-latin-ext.woff2) format('woff2'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1E00-1E9F, U+20A0-20AB, U+20AD-20C0, U+A720-A7FF; }
+  @font-face { font-family: 'Inter'; font-weight: 300 800; src: url(../../assets/fonts/inter-latin.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+  @font-face { font-family: 'Inter'; font-weight: 300 800; src: url(../../assets/fonts/inter-latin-ext.woff2) format('woff2'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1E00-1E9F, U+20A0-20AB, U+20AD-20C0, U+A720-A7FF; }
+  @font-face { font-family: 'Material Symbols Outlined'; font-weight: 400 700; font-display: block; src: url(../../assets/fonts/material-symbols-outlined.woff2) format('woff2'); }
+
+  :root {
+    --nuit: #050709;
+    --nuit-2: #0C131C;
+    --vert: #CBFD00;
+    --vert-photo: #C9F708;
+    --blanc: #FFFFFF;
+    --b80: rgba(255,255,255,.82);
+    --b70: rgba(255,255,255,.70);
+    --b50: rgba(255,255,255,.50);
+    --b14: rgba(255,255,255,.14);
+    --b08: rgba(255,255,255,.08);
+    --titre: 'Plus Jakarta Sans', system-ui, sans-serif;
+    --corps: 'Inter', system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--nuit); overflow: hidden; }
+  body { font-family: var(--corps); color: var(--blanc); -webkit-font-smoothing: antialiased; }
+  #scene { position: relative; overflow: hidden; background: var(--nuit); }
+  #scene > * { position: absolute; }
+  img { display: block; }
+
+  /* ---- Fonds ---- */
+  .halos { inset: 0; pointer-events: none; }
+  .halos i { position: absolute; display: block; border-radius: 50%; }
+  .halos .h1 { width: 1500px; height: 1500px; right: -640px; top: -760px; background: radial-gradient(circle, rgba(203,253,0,.20) 0%, rgba(203,253,0,.07) 34%, rgba(203,253,0,0) 64%); }
+  .halos .h2 { width: 1400px; height: 1400px; left: -720px; bottom: -720px; background: radial-gradient(circle, rgba(46,92,255,.18) 0%, rgba(46,92,255,.05) 38%, rgba(46,92,255,0) 66%); }
+  .grille { inset: 0; pointer-events: none; background-size: 60px 60px;
+    background-image: linear-gradient(rgba(255,255,255,.032) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.032) 1px, transparent 1px); }
+  .grille.sombre { background-image: linear-gradient(rgba(5,7,9,.07) 1px, transparent 1px), linear-gradient(90deg, rgba(5,7,9,.07) 1px, transparent 1px); }
+  .grain { inset: 0; pointer-events: none; opacity: .11; mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='260' height='260'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='260' height='260' filter='url(%23n)'/></svg>"); }
+  .photo { background-repeat: no-repeat; }
+  .anneau { overflow: visible; pointer-events: none; }
+
+  /* ---- Cadre de série ---- */
+  .cadre-haut { left: 72px; right: 72px; top: 62px; display: flex; align-items: center; justify-content: space-between; }
+  .cadre-haut .logo { height: 66px; width: auto; }
+  .serie { display: flex; align-items: center; gap: 16px; font: 700 17px/1 var(--corps); letter-spacing: .2em; text-transform: uppercase; color: var(--b70); white-space: nowrap; }
+  .serie b { display: grid; place-items: center; min-width: 52px; height: 34px; padding: 0 10px; border-radius: 999px; border: 1.5px solid rgba(203,253,0,.7);
+    font: 800 17px/1 var(--titre); letter-spacing: .04em; color: var(--vert); }
+  .clair .serie { color: rgba(5,7,9,.72); }
+  .clair .serie b { border-color: rgba(5,7,9,.7); color: var(--nuit); }
+  .cadre-bas { left: 72px; right: 72px; bottom: 56px; display: flex; align-items: center; justify-content: space-between; gap: 24px;
+    font: 600 23px/1.2 var(--corps); color: var(--b70); white-space: nowrap; }
+  .cadre-bas b { color: var(--blanc); font-weight: 700; }
+  .cadre-bas .site { color: var(--vert); font-weight: 700; }
+
+  /* ---- Typographie ---- */
+  .kicker { display: flex; align-items: center; gap: 16px; font: 700 20px/1.2 var(--corps); letter-spacing: .2em; text-transform: uppercase; color: var(--vert); }
+  .kicker::before { content: ''; flex: none; width: 44px; height: 3px; border-radius: 2px; background: currentColor; }
+  .titre { font-family: var(--titre); font-weight: 800; letter-spacing: -.045em; line-height: .94; color: var(--blanc); }
+  .v { color: var(--vert); }
+  .texte { font: 500 31px/1.42 var(--corps); color: var(--b70); }
+  .bloc { display: flex; flex-direction: column; gap: 28px; }
+  .centre { text-align: center; }
+  .ms { font-family: 'Material Symbols Outlined'; font-weight: 400; font-style: normal; line-height: 1; letter-spacing: normal; text-transform: none;
+    white-space: nowrap; direction: ltr; font-feature-settings: 'liga'; display: inline-block; }
+
+  /* ---- Pièces ---- */
+  .verre { background: rgba(10,15,22,.66); -webkit-backdrop-filter: blur(18px) saturate(1.15); backdrop-filter: blur(18px) saturate(1.15);
+    border: 1px solid rgba(255,255,255,.14); border-radius: 28px; box-shadow: 0 30px 80px rgba(0,0,0,.45); }
+  .ticket { display: grid; grid-template-columns: 1fr 1fr 1.25fr; padding: 30px 34px 32px; }
+  .ticket > div { display: grid; align-content: start; gap: 12px; padding: 0 22px; border-left: 1px solid rgba(255,255,255,.14); }
+  .ticket > div:first-child { padding-left: 0; border-left: 0; }
+  .ticket > div:last-child { padding-right: 0; }
+  .ticket span { font: 700 15px/1 var(--corps); letter-spacing: .2em; text-transform: uppercase; color: var(--vert); }
+  .ticket b { font: 700 27px/1.22 var(--titre); letter-spacing: -.015em; color: var(--blanc); }
+  .ticket em { font: 500 21px/1.3 var(--corps); font-style: normal; color: var(--b70); }
+  .ticket.vertical { grid-template-columns: 1fr; gap: 22px; padding: 34px 36px; }
+  .ticket.vertical > div { padding: 0 0 0 0; border-left: 0; border-top: 1px solid rgba(255,255,255,.14); padding-top: 20px; grid-template-columns: 170px 1fr; align-items: baseline; }
+  .ticket.vertical > div:first-child { border-top: 0; padding-top: 0; }
+  .prix { width: 236px; height: 236px; border-radius: 50%; background: var(--vert); color: var(--nuit); display: grid; place-content: center; text-align: center;
+    transform: rotate(-8deg); box-shadow: 0 26px 70px rgba(0,0,0,.5), inset 0 0 0 6px rgba(5,7,9,.08); }
+  .prix b { font: 800 56px/.9 var(--titre); letter-spacing: -.045em; white-space: nowrap; }
+  .prix span { margin-top: 6px; font: 800 24px/1 var(--corps); letter-spacing: .1em; }
+  .prix small { margin-top: 14px; font: 700 15px/1 var(--corps); letter-spacing: .16em; text-transform: uppercase; }
+  .etiquette-verte { display: inline-flex; align-items: center; padding: 14px 22px; border-radius: 999px; background: var(--vert); color: var(--nuit);
+    font: 800 19px/1 var(--corps); letter-spacing: .14em; text-transform: uppercase; white-space: nowrap; box-shadow: 0 16px 40px rgba(0,0,0,.4); }
+  .bouton-vert { display: inline-flex; align-items: center; gap: 14px; padding: 26px 40px; border-radius: 999px; background: var(--vert); color: var(--nuit);
+    font: 800 38px/1 var(--titre); letter-spacing: -.015em; white-space: nowrap; box-shadow: 0 24px 60px rgba(203,253,0,.22); }
+  .bouton-vert .ms { font-size: 44px; }
+  .cta-wa { display: grid; gap: 12px; padding: 30px 36px; border-radius: 28px; border: 1.5px solid rgba(203,253,0,.6); background: rgba(203,253,0,.07); }
+  .cta-wa span { font: 600 27px/1.2 var(--corps); color: var(--b80); }
+  .cta-wa b { font: 800 62px/1 var(--titre); letter-spacing: -.025em; color: var(--vert); white-space: nowrap; }
+  .progression { display: flex; align-items: center; gap: 10px; }
+  .progression i { display: block; width: 12px; height: 12px; border-radius: 999px; background: rgba(255,255,255,.22); }
+  .progression i.on { width: 40px; background: var(--vert); }
+  .defiler { display: flex; align-items: center; gap: 12px; font: 700 24px/1 var(--corps); letter-spacing: .04em; color: var(--blanc); }
+  .defiler .ms { font-size: 36px; color: var(--vert); }
+  .num-contour { font: 800 300px/.8 var(--titre); letter-spacing: -.06em; color: transparent; -webkit-text-stroke: 2px rgba(203,253,0,.85); }
+  .pastille-icone { width: 118px; height: 118px; border-radius: 32px; background: var(--vert); display: grid; place-items: center; box-shadow: 0 20px 50px rgba(203,253,0,.18); }
+  .pastille-icone .ms { font-size: 66px; color: var(--nuit); }
+  .liste-points { list-style: none; display: grid; }
+  .liste-points li { display: grid; grid-template-columns: 70px 1fr; align-items: baseline; padding: 24px 0; border-top: 1px solid rgba(255,255,255,.12); }
+  .liste-points li:last-child { border-bottom: 1px solid rgba(255,255,255,.12); }
+  .liste-points b { font: 800 24px/1 var(--titre); color: var(--vert); letter-spacing: .02em; }
+  .liste-points span { font: 600 34px/1.28 var(--corps); color: var(--blanc); }
+  .coches { list-style: none; display: grid; gap: 22px; }
+  .coches li { display: flex; align-items: flex-start; gap: 16px; font: 600 30px/1.3 var(--corps); color: var(--blanc); }
+  .coches .ms { flex: none; font-size: 36px; color: var(--vert); margin-top: -1px; }
+  .guillemet { font: 800 420px/1 var(--titre); color: var(--vert); opacity: .95; }
+  .medaillon { border-radius: 50%; background-repeat: no-repeat; box-shadow: 0 30px 70px rgba(0,0,0,.5); }
+  .qr { list-style: none; display: grid; }
+  .qr li { display: grid; grid-template-columns: 76px 1fr; padding: 30px 0; border-top: 1px solid rgba(255,255,255,.12); }
+  .qr li:last-child { border-bottom: 1px solid rgba(255,255,255,.12); }
+  .qr b { font: 800 26px/1.5 var(--titre); color: var(--vert); }
+  .qr h3 { font: 700 38px/1.18 var(--titre); letter-spacing: -.02em; color: var(--blanc); }
+  .qr p { margin-top: 12px; font: 500 27px/1.4 var(--corps); color: var(--b70); }
+  .bandeau { display: flex; align-items: center; gap: 14px; padding: 18px 26px; border-radius: 18px; background: var(--b08); border: 1px solid var(--b14);
+    font: 600 22px/1.3 var(--corps); color: var(--b80); }
+  .bandeau::before { content: ''; flex: none; width: 12px; height: 12px; border-radius: 50%; background: var(--vert); }
+  .carte-noire { display: grid; gap: 18px; padding: 34px 36px; border-radius: 30px; background: var(--nuit); box-shadow: 0 30px 80px rgba(0,0,0,.35); }
+  .carte-noire ul { list-style: none; display: grid; gap: 12px; }
+  .carte-noire li { display: flex; align-items: center; gap: 14px; font: 600 25px/1.25 var(--corps); color: var(--blanc); }
+  .carte-noire li::before { content: ''; flex: none; width: 10px; height: 10px; border-radius: 50%; background: var(--vert); }
+  .nom-geant { font: 800 236px/.8 var(--titre); letter-spacing: -.065em; color: var(--nuit); }
+  .chiffre { font: 800 300px/1 var(--titre); letter-spacing: -.06em; color: var(--blanc); font-variant-numeric: tabular-nums; text-align: center; }
+  .certif-3d { transform: perspective(1800px) rotateX(9deg) rotateY(-13deg) rotateZ(-3deg); border-radius: 8px; overflow: hidden;
+    box-shadow: 0 60px 120px rgba(0,0,0,.65), 0 0 0 1px rgba(255,255,255,.08); }
+  .certif-3d img { width: 100%; height: 100%; }
+  .filigrane { position: absolute; inset: 0; display: grid; place-items: center; font: 800 160px/1 var(--titre); letter-spacing: .12em; transform: rotate(-14deg); }
+  .pilule-noire { display: inline-flex; align-items: center; gap: 12px; padding: 18px 26px; border-radius: 999px; background: var(--nuit); color: var(--blanc);
+    font: 700 22px/1 var(--corps); white-space: nowrap; }
+  .pilule-noire b { color: var(--vert); }
+  .sombre-texte { color: var(--nuit) !important; }
+
+  /* ---- Vitrines ---- */
+  .carte { border-radius: 26px; background: linear-gradient(160deg, #131D2A, #0A1119); border: 1px solid rgba(255,255,255,.10); box-shadow: 0 34px 80px rgba(0,0,0,.5); overflow: hidden; }
+  .carte > *, .mock > * { position: absolute; }
+  .mock { overflow: hidden; }
+  .pastille-label { display: inline-flex; padding: 9px 16px; border-radius: 999px; background: var(--vert); color: var(--nuit); font: 800 16px/1 var(--corps); letter-spacing: .14em; text-transform: uppercase; box-shadow: 0 10px 26px rgba(0,0,0,.35); }
+  .barre { display: block; height: 14px; border-radius: 7px; background: rgba(255,255,255,.18); }
+  .affiche { overflow: hidden; border-radius: 16px; box-shadow: 0 30px 70px rgba(0,0,0,.55); }
+  .affiche > * { position: absolute; }
+  .etiquette { display: inline-flex; padding: 12px 22px; border-radius: 999px; font: 800 22px/1 var(--corps); letter-spacing: .16em; text-transform: uppercase; }
+  .etiquette.avant { background: rgba(255,255,255,.12); color: var(--b80); }
+  .etiquette.apres { background: var(--vert); color: var(--nuit); }
+  .criteres { list-style: none; display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .criteres li { display: flex; align-items: center; gap: 12px; padding: 18px 20px; border-radius: 18px; border: 1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.04); font: 700 25px/1.2 var(--corps); }
+  .criteres .ms { font-size: 32px; color: var(--vert); }
+  .cadre-video { border-radius: 20px; overflow: hidden; border: 2px solid rgba(255,255,255,.16); box-shadow: 0 30px 70px rgba(0,0,0,.5); background-repeat: no-repeat; }
+  .cadre-video > * { position: absolute; }
+</style>
+</head>
+<body>
+<div id="scene"></div>
+<script src="donnees.js"></script>
+<script>
+'use strict';
+const { MARCHES, FORMATIONS } = window.CAMPAGNE;
+const params = new URLSearchParams(location.search);
+const SLUG = params.get('f') || 'canva-pro';
+const VID = params.get('v') || 'annonce';
+const MARCHE = params.get('m') || null;
+const PHOTO_L = 1122, PHOTO_H = 1402;
+
+// ------------------------------------------------------------ dates ----
+const JL = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
+const MO = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+const MC = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
+const lireDate = iso => { const [a, m, j] = iso.split('-').map(Number); return { a, m: m - 1, j, js: new Date(Date.UTC(a, m - 1, j)).getUTCDay() }; };
+const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+const jourNum = d => d.j === 1 ? '1er' : String(d.j);
+const jourLong = iso => { const d = lireDate(iso); return `${JL[d.js]} ${jourNum(d)} ${MO[d.m]}`; };
+const plage = (a, b) => {
+  const A = lireDate(a), B = lireDate(b), c = d => JL[d.js].slice(0, 3);
+  return A.m === B.m
+    ? [`${cap(c(A))} ${jourNum(A)} au ${c(B)} ${jourNum(B)}`, `${MO[A.m]} ${A.a}`]
+    : [`${cap(c(A))} ${jourNum(A)} ${MC[A.m]}`, `au ${c(B)} ${jourNum(B)} ${MC[B.m]}`];
+};
+const nombre = n => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+
+// ------------------------------------------------------------ pièces ----
+const ms = n => `<span class="ms">${n}</span>`;
+const halos = () => '<div class="halos"><i class="h1"></i><i class="h2"></i></div>';
+const grille = (sombre = false) => `<div class="grille${sombre ? ' sombre' : ''}"></div>`;
+const grain = () => '<div class="grain"></div>';
+const lignesTitre = (lignes, vertes = []) => lignes.map((l, i) => (vertes.includes(i) ? `<span class="v">${l}</span>` : l)).join('<br>');
+
+/* L'anneau : le « C » ouvert du logo IMPACTALI et son point, en grand. */
+function anneau({ cx, cy, d, ep = 2, op = .6, rot = -30, point = 12, couleur = '#CBFD00' }) {
+  const r = d / 2 - ep - point;
+  const c = 2 * Math.PI * r;
+  const trou = c * 0.12;
+  const a = -0.06 * 2 * Math.PI; // le point, au milieu de l'ouverture
+  const px = d / 2 + r * Math.cos(a), py = d / 2 + r * Math.sin(a);
+  return `<svg class="anneau" width="${d}" height="${d}" viewBox="0 0 ${d} ${d}" style="left:${cx - d / 2}px;top:${cy - d / 2}px;transform:rotate(${rot}deg);opacity:${op}">
+    <circle cx="${d / 2}" cy="${d / 2}" r="${r}" fill="none" stroke="${couleur}" stroke-width="${ep}" stroke-linecap="round" stroke-dasharray="${c - trou} ${trou}"/>
+    <circle cx="${px}" cy="${py}" r="${point}" fill="${couleur}"/></svg>`;
+}
+
+/* Cadrer la photo d'une formation dans une boîte : `foyer` (en pixels de la photo source)
+   va se placer au point `cible` de la boîte (par défaut son centre), sans jamais montrer de vide. */
+function cadrage(F, w, h, { foyer = 'visage', zoom = 1, cible = null } = {}) {
+  const [fx, fy] = Array.isArray(foyer) ? foyer : F[foyer];
+  const s = Math.max(w / PHOTO_L, h / PHOTO_H) * zoom;
+  const W = PHOTO_L * s, H = PHOTO_H * s;
+  const [tx, ty] = cible || [w / 2, h / 2];
+  const x = Math.min(Math.max(fx * s - tx, 0), W - w);
+  const y = Math.min(Math.max(fy * s - ty, 0), H - h);
+  return `background-image:url(medias/${F.photo});background-size:${W.toFixed(1)}px ${H.toFixed(1)}px;background-position:${(-x).toFixed(1)}px ${(-y).toFixed(1)}px;`;
+}
+/* Où tombe le foyer une fois cadré (pour y centrer l'anneau). */
+function foyerCadre(F, w, h, { foyer = 'visage', zoom = 1, cible = null } = {}) {
+  const [fx, fy] = Array.isArray(foyer) ? foyer : F[foyer];
+  const s = Math.max(w / PHOTO_L, h / PHOTO_H) * zoom;
+  const W = PHOTO_L * s, H = PHOTO_H * s;
+  const [tx, ty] = cible || [w / 2, h / 2];
+  const x = Math.min(Math.max(fx * s - tx, 0), W - w);
+  const y = Math.min(Math.max(fy * s - ty, 0), H - h);
+  return [fx * s - x, fy * s - y];
+}
+
+const cadreHaut = (F, num, clair = false) => `
+  <header class="cadre-haut t${clair ? ' clair' : ''}">
+    <img class="logo" src="../medias/logo-${clair ? 'noir' : 'vert'}.png" alt="">
+    <p class="serie"><span>${F.court}</span><b>${num}</b></p>
+  </header>`;
+const cadreBas = (gauche, droite) => `<div class="cadre-bas t"><span>${gauche}</span><span>${droite}</span></div>`;
+const site = '<span class="site">impactali.site</span>';
+const cta = (F, S) => `Écrivez « ${F.motCle} » au <b>${S.wa}</b>`;
+const prix = (S, style) => `<div class="prix t" style="${style}"><b>${nombre(S.prix)}</b><span>${S.devise}</span><small>${S.total} places</small></div>`;
+function ticket(M, S, style, vertical = false) {
+  const [d1, d2] = plage(S.debut, S.fin);
+  return `<div class="ticket verre t${vertical ? ' vertical' : ''}" style="${style}">
+    <div><span>Dates</span><b>${d1}<br><em>${d2}</em></b></div>
+    <div><span>Horaires</span><b>18h30 – 20h30<br><em>6 soirées · 12 heures</em></b></div>
+    <div><span>${M.lieuLibelle}</span><b>${M.lieu}</b></div>
+  </div>`;
+}
+const progression = (actif, total, style = 'right:72px;bottom:66px') =>
+  `<div class="progression t" style="${style}">${Array.from({ length: total }, (_, i) => `<i${i === actif ? ' class="on"' : ''}></i>`).join('')}</div>`;
+
+/* Réglages d'art par formation : où placer le visage dans l'annonce, taille du titre. */
+const ART = {
+  'canva-pro': { zoom: 1.15, cible: [805, 410], titre: 100 },
+  'identite-visuelle': { zoom: 1.15, cible: [805, 410], titre: 100 },
+  'marketing-digital': { zoom: 1.12, cible: [800, 470], titre: 112 },
+  'ia-appliquee': { zoom: 1.15, cible: [810, 450], titre: 100 },
+  'photo-video': { zoom: 1.25, cible: [860, 330], titre: 86 }
+};
+
+// ------------------------------------------------------------ maquettes ----
+const V = {};
+const FEED = [1080, 1350], STORY = [1080, 1920];
+
+/* 01 · Annonce */
+V.annonce = { taille: FEED, marche: true, html: (F, M, S) => {
+  const a = ART[F.slug];
+  const opt = { foyer: 'visage', zoom: a.zoom, cible: a.cible };
+  const [vx, vy] = foyerCadre(F, 1080, 1350, opt);
+  return `
+  <div class="photo" style="inset:0;${cadrage(F, 1080, 1350, opt)}"></div>
+  <div style="inset:0;background:linear-gradient(90deg,rgba(5,7,9,.97) 0%,rgba(5,7,9,.9) 28%,rgba(5,7,9,.4) 52%,rgba(5,7,9,0) 68%),linear-gradient(0deg,#050709 0%,rgba(5,7,9,.94) 23%,rgba(5,7,9,0) 50%),linear-gradient(180deg,rgba(5,7,9,.75) 0%,rgba(5,7,9,0) 17%)"></div>
+  ${anneau({ cx: vx, cy: vy, d: 620, ep: 2, op: .5, rot: -18, point: 10 })}
+  ${cadreHaut(F, '01')}
+  <div class="bloc t" style="left:72px;top:226px;width:610px">
+    <p class="kicker">Dès le ${jourLong(S.debut)}</p>
+    <h1 class="titre" style="font-size:${a.titre}px">${lignesTitre(F.lignes, F.vertes)}</h1>
+    <p class="texte" style="width:500px">${F.promesse}</p>
+  </div>
+  ${prix(S, 'right:70px;top:800px')}
+  ${ticket(M, S, 'left:72px;right:72px;bottom:144px')}
+  ${cadreBas(cta(F, S), site)}
+  ${grain()}`; } };
+
+/* 02 · Formateur (générique) */
+V.formateur = { taille: FEED, html: F => `
+  <div style="inset:0;background:var(--vert)"></div>
+  ${grille(true)}
+  ${cadreHaut(F, '02', true)}
+  <p class="nom-geant" style="left:50px;top:190px">Ali<br>William</p>
+  <img src="medias/portrait-detoure.png" alt="" style="left:140px;bottom:0;width:1010px;filter:drop-shadow(0 30px 60px rgba(5,7,9,.25))">
+  <div class="carte-noire t" style="left:72px;bottom:72px;width:560px">
+    <p class="kicker">Votre formateur</p>
+    <p style="font:800 30px/1.15 var(--titre);letter-spacing:-.02em;color:#fff;margin-top:-4px">${F.titre}</p>
+    <ul>
+      <li>Réalisateur et vidéaste</li>
+      <li>Responsable de communication multimédia</li>
+      <li>Fondateur de CINEWORLD ACADEMIE</li>
+    </ul>
+  </div>
+  ${grain()}` };
+
+/* 03 · Programme : couverture, un module par image, fin par pays */
+const totalProgramme = F => F.modules.length + 2;
+V['programme-0'] = { taille: FEED, html: F => `
+  ${halos()}${grille()}
+  ${cadreHaut(F, '03')}
+  <div class="photo" style="left:648px;top:186px;width:360px;height:964px;border-radius:34px;${cadrage(F, 360, 964, { foyer: 'visage' })}"></div>
+  <div style="left:648px;top:186px;width:360px;height:964px;border-radius:34px;background:linear-gradient(0deg,rgba(5,7,9,.7),rgba(5,7,9,0) 42%);border:1px solid rgba(255,255,255,.12)"></div>
+  ${anneau({ cx: 648, cy: 260, d: 250, ep: 2, op: .9, rot: 160, point: 9 })}
+  <div class="bloc t" style="left:72px;top:236px;width:552px">
+    <p class="kicker">Le programme</p>
+    <h1 class="titre" style="font-size:90px">6 soirées.<br>${F.modules.length} modules.<br><span class="v">1 projet final.</span></h1>
+    <p class="texte">${F.titre}. ${F.promesse}</p>
+  </div>
+  <div class="defiler t" style="left:72px;bottom:66px">Faites défiler ${ms('arrow_forward')}</div>
+  ${progression(0, totalProgramme(F))}
+  ${grain()}` };
+function module(k) {
+  return { taille: FEED, html: F => {
+    const m = F.modules[k - 1];
+    return `
+    ${halos()}${grille()}
+    ${cadreHaut(F, '03')}
+    <div class="num-contour" style="left:52px;top:166px">0${k}</div>
+    <div class="pastille-icone" style="right:72px;top:190px">${ms(m.icone)}</div>
+    <div class="bloc t" style="left:72px;top:472px;width:936px;gap:20px">
+      <p class="kicker">Module ${k} sur ${F.modules.length}</p>
+      <h1 class="titre" style="font-size:86px">${m.titre}</h1>
+    </div>
+    <ol class="liste-points t" style="left:72px;top:${m.titre.length > 24 ? 760 : 700}px;width:936px">${m.points.map((p, i) => `<li><b>0${i + 1}</b><span>${p}</span></li>`).join('')}</ol>
+    <div class="cadre-bas t" style="right:auto"><span class="site">impactali.site</span></div>
+    ${progression(k, totalProgramme(F))}
+    ${grain()}`; } };
+}
+[1, 2, 3, 4].forEach(k => { V['programme-' + k] = module(k); });
+V['programme-fin'] = { taille: FEED, marche: true, html: (F, M, S) => `
+  <div class="photo" style="inset:0;${cadrage(F, 1080, 1350, { foyer: 'visage', zoom: 1.1, cible: [800, 420] })}"></div>
+  <div style="inset:0;background:linear-gradient(180deg,rgba(5,7,9,.62) 0%,rgba(5,7,9,.86) 38%,#050709 70%)"></div>
+  ${cadreHaut(F, '03')}
+  <div class="bloc t" style="left:72px;top:236px;width:700px">
+    <p class="kicker">${M.tag}</p>
+    <h1 class="titre" style="font-size:100px">Votre place<br><span class="v">vous attend.</span></h1>
+  </div>
+  ${prix(S, 'left:790px;top:226px')}
+  ${ticket(M, S, 'left:72px;right:72px;top:612px')}
+  <div class="cta-wa t" style="left:72px;right:72px;top:900px"><span>Une question ? Écrivez « ${F.motCle} » sur WhatsApp</span><b>${S.wa}</b></div>
+  <p class="t" style="left:72px;top:1112px;font:600 27px/1.3 var(--corps);color:var(--b70)">Programme détaillé et inscription : ${site}</p>
+  ${progression(totalProgramme(F) - 1, totalProgramme(F))}
+  ${grain()}` };
+
+/* 04 · Vitrine : ce que vous allez créer (générique, propre à chaque formation) */
+const VITRINES = {};
+V.vitrine = { taille: FEED, html: F => VITRINES[F.vitrine](F) };
+
+VITRINES['avant-apres'] = F => `
+  ${halos()}${grille()}
+  ${cadreHaut(F, '04')}
+  <div class="bloc t" style="left:72px;top:190px;width:936px;gap:22px">
+    <p class="kicker">Ce que vous apprenez à faire</p>
+    <h1 class="titre" style="font-size:86px">Même message.<br><span class="v">Autre effet.</span></h1>
+  </div>
+  <div class="etiquette avant t" style="left:72px;top:470px">Avant</div>
+  <div class="etiquette apres t" style="left:568px;top:470px">Après</div>
+  <div class="affiche" style="left:72px;top:540px;width:440px;height:520px;background:linear-gradient(135deg,#ff3b3b 0%,#ffd400 46%,#3d7bff 100%)">
+    <p style="left:0;right:0;top:30px;text-align:center;font:72px/1 Impact,'Arial Black',sans-serif;color:#ffff00;text-shadow:3px 3px 0 #ff00aa,6px 6px 0 #000;transform:rotate(-4deg)">PROMO !!!</p>
+    <p style="left:0;right:0;top:128px;text-align:center;font:italic 700 34px/1 'Comic Sans MS',cursive;color:#1a3dff">Boutique Nour</p>
+    <div style="left:112px;top:184px;width:216px;height:216px;background:#fff200;clip-path:polygon(50% 0%,61% 33%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 33%)"></div>
+    <p style="left:0;right:0;top:268px;text-align:center;font:italic 700 46px/1 'Times New Roman',serif;color:#e60000">-20%</p>
+    <p style="left:26px;right:26px;top:410px;text-align:center;font:400 21px/1.3 'Comic Sans MS',cursive;color:#fff59a">sur tous nos parfums ce week-end seulement venez nombreux !!!</p>
+    <p style="left:0;right:0;bottom:14px;text-align:center;font:400 16px/1 'Courier New',monospace;color:rgba(255,255,255,.75)">samedi et dimanche de 9h a 19h</p>
+  </div>
+  <div class="affiche" style="left:568px;top:540px;width:440px;height:520px;background:#F3EEE4">
+    <p style="left:38px;top:40px;font:700 17px/1 var(--corps);letter-spacing:.32em;color:#1F3D2B">BOUTIQUE NOUR</p>
+    <p style="left:34px;top:92px;font:800 124px/.9 var(--titre);letter-spacing:-.05em;color:#1F3D2B">-20&nbsp;%</p>
+    <p style="left:40px;top:226px;width:240px;font:600 36px/1.12 var(--corps);color:#1F3D2B">sur tous les parfums</p>
+    <i style="left:40px;top:338px;width:80px;height:6px;border-radius:3px;background:#C8A44D;display:block"></i>
+    <p style="left:40px;top:364px;font:500 23px/1.45 var(--corps);color:#4B5B50">Samedi et dimanche<br>9 h – 19 h</p>
+    <div style="right:40px;bottom:44px;width:110px;height:190px">
+      <i style="position:absolute;left:31px;top:0;width:48px;height:30px;border-radius:8px;background:#1F3D2B"></i>
+      <i style="position:absolute;left:42px;top:28px;width:26px;height:22px;background:#B79343"></i>
+      <i style="position:absolute;left:0;top:48px;width:110px;height:142px;border-radius:26px;background:linear-gradient(160deg,#E9D9A6,#C8A44D)"></i>
+      <i style="position:absolute;left:22px;top:92px;width:66px;height:46px;border-radius:8px;background:rgba(31,61,43,.88)"></i>
+    </div>
+  </div>
+  <ul class="criteres t" style="left:72px;top:1094px;width:936px">
+    <li>${ms('check_circle')}Hiérarchie</li><li>${ms('check_circle')}Contraste</li><li>${ms('check_circle')}2 polices</li>
+  </ul>
+  ${cadreBas(F.titre, site)}
+  ${grain()}`;
+
+const MARQUE_NOUR = (taille, or = '#C8A44D') => `
+  <svg width="${taille}" height="${taille}" viewBox="0 0 100 100" style="display:block">
+    <circle cx="50" cy="50" r="40" fill="none" stroke="${or}" stroke-width="7"/>
+    <circle cx="62" cy="40" r="15" fill="${or}"/>
+  </svg>`;
+
+VITRINES.identite = F => `
+  ${halos()}${grille()}
+  ${cadreHaut(F, '04')}
+  <div class="bloc t" style="left:72px;top:186px;width:936px;gap:22px">
+    <p class="kicker">Ce que vous allez créer</p>
+    <h1 class="titre" style="font-size:78px">Une identité complète,<br><span class="v">dans votre portfolio.</span></h1>
+  </div>
+  <div class="carte" style="left:72px;top:440px;width:456px;height:456px;background:#1F3D2B">
+    <div style="left:153px;top:96px">${MARQUE_NOUR(150)}</div>
+    <p style="left:0;right:0;top:282px;text-align:center;font:800 64px/1 var(--titre);letter-spacing:.28em;color:#F3EEE4;padding-left:.28em">NOUR</p>
+    <p style="left:0;right:0;top:366px;text-align:center;font:600 16px/1 var(--corps);letter-spacing:.42em;color:#C8A44D;padding-left:.42em">PARFUMERIE</p>
+  </div>
+  <div class="carte" style="left:552px;top:440px;width:456px;height:216px;background:#0E1621">
+    ${[['#1F3D2B', 'Vert Nour'], ['#C8A44D', 'Or'], ['#F3EEE4', 'Sable'], ['#0E1A14', 'Nuit']].map(([c, n], i) => `
+      <i style="left:${i * 114}px;top:0;width:114px;height:150px;background:${c};display:block"></i>
+      <p style="left:${i * 114 + 14}px;top:162px;font:700 15px/1.25 var(--corps);color:var(--b80)">${n}<br><span style="color:var(--b50);font-weight:600">${c}</span></p>`).join('')}
+  </div>
+  <div class="carte" style="left:552px;top:680px;width:456px;height:216px;background:#F3EEE4">
+    <p style="left:34px;top:30px;font:800 120px/1 var(--titre);letter-spacing:-.05em;color:#1F3D2B">Aa</p>
+    <p style="left:210px;top:56px;font:700 19px/1.5 var(--corps);color:#1F3D2B">Titres<br><span style="font-weight:500;color:#4B5B50">Plus Jakarta Sans</span><br>Textes<br><span style="font-weight:500;color:#4B5B50">Inter</span></p>
+  </div>
+  <div class="carte" style="left:84px;top:946px;width:420px;height:236px;background:#F3EEE4;transform:rotate(-4deg)">
+    <div style="left:34px;top:34px">${MARQUE_NOUR(64)}</div>
+    <p style="left:118px;top:44px;font:800 34px/1 var(--titre);letter-spacing:.2em;color:#1F3D2B">NOUR</p>
+    <p style="left:120px;top:86px;font:500 18px/1 var(--corps);color:#4B5B50">Parfumerie</p>
+    <i class="barre" style="left:34px;top:150px;width:240px;background:#D9D1C1"></i>
+    <i class="barre" style="left:34px;top:178px;width:170px;background:#D9D1C1"></i>
+  </div>
+  <div class="carte" style="left:588px;top:924px;width:244px;height:300px;background:#1F3D2B;transform:rotate(3deg)">
+    <div style="left:84px;top:40px">${MARQUE_NOUR(76)}</div>
+    <p style="left:24px;top:146px;width:200px;font:800 30px/1.05 var(--titre);letter-spacing:-.02em;color:#F3EEE4">Nouvelle collection</p>
+    <p style="left:24px;top:232px;font:600 15px/1 var(--corps);letter-spacing:.24em;color:#C8A44D">BIENTÔT</p>
+  </div>
+  <div class="carte" style="left:842px;top:1000px;width:166px;height:166px;background:#C8A44D;transform:rotate(-3deg)">
+    <p style="left:16px;top:46px;font:800 44px/1 var(--titre);letter-spacing:-.04em;color:#1F3D2B">-20&nbsp;%</p>
+    <p style="left:20px;top:104px;font:700 14px/1.2 var(--corps);color:#1F3D2B">sur la collection</p>
+  </div>
+  <span class="pastille-label t" style="left:96px;top:464px">Logo</span>
+  <span class="pastille-label t" style="left:576px;top:462px">Charte</span>
+  <span class="pastille-label t" style="left:608px;top:892px">Affiche</span>
+  ${cadreBas(F.titre, site)}
+  ${grain()}`;
+
+VITRINES.campagne = F => `
+  ${halos()}${grille()}
+  ${cadreHaut(F, '04')}
+  <div class="bloc t" style="left:72px;top:186px;width:936px;gap:22px">
+    <p class="kicker">Ce que vous allez construire</p>
+    <h1 class="titre" style="font-size:84px">De la stratégie<br><span class="v">à la campagne.</span></h1>
+  </div>
+  <div class="mock" style="left:72px;top:430px;width:380px;height:760px;border-radius:56px;background:#0E1621;border:10px solid #1C2633;box-shadow:0 40px 90px rgba(0,0,0,.6)">
+    <i style="left:130px;top:14px;width:100px;height:22px;border-radius:12px;background:#1C2633;display:block"></i>
+    <i style="left:22px;top:70px;width:46px;height:46px;border-radius:50%;background:#C8A44D;display:block"></i>
+    <p style="left:80px;top:72px;font:700 19px/1.2 var(--corps);color:#fff">Boutique Nour<br><span style="font-weight:500;font-size:15px;color:var(--b50)">Sponsorisé</span></p>
+    <i class="barre" style="left:22px;top:136px;width:300px;height:12px"></i>
+    <i class="barre" style="left:22px;top:158px;width:220px;height:12px"></i>
+    <div style="left:0;top:190px;width:360px;height:330px;background:linear-gradient(150deg,#1F3D2B,#3E6B4E 60%,#C8A44D)">
+      <p style="position:absolute;left:28px;top:40px;font:700 16px/1 var(--corps);letter-spacing:.3em;color:#F3EEE4">BOUTIQUE NOUR</p>
+      <p style="position:absolute;left:24px;top:84px;font:800 104px/.9 var(--titre);letter-spacing:-.05em;color:#F3EEE4">-20&nbsp;%</p>
+      <p style="position:absolute;left:28px;top:200px;font:600 26px/1.15 var(--corps);color:#F3EEE4">sur tous<br>les parfums</p>
+    </div>
+    <div style="left:0;top:520px;width:360px;height:70px;background:#121C28;display:flex;align-items:center;justify-content:space-between;padding:0 22px">
+      <span style="font:600 16px/1.2 var(--corps);color:var(--b70)">Ce week-end</span>
+      <span style="padding:12px 16px;border-radius:10px;background:#CBFD00;color:#050709;font:800 16px/1 var(--corps)">Envoyer un message</span>
+    </div>
+    <i class="barre" style="left:22px;top:618px;width:180px;height:12px"></i>
+    <i class="barre" style="left:22px;top:642px;width:260px;height:12px"></i>
+  </div>
+  <div class="carte" style="left:484px;top:430px;width:524px;height:350px">
+    <p style="left:34px;top:30px;font:700 16px/1 var(--corps);letter-spacing:.2em;text-transform:uppercase;color:var(--vert)">Le parcours client</p>
+    ${[['Attirer', 456, 1], ['Convertir', 356, .72], ['Fidéliser', 256, .48]].map(([t, w, o], i) => `
+      <div style="left:${(524 - w) / 2}px;top:${80 + i * 86}px;width:${w}px;height:72px;border-radius:16px;background:rgba(203,253,0,${o});display:grid;place-items:center">
+        <span style="font:800 30px/1 var(--titre);letter-spacing:-.02em;color:#050709">${t}</span></div>`).join('')}
+  </div>
+  <div class="carte" style="left:484px;top:804px;width:524px;height:386px">
+    <p style="left:34px;top:30px;font:700 16px/1 var(--corps);letter-spacing:.2em;text-transform:uppercase;color:var(--vert)">Calendrier de publication</p>
+    ${['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((j, i) => `<p style="left:${34 + i * 66}px;top:80px;width:56px;text-align:center;font:700 18px/1 var(--corps);color:var(--b50)">${j}</p>`).join('')}
+    ${Array.from({ length: 14 }, (_, i) => `<i style="left:${34 + (i % 7) * 66}px;top:${112 + Math.floor(i / 7) * 112}px;width:56px;height:100px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);display:block"></i>`).join('')}
+    ${[[0, 0, 'Post', 1], [2, 0, 'Reel', .75], [4, 0, 'Statut', .5], [1, 1, 'Live', .75], [3, 1, 'Post', 1], [5, 1, 'Pub', .5]].map(([c, r, t, o]) => `
+      <span style="left:${34 + c * 66}px;top:${150 + r * 112}px;width:56px;padding:8px 0;border-radius:8px;text-align:center;background:rgba(203,253,0,${o});color:#050709;font:800 13px/1 var(--corps)">${t}</span>`).join('')}
+  </div>
+  <span class="pastille-label t" style="left:110px;top:404px">Campagne</span>
+  <span class="pastille-label t" style="left:510px;top:404px">Stratégie</span>
+  <span class="pastille-label t" style="left:510px;top:778px">Plan</span>
+  ${cadreBas(F.titre, site)}
+  ${grain()}`;
+
+VITRINES.site = F => `
+  ${halos()}${grille()}
+  ${cadreHaut(F, '04')}
+  <div class="bloc t" style="left:72px;top:186px;width:936px;gap:22px">
+    <p class="kicker">Ce que vous allez créer</p>
+    <h1 class="titre" style="font-size:84px">De l’idée<br><span class="v">au site en ligne.</span></h1>
+  </div>
+  <div class="carte" style="left:72px;top:452px;width:650px;height:150px;border-radius:26px 26px 26px 6px">
+    <span style="left:30px;top:30px;width:52px;height:52px;border-radius:50%;background:var(--vert);display:grid;place-items:center;font:800 18px/1 var(--corps);color:#050709">Vous</span>
+    <p style="left:100px;top:28px;width:520px;font:500 25px/1.42 var(--corps);color:#fff">« Crée le site de ma pâtisserie : la carte, les horaires et un bouton WhatsApp. »</p>
+  </div>
+  <div class="mock" style="left:300px;top:640px;width:708px;height:540px;border-radius:22px;background:#F7F3EC;box-shadow:0 40px 90px rgba(0,0,0,.6)">
+    <div style="left:0;top:0;width:708px;height:52px;background:#E6E0D6;display:flex;align-items:center;gap:10px;padding:0 20px">
+      <i style="width:13px;height:13px;border-radius:50%;background:#FF6159;display:block"></i><i style="width:13px;height:13px;border-radius:50%;background:#FFBD2E;display:block"></i><i style="width:13px;height:13px;border-radius:50%;background:#28C941;display:block"></i>
+      <i style="margin-left:24px;width:380px;height:26px;border-radius:13px;background:#F7F3EC;display:block"></i>
+    </div>
+    <p style="left:36px;top:80px;font:800 26px/1 var(--titre);letter-spacing:.06em;color:#5A2E1A">NOUR</p>
+    ${[0, 1, 2].map(i => `<i class="barre" style="left:${430 + i * 82}px;top:88px;width:62px;height:12px;background:#D8CDBD"></i>`).join('')}
+    <p style="left:36px;top:150px;width:300px;font:800 50px/1 var(--titre);letter-spacing:-.04em;color:#2B1A12">Pâtisserie Nour</p>
+    <p style="left:38px;top:272px;width:290px;font:500 19px/1.45 var(--corps);color:#6E5A4C">Gâteaux, viennoiseries et commandes pour vos fêtes.</p>
+    <span style="left:36px;top:368px;padding:16px 22px;border-radius:12px;background:#CBFD00;color:#050709;font:800 18px/1 var(--corps)">Commander sur WhatsApp</span>
+    <div style="left:370px;top:132px;width:306px;height:290px;border-radius:20px;background:radial-gradient(circle at 35% 40%,#F4C98B 0 22%,transparent 23%),radial-gradient(circle at 68% 58%,#E79A6B 0 20%,transparent 21%),radial-gradient(circle at 42% 74%,#B9654A 0 14%,transparent 15%),linear-gradient(150deg,#F1E2CC,#E2C7A4)"></div>
+    ${[0, 1, 2].map(i => `<div style="left:${36 + i * 214}px;top:452px;width:198px;height:60px;border-radius:14px;background:#EDE6DB"></div>`).join('')}
+  </div>
+  <div class="mock" style="left:72px;top:820px;width:230px;height:420px;border-radius:38px;background:#F7F3EC;border:8px solid #1C2633;box-shadow:0 34px 80px rgba(0,0,0,.65)">
+    <p style="left:20px;top:28px;font:800 15px/1 var(--titre);letter-spacing:.06em;color:#5A2E1A">NOUR</p>
+    <div style="left:16px;top:62px;width:182px;height:130px;border-radius:14px;background:radial-gradient(circle at 40% 45%,#F4C98B 0 24%,transparent 25%),radial-gradient(circle at 70% 62%,#E79A6B 0 20%,transparent 21%),linear-gradient(150deg,#F1E2CC,#E2C7A4)"></div>
+    <p style="left:18px;top:206px;width:180px;font:800 24px/1 var(--titre);letter-spacing:-.03em;color:#2B1A12">Pâtisserie Nour</p>
+    <span style="left:18px;top:278px;padding:11px 12px;border-radius:9px;background:#CBFD00;color:#050709;font:800 12px/1 var(--corps)">Commander sur WhatsApp</span>
+    <i class="barre" style="left:18px;top:336px;width:150px;height:10px;background:#D8CDBD"></i>
+    <i class="barre" style="left:18px;top:356px;width:110px;height:10px;background:#D8CDBD"></i>
+  </div>
+  <span class="pastille-label t" style="left:600px;top:432px">Décrire</span>
+  <span class="pastille-label t" style="left:842px;top:620px">Construire</span>
+  <span class="pastille-label t" style="left:96px;top:794px">Publier</span>
+  ${cadreBas(F.titre, site)}
+  ${grain()}`;
+
+VITRINES.video = F => {
+  const plan = (x, nom, n, opt) => `
+    <div class="cadre-video" style="left:${x}px;top:430px;width:288px;height:512px;${cadrage(F, 288, 512, opt)}">
+      <div style="left:0;right:0;bottom:0;height:150px;background:linear-gradient(0deg,rgba(5,7,9,.9),rgba(5,7,9,0))"></div>
+      <span style="left:16px;top:16px;padding:8px 12px;border-radius:8px;background:rgba(5,7,9,.7);font:700 15px/1 var(--corps);letter-spacing:.12em;color:#fff">PLAN ${n}</span>
+      <span style="right:16px;top:16px;display:flex;align-items:center;gap:7px;font:700 15px/1 var(--corps);color:#fff"><i style="width:11px;height:11px;border-radius:50%;background:#FF4D4D;display:block"></i>REC</span>
+      <p style="left:18px;bottom:20px;font:800 30px/1 var(--titre);letter-spacing:-.02em;color:#fff">${nom}</p>
+    </div>`;
+  const ondes = Array.from({ length: 62 }, (_, i) => 8 + Math.round(Math.abs(Math.sin(i * 1.7) * 22 + Math.sin(i * .45) * 14)));
+  return `
+  ${halos()}${grille()}
+  ${cadreHaut(F, '04')}
+  <div class="bloc t" style="left:72px;top:186px;width:936px;gap:22px">
+    <p class="kicker">Du scénario au montage</p>
+    <h1 class="titre" style="font-size:90px">Racontez <span class="v">en images.</span></h1>
+  </div>
+  ${plan(72, 'Plan moyen', 1, { foyer: [700, 640] })}
+  ${plan(396, 'Plan rapproché', 2, { foyer: [660, 420], zoom: 1.65 })}
+  ${plan(720, 'Gros plan', 3, { foyer: [700, 300], zoom: 3.1 })}
+  <div class="carte" style="left:72px;top:980px;width:936px;height:210px">
+    <p style="left:30px;top:24px;font:700 15px/1 var(--corps);letter-spacing:.2em;text-transform:uppercase;color:var(--vert)">Montage · CapCut Pro · DaVinci Resolve</p>
+    <p style="left:30px;top:74px;font:700 16px/1 var(--corps);color:var(--b50)">V1</p>
+    ${[[80, 230, '#CBFD00'], [316, 180, '#6E7BFF'], [502, 250, '#FF7A59'], [758, 148, '#CBFD00']].map(([x, w, c]) => `<i style="left:${x}px;top:62px;width:${w}px;height:44px;border-radius:10px;background:${c};opacity:.9;display:block"></i>`).join('')}
+    <p style="left:30px;top:146px;font:700 16px/1 var(--corps);color:var(--b50)">A1</p>
+    ${ondes.map((h, i) => `<i style="left:${80 + i * 13.4}px;top:${152 - h / 2}px;width:6px;height:${h}px;border-radius:3px;background:rgba(203,253,0,.55);display:block"></i>`).join('')}
+    <i style="left:560px;top:48px;width:3px;height:140px;background:#fff;display:block"></i>
+    <i style="left:552px;top:40px;width:0;height:0;border-left:9px solid transparent;border-right:9px solid transparent;border-top:12px solid #fff;display:block"></i>
+  </div>
+  ${cadreBas(F.titre, site)}
+  ${grain()}`;
+};
+
+/* 05 · Cible 1 : photo + accroche */
+V.cible1 = { taille: FEED, html: F => {
+  const c = F.cible1;
+  return `
+  ${halos()}${grille()}
+  ${cadreHaut(F, '05')}
+  <div class="photo" style="left:72px;top:156px;width:936px;height:590px;border-radius:32px;${cadrage(F, 936, 590, { foyer: 'visage', zoom: 1.05, cible: [600, 280] })}"></div>
+  <div style="left:72px;top:156px;width:936px;height:590px;border-radius:32px;background:linear-gradient(0deg,rgba(5,7,9,.55),rgba(5,7,9,0) 40%);border:1px solid rgba(255,255,255,.12)"></div>
+  ${anneau({ cx: 1002, cy: 744, d: 200, ep: 2, op: .95, rot: 200, point: 9 })}
+  <p class="etiquette-verte t" style="left:104px;top:716px">${c.etiquette}</p>
+  <h1 class="titre t" style="left:72px;top:820px;width:936px;font-size:84px">${lignesTitre(c.lignes, c.vertes)}</h1>
+  <p class="texte t" style="left:72px;top:1094px;width:880px">${c.texte}</p>
+  ${cadreBas(F.titre, site)}
+  ${grain()}`; } };
+
+/* 06 · Cible 2 : la question qu'ils se posent */
+V.cible2 = { taille: FEED, html: F => {
+  const c = F.cible2;
+  const opt = { foyer: 'visage', zoom: 1 };
+  const D = 270;
+  const s = Math.max(D / PHOTO_L, D / PHOTO_H) * 2.6;
+  const [fx, fy] = F.visage;
+  return `
+  ${halos()}${grille()}
+  ${cadreHaut(F, '06')}
+  <div class="guillemet" style="left:46px;top:96px">“</div>
+  <div class="bloc t" style="left:72px;top:330px;width:936px;gap:24px">
+    <p class="kicker">${c.etiquette}</p>
+    <h1 class="titre" style="font-size:80px">${c.question}<br><span class="v">${c.reponse}</span></h1>
+  </div>
+  <ul class="coches t" style="left:72px;top:${c.question.length > 40 ? 900 : 846}px;width:600px">${c.points.map(p => `<li>${ms('check_circle')}<span>${p}</span></li>`).join('')}</ul>
+  <div class="medaillon" style="left:740px;top:${c.question.length > 40 ? 900 : 846}px;width:${D}px;height:${D}px;background-image:url(medias/${F.photo});background-size:${(PHOTO_L * s).toFixed(1)}px ${(PHOTO_H * s).toFixed(1)}px;background-position:${(D / 2 - fx * s).toFixed(1)}px ${(D / 2 - fy * s).toFixed(1)}px"></div>
+  ${anneau({ cx: 875, cy: (c.question.length > 40 ? 900 : 846) + D / 2, d: 350, ep: 2, op: .95, rot: -40, point: 10 })}
+  ${cadreBas(F.titre, site)}
+  ${grain()}`; } };
+
+/* 07 · Cible 3 : la page verte (portrait studio) */
+V.cible3 = { taille: FEED, html: F => {
+  const c = F.cible3;
+  return `
+  <div style="inset:0;background:var(--vert-photo)"></div>
+  ${grille(true)}
+  <div style="right:-230px;bottom:0;width:790px;height:1119px;background:url(medias/portrait-vert.jpg) center/cover no-repeat;-webkit-mask-image:linear-gradient(90deg,transparent 0%,#000 22%);mask-image:linear-gradient(90deg,transparent 0%,#000 22%)"></div>
+  ${cadreHaut(F, '07', true)}
+  <div class="bloc t" style="left:72px;top:240px;width:600px;gap:26px">
+    <p class="kicker sombre-texte">${c.etiquette}</p>
+    <h1 class="titre sombre-texte" style="font-size:80px">${c.lignes.join('<br>')}</h1>
+    <p style="font:800 36px/1.15 var(--titre);letter-spacing:-.02em;color:#050709;width:470px">${c.suite}</p>
+    <p style="font:500 27px/1.42 var(--corps);color:rgba(5,7,9,.72);width:440px">${c.texte}</p>
+  </div>
+  <div class="pilule-noire t" style="left:72px;bottom:72px">${F.titre} <b>· impactali.site</b></div>
+  ${grain()}`; } };
+
+/* 08 · Questions (par pays : le bandeau dit le lieu ou le format) */
+V.questions = { taille: FEED, marche: true, html: (F, M, S) => `
+  ${halos()}${grille()}
+  ${cadreHaut(F, '08')}
+  <div class="bloc t" style="left:72px;top:198px;width:936px;gap:22px">
+    <p class="kicker">Questions fréquentes</p>
+    <h1 class="titre" style="font-size:90px">Vos questions,<br><span class="v">nos réponses.</span></h1>
+  </div>
+  <ol class="qr t" style="left:72px;top:496px;width:936px">${F.questions.map(([q, r], i) => `<li><b>0${i + 1}</b><div><h3>${q}</h3><p>${r}</p></div></li>`).join('')}</ol>
+  <div class="bandeau t" style="left:72px;right:72px;bottom:142px">${M.bandeau}</div>
+  ${cadreBas(cta(F, S), site)}
+  ${grain()}` };
+
+/* 09 · Certificat (par pays : le modèle clair des Comores, sombre de Djibouti) */
+V.certificat = { taille: FEED, marche: true, html: (F, M, S) => `
+  ${halos()}${grille()}
+  ${anneau({ cx: 540, cy: 820, d: 1000, ep: 2, op: .35, rot: -60, point: 12 })}
+  ${cadreHaut(F, '09')}
+  <h1 class="titre t" style="left:72px;top:190px;width:936px;font-size:84px">Ce certificat<br>ne s’achète pas.<br><span class="v">Il se mérite.</span></h1>
+  <div class="certif-3d" style="left:118px;top:520px;width:850px;height:601px">
+    <img src="../rendus/campagne/_certificat-${F.slug}-${M.certificat}.png" alt="">
+    <div class="filigrane" style="color:${M.certificat === 'clair' ? 'rgba(5,7,9,.14)' : 'rgba(255,255,255,.13)'}">MODÈLE</div>
+  </div>
+  <p class="texte t" style="left:72px;top:1162px;width:936px">Remis après validation de votre projet final.</p>
+  <p class="t" style="left:72px;top:1216px;font:700 29px/1.3 var(--corps);color:var(--vert)">Prochaine session : ${jourLong(S.debut)} · ${M.lieuCourt}</p>
+  ${grain()}` };
+
+/* 10 · Dernier appel : les places restantes, lues sur le site */
+V.places = { taille: FEED, marche: true, html: (F, M, S) => `
+  <div class="photo" style="inset:0;${cadrage(F, 1080, 1350, { foyer: 'visage', zoom: 1.1 })}"></div>
+  <div style="inset:0;background:rgba(5,7,9,.82)"></div>
+  ${halos()}
+  ${cadreHaut(F, '10')}
+  <p class="titre t centre" style="left:0;right:0;top:214px;font-size:74px">Il reste</p>
+  ${anneau({ cx: 540, cy: 584, d: 470, ep: 12, op: 1, rot: -50, point: 20 })}
+  <p class="chiffre t" style="left:0;right:0;top:${584 - 166}px">${S.places}</p>
+  <p class="titre t centre" style="left:0;right:0;top:852px;font-size:74px">place${S.places > 1 ? 's' : ''} sur ${S.total}</p>
+  <p class="t centre" style="left:0;right:0;top:964px;font:600 33px/1.4 var(--corps);color:var(--b80)">${F.titre}<br><span class="v">${cap(jourLong(S.debut))} · 18h30 · ${M.lieuCourt}</span></p>
+  <div class="bouton-vert t" style="left:50%;top:1100px;transform:translateX(-50%)">Réservez sur impactali.site</div>
+  ${cadreBas(`WhatsApp <b>${S.wa}</b>`, M.tag)}
+  ${grain()}` };
+
+// ------------------------------------------------------------ statuts 9:16 ----
+/* Zone sûre : rien d'important au-dessus de 290 px ni sous 1640 px. */
+const cadreHautStory = (F, clair) => cadreHaut(F, '', clair).replace('top:62px', '').replace('class="cadre-haut', 'style="top:292px" class="cadre-haut');
+V['story-annonce'] = { taille: STORY, marche: true, html: (F, M, S) => {
+  const opt = { foyer: 'visage', zoom: 1.2, cible: [640, 560] };
+  const [vx, vy] = foyerCadre(F, 1080, 1240, opt);
+  return `
+  <div class="photo" style="left:0;top:0;width:1080px;height:1240px;${cadrage(F, 1080, 1240, opt)}"></div>
+  <div style="left:0;top:0;width:1080px;height:1240px;background:linear-gradient(0deg,#050709 0%,rgba(5,7,9,.7) 22%,rgba(5,7,9,0) 46%),linear-gradient(180deg,rgba(5,7,9,.8) 0%,rgba(5,7,9,0) 30%)"></div>
+  ${anneau({ cx: vx, cy: vy, d: 640, ep: 2, op: .55, rot: -18, point: 10 })}
+  <header class="cadre-haut t" style="top:300px"><img class="logo" src="../medias/logo-vert.png" alt=""><p class="serie"><span>${M.tag}</span></p></header>
+  ${prix(S, 'right:64px;top:744px')}
+  <div class="bloc t" style="left:72px;top:1040px;width:936px;gap:24px">
+    <p class="kicker">Dès le ${jourLong(S.debut)}</p>
+    <h1 class="titre" style="font-size:92px">${lignesTitre(F.lignes, F.vertes).replace(/<br>/g, ' ')}</h1>
+  </div>
+  ${ticket(M, S, 'left:72px;right:72px;top:1352px')}
+  <div class="bouton-vert t" style="left:72px;top:1550px;font-size:34px;padding:22px 34px">Répondez « ${F.motCle} » ${ms('arrow_forward')}</div>
+  ${grain()}`; } };
+
+V['story-places'] = { taille: STORY, marche: true, html: (F, M, S) => `
+  <div class="photo" style="inset:0;${cadrage(F, 1080, 1920, { foyer: 'visage', zoom: 1 })}"></div>
+  <div style="inset:0;background:rgba(5,7,9,.83)"></div>
+  ${halos()}
+  <header class="cadre-haut t" style="top:300px"><img class="logo" src="../medias/logo-vert.png" alt=""><p class="serie"><span>${M.tag}</span></p></header>
+  <p class="titre t centre" style="left:0;right:0;top:470px;font-size:84px">Il reste</p>
+  ${anneau({ cx: 540, cy: 870, d: 520, ep: 13, op: 1, rot: -50, point: 22 })}
+  <p class="chiffre t" style="left:0;right:0;top:${870 - 182}px;font-size:330px">${S.places}</p>
+  <p class="titre t centre" style="left:0;right:0;top:1160px;font-size:84px">place${S.places > 1 ? 's' : ''} sur ${S.total}</p>
+  <p class="t centre" style="left:0;right:0;top:1290px;font:600 36px/1.4 var(--corps);color:var(--b80)">${F.titre}<br><span class="v">${cap(jourLong(S.debut))} · 18h30 · ${M.lieuCourt}</span></p>
+  <div class="bouton-vert t" style="left:50%;top:1480px;transform:translateX(-50%)">Réservez sur impactali.site</div>
+  ${grain()}` };
+
+V['story-programme'] = { taille: STORY, marche: true, html: (F, M, S) => `
+  ${halos()}${grille()}
+  <header class="cadre-haut t" style="top:300px"><img class="logo" src="../medias/logo-vert.png" alt=""><p class="serie"><span>${F.court}</span></p></header>
+  <div class="bloc t" style="left:72px;top:450px;width:936px;gap:26px">
+    <p class="kicker">Le programme</p>
+    <h1 class="titre" style="font-size:120px">6 soirées,<br><span class="v">${F.modules.length} modules</span></h1>
+  </div>
+  <ol class="liste-points t" style="left:72px;top:820px;width:936px">${F.modules.map((m, i) => `<li><b>0${i + 1}</b><span style="font:800 44px/1.15 var(--titre);letter-spacing:-.02em">${m.titre}</span></li>`).join('')}</ol>
+  <p class="t" style="left:72px;top:1360px;font:600 36px/1.35 var(--corps);color:var(--b80)">Dès le ${jourLong(S.debut)} · ${M.lieuCourt}</p>
+  <div class="bouton-vert t" style="left:72px;top:1470px">Répondez « PROGRAMME »</div>
+  ${grain()}` };
+
+V['story-questions'] = { taille: STORY, marche: true, html: (F, M, S) => `
+  ${halos()}${grille()}
+  <header class="cadre-haut t" style="top:300px"><img class="logo" src="../medias/logo-vert.png" alt=""><p class="serie"><span>${F.court}</span></p></header>
+  <div class="bloc t" style="left:72px;top:440px;width:936px;gap:26px">
+    <p class="kicker">Questions fréquentes</p>
+    <h1 class="titre" style="font-size:104px">3 questions,<br><span class="v">3 réponses.</span></h1>
+  </div>
+  <ol class="qr t" style="left:72px;top:760px;width:936px">${F.questions.map(([q, r], i) => `<li><b>0${i + 1}</b><div><h3 style="font-size:40px">${q}</h3><p style="font-size:29px">${r}</p></div></li>`).join('')}</ol>
+  <div class="bouton-vert t" style="left:72px;top:1500px">Répondez à ce statut</div>
+  ${grain()}` };
+
+V['reel-fin'] = { taille: STORY, html: F => `
+  ${halos()}${grille()}
+  ${anneau({ cx: 540, cy: 760, d: 700, ep: 3, op: .9, rot: -30, point: 16 })}
+  <img src="../medias/logo-vert.png" alt="" style="left:290px;top:620px;width:500px">
+  <h1 class="titre t centre" style="left:72px;right:72px;top:1180px;font-size:104px">Apprenez-le en <span class="v">6 soirées</span></h1>
+  <div class="bouton-vert t" style="left:50%;top:1450px;transform:translateX(-50%)">Lien en bio · impactali.site</div>
+  ${grain()}` };
+
+// ------------------------------------------------------------ montage ----
+function typographie(racine) {
+  const marcheur = document.createTreeWalker(racine, NodeFilter.SHOW_TEXT);
+  const noeuds = [];
+  while (marcheur.nextNode()) noeuds.push(marcheur.currentNode);
+  noeuds.forEach(n => {
+    if (n.parentElement && n.parentElement.closest('svg, .ms')) return;
+    n.nodeValue = n.nodeValue
+      .replace(/ ([?!:;»%])/g, ' $1')
+      .replace(/« /g, '« ')
+      .replace(/(\d) – (\d)/g, '$1 – $2')
+      .replace(/(\d) (soirées?|places?|heures|h\b|modules?|questions|réponses|séances|projet)/g, '$1 $2')
+      .replace(/(\+\d{3})((?: \d{2,3})+)/g, (m, a, b) => a + b.replace(/ /g, ' '));
+  });
+}
+
+const scene = document.getElementById('scene');
+window.pret = (async () => {
+  const def = V[VID];
+  const F = FORMATIONS[SLUG] ? Object.assign({ slug: SLUG }, FORMATIONS[SLUG]) : null;
+  if (!def || !F) {
+    scene.style.cssText = 'width:1080px;height:200px';
+    scene.innerHTML = `<p class="t" style="left:40px;top:60px;font:600 30px var(--corps)">Maquette inconnue : ${SLUG} / ${VID}</p>`;
+    window.MAQUETTE = null;
+    return true;
+  }
+  let M = null, S = null;
+  if (def.marche) {
+    const live = await (await fetch('../rendus/campagne/_live.json', { cache: 'no-store' })).json();
+    M = MARCHES[MARCHE];
+    const L = live[MARCHE];
+    const s = L && L.sessions[SLUG];
+    if (!M || !s) throw new Error(`Pas de session ${SLUG} pour ${MARCHE} dans _live.json`);
+    S = Object.assign({ wa: L.wa, devise: L.devise }, s);
+  }
+  const [w, h] = def.taille;
+  document.body.style.width = w + 'px';
+  document.body.style.height = h + 'px';
+  scene.style.width = w + 'px';
+  scene.style.height = h + 'px';
+  scene.innerHTML = def.html(F, M, S);
+  typographie(scene);
+  window.MAQUETTE = { formation: SLUG, maquette: VID, marche: MARCHE, w, h };
+  await document.fonts.ready;
+  await Promise.all([
+    document.fonts.load('800 100px "Plus Jakarta Sans"', 'ÀÉÈÊÔÇéèêàçôû«»’–'),
+    document.fonts.load('700 40px "Plus Jakarta Sans"', 'éà'),
+    document.fonts.load('500 40px "Inter"', 'éàç'), document.fonts.load('600 40px "Inter"', 'éàç'),
+    document.fonts.load('700 40px "Inter"', 'éàç'), document.fonts.load('800 40px "Inter"', 'éàç'),
+    document.fonts.load('48px "Material Symbols Outlined"', 'check_circle arrow_forward')
+  ]).catch(() => null);
+  /* Les images de fond (background-image) doivent être chargées avant la capture. */
+  const urls = new Set();
+  scene.querySelectorAll('*').forEach(e => { const m = /url\("?([^")]+)"?\)/.exec(getComputedStyle(e).backgroundImage); if (m && !m[1].startsWith('data:')) urls.add(m[1]); });
+  scene.querySelectorAll('img').forEach(i => urls.add(i.src));
+  window.IMAGES_MANQUANTES = [];
+  await Promise.all([...urls].map(u => new Promise(r => { const i = new Image(); i.onload = r; i.onerror = () => { window.IMAGES_MANQUANTES.push(u); r(); }; i.src = u; })));
+  await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+  return true;
+})();
+
+/* Contrôles lus par rendre.js */
+window.verifier = () => {
+  const r0 = scene.getBoundingClientRect();
+  const largeurTexte = e => { const r = document.createRange(); r.selectNodeContents(e); return r.getBoundingClientRect().width; };
+  const icones = [...scene.querySelectorAll('.ms')].filter(e => largeurTexte(e) > parseFloat(getComputedStyle(e).fontSize) * 1.5).map(e => e.textContent);
+  const blocs = [...scene.querySelectorAll('.t')];
+  const boites = blocs.map(e => ({ e, r: e.getBoundingClientRect() }));
+  const nom = e => (e.className + ' « ' + e.textContent.trim().replace(/\s+/g, ' ').slice(0, 40) + ' »');
+  const hors = boites.filter(({ r }) => r.left < r0.left - 2 || r.top < r0.top - 2 || r.right > r0.right + 2 || r.bottom > r0.bottom + 2).map(({ e }) => nom(e));
+  const chevauchements = [];
+  for (let i = 0; i < boites.length; i++) for (let j = i + 1; j < boites.length; j++) {
+    const a = boites[i], b = boites[j];
+    if (a.e.contains(b.e) || b.e.contains(a.e)) continue;
+    const l = Math.max(a.r.left, b.r.left), t = Math.max(a.r.top, b.r.top), rr = Math.min(a.r.right, b.r.right), bb = Math.min(a.r.bottom, b.r.bottom);
+    if (rr - l > 3 && bb - t > 3) chevauchements.push(nom(a.e) + ' × ' + nom(b.e));
+  }
+  const debordements = blocs.filter(e => e.scrollWidth > e.clientWidth + 2).map(nom);
+  return { texte: scene.innerText, icones, hors, chevauchements, debordements, images: window.IMAGES_MANQUANTES || [] };
+};
+</script>
+</body>
+</html>

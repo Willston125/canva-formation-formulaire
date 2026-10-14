@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IMPACTALI — Présentation vidéo</title>
+<!--
+  La vidéo de présentation d'IMPACTALI, image par image.
+
+  CHAQUE IMAGE EST CALCULÉE, PAS JOUÉE : `rendre(t)` pose tout ce qui est à
+  l'écran à l'instant t. Le tournage (rendre.js) filme ainsi à cadence
+  parfaite, et deux rendus donnent la même vidéo.
+
+  Adresse :  video.html?format=9x16|4x5&montage=40|15[&st=1]
+    format    9x16 (1080 × 1920, Reels / TikTok / Shorts / Stories) ou 4x5 (1080 × 1350, fil d'actualité)
+    montage   40 (version principale) ou 15 (version courte)
+    st=1      affiche les sous-titres incrustés par-dessus
+  Ouverte dans un navigateur à travers un serveur local, la page joue en
+  boucle avec une barre de lecture (voir LISEZMOI.md).
+
+  Les textes se modifient dans donnees.js, pas ici.
+-->
+<style>
+  @font-face { font-family: 'Plus Jakarta Sans'; font-weight: 300 800; src: url(../../assets/fonts/plus-jakarta-sans-latin.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+  @font-face { font-family: 'Plus Jakarta Sans'; font-weight: 300 800; src: url(../../assets/fonts/plus-jakarta-sans-latin-ext.woff2) format('woff2'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1E00-1E9F, U+20A0-20AB, U+20AD-20C0, U+A720-A7FF; }
+  @font-face { font-family: 'Inter'; font-weight: 300 800; src: url(../../assets/fonts/inter-latin.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+  @font-face { font-family: 'Inter'; font-weight: 300 800; src: url(../../assets/fonts/inter-latin-ext.woff2) format('woff2'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1E00-1E9F, U+20A0-20AB, U+20AD-20C0, U+A720-A7FF; }
+
+  /* La charte du site (style.css, :root) */
+  :root {
+    --nuit: #050709;
+    --surface: #07111D;
+    --surface2: #0D1723;
+    --vert: #CBFD00;
+    --creme: #F6F5EF;
+    --doux: #9CA6B2;
+    --bordure: rgba(255, 255, 255, .10);
+    --titre: 'Plus Jakarta Sans', system-ui, sans-serif;
+    --corps: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: #000; }
+  body.calque-st, body.calque-st #scene { background: transparent !important; }
+  body { overflow: hidden; }
+
+  #cadre { position: relative; transform-origin: 0 0; }
+  #scene {
+    position: absolute; inset: 0; overflow: hidden;
+    background: var(--nuit); color: var(--creme);
+    font-family: var(--corps);
+    -webkit-font-smoothing: antialiased; text-rendering: geometricPrecision;
+  }
+  .abs { position: absolute; left: 0; top: 0; }
+  .plan { position: absolute; inset: 0; display: none; }
+  .anime { will-change: transform, opacity; }
+
+  /* ---------- Le fond : la nuit, deux lueurs discrètes ---------- */
+  #fond { position: absolute; inset: 0; }
+  .lueur { position: absolute; border-radius: 50%; left: 0; top: 0; }
+  #lueurVerte { width: 1400px; height: 1400px; margin: -700px 0 0 -700px; background: radial-gradient(circle, rgba(203, 253, 0, .13), rgba(203, 253, 0, .04) 38%, transparent 66%); }
+  #lueurBleue { width: 1700px; height: 1700px; margin: -850px 0 0 -850px; background: radial-gradient(circle, rgba(29, 64, 110, .55), rgba(13, 23, 35, .35) 42%, transparent 70%); }
+  #grain { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 45%, transparent 55%, rgba(0, 0, 0, .55)); }
+
+  /* ---------- Titres : lignes qui montent d'un masque ---------- */
+  .m { position: absolute; overflow: hidden; padding: .2em .08em .24em 0; margin: -.2em 0 0 0; white-space: nowrap; line-height: 1; }
+  .mi { display: block; will-change: transform; }
+  .t-titre { font-family: var(--titre); font-weight: 800; letter-spacing: -.045em; line-height: 1; color: #FFFFFF; }
+  .t-vert { color: var(--vert); }
+
+  /* ---------- Le fil vert ---------- */
+  #fil { position: absolute; inset: 0; overflow: visible; pointer-events: none; }
+  #fil path { fill: none; stroke: var(--vert); stroke-linecap: round; stroke-linejoin: round; }
+  #filLueur { filter: blur(7px); opacity: .32; }
+
+  /* ---------- 1. L'accroche ---------- */
+  .accroche-ligne { position: absolute; }
+  .accroche-vert { position: absolute; left: 0; top: 0; color: var(--vert); }
+
+  /* ---------- 2. La marque ---------- */
+  #logo { position: absolute; display: block; }
+  .signature { position: absolute; text-align: center; font: 600 34px/1.32 var(--corps); color: rgba(246, 245, 239, .86); white-space: nowrap; }
+  .telephone {
+    position: absolute; border-radius: 64px; padding: 14px;
+    background: linear-gradient(160deg, #1A2431, #0B121B 60%, #18212C);
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, .08) inset, 0 60px 120px rgba(0, 0, 0, .65), 0 0 90px rgba(203, 253, 0, .08);
+  }
+  .telephone .ecran { position: relative; width: 100%; height: 100%; border-radius: 50px; overflow: hidden; background: var(--nuit); }
+  .telephone .ecran img { position: absolute; left: 0; top: 0; width: 100%; display: block; }
+  .telephone .encoche { position: absolute; left: 50%; top: 22px; width: 112px; height: 30px; margin-left: -56px; border-radius: 20px; background: #000; }
+
+  /* ---------- 3. Les domaines ---------- */
+  .index { position: absolute; font: 800 26px/1 var(--corps); letter-spacing: .16em; color: var(--vert); }
+  .verbe { font-size: 116px; }
+  .formations { position: absolute; font: 600 32px/1.3 var(--corps); color: rgba(246, 245, 239, .88); white-space: nowrap; }
+  .formations div { position: relative; padding-left: 26px; }
+  .formations div::before { content: ''; position: absolute; left: 0; top: .5em; width: 12px; height: 12px; margin-top: -4px; border-radius: 50%; background: var(--vert); }
+  .carte {
+    position: absolute; overflow: hidden; border-radius: 30px;
+    background: linear-gradient(170deg, #0C1826, #07111D 55%, #060D16);
+    border: 1px solid var(--bordure);
+    box-shadow: 0 50px 110px rgba(0, 0, 0, .55), 0 0 0 1px rgba(0, 0, 0, .3);
+  }
+  .carte .toile { position: absolute; left: 0; top: 0; width: 800px; height: 450px; transform-origin: 0 0; }
+  .mini-verbe { position: absolute; left: 0; right: 0; bottom: 0; padding: 50px 22px 16px; font: 800 44px/1 var(--titre); letter-spacing: -.04em; color: #FFF; background: linear-gradient(transparent, rgba(5, 7, 9, .92) 55%); }
+  .a-venir {
+    position: absolute; display: flex; align-items: center; gap: 16px; padding: 14px 22px 14px 14px;
+    border: 2px dashed rgba(246, 245, 239, .28); border-radius: 999px; white-space: nowrap;
+    font: 600 28px/1 var(--corps); color: rgba(246, 245, 239, .78);
+  }
+  .a-venir .etiq { padding: 9px 16px; border-radius: 999px; background: rgba(246, 245, 239, .12); color: var(--creme); font: 800 20px/1 var(--corps); letter-spacing: .1em; text-transform: uppercase; }
+
+  /* Les réalisations (illustrations.js) */
+  .illu { color: var(--creme); font-family: var(--corps); }
+  .illu-entete { display: flex; align-items: center; gap: 18px; padding: 0 22px; border-bottom: 1px solid rgba(255, 255, 255, .07); }
+  .illu-pastilles { display: flex; gap: 7px; }
+  .illu-pastilles div { width: 10px; height: 10px; border-radius: 50%; }
+  .illu-titre { font: 600 17px/1 var(--corps); color: var(--doux); flex: 1; }
+  .illu-droite { font: 600 14px/1 var(--corps); color: #667080; font-variant-numeric: tabular-nums; }
+  .illu-masque { overflow: hidden; }
+  .illu-curseur { pointer-events: none; }
+  .illu-selection { position: absolute; border: 2px solid var(--vert); border-radius: 4px; }
+  .illu-selection .poignee { position: absolute; width: 10px; height: 10px; border-radius: 2px; background: #FFF; border: 2px solid var(--vert); }
+  .poignee.hg { left: -6px; top: -6px; } .poignee.hd { right: -6px; top: -6px; } .poignee.bg { left: -6px; bottom: -6px; } .poignee.bd { right: -6px; bottom: -6px; }
+
+  .creer-rail { border-radius: 16px; background: #0D1723; border: 1px solid rgba(255, 255, 255, .06); }
+  .creer-outil { border-radius: 10px; }
+  .creer-outil.actif { background: var(--vert); }
+  .creer-plan { border-radius: 10px; background: var(--creme); box-shadow: 0 24px 50px rgba(0, 0, 0, .45); transform-origin: 50% 50%; overflow: hidden; }
+  .creer-image { border-radius: 8px; background: linear-gradient(165deg, #0D1723, #15304D); overflow: hidden; }
+  .creer-tag { display: flex; align-items: center; justify-content: center; border-radius: 999px; background: var(--vert); color: var(--nuit); font: 800 13px/1 var(--corps); }
+  .creer-surligne { background: var(--vert); transform-origin: 0 50%; border-radius: 3px; }
+  .creer-titre { font: 800 30px/1 var(--titre); letter-spacing: -.035em; color: var(--nuit); padding-top: 2px; }
+  .creer-pied { font: 600 11px/1 var(--corps); color: #667080; letter-spacing: .06em; text-transform: uppercase; }
+  .creer-etiquette { font: 700 16px/1 var(--corps); color: var(--creme); }
+  .creer-etiquette.doux { color: var(--doux); font-size: 14px; }
+  .creer-nuance { border-radius: 50%; box-shadow: 0 0 0 2px rgba(255, 255, 255, .14); }
+  .creer-typo { display: flex; align-items: baseline; gap: 14px; }
+  .creer-typo .aa { font-size: 40px; line-height: 1; color: #FFF; }
+  .creer-typo .aa.jakarta { font-family: var(--titre); font-weight: 800; letter-spacing: -.04em; }
+  .creer-typo .aa.inter { font-family: var(--corps); font-weight: 600; }
+  .creer-typo .nom { font: 500 14px/1 var(--corps); color: var(--doux); }
+  .creer-bouton { display: flex; align-items: center; justify-content: center; border-radius: 999px; background: var(--vert); color: var(--nuit); font: 800 17px/1 var(--corps); }
+
+  .cal-pilule { display: flex; align-items: center; justify-content: center; border-radius: 999px; border: 1px solid rgba(255, 255, 255, .16); font: 600 13px/1 var(--corps); color: var(--creme); }
+  .cal-jour { text-align: center; font: 700 15px/20px var(--corps); color: var(--doux); }
+  .cal-case { border-radius: 14px; background: #0D1723; border: 1px solid rgba(255, 255, 255, .06); }
+  .cal-case.auj { border-color: rgba(203, 253, 0, .35); }
+  .cal-vignette { position: absolute; left: 0; top: 0; border-radius: 10px; overflow: hidden; }
+  .cal-vignette.carrousel { background: var(--vert); }
+  .cal-vignette.reel { background: linear-gradient(160deg, #1F4877, #11263F); }
+  .cal-vignette.post { background: var(--creme); }
+  .cal-vignette.story { background: linear-gradient(160deg, #DDFF5C, #A5CF00); }
+  .cal-legende { font: 700 14px/1.1 var(--corps); color: #FFF; }
+  .cal-statut { display: flex; align-items: center; gap: 6px; margin-top: 8px; font: 500 11px/1 var(--corps); color: var(--doux); }
+  .cal-statut .point { width: 8px; height: 8px; border-radius: 50%; background: var(--vert); }
+  .cal-graph { border-radius: 14px; background: #0D1723; border: 1px solid rgba(255, 255, 255, .06); }
+  .cal-graph-titre { font: 600 13px/1 var(--corps); color: var(--doux); }
+  .cal-barre { border-radius: 6px; background: rgba(255, 255, 255, .08); transform-origin: 50% 100%; }
+  .cal-barre.pleine { background: linear-gradient(180deg, #DDFF5C, #A5CF00); }
+  .cal-toast { display: flex; align-items: center; border-radius: 18px; background: #0D1723; border: 1px solid rgba(203, 253, 0, .35); }
+  .cal-toast-texte { margin-left: 64px; font: 700 17px/1 var(--corps); color: #FFF; }
+
+  .mont-tc { color: var(--vert) !important; font-size: 16px !important; }
+  .mont-ecran { border-radius: 14px; overflow: hidden; background: #000; box-shadow: 0 0 0 1px rgba(255, 255, 255, .1); }
+  .mont-legende { font: 600 13px/40px var(--corps); color: var(--doux); text-align: center; }
+  .mont-timeline { border-radius: 16px; background: #0D1723; border: 1px solid rgba(255, 255, 255, .06); overflow: hidden; }
+  .mont-titre { font: 700 14px/1 var(--corps); color: var(--doux); }
+  .mont-graduation { background: rgba(255, 255, 255, .25); }
+  .mont-seconde { font: 500 11px/1 var(--corps); color: #667080; }
+  .mont-piste { font: 800 12px/1 var(--corps); color: #667080; }
+  .mont-couloir { border-radius: 8px; background: rgba(255, 255, 255, .03); }
+  .mont-plan { border-radius: 9px; overflow: hidden; box-shadow: 0 0 0 1px rgba(255, 255, 255, .12) inset; }
+  .mont-plan-nom { position: absolute; left: 50px; top: 10px; font: 700 12px/1 var(--corps); color: #FFF; }
+  .mont-titreclip { display: flex; align-items: center; padding-left: 14px; border-radius: 8px; background: var(--vert); color: var(--nuit); font: 800 13px/1 var(--corps); }
+  .mont-onde { transform-origin: 50% 50%; }
+  .mont-coupe { background: #FFF; box-shadow: 0 0 12px #FFF; transform-origin: 50% 50%; }
+  .mont-tete .triangle { position: absolute; left: 0; top: 0; width: 0; height: 0; border-left: 9px solid transparent; border-right: 9px solid transparent; border-top: 12px solid var(--vert); }
+  .mont-tete .barre { position: absolute; left: 7.5px; top: 8px; width: 3px; height: 228px; background: var(--vert); box-shadow: 0 0 10px rgba(203, 253, 0, .6); }
+
+  .ia-chat { border-radius: 18px; background: #0D1723; border: 1px solid rgba(255, 255, 255, .06); }
+  .ia-bulle { border-radius: 16px; padding: 14px 16px; }
+  .ia-bulle.moi { background: #1B2B3F; border-bottom-right-radius: 4px; }
+  .ia-bulle.elle { display: flex; gap: 12px; align-items: flex-start; background: #0A131E; border: 1px solid rgba(203, 253, 0, .22); border-bottom-left-radius: 4px; }
+  .ia-texte { font: 500 16px/1.38 var(--corps); color: var(--creme); }
+  .ia-texte.rep { flex: 1; }
+  .ia-avatar { flex: none; width: 34px; height: 34px; border-radius: 50%; background: var(--vert); color: var(--nuit); font: 800 13px/34px var(--corps); text-align: center; }
+  .ia-points { display: flex; gap: 6px; padding-top: 14px; }
+  .ia-points .pt { width: 8px; height: 8px; border-radius: 50%; background: var(--doux); }
+  .ia-saisie { display: flex; align-items: center; justify-content: space-between; padding: 0 6px 0 16px; border-radius: 999px; background: #0A131E; border: 1px solid rgba(255, 255, 255, .08); }
+  .ia-placeholder { font: 500 14px/1 var(--corps); color: #667080; }
+  .ia-envoyer { position: relative; width: 32px; height: 32px; border-radius: 50%; background: var(--vert); }
+  .ia-navig { border-radius: 16px; overflow: hidden; background: #FFFFFF; box-shadow: 0 30px 70px rgba(0, 0, 0, .5); }
+  .ia-barre { background: #ECEAE3; }
+  .ia-feu { border-radius: 50%; background: #C9C6BC; }
+  .ia-adresse { border-radius: 999px; background: #FFFFFF; }
+  .ia-page { background: #FFFFFF; overflow: hidden; }
+  .ia-squelette { border-radius: 10px; background: linear-gradient(90deg, #ECEAE3, #F6F5EF, #ECEAE3); }
+  .ia-logo { border-radius: 4px; background: var(--nuit); }
+  .ia-lien { border-radius: 3px; background: #C9C6BC; }
+  .ia-btn-vert { display: flex; align-items: center; justify-content: center; border-radius: 999px; background: var(--vert); color: var(--nuit); font: 800 10px/1 var(--corps); }
+  .ia-h1 { font: 800 25px/1.08 var(--titre); letter-spacing: -.035em; color: var(--nuit); }
+  .ia-ligne { border-radius: 4px; background: #D8D5CB; }
+  .ia-ligne.fonce { background: #3A4250; }
+  .ia-btn-noir { display: flex; align-items: center; justify-content: center; border-radius: 999px; background: var(--nuit); color: #FFF; font: 700 11px/1 var(--corps); }
+  .ia-image { border-radius: 12px; background: linear-gradient(140deg, #DDFF5C, #A5CF00); overflow: hidden; }
+  .ia-carte-img { border-radius: 10px; background: linear-gradient(140deg, #E3E1D8, #CFCBBF); }
+  .ia-carte-img.vert { background: linear-gradient(140deg, #E8FF8A, #C2EA2E); }
+  .ia-pastille { border-radius: 999px; background: var(--vert); }
+  .ia-balayage { background: linear-gradient(90deg, transparent, rgba(165, 207, 0, .9), transparent); box-shadow: 0 0 18px rgba(165, 207, 0, .7); }
+
+  /* ---------- 4. La pratique ---------- */
+  .fenetre { position: absolute; overflow: hidden; border-radius: 26px; background: #000; box-shadow: 0 40px 90px rgba(0, 0, 0, .6), 0 0 0 1px rgba(255, 255, 255, .12); }
+  .fenetre canvas { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: block; }
+  .fenetre .legende {
+    position: absolute; left: 16px; bottom: 16px; display: flex; align-items: center; gap: 10px;
+    padding: 11px 16px; border-radius: 999px; background: rgba(5, 7, 9, .78);
+    font: 700 22px/1 var(--corps); color: #FFF; white-space: nowrap;
+  }
+  .fenetre .legende::before { content: ''; width: 10px; height: 10px; border-radius: 50%; background: var(--vert); }
+  .pratique-ligne { position: absolute; font: 600 36px/1.2 var(--corps); color: rgba(246, 245, 239, .9); white-space: nowrap; }
+
+  /* ---------- 5. Le parcours ---------- */
+  .noeud { position: absolute; width: 64px; height: 64px; margin: -32px 0 0 -32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font: 800 28px/1 var(--corps); }
+  .noeud-label { position: absolute; font: 700 24px/1 var(--corps); white-space: nowrap; transform: translateX(-50%); }
+  .etape-titre { font-size: 54px; }
+  .note { position: absolute; font: 500 28px/1.35 var(--corps); color: #C9D2DC; white-space: nowrap; }
+  .ecran-site { position: absolute; overflow: hidden; border-radius: 30px; background: #0A0F15; box-shadow: 0 0 0 2px rgba(255, 255, 255, .1), 0 0 0 12px #121B26, 0 0 0 13px rgba(255, 255, 255, .08), 0 50px 110px rgba(0, 0, 0, .6); }
+  .ecran-site .pile { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+  .ecran-site .pile img { position: absolute; display: block; }
+  .ecran-site .fondu { position: absolute; left: 0; right: 0; height: 90px; pointer-events: none; }
+  .appui { position: absolute; width: 90px; height: 90px; margin: -45px 0 0 -45px; border-radius: 50%; background: rgba(255, 255, 255, .5); box-shadow: 0 0 0 3px rgba(255, 255, 255, .85); }
+
+  /* ---------- 6. L'appel ---------- */
+  .slogan-mot { font-size: 88px; }
+  .bouton-final { position: absolute; display: flex; align-items: center; justify-content: center; gap: 18px; border-radius: 999px; font: 800 40px/1 var(--corps); letter-spacing: -.01em; white-space: nowrap; }
+  .bouton-final .fond { position: absolute; inset: 0; border-radius: 999px; background: var(--vert); transform-origin: 50% 50%; }
+  .bouton-final span { position: relative; color: var(--nuit); }
+  .bouton-final svg { position: relative; }
+  .invitation { position: absolute; text-align: center; white-space: nowrap; font: 700 32px/1 var(--corps); color: var(--vert); }
+  .adresse { position: absolute; text-align: center; white-space: nowrap; font: 800 46px/1 var(--corps); letter-spacing: -.01em; color: #FFF; }
+
+  /* ---------- Les sous-titres incrustés ---------- */
+  #calqueST { position: absolute; inset: 0; pointer-events: none; }
+  .st {
+    position: absolute; padding: 12px 24px 14px; border-radius: 16px;
+    background: rgba(5, 7, 9, .80); box-shadow: 0 0 0 1px rgba(255, 255, 255, .06);
+    font: 600 38px/1.28 var(--corps); color: #FFF; text-align: center;
+  }
+
+  /* ---------- Prévisualisation ---------- */
+  #commandes {
+    position: fixed; left: 12px; right: 12px; bottom: 12px; z-index: 10;
+    display: none; align-items: center; gap: 12px; padding: 10px 14px;
+    border-radius: 14px; background: rgba(15, 20, 28, .92); color: #fff; font: 600 14px/1 var(--corps);
+  }
+  #commandes input { flex: 1; accent-color: #CBFD00; }
+  #commandes button { padding: 8px 14px; border: 0; border-radius: 10px; background: #CBFD00; color: #050709; font: 800 14px/1 var(--corps); cursor: pointer; }
+  body.apercu #commandes { display: flex; }
+</style>
+<script src="donnees.js"></script>
+<script src="medias/site/reperes.js"></script>
+<script src="son/voix/mesures.js"></script>
+<script src="medias/classe/clips.js"></script>
+<script src="illustrations.js"></script>
+</head>
+<body>
+<div id="cadre"><div id="scene"></div></div>
+<div id="commandes">
+  <button type="button" id="lecture">Pause</button>
+  <input type="range" id="curseurTemps" min="0" max="40" step="0.01" value="0">
+  <span id="temps">0.00 s</span>
+</div>
+<script src="video.js"></script>
+</body>
+</html>

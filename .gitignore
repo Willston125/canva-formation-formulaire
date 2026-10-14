@@ -5,3 +5,26 @@ node_modules/
 .env
 .env.*
 exports/
+
+# Les vidéos rendues (lourdes) : on garde les sources, on refait les rendus (node publicite/rendre.js)
+publicite/rendus/
+
+# La présentation vidéo (publicite/presentation) : on garde les sources, pas les rendus.
+# Les extraits de cours montrent des élèves reconnaissables : jamais dans le dépôt public.
+# Le relevé du catalogue et ses photos portent des données de pays (lieux, sessions) : idem.
+publicite/presentation/rendus/
+publicite/presentation/livrables/
+publicite/presentation/son/rendus/
+publicite/presentation/son/voix/temoin/
+publicite/presentation/medias/classe/
+publicite/presentation/site/
+
+# Le modèle de certificat (PSD, PDF Canva) et sa fabrique : jamais versionnés.
+# Le dépôt est public : le modèle permettrait de fabriquer de faux certificats.
+certificat/
+
+# Campagne des formations : les portraits et photos retouchées (sources hors dépôt, dossier public)
+publicite/campagne/medias/
+
+# Le spot vidéo : ses médias (portrait, photos, certificat modèle) ne vont pas dans le dépôt public.
+publicite/spot/medias/

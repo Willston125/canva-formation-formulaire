@@ -30,3 +30,9 @@ assets/images/formation canva 01.png
 # api/_lib/ n'est PAS écarté : les fonctions de l'API en ont besoin.
 supabase
 exports
+
+# La publicité vidéo : ses sources et ses rendus restent hors du site publié
+publicite
+
+# Le modèle de certificat : jamais servi par le site
+certificat

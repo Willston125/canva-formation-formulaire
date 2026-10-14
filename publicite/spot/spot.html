@@ -1,0 +1,831 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>IMPACTALI · spot</title>
+<!--
+  Le spot IMPACTALI (35 s), image par image : rendre(t) dessine l'instant t, de façon
+  déterministe. rendre.js le filme (24 i/s, flou de mouvement) et le mixe avec son.js.
+  spot.html?format=16x9 (1920 × 1080, bandes 2,39:1) ou ?format=9x16 (1080 × 1920).
+  Ouvert seul (à travers un serveur local), il se joue en boucle.
+
+  Générique : ni prix, ni lieu, ni date, ni numéro, ni mode (présentiel / en ligne).
+-->
+<style>
+  @font-face { font-family: 'Plus Jakarta Sans'; font-weight: 300 800; src: url(../../assets/fonts/plus-jakarta-sans-latin.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+  @font-face { font-family: 'Plus Jakarta Sans'; font-weight: 300 800; src: url(../../assets/fonts/plus-jakarta-sans-latin-ext.woff2) format('woff2'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1E00-1E9F, U+20A0-20AB, U+20AD-20C0, U+A720-A7FF; }
+  @font-face { font-family: 'Inter'; font-weight: 300 800; src: url(../../assets/fonts/inter-latin.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+  @font-face { font-family: 'Inter'; font-weight: 300 800; src: url(../../assets/fonts/inter-latin-ext.woff2) format('woff2'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1E00-1E9F, U+20A0-20AB, U+20AD-20C0, U+A720-A7FF; }
+
+  :root { --nuit: #050709; --vert: #CBFD00; --titre: 'Plus Jakarta Sans', system-ui, sans-serif; --corps: 'Inter', system-ui, sans-serif; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: #000; overflow: hidden; }
+  body { font-family: var(--corps); color: #fff; -webkit-font-smoothing: antialiased; }
+  #ecran { position: relative; overflow: hidden; background: var(--nuit); }
+  #monde { position: absolute; inset: 0; transform-origin: 50% 50%; }
+  .couche, .scene { position: absolute; inset: 0; }
+  .scene { display: none; transform-origin: 50% 50%; }
+  .abs { position: absolute; }
+  canvas { position: absolute; left: 0; top: 0; }
+
+  /* Lignes de texte : un conteneur de hauteur nulle centré sur y, le contenu s'anime */
+  .ligne { position: absolute; left: 0; right: 0; height: 0; display: flex; align-items: center; justify-content: center; }
+  .ligne.gauche { justify-content: flex-start; right: auto; }
+  .contenu { display: block; white-space: nowrap; text-align: center; will-change: transform, filter, opacity; }
+  .gauche .contenu { text-align: left; }
+  .t-legende { font-family: var(--titre); font-weight: 700; letter-spacing: -.015em; line-height: 1.12; color: #fff; }
+  .t-punch { font-family: var(--titre); font-weight: 800; letter-spacing: -.05em; line-height: .92; color: #fff; }
+  .t-caps { font-family: var(--titre); font-weight: 800; text-transform: uppercase; letter-spacing: .04em; line-height: 1.08; }
+  .t-kicker { font-family: var(--corps); font-weight: 700; letter-spacing: .32em; text-transform: uppercase; color: var(--vert); }
+  .t-corps { font-family: var(--corps); font-weight: 500; line-height: 1.4; color: rgba(255,255,255,.8); white-space: normal; }
+  .vert { color: var(--vert); }
+  .lueur { text-shadow: 0 0 40px rgba(203,253,0,.35); }
+  .masque { display: block; overflow: hidden; padding: .06em 0 .1em; margin: -.06em 0 -.1em; }
+  .masque > span { display: block; will-change: transform; }
+
+  .point { position: absolute; width: 18px; height: 18px; margin: -9px 0 0 -9px; border-radius: 50%; background: #F6FFD0;
+    box-shadow: 0 0 10px 3px rgba(203,253,0,.95), 0 0 50px 18px rgba(203,253,0,.45), 0 0 150px 60px rgba(203,253,0,.16); }
+  .flare-coeur { position: absolute; height: 4px; margin-top: -2px; border-radius: 4px; mix-blend-mode: screen;
+    background: linear-gradient(90deg, rgba(120,190,255,0) 0%, rgba(160,220,255,.55) 30%, #F4FFD6 50%, rgba(160,220,255,.55) 70%, rgba(120,190,255,0) 100%); }
+  .flare-halo { position: absolute; height: 90px; margin-top: -45px; border-radius: 50%; mix-blend-mode: screen; filter: blur(22px);
+    background: linear-gradient(90deg, rgba(80,160,255,0) 0%, rgba(90,170,255,.22) 35%, rgba(203,253,0,.3) 50%, rgba(90,170,255,.22) 65%, rgba(80,160,255,0) 100%); }
+  .flare-boule { position: absolute; border-radius: 50%; mix-blend-mode: screen;
+    background: radial-gradient(circle, rgba(230,255,170,.55) 0%, rgba(203,253,0,.18) 30%, rgba(203,253,0,0) 68%); }
+
+  .brume { position: absolute; border-radius: 50%; pointer-events: none; }
+  #grain { mix-blend-mode: overlay; opacity: .09; }
+  #vignette { background: radial-gradient(ellipse at 50% 50%, rgba(0,0,0,0) 52%, rgba(0,0,0,.62) 100%); pointer-events: none; }
+  #flash { pointer-events: none; opacity: 0; }
+  .fuite { position: absolute; border-radius: 50%; mix-blend-mode: screen; pointer-events: none; opacity: 0; }
+  .cache { position: absolute; left: 0; right: 0; background: #000; }
+  #barre { position: absolute; top: -10%; bottom: -10%; width: 220px; mix-blend-mode: screen; opacity: 0; filter: blur(18px);
+    background: linear-gradient(90deg, rgba(203,253,0,0), rgba(220,255,120,.9) 50%, rgba(203,253,0,0)); }
+
+  .photo { background-repeat: no-repeat; }
+  .carte-photo { position: absolute; border-radius: 20px; overflow: hidden; background-repeat: no-repeat; box-shadow: 0 40px 90px rgba(0,0,0,.6); border: 1px solid rgba(255,255,255,.14); }
+  .tel { position: absolute; border-radius: 64px; background: #0B0F14; border: 2px solid #2C3644; box-shadow: 0 60px 140px rgba(0,0,0,.7), 0 0 0 10px #151B23 inset; }
+  .ecran-tel { position: absolute; left: 16px; top: 16px; border-radius: 50px; overflow: hidden; background: #050709; }
+  .ecran-tel img { position: absolute; left: 0; top: 0; display: block; }
+  .encoche { position: absolute; left: 50%; top: 14px; width: 110px; height: 30px; margin-left: -55px; border-radius: 20px; background: #000; }
+  .pilule { display: inline-flex; align-items: center; gap: 22px; padding: 26px 46px 26px 52px; border-radius: 999px; background: var(--vert); color: var(--nuit);
+    font-family: var(--titre); font-weight: 800; letter-spacing: -.02em; box-shadow: 0 30px 80px rgba(203,253,0,.25); }
+  .autocollant { display: inline-flex; padding: 12px 24px; border-radius: 999px; border: 2.5px solid var(--vert); color: var(--vert);
+    font-family: var(--titre); font-weight: 800; letter-spacing: -.01em; }
+  .geant { font-family: var(--titre); font-weight: 800; letter-spacing: -.06em; line-height: .8; color: transparent; -webkit-text-stroke: 2px rgba(203,253,0,.26); white-space: nowrap; }
+</style>
+</head>
+<body>
+<div id="ecran">
+  <div id="monde"></div>
+  <canvas id="grain"></canvas>
+  <div id="vignette" class="couche"></div>
+  <div id="flash" class="couche"></div>
+  <div class="cache" id="cacheHaut" style="top:0;height:0"></div>
+  <div class="cache" id="cacheBas" style="bottom:0;height:0"></div>
+</div>
+<svg width="0" height="0" style="position:absolute">
+  <filter id="ca" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
+    <feColorMatrix in="SourceGraphic" type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="r"/>
+    <feOffset in="r" dx="0" dy="0" result="ro" id="caR"/>
+    <feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 1 0" result="gb"/>
+    <feOffset in="gb" dx="0" dy="0" result="gbo" id="caB"/>
+    <feBlend in="ro" in2="gbo" mode="screen"/>
+  </filter>
+</svg>
+<script src="son.js"></script>
+<script>
+'use strict';
+// =====================================================================
+//  Réglages
+// =====================================================================
+const Q = new URLSearchParams(location.search);
+const FORMAT = Q.get('format') === '9x16' ? '9x16' : '16x9';
+const V = FORMAT === '9x16';
+const W = V ? 1080 : 1920, H = V ? 1920 : 1080;
+const DUREE = 35, IPS = 24;
+/* true tant qu'une session est ouverte aux inscriptions (vérifié sur le site le 14/10/2026). */
+const INSCRIPTIONS_OUVERTES = true;
+const f = (a, b) => (V ? b : a);
+window.DUREE = DUREE; window.IPS = IPS; window.FORMAT = FORMAT;
+
+/* Les repères, partagés avec la musique (son.js) : un événement d'image = un son. */
+const R = window.REPERES = {
+  temps: 0.625,                  // 96 battements par minute
+  eveil: 0.30, ligne1: 0.62, talent: 2.50, methode: 5.00, methode2: 5.55, aspiration: [6.92, 7.47], choc1: 7.50, eclat: 8.70,
+  formateur: 10.00, credits: [12.40, 12.90, 13.40], fouet: 14.62,
+  formations: [15.00, 16.25, 17.50, 18.75, 20.00], choisir: 21.25,
+  choc2: 22.50, methodePas: [22.50, 23.125, 23.75, 24.375], certificat: 25.00,
+  site: 27.50, tap: 29.20, monteeFinale: [28.05, 30.00], final: 30.00, slogan: 30.85, url: 31.60, hashtag: 32.25, clic: 32.70
+};
+
+const FORMATIONS = [
+  { photo: 'canva-pro.jpg', lignes: ['Canva Pro', '&amp; Création', 'de contenu'], vertes: [0], visage: [765, 400] },
+  { photo: 'identite-visuelle.jpg', lignes: ['Graphisme', '&amp; identité', 'visuelle'], vertes: [0], visage: [720, 390] },
+  { photo: 'marketing-digital.jpg', lignes: ['Marketing', 'digital'], vertes: [1], visage: [725, 480] },
+  { photo: 'ia-appliquee.jpg', lignes: ['Création', 'de site web', 'avec l’iA'], vertes: [2], visage: [745, 470] },
+  { photo: 'photo-video.jpg', lignes: ['Réalisation', '&amp; Montage', 'vidéo'], vertes: [2], visage: [720, 270] }
+];
+const PHOTO = [1122, 1402];
+
+// =====================================================================
+//  Outils
+// =====================================================================
+const cl = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const pr = (t, a, b) => cl((t - a) / (b - a));
+const lerp = (a, b, x) => a + (b - a) * x;
+const E = {
+  lin: x => x,
+  outExpo: x => (x >= 1 ? 1 : 1 - Math.pow(2, -10 * x)),
+  inExpo: x => (x <= 0 ? 0 : Math.pow(2, 10 * x - 10)),
+  outCubic: x => 1 - Math.pow(1 - x, 3),
+  inCubic: x => x * x * x,
+  inOutCubic: x => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2),
+  inOutSine: x => -(Math.cos(Math.PI * x) - 1) / 2,
+  outBack: x => { const c1 = 1.5, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); }
+};
+function graine(s) { let v = s >>> 0 || 1; return () => { v ^= v << 13; v >>>= 0; v ^= v >>> 17; v ^= v << 5; v >>>= 0; return v / 4294967296; }; }
+const ecran = document.getElementById('ecran');
+const monde = document.getElementById('monde');
+ecran.style.width = W + 'px'; ecran.style.height = H + 'px';
+document.body.style.width = W + 'px'; document.body.style.height = H + 'px';
+
+function el(parent, html) { const d = document.createElement('div'); d.innerHTML = html.trim(); const n = d.firstElementChild; parent.appendChild(n); return n; }
+function montre(n, on) { const v = on ? 'block' : 'none'; if (n.style.display !== v) n.style.display = v; }
+const px = v => v.toFixed(2) + 'px';
+
+/* Une ligne de texte centrée sur y (ou alignée à gauche sur x). Retourne l'élément animable. */
+function texte(parent, html, classe, { y, taille, x = null, largeur = null }) {
+  const l = el(parent, `<div class="ligne${x !== null ? ' gauche' : ''}" style="top:${y}px;${x !== null ? `left:${x}px;` : ''}"></div>`);
+  const c = el(l, `<div class="contenu ${classe}" style="font-size:${taille}px;${largeur ? `width:${largeur}px;white-space:normal;` : ''}">${html}</div>`);
+  return c;
+}
+/* Un bloc de lignes masquées (le texte monte dans sa fenêtre). */
+function lignesMasquees(parent, lignes, vertes, classe, { x, y, taille, interligne }) {
+  return lignes.map((l, i) => {
+    const conteneur = el(parent, `<div class="abs" style="left:${x}px;top:${y + i * interligne - taille * 0.55}px"></div>`);
+    const m = el(conteneur, `<div class="masque"><span class="${classe}${vertes.includes(i) ? ' vert' : ''}" style="font-size:${taille}px;white-space:nowrap">${l}</span></div>`);
+    return m.firstElementChild;
+  });
+}
+function ligneMasquee(n, t, a, d, sortie) {
+  const x = E.outExpo(pr(t, a, a + d));
+  const y = sortie ? E.inExpo(pr(t, sortie[0], sortie[0] + sortie[1])) : 0;
+  n.style.transform = `translateY(${((1 - x) * 112 - y * 112).toFixed(2)}%)`;
+}
+
+/* Entrée et sortie d'un élément : opacité, flou de mise au point, déplacement, échelle, interlettrage. */
+function anim(n, t, entree, sortie) {
+  const [a, d, o = {}] = entree;
+  const x = (o.ease || E.outExpo)(pr(t, a, a + d));
+  let y = 0, q = {};
+  if (sortie) { const [b, e, oo = {}] = sortie; q = oo; y = (oo.ease || E.inCubic)(pr(t, b, b + e)); }
+  const op = x * (1 - y);
+  n.style.opacity = op.toFixed(4);
+  const fl = (1 - x) * (o.flou ?? 14) + y * (q.flou ?? 12);
+  n.style.filter = fl > 0.06 ? `blur(${fl.toFixed(2)}px)` : 'none';
+  const tx = (o.dx || 0) * (1 - x) + (q.dx || 0) * y;
+  const ty = (o.dy || 0) * (1 - x) + (q.dy || 0) * y;
+  const sc = lerp(o.echelle ?? 1, 1, x) * lerp(1, q.echelle ?? 1, y);
+  n.style.transform = `translate(${px(tx)}, ${px(ty)}) scale(${sc.toFixed(4)})`;
+  if (o.ls0 !== undefined) n.style.letterSpacing = `${lerp(o.ls0, o.ls1, x).toFixed(4)}em`;
+  return op;
+}
+
+/* L'anneau du logo (le « C » ouvert et son point), tracé progressivement. */
+function anneau(parent, cx, cy, rMax, ep = 3) {
+  const S = Math.ceil(2 * rMax + 60);
+  const s = el(parent, `<svg class="abs" width="${S}" height="${S}" viewBox="0 0 ${S} ${S}" style="left:${cx - S / 2}px;top:${cy - S / 2}px;overflow:visible">
+    <circle cx="${S / 2}" cy="${S / 2}" r="10" fill="none" stroke="#CBFD00" stroke-width="${ep}" stroke-linecap="round"/></svg>`);
+  const c = s.firstElementChild;
+  const ECART = 0.12;
+  return {
+    svg: s, cx, cy,
+    dessin(frac, rot, r, alpha = 1) {
+      const C = 2 * Math.PI * r;
+      c.setAttribute('r', r.toFixed(2));
+      c.setAttribute('stroke-dasharray', `${(C * (1 - ECART) * frac).toFixed(2)} ${C.toFixed(2)}`);
+      c.setAttribute('transform', `rotate(${rot.toFixed(2)} ${S / 2} ${S / 2})`);
+      s.style.opacity = frac <= 0 ? 0 : alpha;
+    },
+    tete(frac, rot, r) {
+      const a = (rot + frac * (1 - ECART / 2) * 360) * Math.PI / 180;
+      return { x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) };
+    }
+  };
+}
+
+/* Cadrer une photo de formation dans une boîte : le visage vient au point voulu. */
+function cadrer(n, ph, w, h, { zoom = 1, cible = null, foyer = null } = {}) {
+  const [fx, fy] = foyer || ph.visage;
+  const s = Math.max(w / PHOTO[0], h / PHOTO[1]) * zoom;
+  const Wp = PHOTO[0] * s, Hp = PHOTO[1] * s;
+  const [tx, ty] = cible || [w / 2, h / 2];
+  const x = Math.min(Math.max(fx * s - tx, 0), Wp - w), y = Math.min(Math.max(fy * s - ty, 0), Hp - h);
+  n.style.backgroundImage = `url(medias/${ph.photo})`;
+  n.style.backgroundSize = `${Wp.toFixed(1)}px ${Hp.toFixed(1)}px`;
+  n.style.backgroundPosition = `${(-x).toFixed(1)}px ${(-y).toFixed(1)}px`;
+}
+
+const SCENES = [];
+function scene(a, b) { const n = el(monde, '<div class="scene"></div>'); const s = { a, b, n, maj: () => {} }; SCENES.push(s); return s; }
+
+// =====================================================================
+//  Couches de fond : brume, particules, reflets
+// =====================================================================
+const brumes = [
+  el(monde, `<div class="brume" style="width:${W * 1.3}px;height:${W * 1.3}px;background:radial-gradient(circle, rgba(36,96,130,.20), rgba(36,96,130,0) 62%)"></div>`),
+  el(monde, `<div class="brume" style="width:${W * 1.1}px;height:${W * 1.1}px;background:radial-gradient(circle, rgba(46,70,170,.16), rgba(46,70,170,0) 62%)"></div>`),
+  el(monde, `<div class="brume" style="width:${W}px;height:${W}px;background:radial-gradient(circle, rgba(203,253,0,.07), rgba(203,253,0,0) 62%)"></div>`)
+];
+const grille = el(monde, `<div class="couche" style="opacity:0;background-size:72px 72px;background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px)"></div>`);
+
+// =====================================================================
+//  1 · L'éveil (0 – 7,5 s)
+// =====================================================================
+const s1 = scene(0, R.choc1);
+const c1 = { x: W / 2, y: f(540, 900) };
+const R1 = f(380, 420);
+const ann1 = anneau(s1.n, c1.x, c1.y, R1 * 1.32, 3);
+const l1 = texte(s1.n, 'Vous avez des idées.', 't-legende', { y: c1.y, taille: f(70, 74) });
+const l2 = texte(s1.n, 'Du talent.', 't-punch', { y: c1.y, taille: f(132, 132) });
+const l3a = texte(s1.n, 'Il ne vous manque', 't-legende', { y: c1.y - f(84, 160), taille: f(58, 64) });
+const l3b = texte(s1.n, V ? 'qu’une<br>méthode.' : 'qu’une méthode.', 't-punch vert lueur', { y: c1.y + f(46, 70), taille: f(118, 140) });
+const point = el(s1.n, '<div class="point"></div>');
+s1.maj = t => {
+  const imp = E.inExpo(pr(t, R.aspiration[0], R.aspiration[1] - 0.03));
+  const push = lerp(1, 1.07, E.inOutSine(pr(t, 0, R.aspiration[0])));
+  const ech = push * lerp(1, 0.035, imp);
+  s1.n.style.transformOrigin = `${c1.x}px ${c1.y}px`;
+  s1.n.style.transform = `scale(${ech.toFixed(4)})`;
+  s1.n.style.filter = imp > 0.01 ? `blur(${(imp * 10).toFixed(2)}px)` : 'none';
+  s1.n.style.opacity = (1 - pr(t, R.aspiration[1] - 0.04, R.aspiration[1])).toFixed(3);
+
+  const apparition = E.outBack(pr(t, R.eveil, R.eveil + 0.2));
+  const monte = E.outCubic(pr(t, 0.55, 1.15)) * (1 - E.inOutCubic(pr(t, R.talent - 0.12, R.talent + 0.05)));
+  let x = c1.x, y = c1.y - f(150, 190) * monte;
+  const trace = E.inOutCubic(pr(t, R.talent + 0.02, R.talent + 0.95));
+  const rayon = R1 * lerp(1, 1.3, E.inOutSine(pr(t, R.methode, R.aspiration[0])));
+  const rot = -90 + 9 * Math.max(0, t - (R.talent + 0.95)) + 70 * E.inCubic(pr(t, R.methode, R.aspiration[1]));
+  ann1.dessin(trace, rot, rayon, 1 - pr(t, R.aspiration[1] - 0.1, R.aspiration[1]));
+  if (t >= R.talent - 0.12) {
+    const tete = ann1.tete(trace, rot, rayon);
+    const k = E.inOutCubic(pr(t, R.talent - 0.12, R.talent + 0.05));
+    const depart = { x: c1.x, y: c1.y - R1 };
+    x = lerp(x, trace > 0 ? tete.x : depart.x, k); y = lerp(y, trace > 0 ? tete.y : depart.y, k);
+  }
+  point.style.left = px(x); point.style.top = px(y);
+  point.style.transform = `scale(${(apparition * (1 + 0.8 * imp)).toFixed(3)})`;
+  point.style.opacity = t < R.eveil ? 0 : 1;
+  // le reflet anamorphique suit le point, en coordonnées d'écran
+  const sx = c1.x + (x - c1.x) * ech, sy = c1.y + (y - c1.y) * ech;
+  const intensite = t < R.eveil ? 0 : (0.55 + 0.45 * Math.exp(-(t - R.eveil) / 0.3) + 0.25 * E.inCubic(pr(t, R.methode, R.aspiration[1]))) * (1 - pr(t, R.aspiration[1] - 0.03, R.aspiration[1]));
+  reflet(sx, sy, intensite);
+
+  anim(l1, t, [R.ligne1, 0.95, { flou: 18, ls0: 0.24, ls1: -0.015 }], [R.talent - 0.3, 0.3, { flou: 14, dy: -18 }]);
+  anim(l2, t, [R.talent + 0.04, 0.6, { flou: 24, echelle: 1.2 }], [R.methode - 0.42, 0.34, { flou: 16, echelle: 1.06 }]);
+  anim(l3a, t, [R.methode, 0.75, { flou: 16, ls0: 0.22, ls1: -0.015 }], [R.aspiration[1] - 0.3, 0.25, {}]);
+  anim(l3b, t, [R.methode2, 0.62, { flou: 24, echelle: 1.15 }], [R.aspiration[1] - 0.3, 0.25, {}]);
+};
+
+// =====================================================================
+//  2 · Le manifeste (7,5 – 10 s)
+// =====================================================================
+const s2 = scene(R.choc1 - 0.02, R.formateur + 0.05);
+const fond2 = el(s2.n, `<div class="abs" style="left:-8%;top:-8%;width:116%;height:116%;background:url(medias/canva-pro.jpg) 60% 30%/cover no-repeat;filter:blur(38px) saturate(1.2) brightness(.8)"></div>`);
+const voile2 = el(s2.n, `<div class="couche" style="background:radial-gradient(ellipse at 50% 50%, rgba(5,7,9,.42), rgba(5,7,9,.9) 72%)"></div>`);
+const tunnel = Array.from({ length: 7 }, () => el(s2.n, `<svg class="abs" width="${W}" height="${H}" style="left:0;top:0;overflow:visible"><circle cx="${W / 2}" cy="${H / 2}" r="${f(170, 190)}" fill="none" stroke="#CBFD00" stroke-width="1.6"/></svg>`));
+const k2 = texte(s2.n, 'IMPACTALI', 't-kicker', { y: f(378, 640), taille: f(30, 32) });
+const m1 = texte(s2.n, V ? 'Transformez<br>votre talent' : 'Transformez votre talent', 't-caps', { y: f(484, 800), taille: f(88, 84) });
+const m2 = texte(s2.n, V ? 'en compétences<br>professionnelles' : 'en compétences professionnelles', 't-caps vert lueur', { y: f(598, 1030), taille: f(88, 76) });
+[m1, m2].forEach((m, i) => {
+  m.style.backgroundImage = `linear-gradient(100deg, ${i ? '#CBFD00' : '#FFFFFF'} 0%, ${i ? '#CBFD00' : '#FFFFFF'} 44%, ${i ? '#FFFFFF' : '#EAFFA6'} 50%, ${i ? '#CBFD00' : '#FFFFFF'} 56%, ${i ? '#CBFD00' : '#FFFFFF'} 100%)`;
+  m.style.backgroundSize = '320% 100%';
+  m.style.webkitBackgroundClip = 'text'; m.style.backgroundClip = 'text'; m.style.color = 'transparent';
+});
+s2.maj = t => {
+  const d = R.choc1;
+  fond2.style.opacity = (0.9 * E.outCubic(pr(t, d, d + 1.2))).toFixed(3);
+  fond2.style.transform = `scale(${lerp(1.12, 1.0, pr(t, d, R.formateur))}) translateX(${px(lerp(-20, 20, pr(t, d, R.formateur)))})`;
+  tunnel.forEach((s, j) => {
+    const u = pr(t, d + j * 0.045, d + j * 0.045 + 0.75);
+    const c = s.firstElementChild;
+    // l'anneau vient vers nous : son trait s'épaissit avec lui, comme en perspective
+    c.setAttribute('transform', `translate(${W / 2} ${H / 2}) scale(${lerp(0.25, 8, E.inCubic(u)).toFixed(3)}) translate(${-W / 2} ${-H / 2})`);
+    s.style.opacity = u <= 0 || u >= 1 ? 0 : ((1 - u) * 0.9).toFixed(3);
+  });
+  anim(k2, t, [d + 0.4, 0.8, { flou: 10, ls0: 0.8, ls1: 0.32 }], [R.formateur - 0.42, 0.3, { dy: -20 }]);
+  [m1, m2].forEach((m, i) => {
+    const a = d + 0.06 + i * 0.32;
+    const x = E.outExpo(pr(t, a, a + 0.85));
+    // la ligne s'ouvre depuis le centre (le conteneur a une hauteur nulle : marges verticales en px)
+    m.parentNode.style.clipPath = `inset(-300px ${(50 * (1 - x)).toFixed(2)}% -300px ${(50 * (1 - x)).toFixed(2)}%)`;
+    anim(m, t, [a, 0.85, { flou: 12, ls0: 0.3, ls1: 0.04 }], [R.formateur - 0.42 + i * 0.06, 0.32, { flou: 14, dy: -28 }]);
+    m.style.backgroundPosition = `${lerp(110, -10, E.inOutSine(pr(t, R.eclat + i * 0.12, R.eclat + 0.85 + i * 0.12))).toFixed(2)}% 0`;
+  });
+  // l'éclat : le même reflet anamorphique que le point de l'ouverture traverse la seconde ligne
+  const u = pr(t, R.eclat + 0.1, R.eclat + 0.95);
+  if (u > 0 && u < 1) reflet(lerp(W * 0.12, W * 0.88, E.inOutSine(u)), m2.parentNode.offsetTop, 0.85 * Math.sin(Math.PI * u));
+};
+
+// =====================================================================
+//  3 · Le formateur (10 – 15 s)
+// =====================================================================
+const s3 = scene(R.formateur - 0.02, R.formations[0] + 0.05);
+const P3 = V
+  ? { lp: 1150, hp: 1015, xp: 540 - 0.42 * 1150, yp: H - 1015, xt: 90, yk: 320, yn: 392, yc: 520, yd: 680, tn: 120, tc: 40, td: 34, lc: 880 }
+  : { lp: 1110, hp: 980, xp: 790, yp: 165, xt: 150, yk: 300, yn: 372, yc: 482, yd: 640, tn: 128, tc: 38, td: 32, lc: 640 };
+const visage3 = { x: P3.xp + 0.42 * P3.lp, y: P3.yp + 0.31 * P3.hp };
+const glow3 = el(s3.n, `<div class="abs" style="left:${visage3.x - 700}px;top:${visage3.y - 650}px;width:1400px;height:1400px;border-radius:50%;background:radial-gradient(circle, rgba(203,253,0,.30) 0%, rgba(203,253,0,.10) 28%, rgba(203,253,0,0) 60%)"></div>`);
+const geant3 = el(s3.n, `<div class="abs geant" style="font-size:${f(470, 440)}px;left:${visage3.x - f(430, 400)}px;top:${visage3.y - f(330, 390)}px">ALI</div>`);
+const port3 = el(s3.n, `<img class="abs" src="medias/portrait-detoure.png" alt="" style="left:${P3.xp}px;top:${P3.yp}px;width:${P3.lp}px;height:${P3.hp}px;transform-origin:50% 100%;filter:drop-shadow(0 0 2px rgba(203,253,0,.8)) drop-shadow(0 0 26px rgba(203,253,0,.28))">`);
+const sol3 = el(s3.n, `<div class="abs" style="left:0;right:0;bottom:0;height:${f(260, 520)}px;background:linear-gradient(0deg, rgba(5,7,9,.95), rgba(5,7,9,0))"></div>`);
+const k3 = texte(s3.n, 'Votre formateur', 't-kicker', { x: P3.xt, y: P3.yk, taille: f(26, 28) });
+const n3 = texte(s3.n, 'Ali William', 't-punch', { x: P3.xt, y: P3.yn, taille: P3.tn });
+const c3 = texte(s3.n, 'Apprenez auprès d’un professionnel de l’image.', 't-corps', { x: P3.xt, y: P3.yc + f(28, 34), taille: P3.tc, largeur: P3.lc });
+const creds3 = ['Réalisateur et vidéaste', 'Responsable de communication multimédia', 'Fondateur de CINEWORLD ACADEMIE'].map((txt, i) =>
+  texte(s3.n, `<span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#CBFD00;margin-right:18px;vertical-align:middle;box-shadow:0 0 14px rgba(203,253,0,.6)"></span>${txt}`, 't-legende', { x: P3.xt, y: P3.yd + i * f(54, 58), taille: P3.td }));
+s3.maj = t => {
+  const d = R.formateur;
+  const sortie = E.inExpo(pr(t, R.fouet, R.formations[0] - 0.02));
+  s3.n.style.transform = `translateX(${px(-sortie * W * 0.42)})`;
+  s3.n.style.filter = sortie > 0.01 ? `blur(${(sortie * 14).toFixed(2)}px)` : 'none';
+  s3.n.style.opacity = (1 - pr(t, R.formations[0] - 0.12, R.formations[0])).toFixed(3);
+  glow3.style.opacity = (E.outCubic(pr(t, d, d + 0.8)) * (0.85 + 0.15 * Math.sin(t * 2.2))).toFixed(3);
+  anim(geant3, t, [d + 0.15, 1.1, { flou: 20, echelle: 1.1 }]);
+  geant3.style.transform += ` translateX(${px(lerp(30, -30, pr(t, d, R.fouet)))})`;
+  anim(port3, t, [d + 0.02, 0.9, { flou: 18, dy: 70, echelle: 1.06 }]);
+  port3.style.transform += ` scale(${lerp(1, 1.035, pr(t, d + 0.9, R.fouet)).toFixed(4)})`;
+  anim(k3, t, [d + 0.45, 0.7, { flou: 10, ls0: 0.7, ls1: 0.32 }]);
+  anim(n3, t, [d + 0.6, 0.8, { flou: 20, dy: 26 }]);
+  anim(c3, t, [d + 1.3, 0.8, { flou: 12, dy: 18 }]);
+  creds3.forEach((c, i) => anim(c, t, [R.credits[i], 0.6, { flou: 10, dx: -26 }]));
+};
+
+// =====================================================================
+//  4 · Les 5 formations (15 – 21,25 s)
+// =====================================================================
+const s4 = scene(R.formations[0] - 0.15, R.choisir + 0.1);
+const P4 = V
+  ? { pw: 1080, ph: 1350, px: 0, py: 0, xt: 90, yk: 1000, y0: 1092, taille: 100, il: 104 }
+  : { pw: 864, ph: 1080, px: 1056, py: 0, xt: 150, yk: 332, y0: 418, taille: 106, il: 110 };
+const groupes = FORMATIONS.map((ph, k) => {
+  const g = el(s4.n, '<div class="couche" style="display:none"></div>');
+  const fond = el(g, '<div class="abs" style="left:-6%;top:-6%;width:112%;height:112%;filter:blur(46px) saturate(1.2) brightness(.5)"></div>');
+  cadrer(fond, ph, W * 1.12, H * 1.12);
+  const photo = el(g, `<div class="abs photo" style="left:${P4.px}px;top:${P4.py}px;width:${P4.pw}px;height:${P4.ph}px;transform-origin:60% 40%;${V
+    ? '-webkit-mask-image:linear-gradient(180deg,#000 55%,transparent 98%);mask-image:linear-gradient(180deg,#000 55%,transparent 98%)'
+    : '-webkit-mask-image:linear-gradient(90deg,transparent 0%,#000 32%);mask-image:linear-gradient(90deg,transparent 0%,#000 32%)'}"></div>`);
+  cadrer(photo, ph, P4.pw, P4.ph);
+  const kicker = texte(g, `Formation <span style="color:#fff;letter-spacing:.2em">0${k + 1} / 05</span>`, 't-kicker', { x: P4.xt, y: P4.yk, taille: f(26, 28) });
+  const lignes = lignesMasquees(g, ph.lignes, ph.vertes, 't-punch', { x: P4.xt, y: P4.y0, taille: P4.taille, interligne: P4.il });
+  return { g, fond, photo, kicker, lignes };
+});
+s4.maj = t => {
+  groupes.forEach((G, k) => {
+    const s = R.formations[k], e = s + 1.25;
+    const actif = t >= s - 0.16 && t < e + 0.1;
+    montre(G.g, actif);
+    if (!actif) return;
+    const xin = E.outExpo(pr(t, s - 0.04, s + 0.4));
+    const xout = E.inCubic(pr(t, e - 0.14, e + 0.05));
+    const sc = lerp(1.02, 1.1, pr(t, s - 0.1, e + 0.1));
+    G.photo.style.transform = `translate(${px((1 - xin) * f(150, 0) - xout * f(110, 0))}, ${px((1 - xin) * f(0, 70) - xout * f(0, 50))}) scale(${sc.toFixed(4)})`;
+    G.photo.style.opacity = (xin * (1 - xout)).toFixed(3);
+    const fl = (1 - xin) * 16 + xout * 16;
+    G.photo.style.filter = fl > 0.06 ? `blur(${fl.toFixed(2)}px)` : 'none';
+    G.fond.style.opacity = (0.55 * xin * (1 - xout)).toFixed(3);
+    G.fond.style.transform = `scale(${lerp(1.1, 1.0, pr(t, s, e)).toFixed(4)})`;
+    anim(G.kicker, t, [s + 0.02, 0.5, { flou: 8, dx: -20 }], [e - 0.16, 0.14, { flou: 6 }]);
+    G.lignes.forEach((l, i) => ligneMasquee(l, t, s + 0.08 + i * 0.07, 0.5, [e - 0.2 + i * 0.03, 0.17]));
+  });
+};
+
+// =====================================================================
+//  5 · « Choisissez la vôtre » (21,25 – 22,5 s)
+// =====================================================================
+const s5 = scene(R.choisir - 0.05, R.choc2 + 0.02);
+const t5a = texte(s5.n, '5 formations.', 't-punch', { y: f(238, 420), taille: f(84, 96) });
+const t5b = texte(s5.n, 'Choisissez la vôtre.', 't-punch vert lueur', { y: f(330, 530), taille: f(84, 96) });
+const cartes5 = FORMATIONS.map((ph, j) => {
+  const cw = f(292, 330), ch = f(392, 460);
+  const c = el(s5.n, `<div class="carte-photo" style="width:${cw}px;height:${ch}px"></div>`);
+  cadrer(c, ph, cw, ch, { zoom: 1.55 });
+  return { c, cw, ch };
+});
+const POS5 = V
+  ? [[-300, 50, -16], [-150, 14, -8], [0, 0, 0], [150, 14, 8], [300, 50, 16]].map(([dx, dy, r]) => [540 + dx, 1020 + dy, r])
+  : [0, 1, 2, 3, 4].map(j => [W / 2 + (j - 2) * 316, 660, 0]);
+s5.maj = t => {
+  const d = R.choisir;
+  anim(t5a, t, [d + 0.05, 0.5, { flou: 14, dy: 20 }]);
+  anim(t5b, t, [d + 0.22, 0.5, { flou: 14, dy: 20 }]);
+  const aspir = E.inExpo(pr(t, R.choc2 - 0.32, R.choc2 - 0.01));
+  s5.n.style.transformOrigin = `${W / 2}px ${f(660, 1020)}px`;
+  s5.n.style.transform = `scale(${lerp(1, 2.8, aspir).toFixed(4)})`;
+  s5.n.style.filter = aspir > 0.01 ? `blur(${(aspir * 18).toFixed(2)}px)` : 'none';
+  s5.n.style.opacity = (1 - pr(t, R.choc2 - 0.12, R.choc2)).toFixed(3);
+  cartes5.forEach(({ c, cw, ch }, j) => {
+    const ordre = V ? [0, 1, 4, 2, 3][j] : j;
+    const a = d + 0.06 + ordre * 0.05;
+    const x = E.outExpo(pr(t, a, a + 0.55));
+    const [cx, cy, r] = POS5[j];
+    c.style.left = px(cx - cw / 2); c.style.top = px(cy - ch / 2);
+    c.style.zIndex = V ? String(10 - Math.abs(j - 2)) : '1';
+    c.style.opacity = x.toFixed(3);
+    c.style.transform = `translateY(${px((1 - x) * 220)}) rotate(${(r * lerp(1.8, 1, x)).toFixed(2)}deg) scale(${lerp(0.9, 1, x).toFixed(3)})`;
+    c.style.filter = x < 1 ? `blur(${((1 - x) * 12).toFixed(2)}px)` : 'none';
+  });
+};
+
+// =====================================================================
+//  6 · La méthode (22,5 – 25 s)
+// =====================================================================
+const s6 = scene(R.choc2 - 0.02, R.certificat + 0.08);
+const PAS = [
+  { n: '6', l: 'soirées', s: 'de 2 heures, en fin de journée' },
+  { n: '12', l: 'heures', s: 'de pratique encadrée' },
+  { n: '20', l: 'places', s: 'par session' },
+  { n: '1', l: 'projet réel', s: 'à présenter en fin de formation' }
+];
+/* Le chiffre au centre d'un anneau ; le mot à droite (16:9) ou dessous (9:16). */
+const cxN6 = f(760, 540), cyN6 = f(540, 760), rN6 = f(250, 270);
+const ann6 = anneau(s6.n, cxN6, cyN6, rN6 + 20, 2);
+const pas6 = PAS.map(p => ({
+  n: texte(s6.n, p.n, 't-punch vert lueur', { y: cyN6, taille: f(330, 380) }),
+  l: texte(s6.n, p.l, 't-punch', V ? { y: 1150, taille: 120 } : { x: 1070, y: 500, taille: 118 }),
+  s: texte(s6.n, p.s, 't-corps', V ? { y: 1255, taille: 42 } : { x: 1074, y: 602, taille: 36 })
+}));
+if (!V) pas6.forEach(p => { const l = p.n.parentNode; l.style.left = `${cxN6 - 450}px`; l.style.right = 'auto'; l.style.width = '900px'; });
+s6.maj = t => {
+  ann6.dessin(E.outExpo(pr(t, R.choc2, R.choc2 + 1)), -90 + (t - R.choc2) * 40, rN6, 0.55 * (1 - pr(t, R.certificat - 0.15, R.certificat)));
+  pas6.forEach((p, i) => {
+    const a = R.methodePas[i], fin = i < 3 ? R.methodePas[i + 1] : R.certificat;
+    anim(p.n, t, [a, 0.26, { flou: 26, echelle: 1.5 }], [fin - 0.09, 0.09, { flou: 12, echelle: 0.92 }]);
+    anim(p.l, t, [a + 0.05, 0.32, { flou: 14, dx: f(70, 0), dy: f(0, 40) }], [fin - 0.09, 0.09, { flou: 10 }]);
+    anim(p.s, t, [a + 0.12, 0.34, { flou: 10, dx: f(40, 0), dy: f(0, 20) }], [fin - 0.09, 0.09, { flou: 8 }]);
+  });
+};
+
+// =====================================================================
+//  7 · Le certificat (25 – 27,5 s)
+// =====================================================================
+const s7 = scene(R.certificat - 0.04, R.site + 0.06);
+const P7 = V
+  ? { w: 920, x: 80, y: 830, ry0: -36, ry1: -8, rx: 10, xt: 90, yk: 330, y0: 420, tt: 100, ys: 640 }
+  : { w: 860, x: 930, y: 236, ry0: -40, ry1: -14, rx: 8, xt: 150, yk: 314, y0: 400, tt: 100, ys: 610 };
+const h7 = Math.round(P7.w / 2246 * 1588);
+const pile7 = el(s7.n, `<div class="abs" style="left:${P7.x + f(80, 60)}px;top:${P7.y - f(70, 60)}px;width:${P7.w}px;height:${h7}px;border-radius:8px;background:url(medias/certificat.png) center/cover;filter:blur(14px) brightness(.45);opacity:0"></div>`);
+const cert7 = el(s7.n, `<div class="abs" style="left:${P7.x}px;top:${P7.y}px;width:${P7.w}px;height:${h7}px;border-radius:8px;overflow:hidden;box-shadow:0 70px 140px rgba(0,0,0,.7),0 0 0 1px rgba(255,255,255,.1);transform-style:preserve-3d">
+  <img src="medias/certificat.png" alt="" style="position:absolute;inset:0;width:100%;height:100%">
+  <img src="medias/certificat.png" alt="" style="position:absolute;inset:0;width:100%;height:100%;filter:blur(5px);-webkit-mask-image:linear-gradient(180deg,transparent 46%,#000 78%);mask-image:linear-gradient(180deg,transparent 46%,#000 78%)">
+  <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:800 ${Math.round(P7.w * 0.17)}px/1 var(--titre);letter-spacing:.12em;color:rgba(255,255,255,.11);transform:rotate(-17deg)">MODÈLE</div>
+  <div class="reflet7" style="position:absolute;top:-30%;bottom:-30%;width:34%;left:-40%;transform:rotate(18deg);mix-blend-mode:screen;background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,240,.55) 50%,rgba(255,255,255,0))"></div>
+</div>`);
+const reflet7 = cert7.querySelector('.reflet7');
+const k7 = texte(s7.n, 'À la fin de la formation', 't-kicker', { x: P7.xt, y: P7.yk, taille: f(26, 28) });
+const l7 = lignesMasquees(s7.n, ['Un certificat', 'qui se mérite.'], [1], 't-punch', { x: P7.xt, y: P7.y0, taille: P7.tt, interligne: P7.tt * 1.04 });
+const st7 = texte(s7.n, 'Remis après validation de votre projet final.', 't-corps', { x: P7.xt, y: P7.ys + 40, taille: f(36, 42), largeur: f(640, 860) });
+s7.maj = t => {
+  const d = R.certificat;
+  const x = E.outExpo(pr(t, d, d + 0.9));
+  const ry = lerp(P7.ry0, P7.ry1, x) + lerp(0, 4, pr(t, d + 0.9, R.site));
+  cert7.style.transform = `perspective(2000px) translateY(${px((1 - x) * 80)}) rotateY(${ry.toFixed(2)}deg) rotateX(${P7.rx}deg) rotateZ(-2deg)`;
+  cert7.style.opacity = x.toFixed(3);
+  cert7.style.filter = x < 1 ? `blur(${((1 - x) * 20).toFixed(2)}px)` : 'none';
+  pile7.style.opacity = (0.6 * x).toFixed(3);
+  pile7.style.transform = `perspective(2000px) rotateY(${(ry - 6).toFixed(2)}deg) rotateX(${P7.rx}deg) rotateZ(4deg)`;
+  reflet7.style.left = `${lerp(-45, 120, E.inOutSine(pr(t, d + 0.6, d + 1.5))).toFixed(2)}%`;
+  anim(k7, t, [d + 0.15, 0.6, { flou: 8, ls0: 0.7, ls1: 0.32 }]);
+  l7.forEach((l, i) => ligneMasquee(l, t, d + 0.25 + i * 0.1, 0.6));
+  anim(st7, t, [d + 0.75, 0.7, { flou: 10, dy: 16 }]);
+  const sortie = E.inCubic(pr(t, R.site - 0.18, R.site + 0.05));
+  s7.n.style.opacity = (1 - sortie).toFixed(3);
+  s7.n.style.filter = sortie > 0.01 ? `blur(${(sortie * 12).toFixed(2)}px)` : 'none';
+};
+
+// =====================================================================
+//  8 · Le site (27,5 – 30 s)
+// =====================================================================
+const s8 = scene(R.site - 0.06, R.final + 0.02);
+const P8 = V
+  ? { e: 0.96, cx: 540, cy: 1110, xt: 90, yk: 310, y0: 390, tt: 100, ys: 575 }
+  : { e: 0.86, cx: 1390, cy: 545, xt: 150, yk: 318, y0: 404, tt: 108, ys: 612 };
+const TEL = { w: 422, h: 876, ew: 390, eh: 844 };
+/* Les captures du site (outils de la présentation) : la fiche du catalogue fait 1158 px de large,
+   son bouton « Voir la formation » est en (87, 2078), 984 × 144 (reperes.js). */
+const K8 = TEL.ew / 1158, HAUT_CARTE = 40;
+const BOUTON = { x: 87 * K8, y: HAUT_CARTE + 2078 * K8, l: 984 * K8, h: 144 * K8 };
+const tel8 = el(s8.n, `<div class="tel" style="left:${P8.cx - TEL.w / 2}px;top:${P8.cy - TEL.h / 2}px;width:${TEL.w}px;height:${TEL.h}px">
+  <div class="ecran-tel" style="width:${TEL.ew}px;height:${TEL.eh}px">
+    <img class="acc" src="medias/site-accueil.png" alt="" style="width:${TEL.ew}px">
+    <div class="carte" style="position:absolute;inset:0;background:#F2EEE5"><img src="medias/site-carte.png" alt="" style="position:absolute;left:0;top:${HAUT_CARTE}px;width:${TEL.ew}px"></div>
+    <div class="halo-bouton" style="position:absolute;left:${BOUTON.x.toFixed(1)}px;top:${BOUTON.y.toFixed(1)}px;width:${BOUTON.l.toFixed(1)}px;height:${BOUTON.h.toFixed(1)}px;border-radius:999px;opacity:0"></div>
+    <div class="onde" style="position:absolute;width:20px;height:20px;border-radius:50%;border:3px solid #CBFD00;opacity:0"></div>
+    <div class="doigt" style="position:absolute;width:56px;height:56px;margin:-28px 0 0 -28px;border-radius:50%;background:rgba(255,255,255,.35);border:2px solid rgba(255,255,255,.7);opacity:0"></div>
+    <div class="vert-plein" style="position:absolute;inset:0;background:#CBFD00;opacity:0"></div>
+  </div>
+  <div class="encoche"></div>
+</div>`);
+const acc8 = tel8.querySelector('.acc'), carte8 = tel8.querySelector('.carte'), halo8 = tel8.querySelector('.halo-bouton');
+const onde8 = tel8.querySelector('.onde'), doigt8 = tel8.querySelector('.doigt'), vert8 = tel8.querySelector('.vert-plein');
+const lueur8 = el(s8.n, `<div class="abs" style="left:${P8.cx - 600}px;top:${P8.cy - 600}px;width:1200px;height:1200px;border-radius:50%;background:radial-gradient(circle, rgba(203,253,0,.22), rgba(203,253,0,0) 60%)"></div>`);
+s8.n.insertBefore(lueur8, tel8);
+const k8 = texte(s8.n, 'Sur le site officiel', 't-kicker', { x: P8.xt, y: P8.yk, taille: f(26, 28) });
+const l8 = lignesMasquees(s8.n, ['Inscrivez-vous', 'en ligne.'], [1], 't-punch', { x: P8.xt, y: P8.y0, taille: P8.tt, interligne: P8.tt * 1.04 });
+const st8 = texte(s8.n, 'Le formulaire officiel, en 4 étapes.', 't-corps', { x: P8.xt, y: P8.ys + 30, taille: f(36, 42), largeur: f(640, 860) });
+const tapX = BOUTON.x + BOUTON.l / 2, tapY = BOUTON.y + BOUTON.h / 2;
+s8.maj = t => {
+  const d = R.site;
+  const x = E.outExpo(pr(t, d - 0.02, d + 0.8));
+  const ry = lerp(f(-34, -26), f(-10, -6), E.outCubic(pr(t, d, R.tap)));
+  const plonge = E.inExpo(pr(t, R.tap + 0.32, R.final - 0.01));
+  // on plonge dans le bouton touché : le centre du zoom est le bouton, à l'échelle du téléphone
+  const ox = P8.cx + (16 + tapX - TEL.w / 2) * P8.e, oy = P8.cy + (16 + tapY - TEL.h / 2) * P8.e;
+  s8.n.style.transformOrigin = `${ox.toFixed(1)}px ${oy.toFixed(1)}px`;
+  s8.n.style.transform = `scale(${lerp(1, 9, plonge).toFixed(4)})`;
+  tel8.style.transform = `perspective(2200px) translateY(${px((1 - x) * 160)}) scale(${P8.e}) rotateY(${lerp(ry, 0, plonge).toFixed(2)}deg) rotateX(${lerp(6, 0, plonge).toFixed(2)}deg) rotateZ(${lerp(1.5, 0, plonge).toFixed(2)}deg)`;
+  tel8.style.opacity = x.toFixed(3);
+  tel8.style.filter = x < 1 ? `blur(${((1 - x) * 16).toFixed(2)}px)` : 'none';
+  lueur8.style.opacity = (x * 0.9).toFixed(3);
+  // l'écran : l'accueil, puis la fiche formation glisse ; le doigt appuie sur « S'inscrire »
+  const glisse = E.inOutCubic(pr(t, d + 1.0, d + 1.3));
+  acc8.style.transform = `translateX(${px(-glisse * TEL.ew)}) scale(${lerp(1, 1.04, pr(t, d, d + 1.1)).toFixed(4)})`;
+  carte8.style.transform = `translateX(${px((1 - glisse) * TEL.ew)})`;
+  const appui = pr(t, R.tap - 0.25, R.tap);
+  doigt8.style.left = px(tapX + 60 * (1 - E.outCubic(appui))); doigt8.style.top = px(tapY + 90 * (1 - E.outCubic(appui)));
+  doigt8.style.opacity = (pr(t, R.tap - 0.3, R.tap - 0.15) * (1 - pr(t, R.tap + 0.1, R.tap + 0.3))).toFixed(3);
+  doigt8.style.transform = `scale(${t > R.tap ? lerp(0.75, 1, pr(t, R.tap, R.tap + 0.15)).toFixed(3) : 1})`;
+  const o = pr(t, R.tap, R.tap + 0.5);
+  onde8.style.left = px(tapX - 10); onde8.style.top = px(tapY - 10);
+  onde8.style.opacity = (t >= R.tap ? 0.9 * (1 - o) : 0).toFixed(3);
+  onde8.style.transform = `scale(${lerp(1, 14, E.outCubic(o)).toFixed(3)})`;
+  halo8.style.opacity = (t >= R.tap ? 1 - pr(t, R.tap + 0.2, R.tap + 0.5) : 0).toFixed(3);
+  halo8.style.boxShadow = '0 0 0 3px rgba(203,253,0,.9), 0 0 40px 10px rgba(203,253,0,.5)';
+  vert8.style.opacity = E.inCubic(pr(t, R.tap + 0.35, R.final - 0.05)).toFixed(3);
+  anim(k8, t, [d + 0.12, 0.6, { flou: 8, ls0: 0.7, ls1: 0.32 }]);
+  l8.forEach((l, i) => ligneMasquee(l, t, d + 0.2 + i * 0.1, 0.6));
+  anim(st8, t, [d + 0.65, 0.7, { flou: 10, dy: 16 }]);
+};
+
+// =====================================================================
+//  9 · Le logo (30 – 35 s)
+// =====================================================================
+const s9 = scene(R.final - 0.02, DUREE + 1);
+const P9 = V
+  ? { lw: 820, ly: 560, ys: [960, 1040], ts: 66, yu: 1190, tu: 64, yh: 1322, yi: 1418 }
+  : { lw: 700, ly: 352, ys: [640], ts: 58, yu: 778, tu: 62, yh: 0, yi: 900 };
+/* Le logo officiel, rogné au plus près par rendre.js (869 × 482) ; le centre de l'anneau
+   est à 27,7 % de sa largeur, à mi-hauteur. */
+const LOGO = { l: 869, h: 482, cx: 27.7, cy: 49.8 };
+const lh9 = Math.round(P9.lw * LOGO.h / LOGO.l);
+const glow9 = el(s9.n, `<div class="abs" style="left:${W / 2 - 800}px;top:${P9.ly - 800}px;width:1600px;height:1600px;border-radius:50%;background:radial-gradient(circle, rgba(203,253,0,.24) 0%, rgba(203,253,0,.08) 30%, rgba(203,253,0,0) 62%)"></div>`);
+const logo9 = el(s9.n, `<div class="abs" style="left:${W / 2 - P9.lw / 2}px;top:${P9.ly - lh9 / 2}px;width:${P9.lw}px;height:${lh9}px">
+  <img src="medias/logo.png" alt="" style="position:absolute;inset:0;width:100%;height:100%;filter:drop-shadow(0 0 30px rgba(203,253,0,.35))">
+  <div class="eclat9" style="position:absolute;inset:0;-webkit-mask:url(medias/logo.png) center/100% 100% no-repeat;mask:url(medias/logo.png) center/100% 100% no-repeat;background:linear-gradient(105deg, rgba(255,255,255,0) 40%, rgba(255,255,255,.95) 50%, rgba(255,255,255,0) 60%);background-size:300% 100%"></div>
+</div>`);
+const eclat9 = logo9.querySelector('.eclat9');
+const slogan9 = V
+  ? [texte(s9.n, 'Se former pour', 't-legende', { y: P9.ys[0], taille: P9.ts }), texte(s9.n, 'devenir <span class="vert">meilleur.</span>', 't-legende', { y: P9.ys[1], taille: P9.ts })]
+  : [texte(s9.n, 'Se former pour devenir <span class="vert">meilleur.</span>', 't-legende', { y: P9.ys[0], taille: P9.ts })];
+const url9 = texte(s9.n, `<span class="pilule" style="font-size:${P9.tu}px">impactali.site<svg width="${P9.tu * 0.8}" height="${P9.tu * 0.8}" viewBox="0 0 24 24" style="display:block"><path d="M4 12h15M13 5l7 7-7 7" fill="none" stroke="#050709" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>`, '', { y: P9.yu, taille: P9.tu });
+const onde9 = el(s9.n, `<div class="abs" style="left:${W / 2 - 330}px;top:${P9.yu - 60}px;width:660px;height:120px;border-radius:999px;border:3px solid #CBFD00;opacity:0"></div>`);
+const tag9 = V
+  ? texte(s9.n, `<span class="autocollant" style="font-size:40px">#quedubon</span>`, '', { y: P9.yh, taille: 40 })
+  : texte(s9.n, `<span class="autocollant" style="font-size:34px">#quedubon</span>`, '', { x: W / 2 + 330, y: P9.yu - 70, taille: 34 });
+const insc9 = texte(s9.n, INSCRIPTIONS_OUVERTES ? 'Inscriptions ouvertes' : 'Découvrez nos formations', 't-kicker', { y: P9.yi, taille: f(26, 28) });
+const souris9 = el(s9.n, `<svg class="abs" width="54" height="54" viewBox="0 0 24 24" style="left:0;top:0;opacity:0;filter:drop-shadow(0 6px 10px rgba(0,0,0,.5))"><path d="M4 2l15 11-6.5 1.2L16 21l-3 1.3-3.4-6.8L4 20z" fill="#fff" stroke="#050709" stroke-width="1.2" stroke-linejoin="round"/></svg>`);
+s9.maj = t => {
+  const d = R.final;
+  glow9.style.opacity = (E.outCubic(pr(t, d, d + 0.8)) * (0.85 + 0.12 * Math.sin((t - d) * 2.4))).toFixed(3);
+  /* Le logo se dessine comme un trait de plume : depuis le haut de l'anneau, en tournant
+     vers la gauche, puis le balayage découvre le mot et le point. */
+  const rev = E.inOutCubic(pr(t, d + 0.12, d + 0.85));
+  if (rev < 1) {
+    const bord = (1 - rev) * 100;
+    const msk = `conic-gradient(from 0deg at ${LOGO.cx}% ${LOGO.cy}%, transparent ${Math.max(0, bord - 3).toFixed(2)}%, #000 ${bord.toFixed(2)}%)`;
+    logo9.style.webkitMaskImage = msk; logo9.style.maskImage = msk;
+  } else { logo9.style.webkitMaskImage = 'none'; logo9.style.maskImage = 'none'; }
+  anim(logo9, t, [d + 0.1, 0.9, { flou: 10, echelle: 1.08 }]);
+  logo9.style.transform += ` scale(${lerp(1, 1.025, pr(t, d + 1, DUREE)).toFixed(4)})`;
+  eclat9.style.backgroundPosition = `${lerp(115, -15, E.inOutSine(pr(t, d + 1.0, d + 1.8))).toFixed(2)}% 0`;
+  slogan9.forEach((s, i) => anim(s, t, [R.slogan + i * 0.14, 0.9, { flou: 16, ls0: 0.16, ls1: -0.015 }]));
+  anim(url9, t, [R.url, 0.6, { flou: 12, echelle: 0.82, ease: E.outBack }]);
+  const presse = t >= R.clic ? 1 - 0.035 * Math.sin(Math.PI * pr(t, R.clic, R.clic + 0.16)) : 1;
+  url9.style.transform += ` scale(${presse.toFixed(4)})`;
+  const o = pr(t, R.clic, R.clic + 0.7);
+  onde9.style.opacity = (t >= R.clic ? 0.85 * (1 - o) : 0).toFixed(3);
+  onde9.style.transform = `scale(${lerp(1, 1.3, E.outCubic(o)).toFixed(3)}, ${lerp(1, 1.9, E.outCubic(o)).toFixed(3)})`;
+  anim(tag9, t, [R.hashtag, 0.5, { flou: 10, echelle: 1.4, ease: E.outBack }]);
+  tag9.style.transform += ' rotate(-7deg)';
+  anim(insc9, t, [R.clic + 0.35, 0.8, { flou: 8, ls0: 0.7, ls1: 0.32 }]);
+  // la souris vient cliquer sur l'adresse
+  const va = E.outCubic(pr(t, R.clic - 0.55, R.clic - 0.05));
+  const sx = lerp(W / 2 + f(420, 330), W / 2 + f(150, 120), va), sy = lerp(P9.yu + f(200, 260), P9.yu + 10, va);
+  souris9.style.left = px(sx); souris9.style.top = px(sy);
+  souris9.style.opacity = (pr(t, R.clic - 0.6, R.clic - 0.4) * (1 - pr(t, R.clic + 0.6, R.clic + 0.9))).toFixed(3);
+  souris9.style.transform = `scale(${t > R.clic && t < R.clic + 0.12 ? 0.86 : 1})`;
+};
+
+// =====================================================================
+//  Couches globales : reflets, fuites de lumière, flash, secousses, grain
+// =====================================================================
+const reflets = el(monde, '<div class="couche" style="pointer-events:none"></div>');
+const rf = { coeur: el(reflets, '<div class="flare-coeur"></div>'), halo: el(reflets, '<div class="flare-halo"></div>'), boule: el(reflets, '<div class="flare-boule"></div>') };
+let refletDemande = null;
+function reflet(x, y, k) { refletDemande = { x, y, k }; }
+function dessinerReflet() {
+  const r = refletDemande;
+  const visible = r && r.k > 0.01;
+  [rf.coeur, rf.halo, rf.boule].forEach(n => montre(n, visible));
+  if (!visible) return;
+  const L = W * 1.25 * (0.6 + 0.4 * r.k);
+  rf.coeur.style.left = px(r.x - L / 2); rf.coeur.style.top = px(r.y); rf.coeur.style.width = px(L); rf.coeur.style.opacity = Math.min(1, r.k).toFixed(3);
+  rf.halo.style.left = px(r.x - L * 0.45); rf.halo.style.top = px(r.y); rf.halo.style.width = px(L * 0.9); rf.halo.style.opacity = Math.min(1, r.k * 0.9).toFixed(3);
+  const B = 520 * (0.6 + 0.6 * r.k);
+  rf.boule.style.left = px(r.x - B / 2); rf.boule.style.top = px(r.y - B / 2); rf.boule.style.width = px(B); rf.boule.style.height = px(B); rf.boule.style.opacity = Math.min(1, r.k).toFixed(3);
+}
+
+const barre = el(monde, '<div id="barre"></div>');
+const fuites = [
+  el(monde, `<div class="fuite" style="width:${W * 0.9}px;height:${W * 0.9}px;background:radial-gradient(circle, rgba(255,150,70,.55), rgba(255,120,40,0) 62%)"></div>`),
+  el(monde, `<div class="fuite" style="width:${W * 0.8}px;height:${W * 0.8}px;background:radial-gradient(circle, rgba(203,253,0,.45), rgba(203,253,0,0) 62%)"></div>`)
+];
+
+/* Les chocs : [instant, flash, couleur, secousse, aberration] */
+const CHOCS = [
+  [R.talent, 0.18, '#FFFFFF', 0.15, 0], [R.choc1, 1, '#FFFFFF', 1, 1], [R.formateur, 0.4, '#FFFFFF', 0.45, 0.4],
+  ...R.formations.map((t, i) => [t, i ? 0.12 : 0.35, '#FFFFFF', i ? 0.25 : 0.5, i ? 0 : 0.4]),
+  [R.choc2, 0.85, '#FFFFFF', 0.95, 0.9], ...R.methodePas.slice(1).map(t => [t, 0.2, '#FFFFFF', 0.35, 0.2]),
+  [R.certificat, 0.15, '#FFFFFF', 0, 0], [R.final, 1, '#CBFD00', 1, 1]
+];
+const FUITES = [R.choc1, R.formateur, R.choc2, R.final];
+const BARRES = R.formations.slice(1);
+
+/* Particules : poussière en suspension et bokeh, positions tirées une fois (graine fixe).
+   Les petites flottent derrière les plans ; les plus proches, larges et floues, devant. */
+function toile(avant) {
+  const c = document.createElement('canvas'); c.width = W; c.height = H; c.style.width = W + 'px'; c.style.height = H + 'px';
+  monde.insertBefore(c, avant);
+  return c.getContext('2d');
+}
+const pctx = toile(grille);
+const pctxAvant = toile(reflets);
+const sprite = (() => {
+  const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d');
+  const g = x.createRadialGradient(64, 64, 0, 64, 64, 64);
+  g.addColorStop(0, 'rgba(255,250,232,1)'); g.addColorStop(0.35, 'rgba(255,248,225,.55)'); g.addColorStop(1, 'rgba(255,248,225,0)');
+  x.fillStyle = g; x.fillRect(0, 0, 128, 128); return c;
+})();
+const spriteVert = (() => {
+  const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d');
+  const g = x.createRadialGradient(64, 64, 0, 64, 64, 64);
+  g.addColorStop(0, 'rgba(225,255,140,1)'); g.addColorStop(0.35, 'rgba(203,253,0,.5)'); g.addColorStop(1, 'rgba(203,253,0,0)');
+  x.fillStyle = g; x.fillRect(0, 0, 128, 128); return c;
+})();
+const alea = graine(1403);
+const POUSSIERE = Array.from({ length: 150 }, () => {
+  const z = Math.pow(alea(), 1.8);
+  return { x: alea() * W, y: alea() * H, z, v: 12 + alea() * 30, ph: alea() * 6.283, vert: alea() < 0.22, sc: alea() };
+});
+function densite(t) {
+  const pts = [[0, 0.1], [0.3, 0.45], [7, 0.6], [7.5, 0.7], [10, 0.75], [15, 0.35], [21, 0.4], [25, 0.85], [27.5, 0.35], [30, 1], [35, 1]];
+  for (let i = 0; i < pts.length - 1; i++) if (t <= pts[i + 1][0]) return lerp(pts[i][1], pts[i + 1][1], pr(t, pts[i][0], pts[i + 1][0]));
+  return 1;
+}
+function particules(t) {
+  pctx.clearRect(0, 0, W, H); pctxAvant.clearRect(0, 0, W, H);
+  const k = densite(t);
+  for (const p of POUSSIERE) {
+    const taille = 2 + p.z * 26 + p.sc * 3;
+    const y = ((p.y - t * p.v * (0.4 + p.z)) % (H + 80) + H + 80) % (H + 80) - 40;
+    const x = p.x + Math.sin(t * 0.35 * (0.5 + p.z) + p.ph) * 40 * (0.3 + p.z);
+    const scint = 0.65 + 0.35 * Math.sin(t * (1.3 + p.sc * 2) + p.ph);
+    const proche = p.z > 0.72;
+    const a = k * scint * (proche ? 0.13 : 0.12 + p.z * 0.55);
+    if (a < 0.01) continue;
+    const ctx = proche ? pctxAvant : pctx;
+    ctx.globalAlpha = Math.min(1, a);
+    ctx.drawImage(p.vert ? spriteVert : sprite, x - taille, y - taille, taille * 2, taille * 2);
+  }
+  pctx.globalAlpha = 1; pctxAvant.globalAlpha = 1;
+}
+
+// Grain de pellicule : 8 tirages, un par image
+const grain = document.getElementById('grain');
+grain.width = W; grain.height = H;
+grain.style.width = W + 'px'; grain.style.height = H + 'px';
+const gctx = grain.getContext('2d');
+const tirages = Array.from({ length: 8 }, (_, i) => {
+  const r = graine(77 + i * 131), img = gctx.createImageData(grain.width, grain.height);
+  for (let j = 0; j < img.data.length; j += 4) { const v = 128 + (r() + r() + r() - 1.5) * 150; img.data[j] = img.data[j + 1] = img.data[j + 2] = v; img.data[j + 3] = 255; }
+  return img;
+});
+
+const flash = document.getElementById('flash');
+const cacheHaut = document.getElementById('cacheHaut'), cacheBas = document.getElementById('cacheBas');
+const caR = document.getElementById('caR'), caB = document.getElementById('caB');
+
+function globaux(t) {
+  // brume qui dérive lentement
+  brumes.forEach((b, i) => {
+    const bx = W * (0.5 + 0.32 * Math.sin(t * 0.07 + i * 2.1)) - b.offsetWidth / 2;
+    const by = H * (0.5 + 0.28 * Math.cos(t * 0.05 + i * 1.7)) - b.offsetHeight / 2;
+    b.style.transform = `translate(${px(bx)}, ${px(by)})`;
+  });
+  particules(t);
+  dessinerReflet(); refletDemande = null;
+
+  // chocs : flash, secousse, aberration chromatique
+  let fl = 0, couleur = '#FFFFFF', sec = 0, ab = 0;
+  for (const [h, k, c, s, a] of CHOCS) {
+    if (t < h) continue;
+    const dt = t - h;
+    const v = k * Math.exp(-dt / 0.075);
+    if (v > fl) { fl = v; couleur = c; }
+    sec += s * Math.exp(-dt / 0.2);
+    ab += a * Math.exp(-dt / 0.13);
+  }
+  // les deux aspirations (avant le manifeste, avant le logo) déchirent un peu l'image
+  if (t < R.aspiration[1]) ab += 0.6 * E.inCubic(pr(t, R.aspiration[0], R.aspiration[1]));
+  if (t < R.final) ab += 0.5 * E.inCubic(pr(t, R.tap + 0.4, R.final - 0.01));
+  flash.style.background = couleur;
+  flash.style.opacity = Math.min(1, fl).toFixed(3);
+  const amp = 16 * sec;
+  const sx = amp * (Math.sin(t * 91.7) + 0.6 * Math.sin(t * 151.3 + 1.3)) / 1.6;
+  const sy = amp * (Math.cos(t * 83.1) + 0.6 * Math.sin(t * 137.9 + 0.4)) / 1.6;
+  const respire = 1 + 0.012 * Math.sin(t * 0.4);
+  monde.style.transform = `translate(${px(sx)}, ${px(sy)}) scale(${respire.toFixed(4)})`;
+  const d = 10 * ab;
+  if (d > 0.7) { caR.setAttribute('dx', d.toFixed(2)); caB.setAttribute('dx', (-d).toFixed(2)); monde.style.filter = 'url(#ca)'; }
+  else monde.style.filter = 'none';
+
+  // fuites de lumière et barre lumineuse entre les formations
+  let lk = 0;
+  for (const h of FUITES) if (t >= h) lk = Math.max(lk, Math.exp(-(t - h) / 0.45) * (t - h < 0.06 ? (t - h) / 0.06 : 1));
+  fuites.forEach((n, i) => {
+    n.style.opacity = (lk * (i ? 0.55 : 0.75)).toFixed(3);
+    const u = lk > 0 ? 1 - lk : 0;
+    n.style.transform = `translate(${px(lerp(-0.3 * W, 0.8 * W, u) + (i ? 0.2 * W : 0))}, ${px(H * (i ? 0.1 : -0.2))})`;
+  });
+  let b = -1;
+  for (const h of BARRES) if (t >= h - 0.09 && t < h + 0.12) b = pr(t, h - 0.09, h + 0.12);
+  barre.style.opacity = b < 0 ? 0 : (0.85 * Math.sin(Math.PI * b)).toFixed(3);
+  if (b >= 0) barre.style.transform = `translateX(${px(lerp(-260, W + 40, E.inOutSine(b)))})`;
+
+  // bandes de cinéma (16:9) : elles s'ouvrent à l'éveil et disparaissent au logo
+  if (!V) {
+    const base = (H - W / 2.39) / 2;
+    const ouverture = E.outCubic(pr(t, 0.2, 1.2));
+    const fin = E.inOutCubic(pr(t, R.final, R.final + 0.9));
+    const h = lerp(H / 2, base, ouverture) * (1 - fin);
+    cacheHaut.style.height = px(h); cacheBas.style.height = px(h);
+  } else {
+    const h = lerp(H / 2, 0, E.outCubic(pr(t, 0.2, 1.2)));
+    cacheHaut.style.height = px(h); cacheBas.style.height = px(h);
+  }
+  gctx.putImageData(tirages[Math.floor(t * IPS + 1e-6) % tirages.length], 0, 0);
+}
+
+// =====================================================================
+//  Rendu
+// =====================================================================
+window.rendre = t => {
+  for (const s of SCENES) { const on = t >= s.a && t < s.b; montre(s.n, on); if (on) s.maj(t); }
+  // la grille fine : sous les chiffres de la méthode, puis sous le logo
+  const g = t < R.final
+    ? 0.8 * pr(t, R.choc2, R.choc2 + 0.6) * (1 - pr(t, R.certificat - 0.1, R.certificat + 0.1))
+    : 0.9 * pr(t, R.final + 0.3, R.final + 1.5);
+  grille.style.opacity = g.toFixed(3);
+  globaux(t);
+};
+
+window.pret = (async () => {
+  await document.fonts.ready;
+  await Promise.all([
+    document.fonts.load('800 100px "Plus Jakarta Sans"', 'ÀÉÈÊÔÇéèêàçôû«»’–'),
+    document.fonts.load('700 60px "Plus Jakarta Sans"', 'éà'),
+    document.fonts.load('500 40px "Inter"', 'éàç'), document.fonts.load('700 40px "Inter"', 'éàç')
+  ]).catch(() => null);
+  const urls = new Set();
+  document.querySelectorAll('*').forEach(e => { const m = /url\("?([^")]+)"?\)/.exec(getComputedStyle(e).backgroundImage); if (m && !m[1].startsWith('data:')) urls.add(m[1]); });
+  document.querySelectorAll('img').forEach(i => urls.add(i.src));
+  urls.add(new URL('medias/logo.png', location.href).href); // le masque de l'éclat
+  window.IMAGES_MANQUANTES = [];
+  await Promise.all([...urls].map(u => new Promise(r => { const i = new Image(); i.onload = () => i.decode().then(r, r); i.onerror = () => { window.IMAGES_MANQUANTES.push(u); r(); }; i.src = u; })));
+  // chaque plan est peint une fois, pour que Chrome ait tout décodé avant la première capture
+  for (const t of [1, 8.5, 12, ...R.formations.map(x => x + 0.6), 22, 23, 26, 28.5, 29.6, 32, 34]) {
+    window.rendre(t);
+    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+  }
+  window.rendre(0);
+  await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+  return true;
+})();
+
+// Ouvert seul dans un navigateur : lecture en boucle
+if (!Q.has('capture')) {
+  window.pret.then(() => { const debut = performance.now(); const boucle = () => { window.rendre(((performance.now() - debut) / 1000) % DUREE); requestAnimationFrame(boucle); }; boucle(); });
+}
+</script>
+</body>
+</html>
