@@ -37,7 +37,7 @@ source.sessions.push({
 /* Ce qui n'appartient qu'à un pays. Les NOMS des pays, eux, peuvent paraître :
    le sélecteur du pied de page les liste, comme sur les grands sites. */
 const DE_DJIBOUTI = ['25377145306', '77 14 53 06', '77 55 63 44', '11000012127', 'Waafi', 'Cacpay', 'Saalam', 'FDJ', 'canva-pro-dj-2026'];
-const DES_COMORES = ['2693804648', '380 46 48', '4866807', 'Mvola', 'KMF', 'American corner', 'Ifere', 'canva-pro-2026-11'];
+const DES_COMORES = ['2694742688', '474 26 88', '4866807', 'Mvola', 'KMF', 'American corner', 'Ifere', 'canva-pro-2026-11'];
 const presents = (texte, liste) => liste.filter(m => texte.indexOf(m) >= 0);
 
 let api;

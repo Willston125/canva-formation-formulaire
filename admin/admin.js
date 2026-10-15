@@ -1260,7 +1260,7 @@
         }
         /* L'indicatif s'affiche collé devant le numéro que tape le candidat.
            Y glisser un numéro complet produit un téléphone inutilisable dans la
-           feuille — « +269 380 46 483801234 » — sans que rien ne le signale. */
+           feuille — « +269 474 26 883801234 » — sans que rien ne le signale. */
         var indicatif = String(valeurs.indicatif || '').trim();
         if (indicatif && !/^\+\d{1,4}$/.test(indicatif)) {
           fini('L’indicatif ne contient que le « + » et l’indicatif du pays, sans espace ni numéro : '
@@ -1305,7 +1305,7 @@
         var chiffres = String(valeurs.whatsappNumber || '').trim();
         if (chiffres && !/^\d{6,15}$/.test(chiffres)) {
           fini('Le numéro WhatsApp ne prend que des chiffres, indicatif compris, sans + ni '
-            + 'espace : 2693804648 pour +269 380 46 48. Reçu : « ' + chiffres + ' ».');
+            + 'espace : 2694742688 pour +269 474 26 88. Reçu : « ' + chiffres + ' ».');
           return;
         }
 

@@ -81,7 +81,7 @@ const REGLES = {
     longueur_telephone: [v => v >= 4 && v <= 15, 'La longueur du numéro va de 4 à 15 chiffres.'],
     whatsapp_number: [v => /^[0-9]{6,15}$/.test(v),
       'Le numéro WhatsApp ne prend que des chiffres, indicatif compris, sans + ni espace : '
-      + '2693804648 pour +269 380 46 48.']
+      + '2694742688 pour +269 474 26 88.']
   },
   realisations: {
     image: [estAdresse, 'L’image doit être une adresse https:// ou un fichier du site (/assets/…).'],
@@ -547,7 +547,7 @@ async function enregistrerPays(tx, donnees) {
   const existe = (await tx.query('select 1 from pays where code = $1 for update', [p.code])).rows.length > 0;
 
   /* L'indicatif s'affiche collé devant le numéro que tape le candidat. Y glisser
-     un numéro complet produit un téléphone inutilisable — « +269 380 46 483801234 »
+     un numéro complet produit un téléphone inutilisable — « +269 474 26 883801234 »
      — sans que rien ne le signale au moment de l'inscription. */
   if (p.indicatif) {
     p.indicatif = String(p.indicatif).trim();

@@ -173,7 +173,7 @@ const erreurDe = r => (r.ok ? 'accepté' : r.erreur);
   const sansMoyens = Object.assign({}, km);
   delete sansMoyens.paymentMethods;
   courriels.length = 0;
-  const kmPartiel = await admin('admin.pays.save', { donnees: Object.assign(sansMoyens, { whatsappDisplay: '+269 380 46 48' }) });
+  const kmPartiel = await admin('admin.pays.save', { donnees: Object.assign(sansMoyens, { whatsappDisplay: '+269 474 26 88' }) });
   verifier('un pays se met à jour', kmPartiel.ok, true);
   verifier('sans « paymentMethods », ses moyens de paiement restent', (await paysDe('KM')).paymentMethods, km.paymentMethods);
   verifier('et aucune alerte ne part', courriels.length, 0);

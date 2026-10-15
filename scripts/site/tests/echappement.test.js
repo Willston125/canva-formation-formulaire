@@ -148,7 +148,7 @@ if (typeof lienSur === 'function') {
   verifier('une ancre passe', lienSur('/#catalogue'), '/#catalogue');
   verifier('une adresse https passe',
     lienSur('https://www.impactali.site/entreprises/'), 'https://www.impactali.site/entreprises/');
-  verifier('un lien WhatsApp passe', lienSur('https://wa.me/2693804648'), 'https://wa.me/2693804648');
+  verifier('un lien WhatsApp passe', lienSur('https://wa.me/2694742688'), 'https://wa.me/2694742688');
 
   // Ce qui doit tomber.
   verifier('javascript: est refusé', lienSur('javascript:alert(1)'), '');

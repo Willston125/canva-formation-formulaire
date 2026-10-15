@@ -42,7 +42,7 @@ const FORMATIONS = [
 ];
 const MARCHES = { km: { code: 'KM', dossier: 'Comores' }, dj: { code: 'DJ', dossier: 'Djibouti' } };
 const MARQUES = {
-  km: [/\+269/, /KMF/, /Mvola/, /Moroni/, /American Corner/i, /IFERE/, /Comores/i, /380\s46\s48/],
+  km: [/\+269/, /KMF/, /Mvola/, /Moroni/, /American Corner/i, /IFERE/, /Comores/i, /474\s26\s88/],
   dj: [/\+253/, /FDJ/, /Waafi/, /Cacpay/, /Saalam/, /Djibouti/i, /77\s14\s53\s06/, /enregistr/i]
 };
 const MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];

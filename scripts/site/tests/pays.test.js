@@ -50,7 +50,7 @@ const SCRIPTS = ['formations-data.js', 'site-common.js', 'script.js', 'landing.j
 const NUMEROS = [
   /\+\s?(253|269)[\s\d]{6,}/g,
   /wa\.me\/\d+/g,
-  /\b(25377145306|2693804648|11000012127|4866807)\b/g,
+  /\b(25377145306|2693804648|2694742688|11000012127|4866807)\b/g,
   /\b77\s?(14|55|47)\s?\d\d\s?\d\d\b/g,
   /\b(380|474)\s?\d\d\s?\d\d\b/g
 ];
@@ -82,7 +82,7 @@ verifier('sans numéro, un lien de contact devient un e-mail, jamais un WhatsApp
 
 /* Un numéro glissé dans le champ « indicatif » produit un téléphone
    inutilisable : le tableau de bord doit le refuser. */
-const essaisIndicatif = [['+269 380 46 48', false], ['269', false], ['+2 6 9', false], ['+269', true], ['+253', true]];
+const essaisIndicatif = [['+269 474 26 88', false], ['269', false], ['+2 6 9', false], ['+269', true], ['+253', true]];
 verifier('un indicatif mal saisi est reconnu comme tel',
   essaisIndicatif.filter(([v, valide]) => /^\+\d{1,4}$/.test(v) !== valide).map(([v]) => v), []);
 
