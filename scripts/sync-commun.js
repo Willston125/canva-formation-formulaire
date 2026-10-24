@@ -86,8 +86,10 @@ function pointDeTerminaison(source) {
 
 /* Depuis la bascule, le site écrit « /api » : une adresse du site lui-même,
    que le navigateur complète seul. Un script lancé sur l'ordinateur, lui, doit
-   savoir de quel site il s'agit. */
-const SITE = 'https://www.impactali.site';
+   savoir de quel site il s'agit. ADRESSE_SITE en choisit un autre — utile le
+   jour d'un changement de domaine, quand le nouveau ne sert pas encore l'API :
+   ADRESSE_SITE=https://www.impactali.site npm run build:fiches */
+const SITE = process.env.ADRESSE_SITE || 'https://cineworldacademie.com';
 function adresseComplete(adresse) {
   return new URL(adresse, SITE).toString();
 }

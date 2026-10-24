@@ -11,6 +11,10 @@
 'use strict';
 
 const EMAIL_PRO = 'infos@impactali.site';
+/* L'adresse que voient les visiteurs (bascule du 24/10/2026). EMAIL_PRO reste
+   la boîte où arrivent les alertes et les sauvegardes, et l'expéditeur garde
+   le domaine vérifié chez Resend tant que cineworldacademie.com ne l'est pas. */
+const EMAIL_PUBLIC = 'cineworld@cineworldacademie.com';
 const EXPEDITEUR = 'Inscriptions Cineworld Académie <infos@impactali.site>';
 
 /** Échappe pour le HTML, attributs compris. */
@@ -151,4 +155,4 @@ async function envoyer({ a = EMAIL_PRO, sujet, texte, html, repondreA = null, pi
   }
 }
 
-module.exports = { alerteInscription, alerteMoyensPaiement, envoyer, echapper, EMAIL_PRO };
+module.exports = { alerteInscription, alerteMoyensPaiement, envoyer, echapper, EMAIL_PRO, EMAIL_PUBLIC };

@@ -147,7 +147,7 @@ if (typeof lienSur === 'function') {
   verifier('un chemin absolu passe', lienSur('/formations/canva-pro/'), '/formations/canva-pro/');
   verifier('une ancre passe', lienSur('/#catalogue'), '/#catalogue');
   verifier('une adresse https passe',
-    lienSur('https://www.impactali.site/entreprises/'), 'https://www.impactali.site/entreprises/');
+    lienSur('https://cineworldacademie.com/entreprises/'), 'https://cineworldacademie.com/entreprises/');
   verifier('un lien WhatsApp passe', lienSur('https://wa.me/2694742688'), 'https://wa.me/2694742688');
 
   // Ce qui doit tomber.

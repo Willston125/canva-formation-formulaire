@@ -22,7 +22,7 @@
 const crypto = require('crypto');
 const { lireCatalogue } = require('./catalogue');
 const { tarifInscription, trouverPays, sessionOuverteAu, dateEnFrancais } = require('./prix');
-const { EMAIL_PRO } = require('./courriel');
+const { EMAIL_PUBLIC } = require('./courriel');
 const { enTransaction } = require('./transaction');
 
 /* Même plafond que le script Google : très au-dessus d'une vraie journée,
@@ -139,7 +139,7 @@ async function recevoirInscription(db, chargeBrute, { ip = '', sel = 'local' } =
         where recue_le >= date_trunc('day', now() at time zone 'utc') at time zone 'utc'`);
     if (duJour >= INSCRIPTIONS_PAR_JOUR) {
       return refus('Nous recevons un nombre inhabituel d’inscriptions aujourd’hui et ne pouvons pas '
-        + 'enregistrer la vôtre pour l’instant. Écrivez-nous à ' + EMAIL_PRO + ' : votre place sera notée à la main.');
+        + 'enregistrer la vôtre pour l’instant. Écrivez-nous à ' + EMAIL_PUBLIC + ' : votre place sera notée à la main.');
     }
 
     const colonnes = Object.keys(ligne);

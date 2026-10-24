@@ -9,7 +9,9 @@
    entre deux domaines sans que personne ne s'en aperçoive.
 
    C'est arrivé au passage de canva-formation-formulaire.vercel.app à
-   www.impactali.site : quatre fichiers à changer à la main, sept générés. */
+   www.impactali.site : quatre fichiers à changer à la main, sept générés.
+   Puis de www.impactali.site à cineworldacademie.com (24/10/2026), avec les
+   pages L'association, Productions et Contact en plus. */
 'use strict';
 
 const fs = require('fs');
@@ -34,7 +36,8 @@ verifier('le générateur nomme une adresse de site', !!reference, true);
 /* Toutes les pages du site, y compris celles écrites à la main — ce sont
    justement elles qu'un changement de domaine oublie. */
 const PAGES = ['index.html', 'entreprises/index.html', 'mentions-legales/index.html',
-  'inscription/index.html', 'formations/_template/fiche.html'];
+  'inscription/index.html', 'formations/_template/fiche.html',
+  'association/index.html', 'production/index.html', 'contact/index.html'];
 for (const dossier of fs.readdirSync(path.join(RACINE, 'formations'))) {
   const page = path.join('formations', dossier, 'index.html');
   if (fs.existsSync(path.join(RACINE, page))) PAGES.push(page);
@@ -81,11 +84,19 @@ for (const page of PAGES) {
 }
 verifier('l’ancienne adresse Vercel ne traîne plus', restes, []);
 
-/* Le site répond sur www : une adresse canonique qui pointerait vers le
-   domaine nu désignerait une page qui redirige, ce que les moteurs traitent
-   comme un signal contradictoire. */
-verifier('l’adresse de référence ne redirige pas vers une autre',
-  /^https:\/\/www\./.test(reference || ''), true);
+/* Une adresse canonique qui redirige désignerait une page qui renvoie
+   ailleurs, ce que les moteurs traitent comme un signal contradictoire.
+   Depuis le 24/10/2026, le site répond sur cineworldacademie.com SANS www,
+   comme l'ancien site Cineworld que Google connaît déjà ; c'est www qui
+   redirige vers lui (vercel.json). On le vérifie dans la configuration
+   elle-même : aucune redirection ne part de l'hôte de référence, et celle
+   de www y mène. */
+const hoteReference = (/^https:\/\/([^/]+)/.exec(reference || '') || [])[1] || '';
+const redirections = (JSON.parse(lire('vercel.json')).redirects || []);
+const depuisHote = hote => redirections.filter(r => (r.has || []).some(h => h.type === 'host' && h.value === hote));
+verifier('l’adresse de référence ne redirige pas vers une autre', depuisHote(hoteReference).length, 0);
+verifier('la forme www y redirige',
+  depuisHote('www.' + hoteReference).some(r => r.destination.indexOf('https://' + hoteReference + '/') === 0), true);
 
 console.log('Pages examinées : ' + PAGES.length + ', adresse commune : ' + reference);
 console.log(resultats.join('\n'));

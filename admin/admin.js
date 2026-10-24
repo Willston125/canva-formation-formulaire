@@ -3111,7 +3111,7 @@
     { section: 'Contact' },
     { cle: 'contactName', libelle: 'Nom du contact', type: 'text' },
     { cle: 'contactEmail', libelle: 'Adresse email publique', type: 'text',
-      exemple: 'infos@impactali.site',
+      exemple: 'contact@votre-domaine.com',
       aide: 'C’est la voie de contact affichée sur tout le site — accueil, entreprises, '
         + 'mentions légales, pied de page. WhatsApp ne paraît qu’au moment de l’inscription, '
         + 'avec le numéro du pays du candidat.' },

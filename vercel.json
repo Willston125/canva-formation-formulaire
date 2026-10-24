@@ -30,8 +30,23 @@
     {
       "source": "/:chemin(.*)",
       "has": [{ "type": "host", "value": "canva-formation-formulaire.vercel.app" }],
-      "destination": "https://www.impactali.site/:chemin",
+      "destination": "https://cineworldacademie.com/:chemin",
       "permanent": true
-    }
+    },
+    {
+      "source": "/:chemin(.*)",
+      "has": [{ "type": "host", "value": "www.cineworldacademie.com" }],
+      "destination": "https://cineworldacademie.com/:chemin",
+      "permanent": true
+    },
+    { "source": "/formations", "destination": "/#catalogue", "permanent": true },
+    { "source": "/formations/", "destination": "/#catalogue", "permanent": true },
+    { "source": "/formations/1", "destination": "/formations/ia-appliquee/", "permanent": true },
+    { "source": "/formations/2", "destination": "/formations/identite-visuelle/", "permanent": true },
+    { "source": "/formations/3", "destination": "/formations/photo-video/", "permanent": true },
+    { "source": "/formations/4", "destination": "/formations/marketing-digital/", "permanent": true },
+    { "source": "/production/:projet(.+)", "destination": "/production/", "permanent": true },
+    { "source": "/a-propos", "destination": "/association/", "permanent": true },
+    { "source": "/maintenance", "destination": "/", "permanent": true }
   ]
 }

@@ -120,7 +120,7 @@ verifier('aucun fichier du site n’est écarté', indispensables.filter(exclu),
 /** Ramène une référence à un chemin de fichier du dépôt, ou null si elle sort du site. */
 function resoudre(ref, depuis) {
   let u = ref.trim();
-  if (/^https:\/\/www\.impactali\.site/i.test(u)) u = u.replace(/^https:\/\/www\.impactali\.site/i, '') || '/';
+  if (/^https:\/\/cineworldacademie\.com/i.test(u)) u = u.replace(/^https:\/\/cineworldacademie\.com/i, '') || '/';
   else if (/^[a-z][a-z0-9+.-]*:/i.test(u) || u.startsWith('//')) return null; // autre site, mailto:, data:…
   u = u.split('#')[0].split('?')[0];
   if (!u) return null;
@@ -142,7 +142,7 @@ for (const f of publies) {
   let refs = [];
   if (/\.html$/i.test(f)) {
     for (const m of texte.matchAll(/\s(?:src|href|poster|data-image-origine)="([^"]+)"/g)) refs.push(m[1]);
-    for (const m of texte.matchAll(/\scontent="(https:\/\/www\.impactali\.site[^"]*)"/g)) refs.push(m[1]);
+    for (const m of texte.matchAll(/\scontent="(https:\/\/cineworldacademie\.com[^"]*)"/g)) refs.push(m[1]);
   } else if (/\.css$/i.test(f)) {
     for (const m of texte.matchAll(/url\(\s*['"]?([^'")]+)['"]?\s*\)/g)) refs.push(m[1]);
   } else if (/\.js$/i.test(f)) {
