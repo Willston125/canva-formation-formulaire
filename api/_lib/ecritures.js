@@ -82,7 +82,11 @@ const REGLES = {
     whatsapp_number: [v => /^[0-9]{6,15}$/.test(v),
       'Le numéro WhatsApp ne prend que des chiffres, indicatif compris, sans + ni espace : '
       + '2694742688 pour +269 474 26 88.'],
-    accroche: [v => v.length <= 120, 'L’accroche du pays tient en 120 caractères au plus.']
+    accroche: [v => v.length <= 120, 'L’accroche du pays tient en 120 caractères au plus.'],
+    adresse: [v => v.length <= 200, 'L’adresse tient en 200 caractères au plus.'],
+    horaires: [v => v.length <= 300, 'Les horaires tiennent en 300 caractères au plus.'],
+    // Même garde que l'audit T2 : jamais de lien « javascript: »
+    carte: [v => /^https:\/\/[^\s]+$/.test(v), 'Le lien de la carte commence par https:// (copiez-le depuis Google Maps → Partager).']
   },
   realisations: {
     image: [estAdresse, 'L’image doit être une adresse https:// ou un fichier du site (/assets/…).'],

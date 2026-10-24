@@ -1177,6 +1177,24 @@
         return String(CONTACT.contactEmail || '').trim();
     }
 
+    /** L'identifiant d'une vidéo YouTube, quelle que soit la forme du lien collé, ou null. */
+    function identifiantYoutube(url) {
+        const t = String(url || '').trim();
+        if (!t) return null;
+        const m = t.match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/)
+            || t.match(/^([A-Za-z0-9_-]{11})$/);
+        return m ? m[1] : null;
+    }
+
+    /* « Production » : les réalisations de l'académie — films, clips,
+       documentaires — publiées sur YouTube. Comme « En classe », tout se règle
+       depuis la réalisation (onglet Réalisations du tableau de bord) : une
+       catégorie « Production », ou « Production · Clip », et un lien YouTube,
+       et la vidéo quitte la grille de l'accueil pour la page /production/. */
+    function estProduction(item) {
+        return /^\s*production\s*(?:$|[·•|—-])/i.test(String((item && item.category) || ''));
+    }
+
     /**
      * Voie de contact publique : l'email, partout sauf à l'inscription.
      *
@@ -1312,6 +1330,8 @@
         nextOpenSession,
         whatsappUrl,
         emailContact,
+        identifiantYoutube,
+        estProduction,
         formatPrice,
         /* Filtre de schema : une adresse venue de la feuille ne doit jamais
            pouvoir devenir un lien qui execute du code au clic. */

@@ -16,7 +16,7 @@ const fs = require('fs');
 const path = require('path');
 
 const RACINE = path.resolve(__dirname, '..', '..', '..');
-const SCRIPTS = ['admin/admin.js', 'site-common.js', 'landing.js', 'script.js', 'fiche-blocs.js', 'formations-data.js'];
+const SCRIPTS = ['admin/admin.js', 'site-common.js', 'landing.js', 'script.js', 'fiche-blocs.js', 'formations-data.js', 'vitrine.js'];
 
 const resultats = [];
 const verifier = (libelle, obtenu, attendu) => {

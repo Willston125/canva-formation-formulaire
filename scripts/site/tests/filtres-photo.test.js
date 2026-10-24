@@ -24,8 +24,14 @@ const CSS = fs.readFileSync(path.join(RACINE, 'style.css'), 'utf8')
    filtre posé sur le conteneur `.trainer__photo` plutôt que sur son image, et
    la même règle écrite `.training-dialog>img` sans espaces. L'épreuve garde ces
    six emplacements, pas toute recoloration imaginable. */
+/* Le bandeau d'accueil (24/10/2026) montre sa photo en noir et blanc, à la
+   demande du propriétaire : c'est l'effet repris de l'ancien site Cineworld.
+   Le filtre est posé sur la couche du FOND seulement ; la couche en couleur,
+   révélée autour du curseur, doit rester la photo telle qu'envoyée. */
 const EMPLACEMENTS = [
-  ['.landing-hero__visual img', 'photo d’ouverture de l’accueil'],
+  ['.cine-hero__couleur img', 'photo du bandeau d’accueil, couche en couleur'],
+  ['.vitrine-photo img', 'photos de la page L’association'],
+  ['.contact-carte--fondateur img', 'portrait du fondateur (page Contact)'],
   ['.method-step img', 'photos des étapes de la méthode'],
   ['.training-dialog > img', 'photo de la fiche formation'],
   ['.trainer__photo img', 'portrait du formateur'],

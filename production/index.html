@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html class="dark" lang="fr">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nos productions — Films, clips et documentaires | Cineworld Académie</title>
+    <meta name="description"
+        content="Les productions vidéo de Cineworld Académie, à regarder directement sur le site.">
+    <meta property="og:title" content="Nos productions — Films, clips et documentaires | Cineworld Académie">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://www.impactali.site/production/">
+    <meta property="og:image" content="https://www.impactali.site/assets/images/partage-cineworld.jpg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <!-- Polices auto-hébergées (régénérer avec : npm run build:fonts) -->
+    <link rel="preload" href="/assets/fonts/plus-jakarta-sans-latin.woff2?v=a389d97d" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/assets/fonts/inter-latin.woff2?v=f11d729b" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/assets/fonts/material-symbols-outlined.woff2?v=7f96750c" as="font" type="font/woff2" crossorigin>
+    <link rel="icon" href="/favicon.ico" sizes="48x48">
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/brand/icone-32.png">
+    <link rel="apple-touch-icon" href="/assets/brand/icone-180.png">
+    <link rel="stylesheet" href="/fonts.css">
+    <link rel="canonical" href="https://www.impactali.site/production/">
+    <link rel="stylesheet" href="/tailwind.css">
+    <link rel="stylesheet" href="/style.css">
+    <!-- Vercel Web Analytics : visiteurs, provenance, pages vues. Sans cookie. Inactif tant
+         que « Analytics » n'est pas activé dans le projet Vercel (le script répond alors 404). -->
+    <script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
+    <script defer src="/_vercel/insights/script.js"></script>
+</head>
+
+<body class="page-secondary">
+    <a class="skip-link" href="#contenu">Aller au contenu</a>
+
+    <a class="session-banner hidden" id="session-banner" href="/#catalogue">
+        <span id="session-banner-text">PROCHAINE SESSION · INSCRIPTIONS OUVERTES</span>
+        <span class="material-symbols-outlined" aria-hidden="true">keyboard_double_arrow_right</span>
+    </a>
+    <header class="site-header" id="site-header">
+        <div class="site-header__inner">
+            <a class="brand" href="/" aria-label="Cineworld Académie — Accueil">
+                <img data-image="marque.logo" data-image-groupe="Marque" data-image-libelle="Logo (sceau) Cineworld Académie" data-image-format="logo" data-image-ratio="1/1" src="/assets/brand/cineworld-sceau.webp" alt="" width="240" height="240" decoding="async"><span class="brand__nom">Cineworld <span>Académie</span></span>
+            </a>
+            <nav class="desktop-nav" aria-label="Navigation principale">
+            <a href="/#accueil">Accueil</a>
+            <a href="/#catalogue">Formations</a>
+            <a href="/association/">L’association</a>
+            <a class="is-active" href="/production/">Productions</a>
+            <a href="/entreprises/">Entreprises</a>
+            <a href="/contact/">Contact</a>
+        </nav>
+            <div class="header-actions">
+                <a class="button button--primary button--compact" href="/#catalogue">
+                    Choisir ma formation<span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+                </a>
+                <button class="menu-toggle" id="menu-toggle" type="button" aria-expanded="false" aria-controls="mobile-menu" aria-label="Ouvrir le menu">
+                    <span class="material-symbols-outlined" aria-hidden="true">menu</span>
+                </button>
+            </div>
+        </div>
+        <nav class="mobile-menu" id="mobile-menu" aria-label="Navigation mobile" hidden>
+            <a href="/#accueil">Accueil</a>
+            <a href="/#catalogue">Formations</a>
+            <a href="/association/">L’association</a>
+            <a href="/production/">Productions</a>
+            <a href="/entreprises/">Entreprises</a>
+            <a href="/contact/">Contact</a>
+            <a href="/#catalogue">Choisir ma formation</a>
+        </nav>
+    </header>
+
+    <main class="secondary-page vitrine" id="contenu">
+        <section class="landing-shell vitrine-entete vitrine-entete--seule">
+            <nav class="breadcrumb" aria-label="Fil d’Ariane">
+                <a href="/">Accueil</a><span aria-hidden="true">/</span><span aria-current="page">Productions</span>
+            </nav>
+            <p class="eyebrow" data-texte="production.surtitre" data-texte-groupe="Page production" data-texte-libelle="Surtitre de la page">PRODUCTION</p>
+            <h1 data-texte-html="production.titre" data-texte-groupe="Page production" data-texte-libelle="Titre de la page">Nos <span>productions</span></h1>
+            <p class="secondary-page__lead" data-texte="production.intro" data-texte-groupe="Page production" data-texte-libelle="Introduction">Les réalisations de Cineworld Académie. Lancez une vidéo : elle se regarde ici, sans quitter la page.</p>
+        </section>
+
+        <!-- Les vidéos viennent des réalisations de catégorie « Production » (tableau de
+             bord → Réalisations), avec un lien YouTube : vitrine.js, renderProductions. -->
+        <section class="landing-shell vitrine-section" aria-label="Vidéos">
+            <div class="production-grille" id="productions-grille" hidden></div>
+            <div class="production-vide" id="productions-vide">
+                <span class="material-symbols-outlined" aria-hidden="true">movie</span>
+                <p data-texte="production.vide" data-texte-groupe="Page production" data-texte-libelle="Message sans vidéo">Nos productions arrivent très bientôt sur cette page.</p>
+            </div>
+        </section>
+
+        <section class="landing-shell vitrine-cta" aria-labelledby="projet-titre">
+            <h2 id="projet-titre" data-texte-html="production.cta.titre" data-texte-groupe="Page production" data-texte-libelle="Appel final — titre">Un projet <span>vidéo</span> ?</h2>
+            <p data-texte="production.cta.texte" data-texte-groupe="Page production" data-texte-libelle="Appel final — texte">Film, clip, documentaire ou contenu de marque : parlons-en.</p>
+            <p class="vitrine-actions">
+                <a class="button button--primary" href="/contact/">Nous contacter<span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a>
+                <a class="button button--secondary" href="/#catalogue">Se former à la vidéo</a>
+            </p>
+        </section>
+    </main>
+
+    <footer class="site-footer" id="site-footer">
+        <div class="landing-shell site-footer__inner">
+            <div class="site-footer__brand">
+                <a class="site-footer__logo" href="/" aria-label="Cineworld Académie — Accueil">
+                    <img data-image="marque.logo" data-image-groupe="Marque" data-image-libelle="Logo (sceau) Cineworld Académie" data-image-format="logo" data-image-ratio="1/1" src="/assets/brand/cineworld-sceau.webp" alt="Cineworld Académie" width="240" height="240" loading="lazy" decoding="async">
+                </a>
+                <span class="site-footer__baseline">École de l’image — formations vidéo, design, marketing digital &amp; IA</span>
+                <span class="site-footer__legal">&copy; 2026 Cineworld Académie. Tous droits réservés.</span>
+                <span class="site-footer__ancien">Anciennement IMPACTALI</span>
+            </div>
+                        <nav class="site-footer__col" aria-labelledby="pied-formations">
+                <h2 id="pied-formations">Formations</h2>
+                <a href="/#catalogue">Tout le catalogue</a>
+                <a href="/formations/canva-pro/">Canva Pro &amp; Création de contenu</a>
+                <a href="/#sessions">Prochaines sessions</a>
+            </nav>
+            <nav class="site-footer__col" aria-labelledby="pied-domaines">
+                <h2 id="pied-domaines">Domaines</h2>
+                <div id="pied-domaines-liens"></div>
+            </nav>
+            <nav class="site-footer__col" aria-labelledby="pied-infos">
+                <h2 id="pied-infos">Informations</h2>
+                <a href="/association/">L’association</a>
+                <a href="/production/">Productions</a>
+                <a href="/entreprises/">Former mon équipe</a>
+                <a href="/contact/">Nous contacter</a>
+                <a href="/mentions-legales/">Mentions légales</a>
+            </nav>
+        </div>
+    </footer>
+
+    <script src="/formations-data.js"></script>
+    <script src="/site-common.js"></script>
+    <script src="/vitrine.js"></script>
+</body>
+
+</html>

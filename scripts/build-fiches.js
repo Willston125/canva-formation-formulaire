@@ -390,7 +390,7 @@ async function principal() {
      date de modification : on n'en connaît pas de fiable, et l'inventer ferait
      passer pour récente une page qui ne l'est pas. */
   const adresses = ['/', ...formations.filter(f => f.slug).map(f => `/formations/${f.slug}/`),
-    '/entreprises/', '/mentions-legales/'];
+    '/association/', '/production/', '/contact/', '/entreprises/', '/mentions-legales/'];
   fs.writeFileSync(path.join(ROOT, 'sitemap.xml'),
     '<?xml version="1.0" encoding="UTF-8"?>\n'
     + '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
@@ -483,8 +483,11 @@ generique = generique.replace(/<section[^>]*id="prerequis-section"[\s\S]*?<\/sec
 generique = generique.replace(/<meta name="robots"[^>]*>/i, '');
 generique = generique.replace('</head>', '    <meta name="robots" content="noindex, follow">\n</head>');
 /* On vient ici pour s'inscrire, et pour rien d'autre : la fenêtre d'annonce n'a
-   pas à interrompre ce parcours (décision du propriétaire, 9 octobre 2026). */
-generique = generique.replace(/\n[ \t]*<script src="\/annonces\.js"><\/script>/, '');
+   pas à interrompre ce parcours (décision du propriétaire, 9 octobre 2026).
+   Le saut de ligne est pris en entier, « \r\n » compris : un gabarit aux fins
+   de ligne Windows laissait sinon un « \r » orphelin, et git tenait la page
+   pour un fichier binaire (constaté le 24/10/2026). */
+generique = generique.replace(/\r?\n[ \t]*<script src="\/annonces\.js"><\/script>/, '');
 
 fs.mkdirSync(path.join(ROOT, 'inscription'), { recursive: true });
 fs.writeFileSync(path.join(ROOT, 'inscription', 'index.html'), generique);

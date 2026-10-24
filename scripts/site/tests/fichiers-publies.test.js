@@ -97,13 +97,13 @@ verifier('aucun fichier Markdown n’est publié, où qu’il soit',
 /* Sans lui, un `*` glissé dans .vercelignore satisferait tout ce qui précède…
    en vidant le site. */
 const pages = ['index.html', '404.html', 'entreprises/index.html', 'mentions-legales/index.html',
-  'inscription/index.html', 'admin/index.html']
+  'inscription/index.html', 'admin/index.html', 'association/index.html', 'production/index.html', 'contact/index.html']
   .concat(fs.readdirSync(path.join(RACINE, 'formations'))
     .filter(d => fs.existsSync(path.join(RACINE, 'formations', d, 'index.html')))
     .map(d => 'formations/' + d + '/index.html'));
 const indispensables = pages.concat([
   'style.css', 'tailwind.css', 'fonts.css', 'site-common.js', 'landing.js', 'script.js',
-  'fiche-blocs.js', 'formations-data.js', 'admin/admin.js', 'admin/admin.css',
+  'fiche-blocs.js', 'formations-data.js', 'admin/admin.js', 'admin/admin.css', 'vitrine.js',
   'assets/brand/cineworld-sceau.webp', 'assets/images/partage-cineworld.jpg',
   /* Le code partagé de l'API : écarté, il manquerait aux fonctions Vercel, qui
      ne reçoivent que ce qui est déployé. */

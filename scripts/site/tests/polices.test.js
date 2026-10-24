@@ -90,7 +90,8 @@ verifier('et cette empreinte est celle du fichier présent', empreintesFausses, 
    ils téléchargent une seconde fois le même fichier, et ne préchargent rien. */
 const prechargements = [];
 for (const page of ['index.html', 'entreprises/index.html', 'admin/index.html',
-  'formations/_template/fiche.html', 'formations/canva-pro/index.html']) {
+  'formations/_template/fiche.html', 'formations/canva-pro/index.html', '404.html',
+  'association/index.html', 'production/index.html', 'contact/index.html']) {
   if (!existe(page)) continue;
   for (const m of lire(page).matchAll(/rel="preload"[^>]*href="([^"]*\.woff2[^"]*)"/g)) {
     prechargements.push({ page, adresse: m[1] });
@@ -106,7 +107,7 @@ verifier('au moins un fichier par famille', fichiers.length >= 3, true);
 
 const PAGES = ['index.html', 'entreprises/index.html', 'mentions-legales/index.html',
   'admin/index.html', 'formations/_template/fiche.html', 'formations/canva-pro/index.html',
-  'inscription/index.html'];
+  'inscription/index.html', 'association/index.html', 'production/index.html', 'contact/index.html'];
 
 const externes = [];
 for (const page of PAGES) {
@@ -151,7 +152,7 @@ const SOURCES_ICONES = [
   'index.html', 'entreprises/index.html', 'mentions-legales/index.html', 'admin/index.html',
   'formations/_template/fiche.html', 'inscription/index.html', 'script.js', 'site-common.js',
   'landing.js', 'admin/admin.js', 'fiche-blocs.js', 'formations-data.js', 'scripts/build-fiches.js',
-  'annonces.js'
+  'annonces.js', 'association/index.html', 'production/index.html', 'contact/index.html', 'vitrine.js'
 ];
 const MOTIFS_ICONES = [
   /material-symbols-outlined[^>]*>\s*([a-z0-9_]+)\s*</g,

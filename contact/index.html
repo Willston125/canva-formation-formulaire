@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html class="dark" lang="fr">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact | Cineworld Académie</title>
+    <meta name="description"
+        content="Contactez Cineworld Académie : formations, partenariats, adhésion à l’association.">
+    <meta property="og:title" content="Contact | Cineworld Académie">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://www.impactali.site/contact/">
+    <meta property="og:image" content="https://www.impactali.site/assets/images/partage-cineworld.jpg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <!-- Polices auto-hébergées (régénérer avec : npm run build:fonts) -->
+    <link rel="preload" href="/assets/fonts/plus-jakarta-sans-latin.woff2?v=a389d97d" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/assets/fonts/inter-latin.woff2?v=f11d729b" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/assets/fonts/material-symbols-outlined.woff2?v=7f96750c" as="font" type="font/woff2" crossorigin>
+    <link rel="icon" href="/favicon.ico" sizes="48x48">
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/brand/icone-32.png">
+    <link rel="apple-touch-icon" href="/assets/brand/icone-180.png">
+    <link rel="stylesheet" href="/fonts.css">
+    <link rel="canonical" href="https://www.impactali.site/contact/">
+    <link rel="stylesheet" href="/tailwind.css">
+    <link rel="stylesheet" href="/style.css">
+    <!-- Vercel Web Analytics : visiteurs, provenance, pages vues. Sans cookie. Inactif tant
+         que « Analytics » n'est pas activé dans le projet Vercel (le script répond alors 404). -->
+    <script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
+    <script defer src="/_vercel/insights/script.js"></script>
+</head>
+
+<body class="page-secondary">
+    <a class="skip-link" href="#contenu">Aller au contenu</a>
+
+    <a class="session-banner hidden" id="session-banner" href="/#catalogue">
+        <span id="session-banner-text">PROCHAINE SESSION · INSCRIPTIONS OUVERTES</span>
+        <span class="material-symbols-outlined" aria-hidden="true">keyboard_double_arrow_right</span>
+    </a>
+    <header class="site-header" id="site-header">
+        <div class="site-header__inner">
+            <a class="brand" href="/" aria-label="Cineworld Académie — Accueil">
+                <img data-image="marque.logo" data-image-groupe="Marque" data-image-libelle="Logo (sceau) Cineworld Académie" data-image-format="logo" data-image-ratio="1/1" src="/assets/brand/cineworld-sceau.webp" alt="" width="240" height="240" decoding="async"><span class="brand__nom">Cineworld <span>Académie</span></span>
+            </a>
+            <nav class="desktop-nav" aria-label="Navigation principale">
+            <a href="/#accueil">Accueil</a>
+            <a href="/#catalogue">Formations</a>
+            <a href="/association/">L’association</a>
+            <a href="/production/">Productions</a>
+            <a href="/entreprises/">Entreprises</a>
+            <a class="is-active" href="/contact/">Contact</a>
+        </nav>
+            <div class="header-actions">
+                <a class="button button--primary button--compact" href="/#catalogue">
+                    Choisir ma formation<span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+                </a>
+                <button class="menu-toggle" id="menu-toggle" type="button" aria-expanded="false" aria-controls="mobile-menu" aria-label="Ouvrir le menu">
+                    <span class="material-symbols-outlined" aria-hidden="true">menu</span>
+                </button>
+            </div>
+        </div>
+        <nav class="mobile-menu" id="mobile-menu" aria-label="Navigation mobile" hidden>
+            <a href="/#accueil">Accueil</a>
+            <a href="/#catalogue">Formations</a>
+            <a href="/association/">L’association</a>
+            <a href="/production/">Productions</a>
+            <a href="/entreprises/">Entreprises</a>
+            <a href="/contact/">Contact</a>
+            <a href="/#catalogue">Choisir ma formation</a>
+        </nav>
+    </header>
+
+    <main class="secondary-page vitrine" id="contenu">
+        <section class="landing-shell vitrine-entete vitrine-entete--seule">
+            <nav class="breadcrumb" aria-label="Fil d’Ariane">
+                <a href="/">Accueil</a><span aria-hidden="true">/</span><span aria-current="page">Contact</span>
+            </nav>
+            <p class="eyebrow" data-texte="contact.surtitre" data-texte-groupe="Page contact" data-texte-libelle="Surtitre de la page">CONTACT</p>
+            <h1 data-texte-html="contact.titre" data-texte-groupe="Page contact" data-texte-libelle="Titre de la page">Parlons de <span>votre projet</span></h1>
+            <p class="secondary-page__lead" data-texte="contact.intro" data-texte-groupe="Page contact" data-texte-libelle="Introduction">Une question sur une formation, un partenariat, une adhésion à l’association ? Écrivez-nous, nous vous répondons.</p>
+        </section>
+
+        <section class="landing-shell contact-grille" aria-label="Nos coordonnées">
+            <article class="contact-carte">
+                <span class="contact-carte__icone material-symbols-outlined" aria-hidden="true">mail</span>
+                <h2 data-texte="contact.email.titre" data-texte-groupe="Page contact" data-texte-libelle="Carte e-mail — titre">Écrivez-nous</h2>
+                <p data-texte="contact.email.texte" data-texte-groupe="Page contact" data-texte-libelle="Carte e-mail — texte">Pour toute demande, depuis n’importe quel pays.</p>
+                <a class="contact-carte__lien" href="mailto:infos@impactali.site" data-email-sujet="Prise de contact"><span data-email-affiche>infos@impactali.site</span></a>
+            </article>
+
+            <!-- Les coordonnées du pays du visiteur, et de lui seul : servies par l'API,
+                 remplies par vitrine.js (renderContactPays). Aucun pays n'est écrit ici. -->
+            <article class="contact-carte" id="contact-pays" hidden>
+                <span class="contact-carte__icone material-symbols-outlined" aria-hidden="true">location_on</span>
+                <h2>Dans votre pays : <span id="contact-pays-nom"></span></h2>
+                <ul class="contact-carte__liste">
+                    <li id="contact-whatsapp" hidden><span class="material-symbols-outlined" aria-hidden="true">chat</span><a href="#" target="_blank" rel="noopener noreferrer">WhatsApp · <span data-numero></span></a></li>
+                    <li id="contact-adresse" hidden><span class="material-symbols-outlined" aria-hidden="true">apartment</span><span data-valeur></span></li>
+                    <li id="contact-horaires" hidden><span class="material-symbols-outlined" aria-hidden="true">schedule</span><span class="contact-carte__horaires" data-valeur></span></li>
+                </ul>
+                <a class="button button--secondary contact-carte__carte" id="contact-carte" href="#" target="_blank" rel="noopener noreferrer" hidden>Ouvrir la carte<span class="material-symbols-outlined" aria-hidden="true">map</span></a>
+            </article>
+            <article class="contact-carte" id="contact-hors-marche" hidden>
+                <span class="contact-carte__icone material-symbols-outlined" aria-hidden="true">public</span>
+                <h2>Nos coordonnées près de chez vous</h2>
+                <p>Choisissez votre pays en bas de page, dans « Pays » : l’adresse et le contact local s’afficheront ici.</p>
+            </article>
+
+            <article class="contact-carte contact-carte--fondateur">
+                <img data-image="contact.fondateur.photo" data-image-groupe="Page contact" data-image-libelle="Photo du fondateur" data-image-format="carre" data-image-ratio="1/1" src="/assets/images/accueil/formateur.webp" alt="Ali William, fondateur et directeur de Cineworld Académie" width="900" height="600" loading="lazy" decoding="async">
+                <div>
+                    <strong data-contact-nom>Ali William</strong>
+                    <span data-texte="contact.fondateur.role" data-texte-groupe="Page contact" data-texte-libelle="Rôle du fondateur">Fondateur &amp; directeur</span>
+                </div>
+            </article>
+        </section>
+
+        <section class="landing-shell vitrine-cta" aria-labelledby="commencer-titre">
+            <h2 id="commencer-titre" data-texte-html="contact.cta.titre" data-texte-groupe="Page contact" data-texte-libelle="Appel final — titre">Prêt à <span>commencer</span> ?</h2>
+            <p data-texte="contact.cta.texte" data-texte-groupe="Page contact" data-texte-libelle="Appel final — texte">Inscrivez-vous et lancez votre parcours dans l’image.</p>
+            <p class="vitrine-actions">
+                <a class="button button--primary" href="/#catalogue">Voir les formations<span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a>
+                <a class="button button--secondary" href="/entreprises/">Former mon équipe</a>
+            </p>
+        </section>
+    </main>
+
+    <footer class="site-footer" id="site-footer">
+        <div class="landing-shell site-footer__inner">
+            <div class="site-footer__brand">
+                <a class="site-footer__logo" href="/" aria-label="Cineworld Académie — Accueil">
+                    <img data-image="marque.logo" data-image-groupe="Marque" data-image-libelle="Logo (sceau) Cineworld Académie" data-image-format="logo" data-image-ratio="1/1" src="/assets/brand/cineworld-sceau.webp" alt="Cineworld Académie" width="240" height="240" loading="lazy" decoding="async">
+                </a>
+                <span class="site-footer__baseline">École de l’image — formations vidéo, design, marketing digital &amp; IA</span>
+                <span class="site-footer__legal">&copy; 2026 Cineworld Académie. Tous droits réservés.</span>
+                <span class="site-footer__ancien">Anciennement IMPACTALI</span>
+            </div>
+                        <nav class="site-footer__col" aria-labelledby="pied-formations">
+                <h2 id="pied-formations">Formations</h2>
+                <a href="/#catalogue">Tout le catalogue</a>
+                <a href="/formations/canva-pro/">Canva Pro &amp; Création de contenu</a>
+                <a href="/#sessions">Prochaines sessions</a>
+            </nav>
+            <nav class="site-footer__col" aria-labelledby="pied-domaines">
+                <h2 id="pied-domaines">Domaines</h2>
+                <div id="pied-domaines-liens"></div>
+            </nav>
+            <nav class="site-footer__col" aria-labelledby="pied-infos">
+                <h2 id="pied-infos">Informations</h2>
+                <a href="/association/">L’association</a>
+                <a href="/production/">Productions</a>
+                <a href="/entreprises/">Former mon équipe</a>
+                <a href="/contact/">Nous contacter</a>
+                <a href="/mentions-legales/">Mentions légales</a>
+            </nav>
+        </div>
+    </footer>
+
+    <script src="/formations-data.js"></script>
+    <script src="/site-common.js"></script>
+    <script src="/vitrine.js"></script>
+</body>
+
+</html>

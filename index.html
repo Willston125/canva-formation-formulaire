@@ -129,7 +129,7 @@
     <!-- Polices auto-hébergées (régénérer avec : npm run build:fonts) -->
     <link rel="preload" href="/assets/fonts/plus-jakarta-sans-latin.woff2?v=a389d97d" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="/assets/fonts/inter-latin.woff2?v=f11d729b" as="font" type="font/woff2" crossorigin>
-    <link rel="preload" href="/assets/fonts/material-symbols-outlined.woff2?v=d51842d3" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/assets/fonts/material-symbols-outlined.woff2?v=7f96750c" as="font" type="font/woff2" crossorigin>
     <link rel="icon" href="/favicon.ico" sizes="48x48">
     <link rel="icon" type="image/png" sizes="32x32" href="/assets/brand/icone-32.png">
     <link rel="apple-touch-icon" href="/assets/brand/icone-180.png">
@@ -184,9 +184,10 @@
             <nav class="desktop-nav" aria-label="Navigation principale">
             <a class="is-active" href="#accueil">Accueil</a>
             <a href="#catalogue">Formations</a>
-            <a href="#domaines">Domaines</a>
+            <a href="/association/">L’association</a>
+            <a href="/production/">Productions</a>
             <a href="/entreprises/">Entreprises</a>
-            <a href="#a-propos">À propos</a>
+            <a href="/contact/">Contact</a>
         </nav>
 
             <div class="header-actions">
@@ -203,57 +204,45 @@
         <nav class="mobile-menu" id="mobile-menu" aria-label="Navigation mobile" hidden>
             <a href="#accueil">Accueil</a>
             <a href="#catalogue">Formations</a>
-            <a href="#domaines">Domaines</a>
+            <a href="/association/">L’association</a>
+            <a href="/production/">Productions</a>
             <a href="/entreprises/">Entreprises</a>
-            <a href="#a-propos">À propos</a>
+            <a href="/contact/">Contact</a>
             <a href="#catalogue">Choisir ma formation</a>
         </nav>
     </header>
 
     <main id="main-content">
 
-    <!-- ====== 3. HERO ====== -->
-    <section class="landing-hero" id="accueil" aria-labelledby="hero-title">
-        <div class="landing-hero__glow" aria-hidden="true"></div>
-        <div class="landing-shell landing-hero__layout">
-            <div class="landing-hero__copy">
-                <!-- La signature vaut pour tous ; l'accroche du pays n'arrive que pour
-                     les visiteurs de ce pays, par l'API (landing.js, renderAccrochePays). -->
-                <p class="landing-hero__marque">
-                    <span data-texte="hero.signature" data-texte-groupe="Bandeau d’accueil" data-texte-libelle="Signature de l’académie">Cineworld Académie · École de l’image</span>
-                    <span class="landing-hero__accroche-pays" id="accroche-pays" hidden></span>
-                </p>
-                <p class="eyebrow" data-texte="hero.surtitre" data-texte-groupe="Bandeau d’accueil" data-texte-libelle="Surtitre">FORMATIONS CRÉATIVES &amp; DIGITALES</p>
-                <h1 id="hero-title" data-texte-html="hero.titre" data-texte-groupe="Bandeau d’accueil" data-texte-libelle="Titre principal">Transformez votre talent en <span>compétences professionnelles</span></h1>
-                <p class="landing-hero__lead" data-texte="hero.texte" data-texte-groupe="Bandeau d’accueil" data-texte-libelle="Phrase d’accroche">Des formations pratiques pour apprendre, créer et développer les compétences
-                    qui font la différence.</p>
-                <div class="landing-hero__actions">
-                    <a class="button button--primary" href="#formations">
-                        Découvrir les formations
-                        <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
-                    </a>
-                    <a class="button button--secondary" href="#sessions">
-                        Voir les sessions
-                        <span class="material-symbols-outlined" aria-hidden="true">calendar_month</span>
-                    </a>
-                </div>
-                <ul class="hero-benefits" aria-label="Bénéfices de nos formations">
-                    <li><span class="material-symbols-outlined" aria-hidden="true">bolt</span><span data-texte="accueil.atout.1" data-texte-groupe="Bandeau d’accueil" data-texte-libelle="Atout 1">Formations pratiques</span></li>
-                    <li><span class="material-symbols-outlined" aria-hidden="true">folder</span><span data-texte="accueil.atout.2" data-texte-groupe="Bandeau d’accueil" data-texte-libelle="Atout 2">Projets concrets</span></li>
-                    <li><span class="material-symbols-outlined" aria-hidden="true">workspace_premium</span><span data-texte="accueil.atout.3" data-texte-groupe="Bandeau d’accueil" data-texte-libelle="Atout 3">Certificat délivré</span></li>
-                </ul>
-            </div>
-
-            <div class="landing-hero__visual">
-                <img data-image="accueil.hero" data-image-groupe="Accueil" data-image-libelle="Visuel de la bannière" data-image-format="carre" data-image-ratio="19/20" src="assets/images/accueil/hero.webp"
-                    alt="Ali William, formateur en communication digitale et vidéo" width="960" height="641"
-                    fetchpriority="high" loading="eager" decoding="async">
-                <!-- La photo est seule dans son cadre. Trois faux panneaux de studio,
-                     un halo, une signature « Créer / Apprendre / Évoluer » et quatre
-                     dégradés sombres s'y superposaient : ils avaient été dessinés pour
-                     la photo livrée avec le design, et masquaient une partie de toute
-                     autre photo posée à sa place. -->
-            </div>
+    <!-- ====== 3. HERO, repris de l'ancien site Cineworld (24/10/2026) ======
+         La même photo deux fois — même emplacement du tableau de bord, donc même
+         image et même cadrage : l'une en noir et blanc sous un voile, l'autre en
+         couleur, révélée dans un cercle qui suit le pointeur (landing.js,
+         initRevelationHero). Tant que rien n'a bougé, au doigt une fois relevé,
+         ou si l'on a demandé moins d'animations, la photo reste en couleur. -->
+    <section class="cine-hero" id="accueil" aria-labelledby="hero-title">
+        <div class="cine-hero__fond" aria-hidden="true">
+            <img data-image="accueil.bandeau" data-image-groupe="Accueil" data-image-libelle="Photo du bandeau d’accueil (noir et blanc, couleur autour du curseur)" data-image-format="paysage" data-image-ratio="16/9" src="/assets/images/accueil/bandeau.webp"
+                alt="" width="1920" height="1281" fetchpriority="high" loading="eager" decoding="async">
+        </div>
+        <div class="cine-hero__voile" aria-hidden="true"></div>
+        <div class="cine-hero__couleur" aria-hidden="true">
+            <img data-image="accueil.bandeau" data-image-groupe="Accueil" data-image-libelle="Photo du bandeau d’accueil (noir et blanc, couleur autour du curseur)" data-image-format="paysage" data-image-ratio="16/9" src="/assets/images/accueil/bandeau.webp"
+                alt="" width="1920" height="1281" fetchpriority="high" loading="eager" decoding="async">
+        </div>
+        <div class="cine-hero__halo" aria-hidden="true"></div>
+        <div class="cine-hero__contenu">
+            <h1 id="hero-title" data-texte="hero.nom" data-texte-groupe="Bandeau d’accueil" data-texte-libelle="Titre (nom de l’académie)">Cineworld Académie</h1>
+            <!-- La signature vaut pour tous ; l'accroche du pays la remplace pour
+                 les seuls visiteurs de ce pays, servie par l'API (renderAccrochePays). -->
+            <p class="cine-hero__accroche">
+                <span data-texte="hero.signature" data-texte-groupe="Bandeau d’accueil" data-texte-libelle="Signature de l’académie (sans accroche de pays)">École de l’image</span>
+                <span id="accroche-pays" hidden></span>
+            </p>
+            <a class="button button--primary cine-hero__bouton" href="#formations">
+                <span data-texte="hero.bouton" data-texte-groupe="Bandeau d’accueil" data-texte-libelle="Bouton">Découvrir nos formations</span>
+                <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+            </a>
         </div>
     </section>
 
@@ -613,9 +602,11 @@
             </nav>
             <nav class="site-footer__col" aria-labelledby="pied-infos">
                 <h2 id="pied-infos">Informations</h2>
+                <a href="/association/">L’association</a>
+                <a href="/production/">Productions</a>
                 <a href="/entreprises/">Former mon équipe</a>
+                <a href="/contact/">Nous contacter</a>
                 <a href="/mentions-legales/">Mentions légales</a>
-                <a href="mailto:infos@impactali.site" data-email-sujet="Contact au sujet de vos formations">Nous contacter</a>
             </nav>
         </div>
     </footer>

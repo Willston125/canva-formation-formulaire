@@ -26,7 +26,9 @@ function fichiersSources() {
        des icônes, en français (`icone:`) pour les modules du programme. */
     'fiche-blocs.js', 'formations-data.js',
     // La fenêtre d'annonce : sa croix et la flèche de son bouton
-    'annonces.js'
+    'annonces.js',
+    // Les pages L'association, Productions et Contact, et leur script
+    'association/index.html', 'production/index.html', 'contact/index.html', 'vitrine.js'
   ];
   for (const dossier of fs.readdirSync('formations')) {
     const page = path.join('formations', dossier, 'index.html');
@@ -127,7 +129,9 @@ const MOTS_ORDINAIRES = new Set([
   'select', 'transform', 'resize', 'function', 'vignette', 'category', 'image',
   'code', 'mode', 'label', 'place', 'phone',
   /* Noms de BALISES HTML, pas d'icônes : createElement('link'). */
-  'link'
+  'link',
+  /* Type de pointeur du bandeau d'accueil : event.pointerType !== 'mouse'. */
+  'mouse'
 ]);
 
 async function signalerIconesOubliees(fichiers) {
@@ -256,7 +260,8 @@ function parseFaces(css) {
      demande une autre : deux téléchargements du même fichier, et un
      préchargement qui ne précharge rien. */
   const PAGES = ['index.html', 'entreprises/index.html', 'mentions-legales/index.html',
-    'admin/index.html', 'formations/_template/fiche.html'];
+    'admin/index.html', 'formations/_template/fiche.html', '404.html',
+    'association/index.html', 'production/index.html', 'contact/index.html'];
   let pagesTouchees = 0;
   for (const page of PAGES) {
     if (!fs.existsSync(page)) continue;

@@ -203,6 +203,11 @@ const erreurDe = r => (r.ok ? 'accepté' : r.erreur);
     /ne respecte pas le format accepté/.test(erreurDe(await admin('admin.pays.save', { donnees: Object.assign({}, km, { exempleTelephone: '12' }) }))), true);
   verifier('un numéro WhatsApp avec des lettres aussi',
     /ne prend que des chiffres/.test(erreurDe(await admin('admin.pays.save', { donnees: Object.assign({}, km, { whatsappNumber: '269XXXXXXX' }) }))), true);
+  // La page Contact en fait un bouton : un lien « javascript: » s'exécuterait au clic
+  verifier('un lien de carte qui n’est pas https:// aussi',
+    /commence par https:\/\//.test(erreurDe(await admin('admin.pays.save', { donnees: Object.assign({}, km, { carte: 'javascript:alert(1)' }) }))), true);
+  verifier('une carte en https:// passe',
+    (await admin('admin.pays.save', { donnees: Object.assign({}, km, { carte: 'https://maps.app.goo.gl/exemple' }) })).ok, true);
   verifier('un paiement mobile sans numéro aussi',
     erreurDe(await admin('admin.pays.save', { donnees: Object.assign({}, km, { paymentMethods: [{ kind: 'mobile', label: 'Mvola' }] }) })),
     '« Mvola » : le numéro à créditer est obligatoire.');

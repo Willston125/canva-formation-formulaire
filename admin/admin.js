@@ -793,7 +793,9 @@
       aide: 'Pour une vidéo « En classe » : « Promotion 2026 · Le cours, en pratique » — ce qui précède « · » '
         + 'devient le badge posé en bas de la vidéo, la suite le titre sous la vidéo.' },
     { cle: 'category', libelle: 'Catégorie', type: 'text',
-      aide: 'Affichée au-dessus du titre. Ex. Affiche, Vidéo, Identité visuelle. « En classe » + une vidéo '
+      aide: 'Affichée au-dessus du titre. Ex. Affiche, Vidéo, Identité visuelle. « Production » + une vidéo '
+        + 'YouTube : la vidéo quitte cette grille et s’affiche sur la page Productions, où elle se lit sur place ; '
+        + '« Production · Clip » affiche l’étiquette « Clip ». « En classe » + une vidéo '
         + 'YouTube (un Short vertical) : la vidéo quitte cette grille et s’affiche dans la section « En classe » '
         + 'de l’accueil, au format vertical, avec l’étiquette « En classe ». « En classe · Sur Canva » change '
         + 'l’étiquette en « Sur Canva ».' },
@@ -1223,9 +1225,19 @@
 
     { section: 'Page d’accueil' },
     { cle: 'accroche', libelle: 'Accroche réservée aux visiteurs de ce pays', type: 'text', large: true,
-      aide: 'Une ligne courte, en haut de l’accueil, à côté du nom de l’académie. Seuls les visiteurs '
+      aide: 'Une ligne courte, sous le nom de l’académie, en haut de l’accueil. Seuls les visiteurs '
         + 'de ce pays la voient : le site ne l’envoie jamais ailleurs. 120 caractères au plus. '
-        + 'Vide = aucune accroche.' },
+        + 'Vide = la signature commune de l’académie.' },
+
+    { section: 'Page Contact' },
+    { cle: 'adresse', libelle: 'Où vous rencontrer dans ce pays', type: 'text', large: true,
+      aide: 'Le lieu d’accueil, tel qu’il s’affichera : bâtiment, étage, ville. Seuls les visiteurs de ce pays '
+        + 'le voient. Vide = aucune adresse affichée.' },
+    { cle: 'horaires', libelle: 'Horaires d’accueil', type: 'textarea', large: true,
+      aide: 'Une ligne par plage horaire, comme vous voulez la lire sur le site. Vide = aucun horaire affiché.' },
+    { cle: 'carte', libelle: 'Lien vers la carte', type: 'url', large: true,
+      aide: 'Dans Google Maps : cherchez le lieu, puis « Partager » → « Copier le lien ». Il commence par https://. '
+        + 'Vide = pas de bouton « Ouvrir la carte ».' },
 
     { section: 'Reconnaissance du visiteur' },
     { cle: 'fuseaux', libelle: 'Fuseaux horaires', type: 'lignes', large: true,
@@ -1250,6 +1262,7 @@
     var donnees = p ? Object.assign({}, p) : {
       code: '', nom: '', devise: '', indicatif: '', active: true, defaut: false,
       whatsappNumber: '', whatsappDisplay: '', fuseaux: [], regions: [], accroche: '',
+      adresse: '', horaires: '', carte: '',
       paymentMethods: [], ordre: listePays().length
     };
     ouvrirPanneau(p ? 'Modifier ' + (p.nom || p.code) : 'Nouveau pays', champsPays(p), donnees,
@@ -2599,7 +2612,7 @@
 
     /* Les pages parcourues. La fiche formation sert d'exemple pour tout le
        gabarit : ses textes partagés valent pour les six fiches. */
-    var pages = ['/', '/entreprises/', '/mentions-legales/'];
+    var pages = ['/', '/association/', '/production/', '/contact/', '/entreprises/', '/mentions-legales/'];
     var premiere = (etat.catalogue.formations || []).filter(function (f) { return f.hasDetailPage !== false; })[0];
     pages.push(premiere ? premiere.href : '/formations/canva-pro/');
 
@@ -2651,7 +2664,7 @@
        Chaque formation porte désormais sa propre clé de photo de formateur : ne
        lire qu'une fiche ne montrait que la sienne, et les cinq autres restaient
        invisibles depuis cet écran — donc irremplaçables. */
-    var pages = ['/', '/entreprises/', '/inscription/'];
+    var pages = ['/', '/association/', '/contact/', '/entreprises/', '/inscription/'];
     (etat.catalogue.formations || [])
       .filter(function (f) { return f.hasDetailPage !== false && f.href; })
       .forEach(function (f) { if (pages.indexOf(f.href) < 0) pages.push(f.href); });

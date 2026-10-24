@@ -27,7 +27,10 @@ const RACINE = path.resolve(__dirname, '..', '..', '..');
    Ils sont écrits en fraction et non en nombre décimal : « 19/20 » se relit et se
    corrige, « 0.95 » ne dit plus d'où il vient. */
 const RAPPORTS_ATTENDUS = {
-  'accueil.hero': '19/20',
+  /* Le bandeau d'accueil repris de l'ancien site Cineworld (24/10/2026) occupe
+     tout l'écran : 16/9 sur un écran d'ordinateur. Ses deux couches — noir et
+     blanc, couleur — portent la même clé, donc la même photo et le même cadrage. */
+  'accueil.bandeau': '16/9',
   'accueil.methode.1': '12/7',
   'accueil.methode.2': '12/7',
   'accueil.methode.3': '12/7',
@@ -38,7 +41,11 @@ const RAPPORTS_ATTENDUS = {
   /* Le logo, en-tête et pied de chaque page : le sceau rond de Cineworld
      Académie, carré — 46 × 46 en haut, 64 × 64 en bas. La feuille de style fixe
      les deux côtés : un logo d'un autre rapport serait contenu, pas déformé. */
-  'marque.logo': '1/1'
+  'marque.logo': '1/1',
+  // Les pages L'association et Contact : cadres fixés par aspect-ratio ou par leurs côtés
+  'association.photo': '3/2',
+  'association.terrain': '4/3',
+  'contact.fondateur.photo': '1/1'
 };
 
 /* Chaque fiche a sa propre clé de photo de formateur, dans le même emplacement
@@ -67,7 +74,7 @@ const GABARIT = 'formations/_template/fiche.html';
    Chaque page porte DEUX emplacements de plus que ses visuels propres : le
    logo de l'en-tête et celui du pied. */
 const FICHIERS = [
-  ['index.html', 7],
+  ['index.html', 8],
   [GABARIT, 3],
   ['inscription/index.html', 3],
   ...FICHES_SUR_DISQUE.map(slug => ['formations/' + slug + '/index.html', 3]),
@@ -78,9 +85,12 @@ const FICHIERS = [
   ['mentions-legales/index.html', 2],
   /* La page d’erreur porte le même en-tête et le même pied que les autres :
      un logo changé depuis le tableau de bord doit y changer aussi. */
-  ['404.html', 2]
+  ['404.html', 2],
+  ['association/index.html', 4],
+  ['production/index.html', 2],
+  ['contact/index.html', 3]
 ];
-const OCCURRENCES_ATTENDUES = 19 + FICHES_SUR_DISQUE.length * 3;
+const OCCURRENCES_ATTENDUES = 29 + FICHES_SUR_DISQUE.length * 3;
 
 const resultats = [];
 const verifier = (libelle, obtenu, attendu) => {
@@ -222,9 +232,9 @@ verifier('dont celui de la photo du formateur',
 /* « paysage » sur un emplacement de rapport 0,95 trompe d'abord celui qui
    téléverse : il choisit une photo large en croyant qu'elle sera montrée large,
    et le site en garde un carré. */
-const hero = occurrences.find(o => o.cle === 'accueil.hero');
-verifier('la bannière n’est plus annoncée comme un paysage',
-  hero ? lireAttribut(hero.balise, 'data-image-format') : 'emplacement introuvable', 'carre');
+const bandeau = occurrences.find(o => o.cle === 'accueil.bandeau');
+verifier('le bandeau plein écran est annoncé comme un paysage',
+  bandeau ? lireAttribut(bandeau.balise, 'data-image-format') : 'emplacement introuvable', 'paysage');
 
 // ---------------------------------- BILAN ----------------------------------
 resultats.forEach(l => console.log(l));

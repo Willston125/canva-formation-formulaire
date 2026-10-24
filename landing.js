@@ -656,14 +656,9 @@
      * Identifiant d'une vidéo YouTube, quelle que soit la forme du lien collé :
      * watch?v=, youtu.be/, /embed/, /shorts/. Une adresse qu'on ne reconnaît pas
      * ne devient pas une vidéo — mieux vaut pas de lecteur qu'un lecteur vide.
+     * La lecture est dans site-common.js : la page Production s'en sert aussi.
      */
-    function identifiantYoutube(url) {
-        const t = String(url || '').trim();
-        if (!t) return null;
-        const m = t.match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/)
-            || t.match(/^([A-Za-z0-9_-]{11})$/);
-        return m ? m[1] : null;
-    }
+    const identifiantYoutube = url => common.identifiantYoutube(url);
 
     /* « En classe » : les vidéos verticales des promotions précédentes. Ce sont
        des réalisations de catégorie « En classe » (onglet Réalisations du tableau
@@ -713,17 +708,50 @@
                 : el.dataset.texteOrigine;
     }
 
-    /* L'accroche propre au pays du visiteur (« Pays » du tableau de bord), à
-       côté de la signature de l'académie. Le serveur ne l'envoie qu'aux
-       visiteurs de ce pays : hors marché, ou sans accroche saisie, rien ne
-       s'affiche. */
+    /* L'accroche propre au pays du visiteur (« Pays » du tableau de bord),
+       sous le nom de l'académie. Le serveur ne l'envoie qu'aux visiteurs de ce
+       pays : elle y remplace la signature commune. Hors marché, ou sans
+       accroche saisie, la signature reste. */
     function renderAccrochePays() {
         const el = document.getElementById('accroche-pays');
         if (!el) return;
+        const signature = el.parentElement && el.parentElement.querySelector('[data-texte="hero.signature"]');
         const pays = common.paysActif ? common.paysActif() : null;
         const texte = String((pays && pays.accroche) || '').trim();
         el.textContent = texte;
         el.hidden = !texte;
+        if (signature) signature.hidden = Boolean(texte);
+    }
+
+    /* Le bandeau d'accueil de l'ancien site Cineworld : la photo, en noir et
+       blanc, se colore dans un cercle qui suit le pointeur. Le cercle suit la
+       souris, ou le doigt tant qu'il glisse ; relevé, ou sorti du bandeau, la
+       photo revient entière en couleur. Rien ne bouge pour qui a demandé moins
+       d'animations. Une image par rafraîchissement d'écran, au plus. */
+    function initRevelationHero() {
+        const hero = document.querySelector('.cine-hero');
+        if (!hero || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        let image = 0;
+        const suivre = event => {
+            const cadre = hero.getBoundingClientRect();
+            const x = event.clientX - cadre.left;
+            const y = event.clientY - cadre.top;
+            cancelAnimationFrame(image);
+            image = requestAnimationFrame(() => {
+                hero.style.setProperty('--x', x + 'px');
+                hero.style.setProperty('--y', y + 'px');
+                hero.classList.add('is-revelation');
+            });
+        };
+        const finir = () => {
+            cancelAnimationFrame(image);
+            hero.classList.remove('is-revelation');
+        };
+        hero.addEventListener('pointermove', suivre);
+        hero.addEventListener('pointerdown', suivre);
+        hero.addEventListener('pointerleave', finir);
+        hero.addEventListener('pointercancel', finir);
+        hero.addEventListener('pointerup', event => { if (event.pointerType !== 'mouse') finir(); });
     }
 
     /* LES VIDÉOS DE CLASSE SE LANCENT SEULES, SUR PLACE. Décision du
@@ -1054,7 +1082,8 @@
         if (!grid || !PORTFOLIO.length) return;
 
         grid.innerHTML = PORTFOLIO.map((item, i) => {
-            if (estEnClasse(item)) return '';
+            // « En classe » a sa bande sur l'accueil, « Production » sa page
+            if (estEnClasse(item) || common.estProduction(item)) return '';
             const video = identifiantYoutube(item.video);
             /* Miniature : celle qu'on a téléversée, sinon celle de YouTube.
                Rien n'est chargé chez YouTube tant qu'on n'a pas cliqué : le
@@ -1200,6 +1229,7 @@
         initFaq();
         renderModeMarche();
         renderAccrochePays();
+        initRevelationHero();
         // Le contenu créé ci-dessus n'existait pas au premier passage de l'observateur
         common.observeReveals?.();
     });
