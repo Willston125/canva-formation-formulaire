@@ -242,6 +242,8 @@
 
         grid.innerHTML = FORMATIONS.map(formation =>
             renderCourseCard(formation, { variant: formation.featured ? 'featured' : 'default', extraClass: 'reveal-on-scroll' })).join('');
+        // Les cartes viennent d'être recréées : l'observateur doit les suivre à nouveau
+        observerCartesAuCentre();
 
         if (!filters) return;
         const families = ['Toutes', ...FORMATIONS.map(item => item.family).filter((value, index, all) => value && all.indexOf(value) === index)];
@@ -261,6 +263,25 @@
         }
 
         appliquerFiltre(domaineChoisi);
+    }
+
+    /* Les photos des formations sont en noir et blanc (style.css). Sur
+       ordinateur, c'est la souris qui leur rend leurs couleurs. Sur téléphone, le
+       survol n'existe pas, et toucher une carte l'ouvre : c'est donc la carte qui
+       passe AU MILIEU DE L'ÉCRAN, pendant qu'on fait défiler la grille, qui
+       reprend ses couleurs (is-centre), puis les rend en sortant de cette bande
+       centrale de 20 % de la hauteur. */
+    let observateurCentre = null;
+
+    function observerCartesAuCentre() {
+        const grid = document.getElementById('catalogue-grid');
+        if (!grid || !('IntersectionObserver' in window)) return;
+        if (window.matchMedia && window.matchMedia('(hover: hover)').matches) return;
+        if (observateurCentre) observateurCentre.disconnect();
+        observateurCentre = new IntersectionObserver(entrees => {
+            entrees.forEach(entree => entree.target.classList.toggle('is-centre', entree.isIntersecting));
+        }, { rootMargin: '-40% 0px -40% 0px', threshold: 0 });
+        grid.querySelectorAll('.course-card').forEach(carte => observateurCentre.observe(carte));
     }
 
     // ---------- Carrousel infini, accessible, sans dépendance ----------

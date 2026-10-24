@@ -97,6 +97,25 @@ EMPLACEMENTS.forEach(([selecteur, nom]) => {
   verifier('aucune recoloration : ' + nom + ' (' + selecteur + ')', filtres, []);
 });
 
+/* LA SEULE EXCEPTION VOULUE : les cartes de formation de l'accueil sont en
+   noir et blanc (demande du propriétaire, 24/10/2026), comme le bandeau. Ce
+   n'est acceptable que si leurs couleurs reviennent toujours : à la souris, au
+   clavier, sur la carte au centre du carrousel, et sur téléphone pour la carte
+   au milieu de l'écran. Qu'une de ces issues disparaisse, et une formation
+   resterait grise sans que personne ne puisse la voir en couleur. */
+verifier('les photos des cartes de formation sont en noir et blanc, et seulement cela',
+  filtresDe(CSS, '.course-card__media img').filtres, ['filter: grayscale(1)']);
+[
+  ['.course-card:hover .course-card__media img', 'à l’approche de la souris'],
+  ['.course-card:focus-within .course-card__media img', 'au clavier'],
+  ['.training-card.is-active .course-card__media img', 'au centre du carrousel'],
+  ['.course-card.is-centre .course-card__media img', 'au milieu de l’écran, sur téléphone']
+].forEach(([selecteur, quand]) => {
+  verifier('la carte reprend ses couleurs ' + quand, filtresDe(CSS, selecteur).filtres.includes('filter: none'), true);
+});
+verifier('la carte au milieu de l’écran est bien repérée par l’accueil',
+  /classList\.toggle\('is-centre'/.test(fs.readFileSync(path.join(RACINE, 'landing.js'), 'utf8')), true);
+
 // ---------------------------------- BILAN ----------------------------------
 resultats.forEach(l => console.log(l));
 const echecs = resultats.filter(l => l.indexOf('ÉCHEC') === 0).length;
