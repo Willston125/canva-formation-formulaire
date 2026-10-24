@@ -498,14 +498,19 @@ verifier('aucun badge n’est vide', Object.entries(badges).filter(([, b]) => !b
 resultats.push('NOTE  badges : ' + Object.values(badges).join(' · '));
 
 /* La photo du formateur ne doit PAS être remplacée par l'affiche de la
-   formation : le gabarit sert le même fichier aux deux usages, et un
-   remplacement aveugle mettait l'affiche sous le nom du formateur. */
+   formation : un remplacement aveugle mettait l'affiche sous le nom du
+   formateur. Depuis le 24/10/2026, c'est sa propre photo par défaut. */
 const photosFausses = fiches.filter(f => {
   const h = lire('formations/' + f + '/index.html');
   const img = /<img[^>]*alt="Ali William"[^>]*>/.exec(h);
-  return !img || !/formation canva \(2\)\.jpg/.test(img[0]);
+  return !img || !/src="\/assets\/images\/formateur\.webp"/.test(img[0]);
 });
 verifier('la carte montre bien le formateur, pas l’affiche', photosFausses, []);
+
+/* Et chaque fiche montre SON affiche, pas celle de la fiche de référence. */
+const affichesEmpruntees = fiches.filter(f => f !== 'canva-pro'
+  && /<img[^>]*src="\/assets\/images\/formations\/canva-pro-affiche\.webp"[^>]*alt="Affiche/.test(lire('formations/' + f + '/index.html')));
+verifier('aucune fiche n’emprunte l’affiche de Canva Pro', affichesEmpruntees, []);
 
 /* Chaque fiche porte SA PROPRE clé de photo de formateur.
    Elles partageaient toutes « fiche.formateur.photo » : une photo envoyée

@@ -377,80 +377,113 @@ window.SESSIONS = Object.freeze([]);
  * @property {string} imageAlt
  * @property {string} imagePosition
  * @property {string|null} href       Lien optionnel vers le projet
+ * @property {string|null} [video]    Lien YouTube (« En classe », « Production »…)
  * @property {boolean} placeholder    true = contenu réel encore à fournir
  */
 
 /**
- * Réalisations affichées sur l'accueil. Seuls les visuels réellement présents
- * dans le projet sont utilisés ; les autres emplacements sont signalés « à fournir ».
+ * Réalisations : COPIE de la liste de la base (tableau de bord → Réalisations),
+ * affichée le temps que le catalogue arrive. Recopiée le 24/10/2026 : elle
+ * portait encore les anciennes bannières IMPACTALI, avec le numéro d'un pays,
+ * que tout visiteur voyait quelques secondes à sa première visite.
  * @type {ReadonlyArray<Readonly<PortfolioItem>>}
  */
 window.PORTFOLIO = Object.freeze([
   Object.freeze({
     id: 'affiche-canva-pro',
     category: 'Affiche',
-    title: 'Affiche de la formation Canva Pro',
-    description: 'Support de communication conçu pour le lancement du programme intensif.',
-    image: '/assets/images/formation canva (2).jpg',
-    imageAlt: 'Affiche de la formation Canva Pro',
+    title: 'Visuelle créer par le formateur',
+    description: 'Support de communication conçu pour une societé',
+    image: '/api?photo=b3572460-d2a0-4844-b563-7550a34d03f4',
+    imageAlt: 'Visuel d’une campagne de communication',
     imagePosition: '50% 18%',
     href: null,
+    video: null,
     placeholder: false
   }),
   Object.freeze({
     id: 'banniere-communication-1',
     category: 'Campagne de communication',
-    title: 'Bannière réseaux sociaux — Impact Ali William',
+    title: 'Photographie festival de cinéma',
     description: 'Visuel de couverture présentant l’offre de services en communication digitale et vidéo.',
-    image: '/assets/images/Bannière facebook impactali 01 (1).jpg',
-    imageAlt: 'Bannière de communication Impact Ali William, version 1',
-    imagePosition: '60% 50%',
+    image: '/api?photo=d30a3347-5bdc-4875-92ae-3fcf5b1b7773',
+    imageAlt: 'Photographie festival de cinéma',
+    imagePosition: '50% 50%',
     href: null,
+    video: null,
     placeholder: false
   }),
   Object.freeze({
     id: 'banniere-communication-2',
     category: 'Contenu numérique',
-    title: 'Bannière réseaux sociaux — déclinaison',
+    title: 'Bannière réseaux sociaux déclinaison',
     description: 'Déclinaison de la bannière avec une hiérarchie d’information retravaillée.',
-    image: '/assets/images/Bannière facebook impactali 01.jpg',
-    imageAlt: 'Bannière de communication Impact Ali William, version 2',
+    image: '/api?photo=8c5e31c3-428a-4bcc-89f6-54cfe124cccd',
+    imageAlt: 'Bannière réseaux sociaux déclinaison',
     imagePosition: '30% 50%',
     href: null,
+    video: null,
     placeholder: false
   }),
   Object.freeze({
     id: 'placeholder-video',
     category: 'Vidéo',
     title: 'Production vidéo',
-    description: 'Extrait ou miniature d’une vidéo réalisée par le formateur — contenu à fournir.',
+    description: 'Extrait d’un film réalisée par le formateur',
     image: null,
     imageAlt: '',
     imagePosition: '50% 50%',
     href: null,
-    placeholder: true
+    video: 'https://www.youtube.com/watch?v=1bep0NEFvZ0',
+    placeholder: false
   }),
   Object.freeze({
     id: 'placeholder-identite',
     category: 'Identité visuelle',
     title: 'Identité visuelle réalisée',
     description: 'Logo, charte et déclinaisons pour une organisation — contenu à fournir.',
-    image: null,
-    imageAlt: '',
+    image: '/api?photo=c3012d1d-8c50-4031-a71d-7769f8cfffcf',
+    imageAlt: 'Identité visuelle réalisée',
     imagePosition: '50% 50%',
     href: null,
-    placeholder: true
+    video: null,
+    placeholder: false
   }),
   Object.freeze({
     id: 'placeholder-photo',
     category: 'Photographie',
     title: 'Série photographique',
     description: 'Sélection de photographies professionnelles — contenu à fournir.',
+    image: '/api?photo=c60fb38d-1382-47c4-982e-233cee8c4daf',
+    imageAlt: 'Série photographique',
+    imagePosition: '50% 50%',
+    href: null,
+    video: null,
+    placeholder: false
+  }),
+  Object.freeze({
+    id: 'classe-2026-cours',
+    category: 'En classe',
+    title: 'Promotion 2026 · Le cours, en pratique',
+    description: 'Canva Pro, identité visuelle et marketing digital',
     image: null,
     imageAlt: '',
     imagePosition: '50% 50%',
     href: null,
-    placeholder: true
+    video: 'https://www.youtube.com/shorts/GLHjotsDT8Y',
+    placeholder: false
+  }),
+  Object.freeze({
+    id: 'classe-2026-canva',
+    category: 'En classe · Sur Canva',
+    title: 'Promotion 2026 · Une création, pas à pas',
+    description: 'Canva Pro, identité visuelle et marketing digital',
+    image: null,
+    imageAlt: '',
+    imagePosition: '50% 50%',
+    href: null,
+    video: 'https://www.youtube.com/shorts/8kV6pVCLTGs',
+    placeholder: false
   })
 ]);
 

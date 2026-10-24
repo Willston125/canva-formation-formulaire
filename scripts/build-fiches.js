@@ -251,11 +251,13 @@ function render(template, f) {
   // `lead` autorise un HTML léger (mise en gras) ; sans lui, la description courte échappée.
   html = replace(html, /<p class="fiche-hero__lead">[\s\S]*?<\/p>/i, `<p class="fiche-hero__lead">${f.lead || esc(f.shortDescription)}</p>`, 'accroche');
   html = replace(html, /<dl class="fiche-facts"[\s\S]*?<\/dl>/i, facts(f), 'informations clés');
-  /* Ce fichier sert à DEUX choses dans le gabarit : l'affiche de la formation,
-     et la photo du formateur dans sa carte. Les remplacer toutes les deux par
-     l'image de la formation mettrait son affiche sous le nom du formateur. On
-     ne vise donc que les affiches, reconnaissables à leur texte de remplacement. */
-  html = html.replace(/<img([^>]*?)src="\/assets\/images\/formation canva \(2\)\.jpg"([^>]*?)>/g,
+  /* Les affiches du gabarit — en tête de fiche et à l'étape de validation — se
+     reconnaissent à leur texte de remplacement, JAMAIS au nom de leur fichier :
+     la photo du formateur, voisine, garde la sienne. Le gabarit a longtemps
+     servi le même fichier aux deux usages (une ancienne affiche de Djibouti,
+     retirée le 24/10/2026) ; viser ce nom de fichier ne remplacerait plus
+     rien depuis, et toutes les fiches montreraient l'affiche de Canva Pro. */
+  html = html.replace(/<img([^>]*?)src="[^"]*"([^>]*?)>/g,
     (balise, avant, apres) => /alt="Affiche/.test(avant + apres)
       ? `<img${avant}src="${esc(f.poster || f.image)}"${apres}>`
       : balise);

@@ -3113,8 +3113,8 @@
     { cle: 'contactEmail', libelle: 'Adresse email publique', type: 'text',
       exemple: 'contact@votre-domaine.com',
       aide: 'C’est la voie de contact affichée sur tout le site — accueil, entreprises, '
-        + 'mentions légales, pied de page. WhatsApp ne paraît qu’au moment de l’inscription, '
-        + 'avec le numéro du pays du candidat.' },
+        + 'mentions légales, pied de page. WhatsApp ne paraît qu’à l’inscription et sur la page '
+        + 'Contact, avec le numéro du pays du visiteur.' },
     { cle: 'whatsappNumber', libelle: 'Numéro WhatsApp', type: 'text',
       aide: 'Chiffres uniquement, indicatif compris, sans + ni espace : 253XXXXXXXX.'
         + (surcharges.length

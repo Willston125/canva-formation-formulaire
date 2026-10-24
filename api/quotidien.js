@@ -3,7 +3,7 @@
  * L'offre gratuite de Supabase n'a AUCUNE sauvegarde, et elle met en pause un
  * projet resté une semaine sans activité. Cette tâche traite les deux :
  * 1. elle exporte toutes les tables et envoie la copie, en pièce jointe, à
- *    infos@impactali.site ;
+ *    la boîte de l’académie (EMAIL_PRO, api/_lib/courriel.js) ;
  * 2. elle ÉCRIT une ligne dans `sauvegardes` — une écriture est l'activité que
  *    Supabase ne peut pas ignorer.
  *
@@ -64,7 +64,7 @@ function creerTache(obtenirBase, { envoyer = envoyerCourriel, maintenant = () =>
         catch (e) { tables[t] = []; illisibles[t] = String((e && e.code) || 'erreur'); }
       }
       const jour = maintenant().toISOString().slice(0, 10);
-      const contenu = JSON.stringify({ projet: 'IMPACTALI', faite_le: maintenant().toISOString(), tables });
+      const contenu = JSON.stringify({ projet: 'Cineworld Académie', faite_le: maintenant().toISOString(), tables });
       const octets = Buffer.byteLength(contenu);
       const resume = TABLES.map(t => `${t} : ` + (illisibles[t] ? `ILLISIBLE (${illisibles[t]})` : tables[t].length)).join('\n');
 
@@ -74,7 +74,7 @@ function creerTache(obtenirBase, { envoyer = envoyerCourriel, maintenant = () =>
           + resume + '\n\nLes photos y sont listées, mais pas jointes : elles restent dans la base.'
           + '\n\nElle contient les inscriptions, donc des données personnelles : '
           + 'gardez-la dans cette boîte, ne la transférez pas.',
-        piecesJointes: [{ filename: 'impactali-sauvegarde-' + jour + '.json', content: Buffer.from(contenu).toString('base64') }]
+        piecesJointes: [{ filename: 'cineworld-sauvegarde-' + jour + '.json', content: Buffer.from(contenu).toString('base64') }]
       });
 
       /* L'écriture qui garde le projet éveillé — faite même si l'envoi a échoué.

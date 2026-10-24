@@ -64,9 +64,25 @@ const LIGNE = {
   verifier('l’envoi réussit', ok, { envoye: true, erreur: null });
   verifier('il passe par l’API de Resend', appels[0] && appels[0].url, 'https://api.resend.com/emails');
   verifier('avec la clé en en-tête, jamais dans l’adresse', appels[0] && appels[0].options.headers.Authorization, 'Bearer cle-des-epreuves');
-  verifier('au nom d’infos@impactali.site', parti && parti.from, 'Inscriptions Cineworld Académie <infos@impactali.site>');
-  verifier('vers infos@impactali.site', parti && parti.to, ['infos@impactali.site']);
+  verifier('au nom de Cineworld Académie, sur son domaine', parti && parti.from, 'Inscriptions Cineworld Académie <inscriptions@cineworldacademie.com>');
+  verifier('vers la boîte de l’académie', parti && parti.to, ['cineworld@cineworldacademie.com']);
   verifier('en répondant au candidat', parti && parti.reply_to, 'awa@exemple.test');
+
+  /* Le domaine refusé par Resend pour cette clé : l'e-mail repart aussitôt
+     depuis l'expéditeur de secours, et l'alerte n'est pas perdue. */
+  const expediteurs = [];
+  global.fetch = async (url, options) => {
+    const from = JSON.parse(options.body).from;
+    expediteurs.push(from);
+    return /cineworldacademie\.com/.test(from)
+      ? { ok: false, status: 403, text: async () => '{"message":"The cineworldacademie.com domain is not verified."}' }
+      : { ok: true, text: async () => '{"id":"essai"}' };
+  };
+  const repli = await envoyer({ sujet: 's', texte: 't' }, 'cle-des-epreuves');
+  verifier('domaine refusé : l’envoi passe par l’expéditeur de secours', [repli, expediteurs.length], [{ envoye: true, erreur: null }, 2]);
+  verifier('le secours garde le nom de l’académie', /^Inscriptions Cineworld Académie </.test(expediteurs[1] || ''), true);
+  global.fetch = async () => ({ ok: false, status: 403, text: async () => 'API key is invalid' });
+  verifier('une clé refusée ne déclenche pas le repli', (await envoyer({ sujet: 's', texte: 't' }, 'cle-des-epreuves')).envoye, false);
 
   /* Resend refuse (quota, clé révoquée) : l'échec est rendu, jamais levé. */
   global.fetch = async () => ({ ok: false, status: 429, text: async () => 'daily quota exceeded' });

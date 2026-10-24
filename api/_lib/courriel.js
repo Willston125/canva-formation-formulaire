@@ -10,12 +10,19 @@
  * dépôt. Une clé « Sending access » : volée, elle n'ouvre pas la boîte. */
 'use strict';
 
-const EMAIL_PRO = 'infos@impactali.site';
-/* L'adresse que voient les visiteurs (bascule du 24/10/2026). EMAIL_PRO reste
-   la boîte où arrivent les alertes et les sauvegardes, et l'expéditeur garde
-   le domaine vérifié chez Resend tant que cineworldacademie.com ne l'est pas. */
+/* Depuis le 24/10/2026, tout est au nom de Cineworld Académie : la boîte où
+   arrivent les alertes et les sauvegardes (EMAIL_PRO) est celle que voient
+   les visiteurs (EMAIL_PUBLIC), et l'expéditeur est sur cineworldacademie.com,
+   domaine que le propriétaire avait déjà configuré chez Resend pour l'ancien
+   site. */
+const EMAIL_PRO = 'cineworld@cineworldacademie.com';
 const EMAIL_PUBLIC = 'cineworld@cineworldacademie.com';
-const EXPEDITEUR = 'Inscriptions Cineworld Académie <infos@impactali.site>';
+const EXPEDITEUR = 'Inscriptions Cineworld Académie <inscriptions@cineworldacademie.com>';
+/* Le repli : si Resend refuse ce domaine pour la clé du site (vérifié sur un
+   autre compte, par exemple), l'e-mail repart aussitôt depuis l'ancien domaine
+   vérifié. Une alerte d'inscription ne se perd pas pour une question
+   d'expéditeur ; le journal de Vercel dit quand le repli a servi. */
+const EXPEDITEUR_SECOURS = 'Inscriptions Cineworld Académie <infos@impactali.site>';
 
 /** Échappe pour le HTML, attributs compris. */
 function echapper(v) {
@@ -136,23 +143,33 @@ function alerteMoyensPaiement({ code, nom, avant, apres, qui, quand = new Date()
  */
 async function envoyer({ a = EMAIL_PRO, sujet, texte, html, repondreA = null, piecesJointes = null }, cle = process.env.RESEND_API_KEY) {
   if (!cle) return { envoye: false, erreur: 'RESEND_API_KEY absente' };
-  const corps = { from: EXPEDITEUR, to: [a], subject: sujet, text: texte };
-  if (html) corps.html = html;
-  if (repondreA) corps.reply_to = repondreA;
-  if (piecesJointes) corps.attachments = piecesJointes;
-  try {
-    const r = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: { Authorization: 'Bearer ' + cle, 'Content-Type': 'application/json' },
-      body: JSON.stringify(corps),
-      signal: AbortSignal.timeout(8000)
-    });
-    if (r.ok) return { envoye: true, erreur: null };
-    const detail = await r.text().catch(() => '');
-    return { envoye: false, erreur: 'Resend ' + r.status + ' ' + detail.slice(0, 160) };
-  } catch (e) {
-    return { envoye: false, erreur: (e && (e.name || e.message)) || 'erreur réseau' };
+  const tenter = async expediteur => {
+    const corps = { from: expediteur, to: [a], subject: sujet, text: texte };
+    if (html) corps.html = html;
+    if (repondreA) corps.reply_to = repondreA;
+    if (piecesJointes) corps.attachments = piecesJointes;
+    try {
+      const r = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + cle, 'Content-Type': 'application/json' },
+        body: JSON.stringify(corps),
+        signal: AbortSignal.timeout(8000)
+      });
+      if (r.ok) return { envoye: true, erreur: null };
+      const detail = await r.text().catch(() => '');
+      // « The … domain is not verified » : 403 chez Resend, parfois 422
+      const domaineRefuse = (r.status === 403 || r.status === 422) && /domain/i.test(detail);
+      return { envoye: false, erreur: 'Resend ' + r.status + ' ' + detail.slice(0, 160), domaineRefuse };
+    } catch (e) {
+      return { envoye: false, erreur: (e && (e.name || e.message)) || 'erreur réseau' };
+    }
+  };
+  let resultat = await tenter(EXPEDITEUR);
+  if (resultat.domaineRefuse) {
+    console.warn('[courriel] domaine d’expédition refusé par Resend, envoi depuis l’expéditeur de secours');
+    resultat = await tenter(EXPEDITEUR_SECOURS);
   }
+  return { envoye: resultat.envoye, erreur: resultat.erreur };
 }
 
 module.exports = { alerteInscription, alerteMoyensPaiement, envoyer, echapper, EMAIL_PRO, EMAIL_PUBLIC };

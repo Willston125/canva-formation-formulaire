@@ -3045,6 +3045,16 @@ a:focus-visible {
   background: rgba(17, 24, 39, 0.5);
 }
 
+.sessions-chargement {
+  margin: 0;
+  padding: clamp(28px, 4vw, 44px);
+  text-align: center;
+  color: var(--color-muted);
+  border: 1px dashed rgba(255, 255, 255, 0.18);
+  border-radius: var(--radius-lg);
+  font-size: 0.9rem;
+}
+
 .sessions-empty .material-symbols-outlined { font-size: 40px; color: var(--color-primary); }
 .sessions-empty p { margin: 0; font: 700 1.1rem/1.3 'Plus Jakarta Sans', system-ui, sans-serif; }
 .sessions-empty small { color: var(--color-muted); font-size: 0.72rem; }
@@ -5305,14 +5315,6 @@ body:has(#already-registered-card:not(.hidden)) #mobile-progress {
 }
 
 .site-footer__legal {
-  color: #7E8898;
-  font-size: 0.72rem;
-}
-
-/* Rappel de l'ancien nom pour les élèves et abonnés qui l'ont connu.
-   À retirer trois mois après la bascule du domaine. */
-.site-footer__ancien {
-  margin-top: -6px;
   color: #7E8898;
   font-size: 0.72rem;
 }

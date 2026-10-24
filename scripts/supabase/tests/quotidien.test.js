@@ -42,7 +42,7 @@ async function lancer(tache, entetes = {}) {
   verifier('un seul e-mail', envois.length, 1);
   verifier('daté du jour', envois[0].sujet, 'Sauvegarde Cineworld Académie du 2026-10-04');
   const piece = envois[0].piecesJointes && envois[0].piecesJointes[0];
-  verifier('avec la copie en pièce jointe', piece && piece.filename, 'impactali-sauvegarde-2026-10-04.json');
+  verifier('avec la copie en pièce jointe', piece && piece.filename, 'cineworld-sauvegarde-2026-10-04.json');
   const copie = JSON.parse(Buffer.from(piece.content, 'base64').toString('utf8'));
   verifier('la copie contient chaque table', Object.keys(copie.tables), TABLES);
   verifier('les inscriptions comprises', copie.tables.inscriptions.length, 1);

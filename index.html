@@ -428,8 +428,10 @@
                 <h2 id="sessions-title" data-texte="sessions.titre" data-texte-groupe="Section sessions" data-texte-libelle="Titre">Prochaines sessions</h2>
                 <p data-texte="sessions.texte" data-texte-groupe="Section sessions" data-texte-libelle="Texte">Dates, horaires, lieu, tarif et places réellement disponibles. Choisissez la session qui vous convient.</p>
             </div>
+            <!-- Tant que le serveur n'a pas répondu : ni liste, ni « aucune session » (landing.js, renderSessions) -->
+            <p class="sessions-chargement" id="sessions-chargement" role="status">Chargement des prochaines sessions…</p>
             <div class="sessions-list reveal-on-scroll" id="sessions-list" hidden></div>
-            <div class="sessions-empty reveal-on-scroll" id="sessions-empty">
+            <div class="sessions-empty reveal-on-scroll" id="sessions-empty" hidden>
                 <span class="material-symbols-outlined" aria-hidden="true">event_upcoming</span>
                 <p data-texte="accueil.sessions.vide" data-texte-groupe="Section sessions" data-texte-libelle="Message quand aucune session">Les prochaines dates seront annoncées prochainement.</p>
                 <a class="button button--primary" href="mailto:cineworld@cineworldacademie.com" data-email-sujet="Être informé de la prochaine session">
@@ -588,7 +590,6 @@
                 </a>
                 <span class="site-footer__baseline" data-texte="pied.baseline" data-texte-groupe="Pied de page" data-texte-libelle="Baseline">École de l’image — formations vidéo, design, marketing digital &amp; IA</span>
                 <span class="site-footer__legal" data-texte="pied.mentions" data-texte-groupe="Pied de page" data-texte-libelle="Mention de droits">&copy; 2026 Cineworld Académie. Tous droits réservés.</span>
-                <span class="site-footer__ancien">Anciennement IMPACTALI</span>
             </div>
                         <nav class="site-footer__col" aria-labelledby="pied-formations">
                 <h2 id="pied-formations">Formations</h2>

@@ -628,15 +628,23 @@
     function renderSessions() {
         const list = document.getElementById('sessions-list');
         const empty = document.getElementById('sessions-empty');
+        const attente = document.getElementById('sessions-chargement');
         if (!list || !empty) return;
 
+        /* Tant que le serveur n'a pas répondu, on ne sait pas encore s'il y a des
+           sessions : « les prochaines dates seront annoncées » serait faux. C'est
+           ce que voyait, quelques secondes, tout premier visiteur — et depuis le
+           changement de domaine, tout le monde l'est (aucun catalogue en mémoire). */
+        const enAttente = !common.marcheActif();
+        if (attente) attente.hidden = !enAttente;
         const sessions = upcomingSessions();
         if (!sessions.length) {
             list.hidden = true;
-            empty.hidden = false;
+            empty.hidden = enAttente;
             return;
         }
 
+        if (attente) attente.hidden = true;
         empty.hidden = true;
         list.hidden = false;
         list.innerHTML = sessions.map(session => {
