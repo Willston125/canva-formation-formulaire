@@ -1429,9 +1429,10 @@ a:focus-visible {
 /* ---------- Bandeau d'accueil, repris de l'ancien site Cineworld ----------
    La photo en noir et blanc sous un voile ; par-dessus, la MÊME photo en
    couleur, que le masque ne laisse voir que dans un cercle de 250 px autour
-   du pointeur (--x, --y, posés par landing.js). Sans la classe is-revelation
-   — rien n'a bougé, ou le pointeur est sorti — le masque tombe et la photo
-   entière est en couleur, comme sur l'ancien site.
+   du pointeur (--x, --y, posés par landing.js). Le bandeau est en noir et
+   blanc DÈS L'ARRIVÉE (précision du propriétaire, 24/10/2026) : la couche en
+   couleur n'apparaît qu'avec la classe is-revelation, tant que le pointeur
+   bouge dans le bandeau, et s'efface quand il en sort.
 
    Le noir et blanc est VOULU (demande du propriétaire, 24/10/2026) : il ne
    touche que la couche du fond, jamais celle en couleur, qui montre la photo
@@ -1468,18 +1469,31 @@ a:focus-visible {
 
 .cine-hero__fond { z-index: 0; filter: grayscale(1) contrast(1.25) brightness(0.75); }
 .cine-hero__voile { z-index: 1; background: rgba(0, 0, 0, 0.5); }
-.cine-hero__couleur { z-index: 2; }
-.cine-hero__halo { z-index: 3; opacity: 0; transition: opacity 300ms ease; }
-
-.cine-hero.is-revelation .cine-hero__couleur {
+/* Le cercle est toujours dessiné là où se trouve le pointeur ; c'est son
+   apparition qui dépend de is-revelation. Il s'efface donc en douceur, sur
+   place, quand le pointeur quitte le bandeau. */
+.cine-hero__couleur {
+  z-index: 2;
+  opacity: 0;
+  transition: opacity 250ms ease;
   -webkit-mask-image: radial-gradient(250px at var(--x) var(--y), #000 0%, transparent 80%);
   mask-image: radial-gradient(250px at var(--x) var(--y), #000 0%, transparent 80%);
 }
 
-.cine-hero.is-revelation .cine-hero__halo {
-  opacity: 1;
+.cine-hero__halo {
+  z-index: 3;
+  opacity: 0;
+  transition: opacity 300ms ease;
   background: radial-gradient(250px circle at var(--x) var(--y), rgba(208, 165, 67, 0.16), transparent 72%);
   mix-blend-mode: overlay;
+}
+
+.cine-hero.is-revelation .cine-hero__couleur,
+.cine-hero.is-revelation .cine-hero__halo { opacity: 1; }
+
+@media (prefers-reduced-motion: reduce) {
+  .cine-hero__couleur,
+  .cine-hero__halo { transition: none; }
 }
 
 .cine-hero__contenu {

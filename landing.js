@@ -723,14 +723,16 @@
         if (signature) signature.hidden = Boolean(texte);
     }
 
-    /* Le bandeau d'accueil de l'ancien site Cineworld : la photo, en noir et
-       blanc, se colore dans un cercle qui suit le pointeur. Le cercle suit la
-       souris, ou le doigt tant qu'il glisse ; relevé, ou sorti du bandeau, la
-       photo revient entière en couleur. Rien ne bouge pour qui a demandé moins
-       d'animations. Une image par rafraîchissement d'écran, au plus. */
+    /* Le bandeau d'accueil de l'ancien site Cineworld : la photo est en noir et
+       blanc dès l'arrivée, et se colore dans un cercle qui suit le pointeur —
+       la souris, ou le doigt tant qu'il glisse. Relevé, ou sorti du bandeau, le
+       cercle s'efface et tout redevient noir et blanc. Le cercle ne bouge que
+       sous la main du visiteur : rien ne s'anime seul, et pour qui a demandé
+       moins d'animations, il apparaît sans fondu (style.css). Une image par
+       rafraîchissement d'écran, au plus. */
     function initRevelationHero() {
         const hero = document.querySelector('.cine-hero');
-        if (!hero || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        if (!hero) return;
         let image = 0;
         const suivre = event => {
             const cadre = hero.getBoundingClientRect();
