@@ -39,6 +39,18 @@
       "destination": "https://cineworldacademie.com/:chemin",
       "permanent": true
     },
+    {
+      "source": "/:chemin(.*)",
+      "has": [{ "type": "host", "value": "www.impactali.site" }],
+      "destination": "https://cineworldacademie.com/:chemin",
+      "permanent": true
+    },
+    {
+      "source": "/:chemin(.*)",
+      "has": [{ "type": "host", "value": "impactali.site" }],
+      "destination": "https://cineworldacademie.com/:chemin",
+      "permanent": true
+    },
     { "source": "/formations", "destination": "/#catalogue", "permanent": true },
     { "source": "/formations/", "destination": "/#catalogue", "permanent": true },
     { "source": "/formations/1", "destination": "/formations/ia-appliquee/", "permanent": true },
