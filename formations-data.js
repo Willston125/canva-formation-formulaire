@@ -384,7 +384,7 @@ window.SESSIONS = Object.freeze([]);
 /**
  * Réalisations : COPIE de la liste de la base (tableau de bord → Réalisations),
  * affichée le temps que le catalogue arrive. Recopiée le 24/10/2026 : elle
- * portait encore les anciennes bannières IMPACTALI, avec le numéro d'un pays,
+ * portait encore les bannières de l'ancienne marque, avec le numéro d'un pays,
  * que tout visiteur voyait quelques secondes à sa première visite.
  * @type {ReadonlyArray<Readonly<PortfolioItem>>}
  */
