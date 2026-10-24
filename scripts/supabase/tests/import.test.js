@@ -94,7 +94,10 @@ const pareil = (libelle, obtenu, attendu) => verifier(libelle, trier(obtenu), tr
     verifier('session ' + s.id + ' : places recalculées', placesAvailable, s.placesTotal);
   }
 
-  pareil('pays identiques (moyens de paiement compris)', relu.pays, source.pays);
+  /* L'accroche est née après la feuille (24/10/2026, passage à Cineworld
+     Académie) : la feuille n'en avait pas, l'import la laisse vide. */
+  verifier('l’accroche du pays reste vide à l’import', relu.pays.map(p => p.accroche), source.pays.map(() => null));
+  pareil('pays identiques (moyens de paiement compris)', relu.pays.map(({ accroche, ...reste }) => reste), source.pays);
   pareil('portfolio identique', relu.portfolio, source.portfolio);
   pareil('réglages identiques', relu.reglages, source.reglages);
   pareil('textes identiques', relu.textes, source.textes);

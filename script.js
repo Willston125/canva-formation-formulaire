@@ -1,5 +1,5 @@
 /* =========================================
-   IMPACTALI — Moteur d'inscription commun à toutes les formations
+   Cineworld Académie — Moteur d'inscription commun à toutes les formations
    Multi-étapes, validation, sauvegarde locale, envoi à l'API du site.
    Chargé sur chaque fiche formation (après formations-data.js et site-common.js).
    La formation de la page est lue sur <main id="inscription" data-formation-id="…"> ;
@@ -187,7 +187,7 @@
         const requestedSessionId = params.get('sessionId') || undefined;
         const pageFormation = FORMATIONS.find(item => item.formId === PAGE_FORMATION_ID || item.slug === PAGE_FORMATION_ID);
         if (requestedFormation && pageFormation && requestedFormation.formId !== pageFormation.formId) {
-            console.warn('IMPACTALI : le paramètre de formation ne correspond pas à la fiche affichée. La fiche reste prioritaire.');
+            console.warn('Cineworld Académie : le paramètre de formation ne correspond pas à la fiche affichée. La fiche reste prioritaire.');
         }
         setSelectedFormation((pageFormation || requestedFormation || selectedFormation)?.formId || PAGE_FORMATION_ID, false, requestedSessionId);
 
@@ -361,8 +361,8 @@
 
         if (formation.title) {
             document.title = generique
-                ? `${formation.title} — Inscription | IMPACTALI`
-                : `${formation.title} — Fiche formation & inscription | IMPACTALI`;
+                ? `${formation.title} — Inscription | Cineworld Académie`
+                : `${formation.title} — Fiche formation & inscription | Cineworld Académie`;
         }
 
         document.querySelectorAll('[data-whatsapp-float], .fiche-hero__actions [data-whatsapp-message]').forEach(lien => {
@@ -649,7 +649,7 @@
         const methods = currentPaymentMethods();
         const pays = currentPays();
         const classes = 'paiement-card flex flex-col items-center justify-center gap-2 p-4 rounded-2xl '
-            + 'border-2 border-[#CBFD00]/20 bg-[#0D1723]/40 hover:border-[#CBFD00]/40 hover:bg-primary/20 '
+            + 'border-2 border-[#D0A543]/20 bg-[#0D1723]/40 hover:border-[#D0A543]/40 hover:bg-primary/20 '
             + 'transition-all duration-200 cursor-pointer group';
 
         grille.innerHTML = methods.map(method => {

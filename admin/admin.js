@@ -1,5 +1,5 @@
 /* =========================================================================
-   IMPACTALI — Tableau de bord
+   Cineworld Académie — Tableau de bord
    Interface d'administration du site. Les données vivent dans la feuille
    Google, l'Apps Script sert d'API. Le mot de passe accompagne chaque
    écriture : il n'est jamais inscrit dans le code, seulement saisi ici.
@@ -1024,7 +1024,7 @@
       { section: 'L’annonce' },
       { cle: 'type', libelle: 'Type', type: 'select', requis: true,
         optionsObjets: [
-          { valeur: 'promotion', libelle: 'Formation à la une (IMPACTALI)' },
+          { valeur: 'promotion', libelle: 'Formation à la une (Cineworld Académie)' },
           { valeur: 'partenaire', libelle: 'Publicité d’un partenaire' }
         ],
         aide: 'Une publicité est toujours signalée « Publicité » aux visiteurs, avec le nom de l’annonceur.' },
@@ -1221,6 +1221,12 @@
       exemple: gabaritAffiche,
       aide: 'Votre vrai numéro là aussi, mis en forme comme vous voulez le lire sur le site.' },
 
+    { section: 'Page d’accueil' },
+    { cle: 'accroche', libelle: 'Accroche réservée aux visiteurs de ce pays', type: 'text', large: true,
+      aide: 'Une ligne courte, en haut de l’accueil, à côté du nom de l’académie. Seuls les visiteurs '
+        + 'de ce pays la voient : le site ne l’envoie jamais ailleurs. 120 caractères au plus. '
+        + 'Vide = aucune accroche.' },
+
     { section: 'Reconnaissance du visiteur' },
     { cle: 'fuseaux', libelle: 'Fuseaux horaires', type: 'lignes', large: true,
       aide: 'Un par ligne, au format IANA : Africa/Djibouti, Indian/Comoro. Le site s’en sert pour '
@@ -1243,7 +1249,7 @@
     var p = code ? trouverPays(code) : null;
     var donnees = p ? Object.assign({}, p) : {
       code: '', nom: '', devise: '', indicatif: '', active: true, defaut: false,
-      whatsappNumber: '', whatsappDisplay: '', fuseaux: [], regions: [],
+      whatsappNumber: '', whatsappDisplay: '', fuseaux: [], regions: [], accroche: '',
       paymentMethods: [], ordre: listePays().length
     };
     ouvrirPanneau(p ? 'Modifier ' + (p.nom || p.code) : 'Nouveau pays', champsPays(p), donnees,
@@ -1929,7 +1935,7 @@
   function boutonWhatsapp(i) {
     var numero = String(i.telephoneInternational || ((i.countryCode || '') + (i.telephone || ''))).replace(/\D/g, '');
     if (!numero) return '<span class="cellule-sous">—</span>';
-    var message = 'Bonjour ' + (i.prenom || '') + ', ici IMPACTALI. Nous avons bien reçu votre inscription à la formation '
+    var message = 'Bonjour ' + (i.prenom || '') + ', ici Cineworld Académie. Nous avons bien reçu votre inscription à la formation '
       + (i.formationTitle || '') + (i.sessionLabel ? ' (session du ' + i.sessionLabel + ')' : '')
       + '. Pouvons-nous confirmer votre participation ?';
     return '<a class="bouton bouton--discret bouton--petit" target="_blank" rel="noopener noreferrer" href="https://wa.me/'
@@ -1961,7 +1967,7 @@
       + liste.map(function (i) { return colonnes.map(function (c) { return cellule(i[c]); }).join(';'); }).join('\n');
     var lien = document.createElement('a');
     lien.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
-    lien.download = 'inscriptions-impactali-' + new Date().toISOString().slice(0, 10) + '.csv';
+    lien.download = 'inscriptions-cineworld-' + new Date().toISOString().slice(0, 10) + '.csv';
     document.body.appendChild(lien);
     lien.click();
     document.body.removeChild(lien);

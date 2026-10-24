@@ -100,28 +100,28 @@
         })();
     </script>
     <!-- apparence-tot:fin -->
-    <title>IMPACTALI — Plateforme de formation &amp; de développement des compétences</title>
-    <meta name="title" content="IMPACTALI — Plateforme de formation &amp; de développement des compétences">
+    <title>Cineworld Académie — École de l’image : formations vidéo, design, marketing &amp; IA</title>
+    <meta name="title" content="Cineworld Académie — École de l’image : formations vidéo, design, marketing &amp; IA">
     <meta name="description"
         content="Cinq formations pratiques pour développer des compétences professionnelles : design, contenu, vidéo, marketing et intelligence artificielle.">
 
     <!-- Open Graph / Facebook / WhatsApp -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://www.impactali.site/">
-    <meta property="og:title" content="IMPACTALI — Plateforme de formation &amp; de développement des compétences">
+    <meta property="og:title" content="Cineworld Académie — École de l’image : formations vidéo, design, marketing &amp; IA">
     <meta property="og:description" content="Cinq formations pratiques pour développer des compétences professionnelles : design, contenu, vidéo, marketing et intelligence artificielle.">
     <meta property="og:image"
-        content="https://www.impactali.site/assets/images/partage-impactali.jpg">
+        content="https://www.impactali.site/assets/images/partage-cineworld.jpg">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:url" content="https://www.impactali.site/">
-    <meta property="twitter:title" content="IMPACTALI — Plateforme de formation &amp; de développement des compétences">
+    <meta property="twitter:title" content="Cineworld Académie — École de l’image : formations vidéo, design, marketing &amp; IA">
     <meta property="twitter:description" content="Cinq formations pratiques pour développer des compétences professionnelles : design, contenu, vidéo, marketing et intelligence artificielle.">
     <meta property="twitter:image"
-        content="https://www.impactali.site/assets/images/partage-impactali.jpg">
+        content="https://www.impactali.site/assets/images/partage-cineworld.jpg">
 
 
 
@@ -141,10 +141,10 @@
     {
       "@context": "https://schema.org",
       "@type": "EducationalOrganization",
-      "name": "IMPACTALI",
+      "name": "Cineworld Académie",
       "legalName": "Fortixa",
       "url": "https://www.impactali.site/",
-      "logo": "https://www.impactali.site/assets/brand/impactali-logo.webp",
+      "logo": "https://www.impactali.site/assets/brand/cineworld-sceau.webp",
       "email": "infos@impactali.site",
       "address": { "@type": "PostalAddress", "addressLocality": "Moroni", "addressCountry": "KM" }
     }
@@ -157,7 +157,7 @@
 </head>
 
 
-<body class="bg-[#050709] font-body text-[#E5E5E5] selection:bg-[#CBFD00] selection:text-[#050709] overflow-x-hidden page-home">
+<body class="bg-[#050709] font-body text-[#E5E5E5] selection:bg-[#D0A543] selection:text-[#050709] overflow-x-hidden page-home">
 
     <!-- ====== AURA SOFT GRADIENT BACKGROUND ====== -->
     <div class="fixed inset-0 -z-10 overflow-hidden aura-bg">
@@ -177,8 +177,8 @@
     <!-- ====== 2. HEADER ====== -->
     <header class="site-header" id="site-header">
         <div class="site-header__inner">
-            <a class="brand" href="#accueil" aria-label="IMPACTALI — Accueil">
-                <img data-image="marque.logo" data-image-groupe="Marque" data-image-libelle="Logo IMPACTALI" data-image-format="logo" data-image-ratio="9/5" src="/assets/brand/impactali-logo.webp" alt="IMPACTALI" width="720" height="400" decoding="async">
+            <a class="brand" href="#accueil" aria-label="Cineworld Académie — Accueil">
+                <img data-image="marque.logo" data-image-groupe="Marque" data-image-libelle="Logo (sceau) Cineworld Académie" data-image-format="logo" data-image-ratio="1/1" src="/assets/brand/cineworld-sceau.webp" alt="" width="240" height="240" decoding="async"><span class="brand__nom">Cineworld <span>Académie</span></span>
             </a>
 
             <nav class="desktop-nav" aria-label="Navigation principale">
@@ -217,6 +217,12 @@
         <div class="landing-hero__glow" aria-hidden="true"></div>
         <div class="landing-shell landing-hero__layout">
             <div class="landing-hero__copy">
+                <!-- La signature vaut pour tous ; l'accroche du pays n'arrive que pour
+                     les visiteurs de ce pays, par l'API (landing.js, renderAccrochePays). -->
+                <p class="landing-hero__marque">
+                    <span data-texte="hero.signature" data-texte-groupe="Bandeau d’accueil" data-texte-libelle="Signature de l’académie">Cineworld Académie · École de l’image</span>
+                    <span class="landing-hero__accroche-pays" id="accroche-pays" hidden></span>
+                </p>
                 <p class="eyebrow" data-texte="hero.surtitre" data-texte-groupe="Bandeau d’accueil" data-texte-libelle="Surtitre">FORMATIONS CRÉATIVES &amp; DIGITALES</p>
                 <h1 id="hero-title" data-texte-html="hero.titre" data-texte-groupe="Bandeau d’accueil" data-texte-libelle="Titre principal">Transformez votre talent en <span>compétences professionnelles</span></h1>
                 <p class="landing-hero__lead" data-texte="hero.texte" data-texte-groupe="Bandeau d’accueil" data-texte-libelle="Phrase d’accroche">Des formations pratiques pour apprendre, créer et développer les compétences
@@ -239,8 +245,8 @@
             </div>
 
             <div class="landing-hero__visual">
-                <img data-image="accueil.hero" data-image-groupe="Accueil" data-image-libelle="Visuel de la bannière" data-image-format="carre" data-image-ratio="19/20" src="assets/images/Bannière facebook impactali 01 (1).jpg"
-                    alt="Ali William, formateur en communication digitale et vidéo" width="851" height="315"
+                <img data-image="accueil.hero" data-image-groupe="Accueil" data-image-libelle="Visuel de la bannière" data-image-format="carre" data-image-ratio="19/20" src="assets/images/accueil/hero.webp"
+                    alt="Ali William, formateur en communication digitale et vidéo" width="960" height="641"
                     fetchpriority="high" loading="eager" decoding="async">
                 <!-- La photo est seule dans son cadre. Trois faux panneaux de studio,
                      un halo, une signature « Créer / Apprendre / Évoluer » et quatre
@@ -343,7 +349,7 @@
             <div class="method__steps">
                 <article class="method-step reveal-on-scroll">
                     <div class="method-step__copy"><span>01</span><div><h3 data-texte="methode.etape1.titre" data-texte-groupe="Section méthode" data-texte-libelle="Étape 1 — titre">Apprenez avec des experts</h3><p data-texte="methode.etape1.texte" data-texte-groupe="Section méthode" data-texte-libelle="Étape 1 — texte">Des formateurs professionnels en activité, à l’écoute et passionnés.</p></div></div>
-                    <img data-image="accueil.methode.1" data-image-groupe="Section méthode" data-image-libelle="Étape 1 — visuel" data-image-format="paysage" data-image-ratio="12/7" src="assets/images/Bannière facebook impactali 01.jpg" alt="Le formateur en situation de production de contenu" width="851" height="315" loading="lazy" decoding="async">
+                    <img data-image="accueil.methode.1" data-image-groupe="Section méthode" data-image-libelle="Étape 1 — visuel" data-image-format="paysage" data-image-ratio="12/7" src="assets/images/accueil/methode-1.webp" alt="Le formateur en situation de production de contenu" width="960" height="640" loading="lazy" decoding="async">
                 </article>
                 <article class="method-step reveal-on-scroll">
                     <div class="method-step__copy"><span>02</span><div><h3 data-texte="methode.etape2.titre" data-texte-groupe="Section méthode" data-texte-libelle="Étape 2 — titre">Réalisez des projets concrets</h3><p data-texte="methode.etape2.texte" data-texte-groupe="Section méthode" data-texte-libelle="Étape 2 — texte">Mettez immédiatement en pratique vos acquis sur des projets réels et encadrés.</p></div></div>
@@ -361,7 +367,7 @@
     <section class="trainer" id="formateur" aria-labelledby="trainer-title">
         <div class="landing-shell trainer__layout reveal-on-scroll">
             <figure class="trainer__photo">
-                <img data-image="accueil.formateur.photo" data-image-groupe="Section formateur" data-image-libelle="Photo du formateur" data-image-format="portrait" data-image-ratio="4/5" src="assets/images/Bannière facebook impactali 01 (1).jpg" alt="Ali William, formateur" width="851" height="315" loading="lazy" decoding="async">
+                <img data-image="accueil.formateur.photo" data-image-groupe="Section formateur" data-image-libelle="Photo du formateur" data-image-format="portrait" data-image-ratio="4/5" src="assets/images/accueil/formateur.webp" alt="Ali William, formateur" width="900" height="600" loading="lazy" decoding="async">
                 <figcaption><strong>Ali William</strong><span data-texte="accueil.formateur.role" data-texte-groupe="Section formateur" data-texte-libelle="Rôle du formateur">Formateur · Réalisateur · Stratège digital</span></figcaption>
             </figure>
             <div class="trainer__copy">
@@ -588,11 +594,12 @@
     <footer class="site-footer" id="site-footer">
         <div class="landing-shell site-footer__inner">
             <div class="site-footer__brand">
-                <a class="site-footer__logo" href="/" aria-label="IMPACTALI — Accueil">
-                    <img data-image="marque.logo" data-image-groupe="Marque" data-image-libelle="Logo IMPACTALI" data-image-format="logo" data-image-ratio="9/5" src="/assets/brand/impactali-logo.webp" alt="IMPACTALI" width="720" height="400" loading="lazy" decoding="async">
+                <a class="site-footer__logo" href="/" aria-label="Cineworld Académie — Accueil">
+                    <img data-image="marque.logo" data-image-groupe="Marque" data-image-libelle="Logo (sceau) Cineworld Académie" data-image-format="logo" data-image-ratio="1/1" src="/assets/brand/cineworld-sceau.webp" alt="Cineworld Académie" width="240" height="240" loading="lazy" decoding="async">
                 </a>
-                <span class="site-footer__baseline" data-texte="pied.baseline" data-texte-groupe="Pied de page" data-texte-libelle="Baseline">Plateforme de formation &amp; de développement des compétences</span>
-                <span class="site-footer__legal" data-texte="pied.mentions" data-texte-groupe="Pied de page" data-texte-libelle="Mention de droits">&copy; 2026 IMPACTALI. Tous droits réservés.</span>
+                <span class="site-footer__baseline" data-texte="pied.baseline" data-texte-groupe="Pied de page" data-texte-libelle="Baseline">École de l’image — formations vidéo, design, marketing digital &amp; IA</span>
+                <span class="site-footer__legal" data-texte="pied.mentions" data-texte-groupe="Pied de page" data-texte-libelle="Mention de droits">&copy; 2026 Cineworld Académie. Tous droits réservés.</span>
+                <span class="site-footer__ancien">Anciennement IMPACTALI</span>
             </div>
                         <nav class="site-footer__col" aria-labelledby="pied-formations">
                 <h2 id="pied-formations">Formations</h2>
@@ -656,7 +663,7 @@
     </div>
 
     <!-- ====== WHATSAPP FLOATING BUTTON ====== -->
-    <a class="fixed bottom-6 right-6 z-50 w-14 h-14 bg-[#CBFD00] rounded-full flex items-center justify-center shadow-lg shadow-lime-300/40 hover:scale-110 hover:shadow-xl hover:shadow-lime-300/50 transition-all duration-300 group" id="contact-float" aria-label="Nous écrire par email" href="mailto:infos@impactali.site" data-email-sujet="Question sur vos formations">
+    <a class="fixed bottom-6 right-6 z-50 w-14 h-14 bg-[#D0A543] rounded-full flex items-center justify-center shadow-lg shadow-[#D0A543]/40 hover:scale-110 hover:shadow-xl hover:shadow-[#D0A543]/50 transition-all duration-300 group" id="contact-float" aria-label="Nous écrire par email" href="mailto:infos@impactali.site" data-email-sujet="Question sur vos formations">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-7 h-7 text-[#050709]" fill="currentColor" aria-hidden="true">
             <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
         </svg>

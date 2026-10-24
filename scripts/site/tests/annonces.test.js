@@ -80,7 +80,7 @@ verifier('l’affiche n’est ni rognée ni recolorée', /object-fit|filter/.tes
 verifier('un clic qui mène ailleurs n’est pas aussi compté comme une fermeture',
   /common\.mesurerAnnonce\('clic', annonce\.id\);\s*\/\/[^\n]*\n\s*fermer\(false\)/.test(annonces), true);
 const commun = lire('site-common.js');
-verifier('le lien WhatsApp d’un partenaire n’est pas une question posée à IMPACTALI',
+verifier('le lien WhatsApp d’un partenaire n’est pas une question posée à l’académie',
   /lien\.closest\('\[data-annonce\]'\)/.test(commun), true);
 
 console.log(resultats.join('\n'));

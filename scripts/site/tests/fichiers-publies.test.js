@@ -104,7 +104,7 @@ const pages = ['index.html', '404.html', 'entreprises/index.html', 'mentions-leg
 const indispensables = pages.concat([
   'style.css', 'tailwind.css', 'fonts.css', 'site-common.js', 'landing.js', 'script.js',
   'fiche-blocs.js', 'formations-data.js', 'admin/admin.js', 'admin/admin.css',
-  'assets/brand/impactali-logo.webp', 'assets/images/partage-impactali.jpg',
+  'assets/brand/cineworld-sceau.webp', 'assets/images/partage-cineworld.jpg',
   /* Le code partagé de l'API : écarté, il manquerait aux fonctions Vercel, qui
      ne reçoivent que ce qui est déployé. */
   'api/index.js', 'api/quotidien.js', 'api/_lib/catalogue.js', 'api/_lib/champs.js', 'api/_lib/base.js',

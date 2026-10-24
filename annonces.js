@@ -2,7 +2,7 @@
  * l'arrivée, et qu'une croix referme.
  *
  * Deux usages, décidés dans le tableau de bord (onglet « Annonces ») :
- * - « À la une » : une formation d'IMPACTALI mise en avant ;
+ * - « À la une » : une formation de l’académie mise en avant ;
  * - « Publicité » : l'annonce d'un partenaire, toujours signalée comme telle,
  *   avec le nom de l'annonceur.
  *

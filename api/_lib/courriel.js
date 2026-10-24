@@ -11,7 +11,7 @@
 'use strict';
 
 const EMAIL_PRO = 'infos@impactali.site';
-const EXPEDITEUR = 'Inscriptions IMPACTALI <infos@impactali.site>';
+const EXPEDITEUR = 'Inscriptions Cineworld Académie <infos@impactali.site>';
 
 /** Échappe pour le HTML, attributs compris. */
 function echapper(v) {
@@ -23,7 +23,7 @@ function echapper(v) {
 const numeroWhatsapp = i => String(i.telephone_international || '').replace(/\D/g, '');
 
 function messageRelance(i, formation, session) {
-  return 'Bonjour ' + (i.prenom || '') + ', ici IMPACTALI. Nous avons bien reçu votre inscription à la formation '
+  return 'Bonjour ' + (i.prenom || '') + ', ici Cineworld Académie. Nous avons bien reçu votre inscription à la formation '
     + formation + (session && session !== 'Session non datée' ? ' (session du ' + session + ')' : '')
     + '. Pouvons-nous confirmer votre participation ?';
 }
@@ -60,7 +60,7 @@ function alerteInscription(i) {
     + echapper(l[1]) + '</td></tr>').join('');
   const html = '<div style="font-family:Arial,Helvetica,sans-serif;max-width:640px;margin:0 auto">'
     + '<div style="background:#050709;padding:20px 24px;border-radius:12px 12px 0 0">'
-    + '<p style="margin:0;color:#CBFD00;font-size:12px;letter-spacing:1px;font-weight:700">IMPACTALI</p>'
+    + '<p style="margin:0;color:#D0A543;font-size:12px;letter-spacing:1px;font-weight:700">CINEWORLD ACADÉMIE</p>'
     + '<h1 style="margin:6px 0 0;color:#ffffff;font-size:20px">Nouvelle inscription</h1>'
     + '<p style="margin:6px 0 0;color:#9CA6B2;font-size:14px">' + echapper(formation) + ' — ' + echapper(session) + '</p>'
     + '</div><div style="border:1px solid #e6e6e6;border-top:0;border-radius:0 0 12px 12px;padding:8px 0 20px">'
@@ -112,7 +112,7 @@ function alerteMoyensPaiement({ code, nom, avant, apres, qui, quand = new Date()
     + liste(moyens).map(l => '<li>' + echapper(l) + '</li>').join('') + '</ul>';
   const html = '<div style="font-family:Arial,Helvetica,sans-serif;max-width:640px;margin:0 auto">'
     + '<div style="background:#050709;padding:20px 24px;border-radius:12px 12px 0 0">'
-    + '<p style="margin:0;color:#CBFD00;font-size:12px;letter-spacing:1px;font-weight:700">IMPACTALI</p>'
+    + '<p style="margin:0;color:#D0A543;font-size:12px;letter-spacing:1px;font-weight:700">CINEWORLD ACADÉMIE</p>'
     + '<h1 style="margin:6px 0 0;color:#ffffff;font-size:20px">Moyens de paiement modifiés</h1>'
     + '<p style="margin:6px 0 0;color:#9CA6B2;font-size:14px">' + echapper(pays) + '</p>'
     + '</div><div style="border:1px solid #e6e6e6;border-top:0;border-radius:0 0 12px 12px;padding:4px 24px 20px">'

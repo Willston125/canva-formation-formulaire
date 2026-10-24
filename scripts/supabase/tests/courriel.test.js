@@ -64,7 +64,7 @@ const LIGNE = {
   verifier('l’envoi réussit', ok, { envoye: true, erreur: null });
   verifier('il passe par l’API de Resend', appels[0] && appels[0].url, 'https://api.resend.com/emails');
   verifier('avec la clé en en-tête, jamais dans l’adresse', appels[0] && appels[0].options.headers.Authorization, 'Bearer cle-des-epreuves');
-  verifier('au nom d’infos@impactali.site', parti && parti.from, 'Inscriptions IMPACTALI <infos@impactali.site>');
+  verifier('au nom d’infos@impactali.site', parti && parti.from, 'Inscriptions Cineworld Académie <infos@impactali.site>');
   verifier('vers infos@impactali.site', parti && parti.to, ['infos@impactali.site']);
   verifier('en répondant au candidat', parti && parti.reply_to, 'awa@exemple.test');
 

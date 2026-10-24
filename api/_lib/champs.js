@@ -47,7 +47,7 @@ const PAYS = [
   ['exempleTelephone', 'exemple_telephone'], ['longueurTelephone', 'longueur_telephone', 'num'],
   ['defaut', 'defaut', 'bool'], ['active', 'active', 'bool'], ['ordre', 'ordre', 'num'],
   ['whatsappNumber', 'whatsapp_number'], ['whatsappDisplay', 'whatsapp_display'],
-  ['fuseaux', 'fuseaux', 'json'], ['regions', 'regions', 'json']
+  ['fuseaux', 'fuseaux', 'json'], ['regions', 'regions', 'json'], ['accroche', 'accroche']
 ];
 
 /* Un moyen de paiement n'a que les clés qui le concernent : un paiement mobile

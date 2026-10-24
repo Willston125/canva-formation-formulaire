@@ -116,7 +116,7 @@ function genericPrerequisites() {
   return `<section class="fiche-block reveal-on-scroll" id="prerequis-section" aria-labelledby="prerequis-title">`
     + `<div class="glass-card rounded-2xl sm:rounded-3xl p-6 sm:p-8">`
     + `<div class="flex items-center gap-3 mb-5">`
-    + `<span class="material-symbols-outlined text-[#CBFD00] text-2xl" aria-hidden="true">checklist</span>`
+    + `<span class="material-symbols-outlined text-[#D0A543] text-2xl" aria-hidden="true">checklist</span>`
     + `<h2 class="text-lg sm:text-xl font-extrabold text-[#FFFFFF] font-headline" id="prerequis-title" `
     + `data-texte="fiche.prerequis.titre" data-texte-groupe="Fiche formation" `
     + `data-texte-libelle="Titre « Prérequis »">Prérequis</h2></div>`
@@ -218,7 +218,7 @@ function objectives(f) {
  * Une image par fiche redeviendra possible le jour où les cinq visuels seront
  * préparés à ce format-là. En attendant, une seule image juste vaut mieux que
  * six images coupées. */
-const IMAGE_PARTAGE = `${SITE_URL}/assets/images/partage-impactali.jpg`;
+const IMAGE_PARTAGE = `${SITE_URL}/assets/images/partage-cineworld.jpg`;
 
 function render(template, f) {
   let html = template;
@@ -228,7 +228,7 @@ function render(template, f) {
      la seule page qu'une formation créée après publication possède. */
   const chemin = f.id === 'inscription-generique' ? '/inscription/' : `/formations/${f.slug}/`;
   const url = `${SITE_URL}${chemin}`;
-  html = html.replace(/<title>[\s\S]*?<\/title>/i, `<title>${esc(f.title)} — Fiche formation &amp; inscription | IMPACTALI</title>`);
+  html = html.replace(/<title>[\s\S]*?<\/title>/i, `<title>${esc(f.title)} — Fiche formation &amp; inscription | Cineworld Académie</title>`);
   html = setMeta(html, 'name="title"', `${f.title} — Fiche formation & inscription`);
   html = setMeta(html, 'name="description"', f.shortDescription);
   html = setMeta(html, 'property="og:url"', url);
@@ -457,7 +457,7 @@ const GENERIQUE = {
   category: 'Inscription',
   shortDescription: 'Choisissez votre formation et complétez votre inscription en quatre étapes.',
   image: '/assets/images/formations/canva-pro.webp',
-  imageAlt: 'Formations IMPACTALI',
+  imageAlt: 'Formations Cineworld Académie',
   duration: 'À confirmer', level: 'À confirmer', mode: 'À confirmer',
   price: null, modules: null, learnings: [], objectives: null,
   formId: '', href: '/inscription/', hasDetailPage: true

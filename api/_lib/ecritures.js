@@ -81,7 +81,8 @@ const REGLES = {
     longueur_telephone: [v => v >= 4 && v <= 15, 'La longueur du numéro va de 4 à 15 chiffres.'],
     whatsapp_number: [v => /^[0-9]{6,15}$/.test(v),
       'Le numéro WhatsApp ne prend que des chiffres, indicatif compris, sans + ni espace : '
-      + '2694742688 pour +269 474 26 88.']
+      + '2694742688 pour +269 474 26 88.'],
+    accroche: [v => v.length <= 120, 'L’accroche du pays tient en 120 caractères au plus.']
   },
   realisations: {
     image: [estAdresse, 'L’image doit être une adresse https:// ou un fichier du site (/assets/…).'],

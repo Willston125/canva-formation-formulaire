@@ -35,11 +35,10 @@ const RAPPORTS_ATTENDUS = {
   /* La page d'inscription générique et le gabarit gardent la clé commune ; elle
      sert aussi de repli aux fiches, qui portent chacune la leur. */
   'fiche.formateur.photo': '3/4',
-  /* Le logo, en-tête et pied de chaque page. Les deux emplacements mesurent le
-     même rapport — 75,59 × 42 en haut, 93,59 × 52 en bas, soit 1,8 — parce que
-     la feuille de style fixe la hauteur et laisse la largeur suivre. Un logo
-     d'un autre rapport ne serait donc pas déformé : il prendrait sa largeur. */
-  'marque.logo': '9/5'
+  /* Le logo, en-tête et pied de chaque page : le sceau rond de Cineworld
+     Académie, carré — 46 × 46 en haut, 64 × 64 en bas. La feuille de style fixe
+     les deux côtés : un logo d'un autre rapport serait contenu, pas déformé. */
+  'marque.logo': '1/1'
 };
 
 /* Chaque fiche a sa propre clé de photo de formateur, dans le même emplacement

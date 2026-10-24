@@ -713,6 +713,19 @@
                 : el.dataset.texteOrigine;
     }
 
+    /* L'accroche propre au pays du visiteur (« Pays » du tableau de bord), à
+       côté de la signature de l'académie. Le serveur ne l'envoie qu'aux
+       visiteurs de ce pays : hors marché, ou sans accroche saisie, rien ne
+       s'affiche. */
+    function renderAccrochePays() {
+        const el = document.getElementById('accroche-pays');
+        if (!el) return;
+        const pays = common.paysActif ? common.paysActif() : null;
+        const texte = String((pays && pays.accroche) || '').trim();
+        el.textContent = texte;
+        el.hidden = !texte;
+    }
+
     /* LES VIDÉOS DE CLASSE SE LANCENT SEULES, SUR PLACE. Décision du
        propriétaire (9 octobre 2026) : comme sur les réseaux sociaux, une vidéo
        démarre quand on arrive dessus, sans le son, dans son propre cadre — elle
@@ -1157,6 +1170,7 @@
             renderThematiquesEntreprise();
             renderFaqPays();
             renderModeMarche();
+            renderAccrochePays();
             if (contenuDuCarrousel() !== avant) initTrainingCarousel();
             common.observeReveals?.();
         });
@@ -1171,6 +1185,7 @@
             renderClasses();
             renderFaqPays();
             renderModeMarche();
+            renderAccrochePays();
             if (contenuDuCarrousel() !== avant) initTrainingCarousel();
             common.observeReveals?.();
         });
@@ -1184,6 +1199,7 @@
         renderFaqPays();
         initFaq();
         renderModeMarche();
+        renderAccrochePays();
         // Le contenu créé ci-dessus n'existait pas au premier passage de l'observateur
         common.observeReveals?.();
     });

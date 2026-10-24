@@ -1288,7 +1288,7 @@
        flottant, « Poser une question », la fiche. Le bouton de la preuve de
        paiement a son propre signal (script.js), et le lien d'une annonce le sien
        (annonces.js) : un partenaire joignable sur WhatsApp n'est pas une
-       question posée à IMPACTALI. */
+       question posée à l’académie. */
     function initMesureWhatsapp() {
         document.addEventListener('click', event => {
             const lien = event.target && event.target.closest && event.target.closest('a[href*="wa.me/"]');

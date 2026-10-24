@@ -4,10 +4,10 @@ module.exports = Object.assign({
     theme: {
         extend: {
             colors: {
-                "primary": "#CBFD00",
-                "primary-container": "#CBFD00",
-                "primary-fixed": "#CBFD00",
-                "primary-fixed-dim": "#A5CF00",
+                "primary": "#D0A543",
+                "primary-container": "#D0A543",
+                "primary-fixed": "#D0A543",
+                "primary-fixed-dim": "#B08A34",
                 "on-primary": "#050709",
                 "on-primary-container": "#050709",
                 "on-primary-fixed": "#050709",
@@ -39,7 +39,7 @@ module.exports = Object.assign({
                 "outline": "#475569",
                 "outline-variant": "#1e293b",
                 "inverse-surface": "#f8fafc",
-                "inverse-primary": "#CBFD00",
+                "inverse-primary": "#D0A543",
                 "inverse-on-surface": "#050709",
                 "error": "#ef4444",
                 "error-container": "#450a0a",

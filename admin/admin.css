@@ -1,20 +1,20 @@
 /* =========================================================================
-   IMPACTALI — Tableau de bord
+   Cineworld Académie — Tableau de bord
    Feuille autonome : l'administration n'a pas la même mise en page que le
    site public, et ne doit pas dépendre de sa recompilation Tailwind.
    Les couleurs reprennent les jetons de marque.
    ========================================================================= */
 
 :root {
-  --brand: #CBFD00;
-  --brand-hover: #DDFF5C;
+  --brand: #D0A543;
+  --brand-hover: #E2BF6A;
   --on-brand: #050709;
   --fond: #050709;
   --surface: #0B1220;
   --surface-2: #0F1826;
   --surface-3: #142032;
   --bordure: rgba(255, 255, 255, 0.10);
-  --bordure-forte: rgba(203, 253, 0, 0.28);
+  --bordure-forte: rgba(208, 165, 67, 0.28);
   --texte: #F6F5EF;
   --texte-doux: #9CA6B2;
   /* Mesuré : l'ancien #667080 donnait 3,56 et 3,27 sur les deux fonds, sous le
@@ -75,7 +75,7 @@ h1, h2, h3 { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; font-weigh
   min-height: 100vh;
   padding: 24px;
   background:
-    radial-gradient(900px 500px at 50% -10%, rgba(203, 253, 0, 0.10), transparent 70%),
+    radial-gradient(900px 500px at 50% -10%, rgba(208, 165, 67, 0.10), transparent 70%),
     var(--fond);
 }
 
@@ -89,7 +89,7 @@ h1, h2, h3 { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; font-weigh
   text-align: center;
 }
 
-.connexion__logo { height: 44px; width: auto; margin-bottom: 22px; }
+.connexion__logo { height: 72px; width: 72px; margin-bottom: 18px; }
 .connexion__carte h1 { font-size: 1.4rem; margin-bottom: 6px; }
 .connexion__aide { margin: 0 0 24px; color: var(--texte-doux); font-size: 0.88rem; }
 .connexion__retour {
@@ -249,8 +249,15 @@ h1, h2, h3 { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; font-weigh
   border-right: 1px solid var(--bordure);
 }
 
-.barre__marque { padding: 0 8px 26px; }
-.barre__marque img { height: 34px; width: auto; }
+.barre__marque { display: flex; align-items: center; gap: 10px; padding: 0 8px 26px; }
+.barre__marque img { height: 40px; width: 40px; }
+.barre__nom {
+  display: flex; flex-direction: column; gap: 3px;
+  color: var(--texte);
+  font: 800 0.86rem/1 'Plus Jakarta Sans', system-ui, sans-serif;
+  letter-spacing: 0.05em; text-transform: uppercase;
+}
+.barre__nom span { color: var(--brand); font-size: 0.6em; font-weight: 700; letter-spacing: 0.36em; }
 
 .barre__nav { display: flex; flex-direction: column; gap: 3px; flex: 1; }
 
@@ -272,7 +279,7 @@ h1, h2, h3 { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; font-weigh
   transition: background 0.15s, color 0.15s;
 }
 .onglet:hover { background: var(--surface-2); color: var(--texte); }
-.onglet.is-actif { background: rgba(203, 253, 0, 0.12); color: var(--brand); }
+.onglet.is-actif { background: rgba(208, 165, 67, 0.12); color: var(--brand); }
 .onglet .material-symbols-outlined { font-size: 19px; }
 
 .pastille {
@@ -284,7 +291,7 @@ h1, h2, h3 { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; font-weigh
   font-size: 0.72rem;
   font-weight: 700;
 }
-.onglet.is-actif .pastille { background: rgba(203, 253, 0, 0.2); color: var(--brand); }
+.onglet.is-actif .pastille { background: rgba(208, 165, 67, 0.2); color: var(--brand); }
 
 .barre__pied { display: flex; flex-direction: column; gap: 3px; padding-top: 16px; border-top: 1px solid var(--bordure); }
 
@@ -409,7 +416,7 @@ table.tableau tr:hover td { background: rgba(255, 255, 255, 0.02); }
   font-weight: 700;
   white-space: nowrap;
 }
-.etiquette--ouvert { background: rgba(203, 253, 0, 0.14); color: var(--brand); }
+.etiquette--ouvert { background: rgba(208, 165, 67, 0.14); color: var(--brand); }
 .etiquette--ferme { background: rgba(255, 255, 255, 0.07); color: var(--texte-doux); }
 .etiquette--alerte { background: rgba(248, 113, 113, 0.15); color: #FCA5A5; }
 .etiquette--info { background: rgba(96, 165, 250, 0.15); color: #93C5FD; }

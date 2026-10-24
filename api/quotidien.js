@@ -69,7 +69,7 @@ function creerTache(obtenirBase, { envoyer = envoyerCourriel, maintenant = () =>
       const resume = TABLES.map(t => `${t} : ` + (illisibles[t] ? `ILLISIBLE (${illisibles[t]})` : tables[t].length)).join('\n');
 
       const envoi = await envoyer({
-        sujet: 'Sauvegarde IMPACTALI du ' + jour,
+        sujet: 'Sauvegarde Cineworld Académie du ' + jour,
         texte: 'Sauvegarde quotidienne de la base du site, en pièce jointe (' + Math.ceil(octets / 1024) + ' Ko).\n\n'
           + resume + '\n\nLes photos y sont listées, mais pas jointes : elles restent dans la base.'
           + '\n\nElle contient les inscriptions, donc des données personnelles : '

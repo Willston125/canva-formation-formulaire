@@ -62,7 +62,7 @@
           + echapper(point) + '</div>';
       }).join('');
 
-      return '<div class="programme-accordion bg-[#0D1723]/40 border border-[#CBFD00]/20 rounded-2xl overflow-hidden'
+      return '<div class="programme-accordion bg-[#0D1723]/40 border border-[#D0A543]/20 rounded-2xl overflow-hidden'
         + (ouvert ? ' accordion-open' : '') + '">'
         + '<button type="button" class="accordion-header w-full flex items-center gap-2.5 p-5 text-left" aria-expanded="'
         + (ouvert ? 'true' : 'false') + '">'
@@ -81,9 +81,9 @@
 
     /* L'en-tête garde ces classes telles quelles : une règle de style.css cible
        « #programme-section .bg-gradient-to-r h2 » pour imposer du texte sombre
-       sur le vert de la marque. Les renommer rendrait le titre illisible. */
+       sur l’or de la marque. Les renommer rendrait le titre illisible. */
     return '<div class="glass-card rounded-2xl sm:rounded-3xl shadow-xl shadow-black/20 border border-white/40 overflow-hidden">'
-      + '<div class="bg-gradient-to-r from-[#CBFD00] to-[#A5CF00] px-6 sm:px-8 py-5 flex items-center gap-3">'
+      + '<div class="bg-gradient-to-r from-[#D0A543] to-[#B08A34] px-6 sm:px-8 py-5 flex items-center gap-3">'
       + '<span class="material-symbols-outlined text-[#FFFFFF] text-2xl" style="font-variation-settings: \'FILL\' 1;">menu_book</span>'
       + '<div><h2 class="text-lg sm:text-xl font-extrabold text-[#FFFFFF] font-headline tracking-tight" id="programme-title">'
       + 'Qu’allez-vous apprendre ?</h2>'
@@ -116,7 +116,7 @@
     if (!questions.length) return '';
     var titre = (formation && (formation.shortTitle || formation.title)) || '';
     var items = questions.map(function (item, i) {
-      return '<div class="programme-accordion bg-[#0D1723]/40 border border-[#CBFD00]/20 rounded-2xl overflow-hidden hover:border-[#CBFD00]/30 transition-colors">'
+      return '<div class="programme-accordion bg-[#0D1723]/40 border border-[#D0A543]/20 rounded-2xl overflow-hidden hover:border-[#D0A543]/30 transition-colors">'
         + '<button type="button" class="accordion-header w-full flex items-center justify-between p-5 text-left" aria-expanded="false" aria-controls="faq-reponse-' + i + '">'
         + '<h3 class="text-sm font-bold text-[#FFFFFF] font-headline pr-4">' + echapper(item.question) + '</h3>'
         + '<span class="accordion-arrow material-symbols-outlined text-[#E5E5E5] text-xl transition-transform duration-300">expand_more</span>'
@@ -156,7 +156,7 @@
     }).join('');
     return '<div class="glass-card rounded-2xl sm:rounded-3xl p-6 sm:p-8">'
       + '<div class="flex items-center gap-3 mb-5">'
-      + '<span class="material-symbols-outlined text-[#CBFD00] text-2xl" aria-hidden="true">checklist</span>'
+      + '<span class="material-symbols-outlined text-[#D0A543] text-2xl" aria-hidden="true">checklist</span>'
       + '<h2 class="text-lg sm:text-xl font-extrabold text-[#FFFFFF] font-headline" id="prerequis-title">'
       + 'Prérequis</h2></div>'
       + '<ul class="prerequis-list">' + items + '</ul></div>';

@@ -36,8 +36,11 @@ source.sessions.push({
 
 /* Ce qui n'appartient qu'à un pays. Les NOMS des pays, eux, peuvent paraître :
    le sélecteur du pied de page les liste, comme sur les grands sites. */
-const DE_DJIBOUTI = ['25377145306', '77 14 53 06', '77 55 63 44', '11000012127', 'Waafi', 'Cacpay', 'Saalam', 'FDJ', 'canva-pro-dj-2026'];
-const DES_COMORES = ['2694742688', '474 26 88', '4866807', 'Mvola', 'KMF', 'American corner', 'Ifere', 'canva-pro-2026-11'];
+/* L'accroche de l'accueil (24/10/2026) : celle de Djibouti dit son pays en toutes lettres. */
+const ACCROCHE_DJ = 'Première académie audiovisuelle de Djibouti';
+const ACCROCHE_KM = 'Accroche réservée aux Comores';
+const DE_DJIBOUTI = ['25377145306', '77 14 53 06', '77 55 63 44', '11000012127', 'Waafi', 'Cacpay', 'Saalam', 'FDJ', 'canva-pro-dj-2026', ACCROCHE_DJ];
+const DES_COMORES = ['2694742688', '474 26 88', '4866807', 'Mvola', 'KMF', 'American corner', 'Ifere', 'canva-pro-2026-11', ACCROCHE_KM];
 const presents = (texte, liste) => liste.filter(m => texte.indexOf(m) >= 0);
 
 let api;
@@ -52,6 +55,7 @@ async function lire(url, pays) {
 (async () => {
   const db = await baseNeuve();
   await db.exec(catalogueVersSql(source).sql);
+  await db.query(`update pays set accroche = case code when 'DJ' then $1 when 'KM' then $2 end`, [ACCROCHE_DJ, ACCROCHE_KM]);
   api = creerGestionnaire(() => db);
 
   // ------------------------------------------------------- 1. Les Comores ---
@@ -78,6 +82,7 @@ async function lire(url, pays) {
   verifier('rien des Comores dans la réponse : ni numéro, ni Mvola, ni KMF, ni American Corner, ni session',
     presents(dj.texte, DES_COMORES), []);
   verifier('un seul pays, le sien', dj.json.pays.map(p => p.code), ['DJ']);
+  verifier('l’accroche de l’accueil est la sienne', dj.json.pays[0].accroche, ACCROCHE_DJ);
   verifier('ses sessions seulement', dj.json.sessions.map(s => s.id).sort(), ['canva-pro-dj-2026', 'marketing-mixte-2026']);
   const mixteDj = dj.json.sessions.find(s => s.id === 'marketing-mixte-2026');
   verifier('la session à deux pays garde l’adresse de Djibouti, et elle seule',

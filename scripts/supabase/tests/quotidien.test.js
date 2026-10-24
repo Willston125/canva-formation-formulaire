@@ -40,7 +40,7 @@ async function lancer(tache, entetes = {}) {
   const premiere = await lancer(tache);
   verifier('la sauvegarde part', [premiere.statut, premiere.json.envoyee], [200, true]);
   verifier('un seul e-mail', envois.length, 1);
-  verifier('daté du jour', envois[0].sujet, 'Sauvegarde IMPACTALI du 2026-10-04');
+  verifier('daté du jour', envois[0].sujet, 'Sauvegarde Cineworld Académie du 2026-10-04');
   const piece = envois[0].piecesJointes && envois[0].piecesJointes[0];
   verifier('avec la copie en pièce jointe', piece && piece.filename, 'impactali-sauvegarde-2026-10-04.json');
   const copie = JSON.parse(Buffer.from(piece.content, 'base64').toString('utf8'));

@@ -474,7 +474,7 @@ verifier('la bulle ne se fait plus passer pour WhatsApp',
 const bulle = /<a[^>]*id="contact-float"[\s\S]{0,700}?<\/a>/.exec(accueil2);
 verifier('la bulle est repérée', !!bulle, true);
 verifier('la bulle porte le vert de marque et une icône sombre',
-  bulle ? /bg-\[#CBFD00\]/.test(bulle[0]) && /text-\[#050709\]/.test(bulle[0]) : false, true);
+  bulle ? /bg-\[#D0A543\]/.test(bulle[0]) && /text-\[#050709\]/.test(bulle[0]) : false, true);
 
 // --- 22. Les six fiches ont le même formateur, pas une version appauvrie ---
 
