@@ -515,7 +515,8 @@ window.PORTFOLIO = Object.freeze([
  */
 /* Les pays — devise, indicatif, numéro WhatsApp, moyens de paiement — ne
    viennent QUE du serveur, réduits au marché du visiteur : celui de son adresse
-   IP, ou celui qu'il a choisi en bas de page. Ce fichier est chargé par toutes
+   IP, sinon celui de sa position s'il active la localisation. Il ne le choisit
+   pas. Ce fichier est chargé par toutes
    les pages : un numéro écrit ici partirait chez les visiteurs de l'autre pays.
    Un pays s'ouvre dans le tableau de bord (onglet Pays). */
 window.PAYS = Object.freeze([]);

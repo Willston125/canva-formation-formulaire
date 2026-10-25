@@ -53,6 +53,10 @@ const TYPES = {
     if (url.pathname === '/auth/v1/logout') { res.statusCode = 204; return res.end(); }
 
     if (url.pathname === '/api') {
+      /* PAYS_IP=KM npm run banc : le banc se fait passer pour Vercel, qui joint
+         à chaque requête le pays de l'adresse IP. Sans lui, le visiteur n'est
+         reconnu nulle part : c'est le cas de la localisation. */
+      if (process.env.PAYS_IP) req.headers['x-vercel-ip-country'] = process.env.PAYS_IP;
       let corps = '';
       for await (const morceau of req) corps += morceau;
       req.body = corps;

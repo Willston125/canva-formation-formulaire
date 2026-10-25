@@ -5319,17 +5319,18 @@ body:has(#already-registered-card:not(.hidden)) #mobile-progress {
   font-size: 0.72rem;
 }
 
-/* Choix du pays : il commande les tarifs et le contact affichés partout.
-   Discret, mais toujours atteignable — c'est tout l'intérêt : le sélecteur du
-   formulaire d'inscription disparaît quand aucune session n'est ouverte. */
-.choix-pays {
+/* Le pays, en bas de page : une information, pas un choix. Le pays reconnu
+   (adresse IP, ou localisation), ou, faute de pays reconnu, le bouton qui
+   active la localisation — seul recours, le pays ne se choisit pas. */
+.pays-pied {
   display: grid;
   gap: 6px;
+  justify-items: start;
   margin-top: 20px;
   max-width: 280px;
 }
 
-.choix-pays__label {
+.pays-pied__label {
   color: var(--color-muted);
   font-size: 0.72rem;
   font-weight: 700;
@@ -5337,25 +5338,68 @@ body:has(#already-registered-card:not(.hidden)) #mobile-progress {
   text-transform: uppercase;
 }
 
-.choix-pays__select {
+.pays-pied__nom {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #FFFFFF;
+  font: 700 0.9rem/1.2 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+.pays-pied__nom .material-symbols-outlined {
+  color: var(--brand);
+  font-size: 18px;
+}
+
+.pays-pied__aide {
+  color: #7E8898;
+  font-size: 0.72rem;
+  line-height: 1.5;
+}
+
+.pays-pied__bouton {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   min-height: 44px; /* cible tactile confortable */
-  padding: 0 12px;
+  padding: 0 14px;
   color: #FFFFFF;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 12px;
   font: 600 0.86rem/1 'Inter', system-ui, -apple-system, sans-serif;
+  cursor: pointer;
 }
 
-.choix-pays__select:focus-visible {
+.pays-pied__bouton:hover {
+  border-color: var(--brand);
+}
+
+.pays-pied__bouton:focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
 }
 
-.choix-pays__aide {
-  color: #7E8898;
-  font-size: 0.72rem;
+.pays-pied__bouton .material-symbols-outlined {
+  color: var(--brand);
+  font-size: 18px;
+}
+
+[data-localiser][disabled] {
+  cursor: progress;
+  opacity: 0.7;
+}
+
+/* Ce que la localisation a donné, à côté du bouton : rien tant qu'elle n'a rien dit. */
+.localisation-etat {
+  flex-basis: 100%;
+  color: #9AA5B5;
+  font-size: 0.78rem;
   line-height: 1.5;
+}
+
+.localisation-etat:empty {
+  display: none;
 }
 
 .site-footer__col {
@@ -6237,6 +6281,7 @@ button.portfolio-card.has-video { cursor: pointer; }
 .contact-carte__liste a { color: var(--brand-hover); font-weight: 700; }
 .contact-carte__horaires { display: grid; gap: 2px; }
 .contact-carte__carte { justify-self: start; }
+.contact-carte__localiser { display: grid; gap: 8px; justify-items: start; }
 
 .contact-carte--fondateur { grid-template-columns: 96px minmax(0, 1fr); align-items: center; }
 .contact-carte--fondateur img { width: 96px; height: 96px; border-radius: 50%; object-fit: cover; border: 2px solid var(--brand); }

@@ -26,9 +26,15 @@
         // Le serveur n'a pas encore répondu : rien d'un pays, rien d'« ailleurs » non plus
         bloc.hidden = !pays;
         if (horsMarche) horsMarche.hidden = !marche || Boolean(pays);
+        // Hors marché, le seul recours : la localisation (le pays ne se choisit pas)
+        const localiser = document.getElementById('contact-localiser');
+        if (localiser && !localiser.childElementCount && common.localisationPossible()) {
+            localiser.innerHTML = common.boutonLocalisation('button button--secondary');
+            localiser.hidden = false;
+        }
         if (!pays) {
-            /* Un pays quitté (choix « aucun » en bas de page) ne laisse rien
-               derrière lui, même masqué : la carte est vidée, pas seulement cachée. */
+            /* Rien d'un pays ne reste dans la carte, même masquée : elle est
+               vidée, pas seulement cachée. */
             bloc.querySelectorAll('#contact-pays-nom, [data-numero], [data-valeur]').forEach(el => { el.textContent = ''; });
             bloc.querySelectorAll('#contact-whatsapp, #contact-adresse, #contact-horaires, #contact-carte').forEach(el => { el.hidden = true; });
             bloc.querySelectorAll('a[href]').forEach(a => { a.href = '#'; });

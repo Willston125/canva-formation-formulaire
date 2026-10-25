@@ -5,9 +5,12 @@
  *   node publicite/campagne/rendre.js --v places,story-places   → seulement ces maquettes (ex. le chiffre du jour)
  *   node publicite/campagne/rendre.js --hors-ligne       → sans interroger le site (reprend le dernier _live.json)
  *
- * Les dates, tarifs, numéros WhatsApp et places restantes viennent de impactali.site
- * (catalogue public de chaque pays) : relancer le rendu suffit à remettre les visuels
- * d'aplomb après un changement dans le tableau de bord.
+ * Les dates, tarifs, numéros WhatsApp et places restantes viennent de la base du site,
+ * réduite pays par pays comme le fait l'API : relancer le rendu suffit à remettre les
+ * visuels d'aplomb après un changement dans le tableau de bord. Le site public ne sert
+ * plus que le pays de la connexion (25/10/2026) : il faut donc l'adresse de la base,
+ * DATABASE_URL, celle de Vercel, dans un fichier .env.local (jamais versionné) :
+ *   node --env-file=.env.local publicite/campagne/rendre.js
  *
  * Sortie : publicite/rendus/campagne/<formation>/{Comores,Djibouti,Generique}/ + planches. */
 'use strict';
@@ -52,11 +55,18 @@ const MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 
 async function lireSite() {
   const fichier = path.join(SORTIE, '_live.json');
   if (HORS_LIGNE) return JSON.parse(fs.readFileSync(fichier, 'utf8'));
+  if (!process.env.DATABASE_URL) {
+    throw new Error('DATABASE_URL absente : lancez « node --env-file=.env.local publicite/campagne/rendre.js », ou ajoutez --hors-ligne');
+  }
+  const { base } = require(path.join(RACINE, 'api/_lib/base'));
+  const { lireCatalogue } = require(path.join(RACINE, 'api/_lib/catalogue'));
+  const { catalogueDuMarche } = require(path.join(RACINE, 'api/_lib/marche'));
+  const db = base();
+  const complet = await lireCatalogue(db);
+  await db.end();
   const live = { maj: new Date().toISOString() };
   for (const [m, { code }] of Object.entries(MARCHES)) {
-    const r = await fetch(`https://www.impactali.site/api?action=catalogue&marche=${code}`, { headers: { 'Cache-Control': 'no-cache' } });
-    if (!r.ok) throw new Error(`Le site répond ${r.status} pour ${code}`);
-    const c = await r.json();
+    const c = catalogueDuMarche(complet, { code, source: 'outil' });
     const pays = c.pays.find(p => p.code === code);
     if (!pays) throw new Error(`Le catalogue ${code} ne contient pas son pays (pays inactif ?)`);
     const sessions = {};

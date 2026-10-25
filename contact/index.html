@@ -16,7 +16,7 @@
     <!-- Polices auto-hébergées (régénérer avec : npm run build:fonts) -->
     <link rel="preload" href="/assets/fonts/plus-jakarta-sans-latin.woff2?v=a389d97d" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="/assets/fonts/inter-latin.woff2?v=f11d729b" as="font" type="font/woff2" crossorigin>
-    <link rel="preload" href="/assets/fonts/material-symbols-outlined.woff2?v=7f96750c" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/assets/fonts/material-symbols-outlined.woff2?v=e3571f11" as="font" type="font/woff2" crossorigin>
     <link rel="icon" href="/favicon.ico" sizes="48x48">
     <link rel="icon" type="image/png" sizes="32x32" href="/assets/brand/icone-32.png">
     <link rel="apple-touch-icon" href="/assets/brand/icone-180.png">
@@ -103,7 +103,8 @@
             <article class="contact-carte" id="contact-hors-marche" hidden>
                 <span class="contact-carte__icone material-symbols-outlined" aria-hidden="true">public</span>
                 <h2>Nos coordonnées près de chez vous</h2>
-                <p>Choisissez votre pays en bas de page, dans « Pays » : l’adresse et le contact local s’afficheront ici.</p>
+                <p>Votre pays n’a pas été reconnu. Activez la localisation : l’adresse et le contact de votre pays s’afficheront ici.</p>
+                <p class="contact-carte__localiser" id="contact-localiser" hidden></p>
             </article>
 
             <article class="contact-carte contact-carte--fondateur">

@@ -43,7 +43,9 @@ verifier('la FAQ est retrouvée', faq.length > 1000, true);
 // --- 1. Des réponses justes ----------------------------------------------------
 
 verifier('plus de « choisissez votre pays à la première étape du formulaire »', /première étape du formulaire/.test(texte), false);
-verifier('le pays mal reconnu se choisit en bas de page, comme partout', /tout en bas de la page/.test(texte), true);
+/* 25 octobre 2026 : le pays ne se choisit plus du tout ; seul recours, la localisation. */
+verifier('plus d’invitation à choisir son pays', /bas de la page|Choisissez-le/.test(texte), false);
+verifier('le pays non reconnu passe par la localisation', /Activez la localisation/.test(texte), true);
 verifier('aucun pays, devise, lieu ni moyen de paiement nommé',
   (texte.match(/Comores|Djibouti|Moroni|\bKMF\b|\bFDJ\b|Waafi|Mvola|Cac ?pay|D-Money|American corner|Saalam/g) || []), []);
 verifier('ni aucun numéro', /\+\s?(253|269)|wa\.me\/\d/.test(faq), false);

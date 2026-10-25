@@ -1,7 +1,7 @@
 /* Aucun pays dans ce que le site sert à tout le monde.
 
    Depuis le 9 octobre 2026, c'est le SERVEUR qui fixe le pays du visiteur
-   (adresse IP, ou choix en bas de page) et qui ne lui envoie que l'offre de
+   (adresse IP, sinon localisation de l'appareil) et qui ne lui envoie que l'offre de
    ce pays (api/_lib/marche.js, éprouvé par scripts/supabase/tests/marche.test.js).
    Cette épreuve garde l'autre moitié de la promesse : les pages et les scripts
    publics — les mêmes pour tous les visiteurs, de tous les pays — ne portent
@@ -79,8 +79,13 @@ verifier('plus de pays par défaut : sans réponse du serveur, aucun pays',
   /function paysActif\(\) \{\s*return MARCHE && MARCHE\.code \? trouverPays\(MARCHE\.code\) : null;/.test(commun), true);
 verifier('un serveur injoignable laisse la page neutre, jamais sur un pays',
   /MARCHE = \{ code: null, nom: null, mode: null, source: 'indisponible' \};/.test(commun), true);
-verifier('le choix du pied de page est transmis au serveur',
-  /&marche=\$\{encodeURIComponent\(marcheDemande\)\}/.test(commun), true);
+/* 25 octobre 2026 : le pays ne se choisit pas. Le site n'envoie jamais un pays,
+   seulement la position de l'appareil si le visiteur active la localisation. */
+verifier('le site n’envoie jamais de pays au serveur', /&marche=/.test(commun), false);
+verifier('seulement la position, si la localisation est activée',
+  /&position=\$\{encodeURIComponent\(positionEnvoyee\)\}/.test(commun), true);
+verifier('arrondie au kilomètre avant de partir',
+  /p\.coords\.latitude\.toFixed\(2\)\},\$\{p\.coords\.longitude\.toFixed\(2\)/.test(commun), true);
 verifier('sans numéro, un lien de contact devient un e-mail, jamais un WhatsApp sans destinataire',
   /if \(numero\) return `https:\/\/wa\.me\/\$\{numero\}/.test(commun) && /mailto:\$\{adresse\}/.test(commun), true);
 

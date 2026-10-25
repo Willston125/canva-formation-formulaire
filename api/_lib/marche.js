@@ -14,15 +14,20 @@
  *   formations, présentées en ligne, sans tarif, sans session, sans numéro ;
  * - pas de pays lisible → hors marché aussi. Jamais le mauvais pays.
  *
- * Un CHOIX explicite (le sélecteur discret du pied de page) passe avant
- * l'adresse IP : un visiteur mal reconnu — VPN, itinérance — choisit son pays,
- * comme sur les grands sites. Il fait partie de l'adresse demandée
- * (`&marche=KM`), donc de la clé du cache : aucune confusion possible entre
- * deux visiteurs. Limite assumée, la même que partout : un VPN fait passer
- * pour un autre pays. Un visiteur ordinaire, lui, ne voit que le sien. */
+ * LE VISITEUR NE CHOISIT PAS SON PAYS (décision du propriétaire, 25 octobre
+ * 2026) : plus de sélecteur, et plus de paramètre qui le forcerait. Seul
+ * recours quand l'adresse IP ne dit rien d'utile : activer la localisation de
+ * l'appareil. Le navigateur envoie alors sa position (`&position=-11.70,43.25`),
+ * jamais un pays, et c'est encore le serveur qui en déduit le pays
+ * (api/_lib/localisation.js). L'adresse IP passe AVANT la position : un
+ * visiteur reconnu à Djibouti ne verra pas les Comores en inventant des
+ * coordonnées. La position fait partie de l'adresse demandée, donc de la clé
+ * du cache. Limite assumée, la même que partout : un VPN fait passer pour un
+ * autre pays. Un visiteur ordinaire, lui, ne voit que le sien. */
 'use strict';
 
 const { sessionOuverteAu } = require('./prix');
+const { paysDeLaPosition } = require('./localisation');
 
 const FORMAT_CODE = /^[A-Z]{2}$/;
 /* Le mode présenté hors marché : décision du propriétaire (9 octobre 2026). */
@@ -43,19 +48,17 @@ function code(valeur) {
 /**
  * Le marché retenu pour cette requête.
  * @param {object} catalogue  le catalogue complet (lireCatalogue)
- * @param {{ demande?: string, ip?: string }} indices
- *   demande : le choix du visiteur (« KM », « aucun » pour hors marché, vide = automatique)
- *   ip      : l'en-tête x-vercel-ip-country
- * @returns {{ code: string|null, source: 'choix'|'ip'|'hors-marche'|'inconnu' }}
+ * @param {{ ip?: string, position?: string }} indices
+ *   ip       : l'en-tête x-vercel-ip-country
+ *   position : « latitude,longitude » si le visiteur a activé la localisation
+ * @returns {{ code: string|null, source: 'ip'|'localisation'|'hors-marche'|'inconnu' }}
  */
-function choisirMarche(catalogue, { demande = '', ip = '' } = {}) {
+function choisirMarche(catalogue, { ip = '', position = '' } = {}) {
   const ouverts = paysOuverts(catalogue).map(p => p.code);
-  const voulu = String(demande || '').trim().toLowerCase();
-  if (voulu === 'aucun') return { code: null, source: 'choix' };
-  const choisi = code(demande);
-  if (choisi && ouverts.indexOf(choisi) >= 0) return { code: choisi, source: 'choix' };
   const lu = code(ip);
   if (lu && ouverts.indexOf(lu) >= 0) return { code: lu, source: 'ip' };
+  const situe = paysDeLaPosition(position);
+  if (situe && ouverts.indexOf(situe) >= 0) return { code: situe, source: 'localisation' };
   return { code: null, source: lu ? 'hors-marche' : 'inconnu' };
 }
 
@@ -179,10 +182,9 @@ function catalogueDuMarche(catalogue, choix, horsMarcheMode = MODE_HORS_MARCHE, 
       nom: pays.length ? pays[0].nom : null,
       mode,
       source: choix ? choix.source : 'inconnu'
-    },
-    /* Les noms des pays ouverts, pour le sélecteur du pied de page : rien
-       d'autre que des noms — ni offre, ni tarif, ni numéro. */
-    marches: ouverts.map(p => ({ code: p.code, nom: p.nom }))
+    }
+    /* Plus de liste des pays ouverts : elle servait au sélecteur du pied de
+       page, et chaque visiteur ne doit voir que le nom du sien. */
   });
 }
 

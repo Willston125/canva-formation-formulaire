@@ -25,19 +25,25 @@
 
     /* ---------- Le marché du visiteur ----------
        C'EST LE SERVEUR QUI LE DÉCIDE, comme sur les grandes plateformes : le
-       pays de l'adresse IP (Vercel), ou celui que le visiteur a choisi en bas de
-       page. Le catalogue reçu ne contient que ce pays — tarifs, sessions,
+       pays de l'adresse IP (Vercel), sinon celui de la position de l'appareil
+       si le visiteur a activé la localisation. Le visiteur ne le choisit pas.
+       Le catalogue reçu ne contient que ce pays — tarifs, sessions,
        moyens de paiement, numéro WhatsApp. Trois états, et aucun n'est un pays
        par défaut :
        - MARCHE === null       : le serveur n'a pas encore répondu → page neutre ;
        - MARCHE.code === null  : hors marché (pays non ouvert, ou illisible) →
                                  formations en ligne, sans tarif ni numéro ;
        - MARCHE.code = 'KM'…   : l'offre de ce pays, et elle seule. */
-    const CLE_MARCHE = 'impactali_marche';
-    // L'ancien choix (sélecteur du formulaire, devinette par fuseau) ne vaut plus rien
-    try { localStorage.removeItem('impactali_pays'); localStorage.removeItem('impactali_places'); } catch (e) { /* stockage indisponible */ }
+    /* La position de l'appareil, arrondie au kilomètre (« -11.70,43.25 »),
+       gardée seulement si elle a fait reconnaître un pays. */
+    const CLE_POSITION = 'impactali_position';
+    /* Les anciens choix (sélecteur du formulaire, devinette par fuseau, puis
+       sélecteur du pied de page) ne valent plus rien : le pays ne se choisit pas. */
+    try {
+        ['impactali_pays', 'impactali_places', 'impactali_marche', 'impactali_catalogue_v2']
+            .forEach(cle => localStorage.removeItem(cle));
+    } catch (e) { /* stockage indisponible */ }
     let MARCHE = null;
-    let MARCHES = [];
     /* Les annonces de la fenêtre d'arrivée (annonces.js), déjà triées par le
        serveur pour CE marché : null tant qu'il n'a pas répondu. */
     let ANNONCES = null;
@@ -70,28 +76,48 @@
         return MARCHE;
     }
 
-    /** Le choix fait en bas de page : un code, « aucun », ou '' (automatique). */
-    function choixMarche() {
-        try { return localStorage.getItem(CLE_MARCHE) || ''; } catch (e) { return ''; }
+    /** La position mémorisée (« -11.70,43.25 »), ou ''. Le formulaire l'envoie avec l'inscription. */
+    function positionMemorisee() {
+        try {
+            const valeur = localStorage.getItem(CLE_POSITION) || '';
+            return /^-?\d{1,2}(\.\d{1,2})?,-?\d{1,3}(\.\d{1,2})?$/.test(valeur) ? valeur : '';
+        } catch (e) { return ''; }
+    }
+
+    /** Le navigateur sait-il donner la position de l'appareil ? */
+    function localisationPossible() {
+        return Boolean(navigator.geolocation) && window.isSecureContext !== false;
     }
 
     /**
-     * Le visiteur choisit son pays (pied de page). '' = revenir à la détection
-     * automatique. Le choix est envoyé au SERVEUR, qui renvoie le catalogue de
-     * ce pays : aucune donnée d'un autre pays n'était déjà dans la page.
+     * Le visiteur active la localisation : seul recours quand son adresse IP
+     * ne le situe dans aucun pays ouvert. On n'envoie au SERVEUR que la
+     * position, arrondie au kilomètre — jamais un pays : c'est lui qui en
+     * déduit le pays, et il ne renvoie que l'offre de celui-là. Une adresse IP
+     * reconnue passe toujours avant (api/_lib/marche.js).
      * Les pages écoutent « impactali:pays » pour se redessiner.
+     * @returns {Promise<'trouve'|'ailleurs'|'refus'|'echec'>}
      */
-    function choisirPays(code) {
-        const brut = String(code || '').trim();
-        const valeur = brut.toLowerCase() === 'aucun' ? 'aucun'
-            : (/^[A-Za-z]{2}$/.test(brut) ? brut.toUpperCase() : '');
-        try {
-            if (valeur) localStorage.setItem(CLE_MARCHE, valeur);
-            else localStorage.removeItem(CLE_MARCHE);
-        } catch (e) { /* stockage indisponible : le choix vaut pour cette page */ }
-        return refreshPlaces(true, valeur).then(() => {
-            document.dispatchEvent(new CustomEvent('impactali:pays', { detail: { pays: paysActif() } }));
-            return true;
+    function localiser() {
+        if (!localisationPossible()) return Promise.resolve('echec');
+        return new Promise(resolve => {
+            navigator.geolocation.getCurrentPosition(
+                p => resolve(`${p.coords.latitude.toFixed(2)},${p.coords.longitude.toFixed(2)}`),
+                erreur => resolve(erreur && erreur.code === 1 ? 'refus' : 'echec'),
+                { enableHighAccuracy: false, timeout: 20000, maximumAge: 600000 }
+            );
+        }).then(position => {
+            if (position === 'refus' || position === 'echec') return position;
+            return refreshPlaces(true, position).then(() => {
+                const trouve = Boolean(MARCHE && MARCHE.code);
+                // Une position qui ne mène à aucun pays ouvert ne sert à rien : on l'oublie
+                try {
+                    if (trouve) localStorage.setItem(CLE_POSITION, position);
+                    else localStorage.removeItem(CLE_POSITION);
+                } catch (e) { /* stockage indisponible : la position vaut pour cette page */ }
+                document.dispatchEvent(new CustomEvent('impactali:pays', { detail: { pays: paysActif() } }));
+                return trouve ? 'trouve' : 'ailleurs';
+            });
         });
     }
 
@@ -314,8 +340,10 @@
        servent de repli : aucune page ne dépend de cet appel pour s'afficher. */
     const ENDPOINTS = window.SITE_ENDPOINTS || {};
     /* v2 : le catalogue est réduit au marché du visiteur. Le relevé d'avant
-       contenait tous les pays ; il ne doit jamais être rejoué (effacé plus haut). */
-    const CACHE_PLACES = 'impactali_catalogue_v2';
+       contenait tous les pays ; il ne doit jamais être rejoué (effacé plus haut).
+       v3 : plus de pays choisi en bas de page. Un relevé v2 pouvait porter
+       l'offre d'un pays CHOISI, autre que celui du visiteur (effacé plus haut). */
+    const CACHE_PLACES = 'impactali_catalogue_v3';
     const DUREE_CACHE = 60000; // 1 minute : assez pour éviter un appel par page, assez court pour rester juste
 
     /* MÉMOIRE D'APPARENCE — l'adresse réellement posée sur chaque visuel.
@@ -446,7 +474,6 @@
            réponse précédente afficherait le tarif et le numéro d'un autre marché. */
         MARCHE = donnees.marche && typeof donnees.marche === 'object'
             ? donnees.marche : { code: null, nom: null, mode: null, source: 'inconnu' };
-        MARCHES = Array.isArray(donnees.marches) ? donnees.marches.filter(m => m && m.code && m.nom) : [];
         PAYS = Array.isArray(donnees.pays) ? donnees.pays : [];
         window.PAYS = PAYS;
         // Prises telles quelles, même vides : celles d'un autre marché ne doivent pas survivre
@@ -865,12 +892,12 @@
      * Interroge l'API : catalogue à jour et nombre d'inscrits par session.
      * Un seul appel sert les deux, pour ne pas doubler l'attente au chargement.
      * @param {boolean} force ignore le cache (après une inscription, par exemple)
-     * @param {string} [choix] le pays choisi en bas de page (sinon celui mémorisé ; '' = automatique)
+     * @param {string} [position] la position de l'appareil (sinon celle mémorisée ; '' = aucune)
      */
-    function refreshPlaces(force, choix) {
+    function refreshPlaces(force, position) {
         const url = ENDPOINTS.registration;
         if (!url) return Promise.resolve(false);
-        const marcheDemande = choix === undefined ? choixMarche() : choix;
+        const positionEnvoyee = position === undefined ? positionMemorisee() : position;
 
         const appliquer = donnees => {
             // Les textes sont indépendants du catalogue : ils s'appliquent même
@@ -894,9 +921,9 @@
                    revient pendant une minute. */
                 let modifieLe = 0;
                 try { modifieLe = Number(localStorage.getItem('impactali_maj')) || 0; } catch (e) { }
-                /* Un relevé ne vaut que pour le choix de pays qui l'a obtenu : sans
-                   cette garde, changer de pays rejouerait l'offre de l'autre. */
-                if (cache && cache.horodatage > modifieLe && (cache.choix || '') === marcheDemande) {
+                /* Un relevé ne vaut que pour la position qui l'a obtenu : sans
+                   cette garde, une localisation rejouerait l'offre d'avant. */
+                if (cache && cache.horodatage > modifieLe && (cache.position || '') === positionEnvoyee) {
                     /* AFFICHER D'ABORD, VÉRIFIER ENSUITE. Le relevé retenu est
                        posé tout de suite, même s'il a passé sa minute : il vaut
                        toujours mieux que les valeurs du fichier, qui datent du
@@ -917,7 +944,7 @@
            <script> exécute ce qu'on lui sert, quand fetch ne fait que le lire. */
         const interroger = action => {
             const cible = `${url}${url.includes('?') ? '&' : '?'}action=${action}`
-                + (marcheDemande ? `&marche=${encodeURIComponent(marcheDemande)}` : '');
+                + (positionEnvoyee ? `&position=${encodeURIComponent(positionEnvoyee)}` : '');
             return fetch(cible, { method: 'GET' })
                 .then(reponse => (reponse.ok ? reponse.json() : Promise.reject(new Error('HTTP ' + reponse.status))));
         };
@@ -932,7 +959,7 @@
             })
             .then(donnees => {
                 try {
-                    localStorage.setItem(CACHE_PLACES, JSON.stringify({ horodatage: Date.now(), releve: donnees, choix: marcheDemande }));
+                    localStorage.setItem(CACHE_PLACES, JSON.stringify({ horodatage: Date.now(), releve: donnees, position: positionEnvoyee }));
                 } catch (e) { /* stockage indisponible : sans conséquence */ }
                 return appliquer(donnees);
             })
@@ -1351,8 +1378,10 @@
         paysParDefaut,
         paysActif,
         marcheActif,
-        choixMarche,
-        choisirPays,
+        positionMemorisee,
+        localisationPossible,
+        localiser,
+        boutonLocalisation,
         trouverPays,
         numeroWhatsapp,
         numeroWhatsappAffiche,
@@ -1426,48 +1455,82 @@
     });
 
     /**
-     * Le pays, en bas de page — discret, comme sur les grands sites.
+     * Le pays, en bas de page — une information, pas un choix.
      *
-     * Le pays est DÉTECTÉ par le serveur ; ce sélecteur n'est qu'un recours pour
-     * le visiteur mal reconnu (VPN, itinérance) ou qui cherche délibérément
-     * l'offre d'un autre pays. Il ne porte que des NOMS de pays : l'offre d'un
-     * autre pays n'est demandée au serveur qu'une fois choisie. Le pied de page
-     * existe sur toutes les pages, fiches générées comprises : on s'y greffe.
+     * Le visiteur NE CHOISIT PAS son pays (décision du propriétaire, 25 octobre
+     * 2026) : un visiteur de Djibouti ne doit pas pouvoir afficher le numéro
+     * des Comores, ni l'inverse. Le pied dit le pays reconnu ; si aucun ne
+     * l'est, il propose d'activer la localisation, seul recours. Le pied de
+     * page existe sur toutes les pages, fiches générées comprises : on s'y greffe.
      */
-    function initChoixPays() {
+    function initPaysPied() {
         const hote = document.querySelector('.site-footer__brand');
         if (!hote) return;
-        const ancien = hote.querySelector('.choix-pays');
+        const ancien = hote.querySelector('.pays-pied');
         if (ancien) ancien.remove();
-        // Rien à proposer tant que le serveur n'a pas dit quels pays sont ouverts
-        if (!MARCHE || !MARCHES.length) return;
+        // Rien à dire tant que le serveur n'a pas fixé le pays
+        if (!MARCHE) return;
 
-        const choix = choixMarche();
-        const detecte = choix ? '' : (MARCHE.code ? MARCHE.nom : 'autre pays');
         const boite = document.createElement('div');
-        boite.className = 'choix-pays';
-        boite.innerHTML =
-            '<label class="choix-pays__label" for="choix-pays-pied">Pays</label>'
-            + '<select class="choix-pays__select" id="choix-pays-pied">'
-            + `<option value="">${escapeHtml('Automatique' + (detecte ? ` (${detecte})` : ''))}</option>`
-            + MARCHES.map(m => `<option value="${escapeHtml(m.code)}">${escapeHtml(m.nom)}</option>`).join('')
-            + '<option value="aucun">Autre pays</option>'
-            + '</select>'
-            + '<span class="choix-pays__aide">Les formations, tarifs et contacts affichés sont ceux de ce pays.</span>';
+        boite.className = 'pays-pied';
+        if (MARCHE.code) {
+            const comment = MARCHE.source === 'localisation' ? 'Reconnu par la localisation de votre appareil.' : 'Reconnu automatiquement.';
+            boite.innerHTML =
+                '<span class="pays-pied__label">Pays</span>'
+                + `<span class="pays-pied__nom"><span class="material-symbols-outlined" aria-hidden="true">location_on</span>${escapeHtml(MARCHE.nom || '')}</span>`
+                + `<span class="pays-pied__aide">${comment} Les formations, tarifs et contacts affichés sont ceux de ce pays.</span>`;
+        } else if (MARCHE.source === 'indisponible') {
+            // Serveur injoignable : la localisation n'y changerait rien
+            boite.innerHTML =
+                '<span class="pays-pied__label">Pays</span>'
+                + '<span class="pays-pied__aide">Service momentanément indisponible : actualisez la page dans un instant.</span>';
+        } else {
+            boite.innerHTML =
+                '<span class="pays-pied__label">Pays</span>'
+                + '<span class="pays-pied__aide">Votre pays n’a pas été reconnu : les formations s’affichent en ligne, sans tarif local.</span>'
+                + (localisationPossible() ? boutonLocalisation('pays-pied__bouton') : '');
+        }
         hote.appendChild(boite);
-
-        const select = boite.querySelector('select');
-        select.value = [...select.options].some(o => o.value === choix) ? choix : '';
-        select.addEventListener('change', () => {
-            select.disabled = true;
-            choisirPays(select.value).then(() => { select.disabled = false; });
-        });
     }
 
-    // Le pays a changé : le sélecteur se redessine (le libellé « Automatique » suit le pays détecté)
-    document.addEventListener('impactali:pays', initChoixPays);
+    /* Le dernier résultat de la localisation. Gardé ici, et non seulement écrit
+       dans la page : l'arrivée du catalogue redessine le pied et le formulaire
+       juste après, et le message disparaissait avec l'ancien bouton. */
+    let ISSUE_LOCALISATION = '';
 
-    // La liste des pays vient de la feuille : elle peut changer en cours de route
-    document.addEventListener('impactali:catalogue', initChoixPays);
-    document.addEventListener('DOMContentLoaded', initChoixPays);
+    /** Le bouton « Activer la localisation » et sa ligne d'état, pour toute page hors marché. */
+    function boutonLocalisation(classe) {
+        return `<button type="button" class="${escapeHtml(classe)}" data-localiser>Activer la localisation<span class="material-symbols-outlined" aria-hidden="true">my_location</span></button>`
+            + `<span class="localisation-etat" data-localiser-etat role="status" aria-live="polite">${escapeHtml(ISSUE_LOCALISATION)}</span>`;
+    }
+
+    const ISSUES_LOCALISATION = {
+        ailleurs: 'Votre position ne se trouve dans aucun pays où nos formations sont proposées sur place.',
+        refus: 'Localisation refusée. Autorisez-la dans les réglages du navigateur, puis réessayez.',
+        echec: 'Position introuvable pour le moment. Réessayez dans un instant.'
+    };
+
+    /* Un seul écouteur pour tous les boutons, y compris ceux qu'une page dessine
+       plus tard (formulaire, page contact). Une localisation réussie redessine
+       les pages par « impactali:pays » ; un échec s'écrit à côté du bouton. */
+    document.addEventListener('click', event => {
+        const bouton = event.target && event.target.closest ? event.target.closest('[data-localiser]') : null;
+        if (!bouton || bouton.disabled) return;
+        const boutons = [...document.querySelectorAll('[data-localiser]')];
+        const ecrire = texte => {
+            ISSUE_LOCALISATION = texte;
+            document.querySelectorAll('[data-localiser-etat]').forEach(el => { el.textContent = texte; });
+        };
+        boutons.forEach(b => { b.disabled = true; b.setAttribute('aria-busy', 'true'); });
+        ecrire('Localisation en cours…');
+        localiser().then(issue => {
+            boutons.forEach(b => { b.disabled = false; b.removeAttribute('aria-busy'); });
+            ecrire(ISSUES_LOCALISATION[issue] || '');
+        });
+    });
+
+    // Le pays a changé (localisation) : le pied se redessine
+    document.addEventListener('impactali:pays', initPaysPied);
+    document.addEventListener('impactali:catalogue', initPaysPied);
+    document.addEventListener('DOMContentLoaded', initPaysPied);
 })();

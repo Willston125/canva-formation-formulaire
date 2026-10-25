@@ -1,8 +1,9 @@
 /* Chaque pays ne voit que son offre.
  *
  * Le catalogue public est réduit au MARCHÉ du visiteur : le pays de son adresse
- * IP (en-tête x-vercel-ip-country, posé par Vercel), ou celui qu'il a choisi en
- * bas de page. On éprouve ici, par le vrai gestionnaire HTTP, que les numéros,
+ * IP (en-tête x-vercel-ip-country, posé par Vercel), sinon celui de sa position
+ * s'il active la localisation. Il ne le choisit pas (25 octobre 2026). On
+ * éprouve ici, par le vrai gestionnaire HTTP, que les numéros,
  * les tarifs, les moyens de paiement et les lieux d'un pays n'apparaissent
  * NULLE PART dans la réponse servie à l'autre — pas seulement à l'écran : dans
  * le texte même de la réponse. */
@@ -34,8 +35,7 @@ source.sessions.push({
   currency: null, pays: 'DJ,KM', parPays: { KM: { mode: 'En ligne', tarif: 10000 }, DJ: { lieu: 'Saalam Tower, 5ème étage' } }
 });
 
-/* Ce qui n'appartient qu'à un pays. Les NOMS des pays, eux, peuvent paraître :
-   le sélecteur du pied de page les liste, comme sur les grands sites. */
+/* Ce qui n'appartient qu'à un pays. */
 /* L'accroche de l'accueil (24/10/2026) : celle de Djibouti dit son pays en toutes lettres. */
 const ACCROCHE_DJ = 'Première académie audiovisuelle de Djibouti';
 const ACCROCHE_KM = 'Accroche réservée aux Comores';
@@ -112,20 +112,47 @@ async function lire(url, pays) {
     [(await lire('/api?action=catalogue', 'FR')).json.marche.source, (await lire('/api?action=catalogue', '')).json.marche.source],
     ['hors-marche', 'inconnu']);
 
-  // ---------------------------------------- 4. Le choix du pied de page ---
+  // ------------------------------------------ 4. Le pays ne se choisit pas ---
 
-  const choixKm = await lire('/api?action=catalogue&marche=KM', 'DJ');
-  verifier('un visiteur de Djibouti qui CHOISIT les Comores les voit', [choixKm.json.marche.code, choixKm.json.marche.source], ['KM', 'choix']);
-  verifier('« aucun » : hors marché, même depuis un pays ouvert',
-    (await lire('/api?action=catalogue&marche=aucun', 'KM')).json.marche.code, null);
-  verifier('un pays non ouvert ne se choisit pas : l’adresse IP reprend la main',
-    (await lire('/api?action=catalogue&marche=FR', 'DJ')).json.marche.code, 'DJ');
-  verifier('une valeur piégée non plus',
-    (await lire('/api?action=catalogue&marche=%3Cscript%3E', 'DJ')).json.marche.code, 'DJ');
-  verifier('la liste du sélecteur ne porte que des noms',
-    km.json.marches, [{ code: 'DJ', nom: 'Djibouti' }, { code: 'KM', nom: 'Comores' }]);
+  /* Décision du propriétaire (25 octobre 2026) : plus de sélecteur, et aucun
+     paramètre ne force un pays. */
+  const forceKm = await lire('/api?action=catalogue&marche=KM', 'DJ');
+  verifier('un visiteur de Djibouti qui demande les Comores reste à Djibouti',
+    [forceKm.json.marche.code, forceKm.json.marche.source], ['DJ', 'ip']);
+  verifier('et ne reçoit rien des Comores', presents(forceKm.texte, DES_COMORES), []);
+  verifier('hors marché, demander un pays n’ouvre rien non plus',
+    (await lire('/api?action=catalogue&marche=DJ', 'FR')).json.marche.code, null);
+  verifier('la liste des pays ouverts ne part plus : chacun ne voit que le nom du sien',
+    [km.json.marches, dj.json.marches], [undefined, undefined]);
 
-  // -------------------------------- 5. Ce qui ne part jamais, nulle part ---
+  // ----------------------------------- 5. La localisation, seul recours ---
+
+  const MORONI = '-11.70,43.26';
+  const DJIBOUTI_VILLE = '11.59,43.15';
+  const moroni = await lire('/api?action=catalogue&position=' + MORONI, 'FR');
+  verifier('adresse non reconnue, appareil localisé à Moroni : le marché des Comores',
+    [moroni.json.marche.code, moroni.json.marche.source], ['KM', 'localisation']);
+  verifier('et rien de Djibouti', presents(moroni.texte, DE_DJIBOUTI), []);
+  const djVille = await lire('/api?action=catalogue&position=' + DJIBOUTI_VILLE, '');
+  verifier('sans adresse lisible, appareil localisé à Djibouti-ville : Djibouti',
+    [djVille.json.marche.code, djVille.json.marche.source], ['DJ', 'localisation']);
+  verifier('et rien des Comores', presents(djVille.texte, DES_COMORES), []);
+  const invente = await lire('/api?action=catalogue&position=' + MORONI, 'DJ');
+  verifier('reconnu à Djibouti, une position des Comores n’y change rien : l’adresse IP l’emporte',
+    [invente.json.marche.code, invente.json.marche.source], ['DJ', 'ip']);
+  verifier('ni numéro ni offre des Comores pour autant', presents(invente.texte, DES_COMORES), []);
+  for (const [libelle, position] of [['Mayotte', '-12.78,45.23'], ['Aden, en face de Djibouti', '12.79,45.03'],
+    ['Addis-Abeba', '9.03,38.74'], ['une île du détroit (Yémen)', '12.66,43.42'], ['Paris', '48.86,2.35']]) {
+    verifier(`localisé à ${libelle} : hors marché`,
+      (await lire('/api?action=catalogue&position=' + encodeURIComponent(position), 'FR')).json.marche.code, null);
+  }
+  for (const [libelle, position] of [['une valeur piégée', '<script>'], ['une latitude impossible', '91,43.26'],
+    ['une position trop précise (le site arrondit au kilomètre)', '-11.7012,43.2601'], ['un pays au lieu d’une position', 'KM']]) {
+    verifier(`${libelle} : ignorée`,
+      (await lire('/api?action=catalogue&position=' + encodeURIComponent(position), 'FR')).json.marche.code, null);
+  }
+
+  // -------------------------------- 6. Ce qui ne part jamais, nulle part ---
 
   for (const [nom, r] of [['Comores', km], ['Djibouti', dj]]) {
     verifier(`${nom} : ni le numéro WhatsApp général, ni le lieu par défaut des sessions`,
@@ -134,7 +161,7 @@ async function lire(url, pays) {
       r.json.formations.filter(f => f.price !== null).map(f => f.formId), []);
   }
 
-  // -------------------------------------------------------- 6. Les places ---
+  // -------------------------------------------------------- 7. Les places ---
 
   await db.exec(`insert into inscriptions (form_id, nom, statut, session_id) values
     ('canva-pro', 'Awa', 'Confirmé', 'canva-pro-2026-11'),
@@ -144,17 +171,19 @@ async function lire(url, pays) {
   verifier('et elles aussi, une copie par pays', placesKm.entetes.vary, 'X-Vercel-IP-Country');
   verifier('Djibouti : ses places à lui', (await lire('/api?action=places', 'DJ')).json, { sessions: { 'canva-pro-dj-2026': 1 } });
   verifier('hors marché : aucune session, aucune place', (await lire('/api?action=places', 'FR')).json, { sessions: {} });
+  verifier('localisé aux Comores : leurs places à elles',
+    (await lire('/api?action=places&position=-11.70,43.26', 'FR')).json, { sessions: { 'canva-pro-2026-11': 1 } });
 
-  // ------------------------------------------- 7. Un pays fermé ne vend rien ---
+  // ------------------------------------------- 8. Un pays fermé ne vend rien ---
 
   const ferme = JSON.parse(JSON.stringify(source));
   ferme.pays.find(p => p.code === 'DJ').active = false;
   verifier('un pays fermé dans le tableau de bord ne reçoit pas son offre',
     choisirMarche(ferme, { ip: 'DJ' }).code, null);
-  verifier('ni par l’adresse IP, ni par le sélecteur',
-    choisirMarche(ferme, { demande: 'DJ', ip: 'DJ' }).code, null);
+  verifier('ni par l’adresse IP, ni par la localisation',
+    choisirMarche(ferme, { ip: 'DJ', position: '11.59,43.15' }).code, null);
   verifier('et la fonction se passe de base pour le dire',
-    catalogueDuMarche(ferme, { code: null, source: 'hors-marche' }).marches.map(m => m.code), ['KM']);
+    catalogueDuMarche(ferme, { code: null, source: 'hors-marche' }).pays, []);
 
   await db.close();
   bilan();

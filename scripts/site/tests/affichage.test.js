@@ -367,37 +367,38 @@ verifier('une réalisation n’est pas rognée à l’envoi',
 verifier('le survol montre bien l’affiche entière',
   /object-fit: contain/.test(style), true);
 
-// --- 17. Le choix du pays doit être atteignable partout ---
+// --- 17. Le pays, en bas de page : une information, pas un choix ---
 
-/* Le seul sélecteur vivait dans le formulaire d'inscription, masqué justement
-   quand aucune session n'est ouverte : un visiteur mal reconnu voyait alors les
-   tarifs et le numéro d'un autre pays sans aucun recours. */
-verifier('un choix du pays est greffé au pied de page',
-  /function initChoixPays\(\)/.test(commun)
+/* Décision du propriétaire (25 octobre 2026) : le visiteur ne choisit pas son
+   pays. Le sélecteur du pied de page laissait un visiteur de Djibouti afficher
+   le numéro des Comores en un clic. Le pied dit le pays reconnu ; faute de
+   pays reconnu, il propose la localisation, seul recours. */
+verifier('le pays est greffé au pied de page',
+  /function initPaysPied\(\)/.test(commun)
   && /document\.querySelector\('\.site-footer__brand'\)/.test(commun), true);
-/* Le pays est désormais DÉTECTÉ par le serveur ; ce sélecteur n'est qu'un
-   recours (VPN, itinérance). Il n'apparaît qu'une fois le serveur entendu, et
-   ne porte que des NOMS : l'offre d'un autre pays n'est demandée qu'une fois
-   ce pays choisi. */
+verifier('plus aucun menu de pays, nulle part',
+  [/<select[^>]*pays/i.test(commun), /function choisirPays/.test(commun), /CLE_MARCHE|MARCHES/.test(commun)], [false, false, false]);
 verifier('il n’apparaît qu’une fois le serveur entendu',
-  /if \(!MARCHE \|\| !MARCHES\.length\) return;/.test(commun), true);
-verifier('il ne porte que des noms de pays',
-  /MARCHES\.map\(m => `<option value="\$\{escapeHtml\(m\.code\)\}">\$\{escapeHtml\(m\.nom\)\}<\/option>`\)/.test(commun), true);
+  /\/\/ Rien à dire tant que le serveur n'a pas fixé le pays\s+if \(!MARCHE\) return;/.test(commun), true);
+verifier('hors marché, il propose la localisation',
+  /localisationPossible\(\) \? boutonLocalisation\('pays-pied__bouton'\)/.test(commun), true);
 verifier('il se redessine quand le pays change',
-  /document\.addEventListener\('impactali:pays', initChoixPays\);/.test(commun), true);
+  /document\.addEventListener\('impactali:pays', initPaysPied\);/.test(commun), true);
+verifier('l’ancien choix mémorisé est effacé',
+  /'impactali_marche'/.test(commun) && /removeItem\(cle\)/.test(commun), true);
 
 /* Le greffon ne tient que si ce pied existe sur TOUTES les pages, fiches
-   générées comprises — sinon le sélecteur manquerait là où il sert le plus. */
+   générées comprises — sinon la localisation manquerait là où elle sert. */
 const pagesDuSite = ['index.html', 'entreprises/index.html', 'mentions-legales/index.html',
   'inscription/index.html'].concat(fiches.map(f => 'formations/' + f + '/index.html'));
 const sansPied = pagesDuSite.filter(p => lire(p).indexOf('site-footer__brand') < 0);
-verifier('chaque page porte le pied où le sélecteur se greffe', sansPied, []);
+verifier('chaque page porte le pied où le pays se greffe', sansPied, []);
 
-verifier('le sélecteur est habillé', /\.choix-pays__select \{/.test(style), true);
-/* Cible tactile : un menu déroulant de moins de 44 px se rate au doigt. */
-const hauteurSelect = /\.choix-pays__select \{[^}]*min-height: (\d+)px/.exec(style);
+verifier('le bouton de localisation est habillé', /\.pays-pied__bouton \{/.test(style), true);
+/* Cible tactile : un bouton de moins de 44 px se rate au doigt. */
+const hauteurBouton = /\.pays-pied__bouton \{[^}]*min-height: (\d+)px/.exec(style);
 verifier('sa hauteur permet de le viser au doigt',
-  hauteurSelect ? Number(hauteurSelect[1]) >= 44 : false, true);
+  hauteurBouton ? Number(hauteurBouton[1]) >= 44 : false, true);
 
 // --- 18. Une image envoyée puis abandonnée ne reste pas dans Drive ---
 

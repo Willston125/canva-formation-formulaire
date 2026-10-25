@@ -533,19 +533,22 @@
                autre pays. */
             'hors-marche': {
                 icon: 'public', heading: 'Inscriptions en ligne bientôt ouvertes dans votre pays',
-                text: `« ${title} » se suit en ligne. Les tarifs et les moyens de paiement de votre pays ne sont pas encore ouverts : écrivez-nous, nous vous préviendrons dès l’ouverture. Vous êtes dans un pays où nous sommes déjà présents ? Choisissez-le tout en bas de la page.`
+                text: `« ${title} » se suit en ligne. Les tarifs et les moyens de paiement de votre pays ne sont pas encore ouverts : écrivez-nous, nous vous préviendrons dès l’ouverture. Vous êtes dans un pays où nous sommes déjà présents ? Activez la localisation : l’offre de votre pays s’affichera.`
             }
         };
         const m = messages[state] || messages.none;
         const askMessage = `Bonjour, je souhaite être informé(e) de la prochaine session de la formation « ${title} ».`;
         const libelle = state === 'hors-marche' ? 'Nous écrire' : 'Être informé(e) de l’ouverture';
+        /* Le pays ne se choisit pas : hors marché, le seul recours est la
+           localisation de l'appareil, dont le serveur déduit le pays. */
+        const localiser = state === 'hors-marche' && common.localisationPossible();
         card.innerHTML = `
             <span class="registration-state__icon material-symbols-outlined" aria-hidden="true">${m.icon}</span>
             <h3>${escapeHtml(m.heading)}</h3>
             <p>${escapeHtml(m.text)}</p>
             <div class="registration-state__actions">
                 <a class="button button--primary" href="${escapeHtml(common.whatsappUrl(askMessage))}" target="_blank" rel="noopener noreferrer">${libelle}<span class="material-symbols-outlined" aria-hidden="true">notifications</span></a>
-                <a class="button button--secondary" href="/#catalogue">Voir les autres formations</a>
+                ${localiser ? common.boutonLocalisation('button button--secondary') : '<a class="button button--secondary" href="/#catalogue">Voir les autres formations</a>'}
             </div>`;
     }
 
@@ -620,7 +623,7 @@
 
     /**
      * Le pays de l'inscription : celui du MARCHÉ, fixé par le serveur d'après
-     * l'adresse IP (ou choisi en bas de page). Il ne se choisit plus ici — un
+     * l'adresse IP (ou la localisation de l'appareil). Il ne se choisit pas — un
      * menu dans le formulaire laissait passer d'une offre à l'autre en un clic.
      * Le champ reste dans la page, masqué, pour porter la valeur envoyée.
      */
@@ -1534,6 +1537,8 @@
             currency: currentCurrency(),
             pays: currentPays()?.nom || '',
             paysCode: currentPays()?.code || '',
+            // Le serveur revérifie le pays : par l'adresse IP, sinon par cette position
+            position: common?.positionMemorisee?.() || '',
             countryCode: currentCountryCode(),
             telephoneInternational: `${currentCountryCode()}${data.telephone}`,
             dateInscription: now.toISOString(),

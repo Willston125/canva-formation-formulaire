@@ -43,10 +43,10 @@ async function poster(corps, { ip = '10.0.0.1', jeton = '' } = {}) {
 const admin = (action, charge) => poster(Object.assign({ action }, charge), { jeton: JETON }).then(r => r.json || {});
 const erreurDe = r => (r.ok ? 'accepté' : r.erreur);
 
-/** Le catalogue tel qu'un visiteur le reçoit, selon le pays de son adresse. */
-async function catalogueVu(paysIp, choix) {
+/** Le catalogue tel qu'un visiteur le reçoit, selon le pays de son adresse (et sa position, s'il l'a donnée). */
+async function catalogueVu(paysIp, position) {
   const res = { statusCode: 200, corps: '', entetes: {}, setHeader(k, v) { this.entetes[k.toLowerCase()] = v; }, end(c) { this.corps = c || ''; } };
-  const url = '/api?action=catalogue' + (choix ? '&marche=' + choix : '');
+  const url = '/api?action=catalogue' + (position ? '&position=' + position : '');
   await api({ method: 'GET', url, headers: { 'x-vercel-ip-country': paysIp } }, res);
   return { texte: res.corps, json: JSON.parse(res.corps) };
 }
@@ -161,8 +161,10 @@ const jour = decalage => jourLocal(Date.now() + decalage * 86400000);
   verifier('la date de fin part, pour qu’une page en cache ne montre pas une offre expirée',
     km.json.annonces.find(a => a.id === 'du-jour').fin, jour(0));
 
-  /* Le choix du pied de page vaut comme le pays de l'adresse. */
-  verifier('un visiteur qui choisit Djibouti voit l’annonce de Djibouti', ids(await catalogueVu('KM', 'DJ')).indexOf('pub-dj') >= 0, true);
+  /* La localisation vaut comme le pays de l'adresse, quand celle-ci ne dit rien d'utile. */
+  verifier('un visiteur localisé à Djibouti voit l’annonce de Djibouti', ids(await catalogueVu('FR', '11.59,43.15')).indexOf('pub-dj') >= 0, true);
+  verifier('mais pas un visiteur reconnu aux Comores, quelle que soit la position envoyée',
+    ids(await catalogueVu('KM', '11.59,43.15')).indexOf('pub-dj'), -1);
 
   /* Une formation désactivée n'a plus rien à promouvoir. */
   await db.exec("update formations set active = false where form_id = 'canva-pro'");

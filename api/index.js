@@ -115,10 +115,12 @@ function creerGestionnaire(obtenirBase, { envoyer = envoyerCourriel, sel = selPa
       if (req.method === 'GET' || req.method === 'HEAD') {
         if (parametres.has('photo')) return servirPhoto(res, await lirePhoto(obtenirBase(), parametres.get('photo')));
         /* Le catalogue et les places ne partent que pour le MARCHÉ du visiteur :
-           le pays de son adresse IP, ou celui qu'il a choisi (api/_lib/marche.js).
-           Le réseau de Vercel garde une copie par pays, jamais celle d'un autre. */
+           le pays de son adresse IP, sinon celui de sa position s'il a activé la
+           localisation (api/_lib/marche.js). Il ne se choisit pas : un
+           « &marche=KM » ajouté à l'adresse n'y change rien. Le réseau de
+           Vercel garde une copie par pays, jamais celle d'un autre. */
         if (action === 'catalogue' || action === 'places') {
-          const indices = { demande: parametres.get('marche') || '', ip: entete(req, 'x-vercel-ip-country') };
+          const indices = { ip: entete(req, 'x-vercel-ip-country'), position: parametres.get('position') || '' };
           res.setHeader('Vary', 'X-Vercel-IP-Country');
           const complet = await lireCatalogue(obtenirBase());
           const choix = choisirMarche(complet, indices);
@@ -172,7 +174,7 @@ function creerGestionnaire(obtenirBase, { envoyer = envoyerCourriel, sel = selPa
         // Seul le tableau de bord a droit à un envoi volumineux
         if (brut.length > TAILLE_MAX) return tropGros();
 
-        const issue = await recevoirInscription(obtenirBase(), charge, { ip, sel: sel() });
+        const issue = await recevoirInscription(obtenirBase(), charge, { ip, sel: sel(), paysIp: entete(req, 'x-vercel-ip-country') });
         if (issue.ligne && issue.alerter) {
           // Une alerte qui échoue ne doit jamais faire perdre l'inscription : elle est déjà enregistrée
           const a = alerteInscription(issue.ligne);

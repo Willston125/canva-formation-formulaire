@@ -18,6 +18,15 @@
         "banc"
       ],
       "port": 5180
+    },
+    {
+      "name": "banc-comores",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "-e",
+        "process.env.PAYS_IP='KM';require('./scripts/supabase/banc-local.js')"
+      ],
+      "port": 5180
     }
   ]
 }

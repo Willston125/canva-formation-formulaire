@@ -24,6 +24,7 @@ const { lireCatalogue } = require('./catalogue');
 const { tarifInscription, trouverPays, sessionOuverteAu, dateEnFrancais } = require('./prix');
 const { EMAIL_PUBLIC } = require('./courriel');
 const { enTransaction } = require('./transaction');
+const { choisirMarche } = require('./marche');
 
 /* Même plafond que le script Google : très au-dessus d'une vraie journée,
    très en dessous de ce qu'une boucle produit. */
@@ -55,7 +56,7 @@ function nettoyer(charge) {
 /** L'adresse du visiteur n'est jamais gardée : seulement une empreinte salée. */
 const empreinte = (ip, sel) => crypto.createHmac('sha256', String(sel)).update(String(ip || '')).digest('hex').slice(0, 32);
 
-async function recevoirInscription(db, chargeBrute, { ip = '', sel = 'local' } = {}) {
+async function recevoirInscription(db, chargeBrute, { ip = '', sel = 'local', paysIp = '' } = {}) {
   const d = nettoyer(chargeBrute);
   if (!d) return refus('Un champ du formulaire est illisible.');
 
@@ -71,6 +72,15 @@ async function recevoirInscription(db, chargeBrute, { ip = '', sel = 'local' } =
   if (!formation || formation.active === false) return refus('Cette formation n’existe pas.');
   const pays = trouverPays(catalogue, d.paysCode);
   if (!pays) return refus('Ce pays n’est pas desservi pour le moment.');
+  /* Le pays ne se choisit pas, pas plus ici que sur la page : un visiteur que
+     le serveur reconnaît dans un pays ouvert (adresse IP, ou position s'il a
+     activé la localisation) ne s'inscrit que dans celui-là. Sans pays reconnu
+     — réseau changé en cours de route —, le pays de la page fait foi : refuser
+     ferait perdre une vraie inscription. La position n'est pas enregistrée. */
+  const reconnu = choisirMarche(catalogue, { ip: paysIp, position: d.position });
+  if (reconnu.code && reconnu.code !== pays.code) {
+    return refus('Cette inscription ne correspond pas au pays où vous vous trouvez. Actualisez la page, puis recommencez.');
+  }
 
   let session = null;
   if (d.sessionId) {

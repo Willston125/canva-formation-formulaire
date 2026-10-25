@@ -99,6 +99,22 @@ const neuve = (autres = {}) => Object.assign({}, VALABLE, { telephone: String(nu
   await db.exec(`update pays set active = true where code = 'DJ'`);
   verifier('session d’un autre pays : refusée',
     (await recevoir(neuve({ paysCode: 'DJ' }))).resultat.erreur, 'Cette session n’est pas proposée dans votre pays.');
+
+  /* Le pays ne se choisit pas (25 octobre 2026) : le serveur revérifie celui
+     de l'inscription — par l'adresse IP, sinon par la position envoyée. Une
+     connexion à part, pour ne pas peser sur la limite par connexion. */
+  const depuis = (charge, paysIp) => recevoirInscription(db, charge, { ip: '41.223.0.99', sel: 'sel-des-epreuves', paysIp });
+  const AUTRE_PAYS = 'Cette inscription ne correspond pas au pays où vous vous trouvez. Actualisez la page, puis recommencez.';
+  verifier('reconnu à Djibouti, inscrit aux Comores : refusé', (await depuis(neuve(), 'DJ')).resultat.erreur, AUTRE_PAYS);
+  verifier('même avec une position des Comores : l’adresse IP l’emporte',
+    (await depuis(neuve({ position: '-11.70,43.26' }), 'DJ')).resultat.erreur, AUTRE_PAYS);
+  verifier('adresse non reconnue, appareil localisé à Djibouti : refusé',
+    (await depuis(neuve({ position: '11.59,43.15' }), 'FR')).resultat.erreur, AUTRE_PAYS);
+  verifier('reconnu aux Comores : accepté', (await depuis(neuve(), 'KM')).resultat.ok, true);
+  verifier('adresse non reconnue, appareil localisé aux Comores : accepté',
+    (await depuis(neuve({ position: '-11.70,43.26' }), 'FR')).resultat.ok, true);
+  verifier('aucun pays reconnu (réseau changé en route) : le pays de la page fait foi',
+    (await depuis(neuve(), '')).resultat.ok, true);
   await db.exec(`update pays set active = false where code = 'DJ'`);
 
   /* Une session fermée ne prend plus d'inscription, même en appelant l'API directement. */
