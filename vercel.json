@@ -44,7 +44,7 @@
       ]
     },
     {
-      "source": "/admin/:path*",
+      "source": "/admin(.*)",
       "headers": [
         { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self'; connect-src 'self' https://isxkyikakrssekrxudjw.supabase.co; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'" }
       ]

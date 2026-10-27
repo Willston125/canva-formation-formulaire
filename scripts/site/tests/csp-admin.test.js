@@ -30,8 +30,22 @@ const verifier = (libelle, obtenu, attendu) => {
 // --- 1. La politique déclarée -------------------------------------------------
 
 const regles = JSON.parse(lire('vercel.json')).headers;
-const regleAdmin = regles.find(r => /^\/admin\//.test(r.source));
+const regleAdmin = regles.find(r => /^\/admin/.test(r.source));
 verifier('une règle d’en-têtes vise /admin/', !!regleAdmin, true);
+/* LE MOTIF COMPTE. Publiée avec « /admin/:path* », la règle s'appliquait à /admin, à admin.js et à
+   admin.css — mais PAS à « /admin/ » avec la barre finale, qui est la page du tableau de bord
+   elle-même : vérifié en production le 27/10/2026, elle ne recevait que « frame-ancestors ». Une
+   politique qui couvre les scripts et pas la page ne protège rien. « /admin(.*) » couvre aussi
+   l'adresse de la page (le point-étoile accepte le vide). Aucun émulateur local ne reproduit la
+   façon dont Vercel fait correspondre une adresse : après toute modification de ce motif, on
+   relit l'en-tête de https://cineworldacademie.com/admin/ en ligne. */
+verifier('et son motif couvre l’adresse de la page, avec sa barre finale', regleAdmin && regleAdmin.source, '/admin(.*)');
+/* Deux règles qui définissent la même clé : la DERNIÈRE l'emporte (relevé en production). La règle
+   de /admin/ doit donc venir après la règle générale, qui pose « frame-ancestors » partout. */
+const rangDe = r => regles.indexOf(r);
+const regleGenerale = regles.find(r => r.source === '/(.*)');
+verifier('la règle de /admin/ vient APRÈS la règle générale, pour l’emporter',
+  !!regleGenerale && !!regleAdmin && rangDe(regleAdmin) > rangDe(regleGenerale), true);
 const valeur = ((regleAdmin || { headers: [] }).headers.find(h => h.key === 'Content-Security-Policy') || {}).value || '';
 verifier('elle porte une politique de sécurité', valeur.length > 0, true);
 
