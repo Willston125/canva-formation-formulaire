@@ -79,14 +79,24 @@ verifier('le cache est bien appliqué sans attendre', poseDuCache >= 0, true);
 verifier('et avant tout appel réseau',
   poseDuCache >= 0 && poseDuCache < corpsRefresh.indexOf('return interroger('), true);
 
-/* AFFICHER D'ABORD, VÉRIFIER ENSUITE. Un cache périmé était auparavant
-   purement ignoré : la page montrait alors ses valeurs d'origine — la photo
-   du dernier déploiement — pendant tout l'aller-retour vers Google, soit
-   plusieurs secondes. Il est désormais affiché, puis corrigé en silence.
-   On vérifie l'ORDRE : la pose doit précéder l'examen de la fraîcheur. Si
-   quelqu'un remettait le test de durée devant, ce contrôle tomberait. */
-verifier('un cache périmé est affiché puis vérifié, non ignoré',
-  poseDuCache >= 0 && poseDuCache < corpsRefresh.indexOf('DUREE_CACHE'), true);
+/* AFFICHER D'ABORD, VÉRIFIER ENSUITE — mais seulement ce qui est COMMUN à tous
+   les pays. Un cache périmé était auparavant purement ignoré (la page montrait
+   alors ses valeurs d'origine pendant tout l'aller-retour), puis il fut affiché
+   en entier, sans limite d'âge. Le 27/10/2026 : un relevé gardé d'une visite
+   passée — peut-être dans un AUTRE pays, sur un téléphone prêté ou en voyage —
+   montrait son pays, ses sessions, ses tarifs et son numéro WhatsApp à un
+   visiteur qui n'en est pas, et définitivement si le serveur ne répondait pas.
+   Un relevé frais (moins d'une minute) est posé en entier ; un relevé plus
+   ancien ne pose que les textes et les visuels. Le reste attend le serveur. */
+verifier('un relevé n’est posé en entier qu’à un seul endroit',
+  (corpsRefresh.match(/appliquer\(cache\.releve\)/g) || []).length, 1);
+verifier('et seulement s’il est frais (moins de DUREE_CACHE)',
+  /DUREE_CACHE\) return Promise\.resolve\(appliquer\(cache\.releve\)\)/.test(corpsRefresh), true);
+verifier('un relevé périmé pose quand même les textes et les visuels, communs à tous les pays',
+  /appliquerTextes\(cache\.releve && cache\.releve\.textes\)/.test(corpsRefresh)
+  && /appliquerImages\(cache\.releve && cache\.releve\.images/.test(corpsRefresh), true);
+verifier('jamais son pays, ses sessions, ses tarifs ni son numéro : ils attendent la réponse du serveur',
+  /appliquerCatalogue\(cache|appliquerReleve\(cache/.test(corpsRefresh), false);
 
 /* LA BANNIÈRE DOIT SUIVRE LE CATALOGUE.
  *

@@ -7,7 +7,7 @@ dans le dépôt fait le lien.
 ```
 visiteur ─▶ site statique (Vercel) ─▶ /api (fonctions Vercel, Francfort) ─▶ base Supabase
                                          │
-                                         └─▶ e-mails (Resend, depuis infos@impactali.site)
+                                         └─▶ e-mails (Resend, depuis inscriptions@cineworldacademie.com)
 ```
 
 **Seule l'API parle à la base.** Un navigateur, même muni de la clé publique de
@@ -48,10 +48,10 @@ dans le dépôt, qui est public.
 | Variable | Rôle |
 |---|---|
 | `DATABASE_URL` | La connexion à la base (le « pooler » de Supabase). |
-| `RESEND_API_KEY` | L'envoi des e-mails. Une clé « Sending access » : volée, elle n'ouvre pas la boîte. |
+| `RESEND_API_KEY` | L'envoi des e-mails. Une clé « Sending access » : volée, elle n'ouvre pas la boîte. **Si elle est limitée à un domaine** (impactali.site, par exemple), Resend refuse tout envoi depuis un autre : voir « Si les e-mails ne partent plus » plus bas. |
 | `ADMIN_EMAIL` | L'e-mail du seul compte autorisé au tableau de bord. **Absente, personne n'entre.** |
 | `SUPABASE_PUBLISHABLE_KEY` | La clé publique, pour la page de connexion. Publique par conception. |
-| `CRON_SECRET` | Facultative : si elle est réglée, seul Vercel peut lancer la tâche quotidienne. |
+| `CRON_SECRET` | **Recommandée** : une longue suite de caractères au hasard. Réglée, seul Vercel peut lancer la tâche quotidienne (il joint le secret tout seul). Sans elle, n'importe qui peut la lancer — sans effet grave : une sauvegarde réussie n'est refaite qu'après 20 heures. |
 
 Une variable ne vaut qu'après un redéploiement.
 
@@ -84,7 +84,7 @@ Users). La création de comptes est fermée.
 
 **Chaque écriture est notée au journal** (qui, quoi, quand), dans la même
 transaction que l'écriture. Un changement de **moyen de paiement** envoie en plus
-un e-mail à infos@impactali.site, avant et après côte à côte : un numéro de
+un e-mail à cineworld@cineworldacademie.com, avant et après côte à côte : un numéro de
 paiement est ce qu'un intrus changerait en premier.
 
 ---
@@ -108,13 +108,27 @@ resté une semaine sans activité. Chaque nuit (3 h, heure universelle),
 `api/quotidien.js` :
 
 1. exporte toutes les tables et envoie la copie, en pièce jointe, à
-   infos@impactali.site (les photos y sont listées, pas jointes) ;
+   cineworld@cineworldacademie.com (les photos y sont listées, pas jointes) ;
 2. **écrit** une ligne dans la table `sauvegardes` — une écriture est la seule
    activité que Supabase ne peut pas ignorer.
 
-**Gardez ces e-mails.** Si vous n'en recevez plus, ou si la table `sauvegardes`
-n'a pas de ligne récente, regardez `/api?action=version` puis les journaux de
-Vercel.
+**Gardez ces e-mails.** Si vous n'en recevez plus, le tableau de bord vous le dit
+en tête de la vue d'ensemble (« La sauvegarde quotidienne ne part plus par
+e-mail »), avec la dernière erreur ; regardez alors `/api?action=version` puis les
+journaux de Vercel.
+
+### Si les e-mails ne partent plus
+
+Le 24 octobre 2026, l'expéditeur est passé sur le domaine de Cineworld Académie.
+La clé `RESEND_API_KEY` du site était limitée à l'ancien domaine : Resend répondait
+« This API key is not authorized to send emails from cineworldacademie.com », et
+**ni les alertes d'inscription ni les sauvegardes ne sont parties pendant trois
+jours**. Le repli vers l'ancien expéditeur ne reconnaissait pas ce message ; il le
+reconnaît depuis le 27 octobre (`api/_lib/courriel.js`). Le tableau de bord compte
+maintenant les alertes perdues et signale une sauvegarde absente depuis plus de 36
+heures. Pour rétablir l'expéditeur normal : dans Resend, créer une clé qui peut
+envoyer depuis cineworldacademie.com (ou ajouter ce domaine au compte de la clé
+actuelle), la saisir dans Vercel, puis redéployer.
 
 ---
 

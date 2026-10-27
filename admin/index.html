@@ -23,7 +23,7 @@
 
     <!-- ====== CONNEXION ====== -->
     <div class="connexion" id="connexion">
-        <form class="connexion__carte" id="form-connexion" autocomplete="on">
+        <form class="connexion__carte" id="form-connexion" autocomplete="on" method="post">
             <img src="/assets/brand/cineworld-sceau.webp" alt="Cineworld Académie" width="240" height="240" class="connexion__logo">
             <h1>Tableau de bord</h1>
             <p class="connexion__aide">Espace réservé à l’administration du site.</p>
@@ -117,6 +117,7 @@
 
             <!-- Vue d'ensemble -->
             <section class="vue is-actif" id="vue-apercu">
+                <div id="apercu-sante"></div>
                 <div class="cartes" id="cartes-apercu"></div>
                 <div class="bloc">
                     <h2>Dernières inscriptions</h2>

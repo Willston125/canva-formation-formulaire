@@ -21,6 +21,25 @@ const { executer: executerCommande, SUPABASE_URL } = require('./_lib/admin');
 const { lirePhoto } = require('./_lib/photos');
 const { recevoirMesure, TAILLE_MAX_MESURE } = require('./_lib/mesures');
 const { choisirMarche, catalogueDuMarche, placesDuMarche } = require('./_lib/marche');
+const { noter } = require('./_lib/journal');
+
+/* Les SEULS paramètres que connaît chaque requête GET. Le réseau de Vercel garde une copie
+   par adresse COMPLÈTE : un paramètre inventé (« &x=1 », « &x=2 »…) contourne donc le cache
+   et fait relire à chaque requête la base — ou une photo de 1,5 Mo, dont l'adresse est
+   publique dans les pages. Sans limite, quelques milliers de requêtes épuisent le quota
+   d'échange de l'offre gratuite de Supabase, qui coupe alors le projet (audit du 27/10/2026).
+   Une requête qui en porte d'autres est refusée AVANT toute lecture de la base. */
+const PARAMETRES_GET = { photo: ['photo'], catalogue: ['action', 'position'], places: ['action', 'position'],
+  version: ['action'], config: ['action'] };
+const FORMAT_PHOTO = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+
+/** Cette adresse ne porte-t-elle que les paramètres de ce genre de requête, chacun une seule fois ? */
+function parametresConnus(parametres, genre) {
+  const permis = PARAMETRES_GET[genre];
+  if (!permis) return true; // action inconnue : refusée plus loin, sans lire la base
+  const cles = [...parametres.keys()];
+  return cles.every(c => permis.indexOf(c) >= 0) && new Set(cles).size === cles.length;
+}
 
 /** Un en-tête de la requête, en texte ('' s'il manque). */
 const entete = (req, nom) => String((req.headers && req.headers[nom]) || '');
@@ -106,14 +125,40 @@ async function etat(obtenirBase) {
 }
 
 /** Fabrique le gestionnaire : les épreuves lui passent une base PGlite, un faux envoi d'e-mail, un faux Supabase Auth. */
-function creerGestionnaire(obtenirBase, { envoyer = envoyerCourriel, sel = selParDefaut, admin = {} } = {}) {
+function creerGestionnaire(obtenirBase, { envoyer = envoyerCourriel, sel = selParDefaut, admin = {}, dureeCache = 0 } = {}) {
+  /* Le catalogue COMPLET, gardé quelques secondes en mémoire de l'instance — et lu une seule fois
+     pour toutes les requêtes simultanées. Chaque lecture coûte treize requêtes SQL sur une seule
+     connexion : sans cela, le nombre de lectures de la base suivait le nombre d'adresses
+     distinctes demandées, donc ce qu'un inconnu voulait bien inventer. Il reste complet : le
+     filtrage par pays se fait à chaque requête, jamais dans ce qu'on garde. Une lecture ratée
+     ne se garde pas, et une commande du tableau de bord l'efface (même instance). Les épreuves
+     le laissent à zéro : elles modifient la base entre deux requêtes. */
+  let enMemoire = null;
+  const catalogueCommun = () => {
+    const maintenant = Date.now();
+    if (dureeCache > 0 && enMemoire && enMemoire.expire > maintenant) return enMemoire.promesse;
+    const promesse = lireCatalogue(obtenirBase());
+    if (dureeCache > 0) {
+      enMemoire = { promesse, expire: maintenant + dureeCache };
+      promesse.catch(() => { if (enMemoire && enMemoire.promesse === promesse) enMemoire = null; });
+    }
+    return promesse;
+  };
+  const oublierCatalogue = () => { enMemoire = null; };
+
   return async function gestionnaire(req, res) {
     const parametres = new URL(req.url || '/', 'http://site').searchParams;
     const action = parametres.get('action') || '';
 
     try {
       if (req.method === 'GET' || req.method === 'HEAD') {
-        if (parametres.has('photo')) return servirPhoto(res, await lirePhoto(obtenirBase(), parametres.get('photo')));
+        const genre = parametres.has('photo') ? 'photo' : action;
+        if (!parametresConnus(parametres, genre)) return repondre(res, 400, { erreur: 'paramètre inconnu' });
+        if (parametres.has('photo')) {
+          // Une seule écriture de l'identifiant (minuscules) : la casse ferait une adresse, donc un cache, de plus
+          if (!FORMAT_PHOTO.test(parametres.get('photo'))) return servirPhoto(res, null);
+          return servirPhoto(res, await lirePhoto(obtenirBase(), parametres.get('photo')));
+        }
         /* Le catalogue et les places ne partent que pour le MARCHÉ du visiteur :
            le pays de son adresse IP, sinon celui de sa position s'il a activé la
            localisation (api/_lib/marche.js). Il ne se choisit pas : un
@@ -122,7 +167,7 @@ function creerGestionnaire(obtenirBase, { envoyer = envoyerCourriel, sel = selPa
         if (action === 'catalogue' || action === 'places') {
           const indices = { ip: entete(req, 'x-vercel-ip-country'), position: parametres.get('position') || '' };
           res.setHeader('Vary', 'X-Vercel-IP-Country');
-          const complet = await lireCatalogue(obtenirBase());
+          const complet = await catalogueCommun();
           const choix = choisirMarche(complet, indices);
           if (action === 'catalogue') return repondre(res, 200, catalogueDuMarche(complet, choix), CACHE_COURT);
           return repondre(res, 200, { sessions: await placesDuMarche(obtenirBase(), complet.places, choix.code) }, CACHE_COURT);
@@ -154,6 +199,7 @@ function creerGestionnaire(obtenirBase, { envoyer = envoyerCourriel, sel = selPa
           const entete = String((req.headers && req.headers.authorization) || '');
           const jeton = entete.startsWith('Bearer ') ? entete.slice(7).trim() : '';
           const issue = await executerCommande(obtenirBase(), charge, jeton, Object.assign({ envoyer }, admin));
+          oublierCatalogue();
           return repondre(res, issue.statut, issue.corps);
         }
         const ip = String((req.headers && (req.headers['x-forwarded-for'] || req.headers['x-real-ip'])) || '')
@@ -174,12 +220,21 @@ function creerGestionnaire(obtenirBase, { envoyer = envoyerCourriel, sel = selPa
         // Seul le tableau de bord a droit à un envoi volumineux
         if (brut.length > TAILLE_MAX) return tropGros();
 
-        const issue = await recevoirInscription(obtenirBase(), charge, { ip, sel: sel(), paysIp: entete(req, 'x-vercel-ip-country') });
+        const issue = await recevoirInscription(obtenirBase(), charge, { ip, sel: sel(), paysIp: entete(req, 'x-vercel-ip-country'), catalogue: await catalogueCommun() });
         if (issue.ligne && issue.alerter) {
           // Une alerte qui échoue ne doit jamais faire perdre l'inscription : elle est déjà enregistrée
           const a = alerteInscription(issue.ligne);
           const envoi = await envoyer({ sujet: a.sujet, texte: a.texte, html: a.html, repondreA: a.repondreA });
-          if (!envoi.envoye) console.error('[alerte]', envoi.erreur);
+          if (!envoi.envoye) {
+            console.error('[alerte]', envoi.erreur);
+            /* Sans trace, une alerte perdue ne se voit jamais : du 24 au 27 octobre
+               2026, aucune ne partait et personne ne le savait. Le tableau de bord
+               compte ces échecs (admin.sante) et le dit en tête de la vue d'ensemble. */
+            try {
+              await noter(obtenirBase(), 'site', 'alerte.echec', String(issue.ligne.id),
+                { erreur: String(envoi.erreur || 'inconnue').slice(0, 300) });
+            } catch (e) { /* l'inscription est déjà enregistrée : la trace est un plus */ }
+          }
         }
         return repondre(res, 200, issue.resultat);
       }
@@ -194,5 +249,5 @@ function creerGestionnaire(obtenirBase, { envoyer = envoyerCourriel, sel = selPa
   };
 }
 
-module.exports = creerGestionnaire(base);
+module.exports = creerGestionnaire(base, { dureeCache: 10000 });
 module.exports.creerGestionnaire = creerGestionnaire;

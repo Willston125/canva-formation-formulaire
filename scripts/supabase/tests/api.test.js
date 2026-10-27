@@ -31,14 +31,14 @@ const INSCRIPTION = {
 };
 
 /** Un appel HTTP simulé : ce que reçoit le gestionnaire, ce qu'il renvoie. */
-async function appeler(gestionnaire, methode, url, corps) {
+async function appeler(gestionnaire, methode, url, corps, entetes = {}) {
   const res = {
     statusCode: 200, entetes: {}, corps: '',
     setHeader(k, v) { this.entetes[k.toLowerCase()] = v; },
     end(corps) { this.corps = corps || ''; }
   };
   /* Un visiteur des Comores : Vercel joint le pays de l'adresse IP à chaque requête. */
-  await gestionnaire({ method: methode, url, body: corps, headers: { 'x-forwarded-for': '41.223.0.10', 'x-vercel-ip-country': 'KM' } }, res);
+  await gestionnaire({ method: methode, url, body: corps, headers: Object.assign({ 'x-forwarded-for': '41.223.0.10', 'x-vercel-ip-country': 'KM' }, entetes) }, res);
   let json = null;
   try { json = JSON.parse(res.corps); } catch (e) { /* corps vide ou non JSON */ }
   return { statut: res.statusCode, entetes: res.entetes, json };
@@ -115,6 +115,36 @@ const sansMaj = c => { const { maj, ...reste } = c || {}; return reste; };
   verifier('un renvoi identique répond « reçu »', renvoi.json, { ok: true });
   verifier('sans doublon', await compter(), 3);
   verifier('ni seconde alerte', courriels.length, 1);
+
+  /* Du 24 au 27 octobre 2026, la clé d'envoi était refusée pour le nouveau
+     domaine : aucune alerte ne partait, et le tableau de bord ne disait rien.
+     Une alerte perdue laisse maintenant une trace, que « admin.sante » compte. */
+  const JETON = 'aaa.admin.zzz';
+  const REGLAGES = { cle: 'sb_publishable_essai', admin: 'infos@impactali.site',
+    lireUtilisateur: async j => (j === JETON ? { email: 'infos@impactali.site' } : null) };
+  const apiSansEnvoi = creerGestionnaire(() => db, {
+    envoyer: async () => ({ envoye: false, erreur: 'Resend 403 {"message":"This API key is not authorized to send emails from cineworldacademie.com"}' }),
+    sel: () => 'sel-des-epreuves', admin: REGLAGES
+  });
+  const perdue = await appeler(apiSansEnvoi, 'POST', '/api', JSON.stringify(Object.assign({}, INSCRIPTION, { telephone: '3299001', telephoneInternational: '+2693299001' })));
+  verifier('une alerte qui ne part pas ne fait pas perdre l’inscription', [perdue.statut, perdue.json, await compter()], [200, { ok: true }, 4]);
+  const trace = (await db.query(`select qui, cible, details->>'erreur' as erreur from journal where action = 'alerte.echec'`)).rows;
+  verifier('elle laisse une trace au journal', [trace.length, trace[0] && trace[0].qui, /not authorized/.test(String(trace[0] && trace[0].erreur))], [1, 'site', true]);
+
+  const admin = (action, charge) => appeler(apiSansEnvoi, 'POST', '/api', JSON.stringify(Object.assign({ action }, charge)), { authorization: 'Bearer ' + JETON });
+  await db.exec(`insert into sauvegardes (faite_le, octets, envoyee, erreur) values
+    (now() - interval '30 hours', 1000, true, null),
+    (now() - interval '5 hours', 1200, false, 'Resend 403 clé non autorisée')`);
+  const sante = (await admin('admin.sante', {})).json;
+  verifier('le tableau de bord compte les alertes perdues', sante.alertesEchouees, 1);
+  verifier('dit quand la dernière sauvegarde est partie, et pourquoi la suivante a échoué',
+    [Boolean(sante.sauvegarde.derniereReussie), sante.sauvegarde.derniereErreur], [true, 'Resend 403 clé non autorisée']);
+  const delaiH = (Date.now() - new Date(sante.sauvegarde.derniereReussie).getTime()) / 3600e3;
+  verifier('la dernière réussie date bien d’environ 30 heures', delaiH > 29 && delaiH < 31, true);
+  const liste = (await admin('admin.inscriptions', {})).json;
+  verifier('la liste des inscriptions donne aussi le total, pour dire quand elle est tronquée', [liste.inscriptions.length, liste.total], [4, 4]);
+  verifier('sans session de l’administrateur, l’état de santé reste fermé',
+    (await appeler(apiSansEnvoi, 'POST', '/api', JSON.stringify({ action: 'admin.sante' }))).statut, 401);
 
   // ---------------------------------------- 4. Une base en panne ne fuit pas ---
 

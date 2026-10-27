@@ -228,15 +228,19 @@ function render(template, f) {
      la seule page qu'une formation créée après publication possède. */
   const chemin = f.id === 'inscription-generique' ? '/inscription/' : `/formations/${f.slug}/`;
   const url = `${SITE_URL}${chemin}`;
-  html = html.replace(/<title>[\s\S]*?<\/title>/i, `<title>${esc(f.title)} — Fiche formation &amp; inscription | Cineworld Académie</title>`);
-  html = setMeta(html, 'name="title"', `${f.title} — Fiche formation & inscription`);
+  /* Un titre de page tient en 60 caractères environ dans les résultats de recherche : au-delà, Google le
+     coupe en plein mot. « … — Fiche formation & inscription | Cineworld Académie » en faisait 74 à 92. */
+  const estGenerique = f.id === 'inscription-generique';
+  const titreCourt = estGenerique ? 'Inscription' : `${f.title} — Formation`;
+  html = html.replace(/<title>[\s\S]*?<\/title>/i, `<title>${esc(titreCourt)} | Cineworld Académie</title>`);
+  html = setMeta(html, 'name="title"', titreCourt);
   html = setMeta(html, 'name="description"', f.shortDescription);
   html = setMeta(html, 'property="og:url"', url);
-  html = setMeta(html, 'property="og:title"', `${f.title} — Fiche formation & inscription`);
+  html = setMeta(html, 'property="og:title"', titreCourt);
   html = setMeta(html, 'property="og:description"', f.shortDescription);
   html = setMeta(html, 'property="og:image"', IMAGE_PARTAGE);
   html = setMeta(html, 'property="twitter:url"', url);
-  html = setMeta(html, 'property="twitter:title"', `${f.title} — Fiche formation & inscription`);
+  html = setMeta(html, 'property="twitter:title"', titreCourt);
   html = setMeta(html, 'property="twitter:description"', f.shortDescription);
   html = setMeta(html, 'property="twitter:image"', IMAGE_PARTAGE);
   html = html.replace(/<link rel="canonical" href="[^"]+">/i, `<link rel="canonical" href="${url}">`);
@@ -392,7 +396,9 @@ async function principal() {
      date de modification : on n'en connaît pas de fiable, et l'inventer ferait
      passer pour récente une page qui ne l'est pas. */
   const adresses = ['/', ...formations.filter(f => f.slug).map(f => `/formations/${f.slug}/`),
-    '/association/', '/production/', '/contact/', '/entreprises/', '/mentions-legales/'];
+    '/association/', '/production/', '/contact/', '/entreprises/'];
+  /* « /mentions-legales/ » n'y figure pas : la page est en « noindex », et un plan du site qui liste une page
+     qu'il interdit d'indexer fait signaler une erreur par la Search Console. */
   fs.writeFileSync(path.join(ROOT, 'sitemap.xml'),
     '<?xml version="1.0" encoding="UTF-8"?>\n'
     + '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'

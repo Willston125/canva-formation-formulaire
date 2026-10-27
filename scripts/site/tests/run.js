@@ -35,7 +35,8 @@ const EPREUVES = [
   ['annonces.test.js', 'La fenetre d annonce : ou, quand, et ce qu elle compte'],
   ['classes.test.js', 'Les videos de classe se lancent seules, sur place'],
   ['entreprises-accueil.test.js', 'La carte Entreprises de l accueil : animee, jamais cachee'],
-  ['faq-accueil.test.js', 'La FAQ de l accueil : reponses justes, accordeon qui ne cache rien']
+  ['faq-accueil.test.js', 'La FAQ de l accueil : reponses justes, accordeon qui ne cache rien'],
+  ['csp-admin.test.js', 'La politique de securite du tableau de bord, et ce qu elle exige de lui']
 ];
 
 /* La liste ci-dessus est écrite à la main : une épreuve ajoutée dans le dossier

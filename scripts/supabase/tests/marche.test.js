@@ -116,12 +116,16 @@ async function lire(url, pays) {
 
   /* Décision du propriétaire (25 octobre 2026) : plus de sélecteur, et aucun
      paramètre ne force un pays. */
+  /* Depuis le 27/10/2026, une adresse qui porte un paramètre inconnu est refusée avant toute
+     lecture de la base (api/index.js, PARAMETRES_GET) : « &marche=KM » ne change plus rien
+     au pays, il ne produit plus de réponse du tout. */
   const forceKm = await lire('/api?action=catalogue&marche=KM', 'DJ');
-  verifier('un visiteur de Djibouti qui demande les Comores reste à Djibouti',
-    [forceKm.json.marche.code, forceKm.json.marche.source], ['DJ', 'ip']);
+  verifier('un visiteur de Djibouti qui demande les Comores n’obtient aucune offre : paramètre refusé',
+    [forceKm.statut, forceKm.json.marche, forceKm.json.pays], [400, undefined, undefined]);
   verifier('et ne reçoit rien des Comores', presents(forceKm.texte, DES_COMORES), []);
+  const horsForce = await lire('/api?action=catalogue&marche=DJ', 'FR');
   verifier('hors marché, demander un pays n’ouvre rien non plus',
-    (await lire('/api?action=catalogue&marche=DJ', 'FR')).json.marche.code, null);
+    [horsForce.statut, horsForce.json.marche, presents(horsForce.texte, DE_DJIBOUTI)], [400, undefined, []]);
   verifier('la liste des pays ouverts ne part plus : chacun ne voit que le nom du sien',
     [km.json.marches, dj.json.marches], [undefined, undefined]);
 

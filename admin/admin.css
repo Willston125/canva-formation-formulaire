@@ -528,6 +528,42 @@ table.tableau tr:hover td { background: rgba(255, 255, 255, 0.02); }
   .cellule-actions { flex-direction: column; }
 }
 
+/* LES TABLEAUX DEVIENNENT DES CARTES SUR TÉLÉPHONE.
+   Le tableau des inscriptions mesurait 723 px dans 342 : le statut et le bouton « WhatsApp » de relance —
+   le geste principal de l'administrateur, qui travaille surtout sur son téléphone — se trouvaient hors de
+   l'écran, à faire défiler de côté dans la boîte. Chaque ligne devient une carte : le premier champ en
+   titre, les autres sous leur intitulé (data-label, posé par tableau() dans admin.js), les actions en bas.
+   L'en-tête reste pour les lecteurs d'écran, masqué à la vue. */
+@media (max-width: 640px) {
+  .tableau-defile { overflow-x: visible; }
+  table.tableau, table.tableau tbody, table.tableau tr, table.tableau td { display: block; width: 100%; }
+  table.tableau thead {
+    position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
+  }
+  table.tableau tr { padding: 14px 16px; border-bottom: 1px solid var(--bordure); }
+  table.tableau tr:last-child { border-bottom: 0; }
+  table.tableau td { padding: 5px 0; border: 0; text-align: left !important; }
+  table.tableau tr:hover td { background: none; }
+  table.tableau td::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 2px;
+    color: var(--texte-faible);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  /* La première cellule fait le titre de la carte, la dernière porte les actions : ni l'une ni l'autre n'a besoin d'intitulé */
+  table.tableau td:first-child { padding-top: 0; }
+  table.tableau td:first-child::before, table.tableau td:last-child::before { display: none; }
+  table.tableau td:last-child { padding-top: 10px; padding-bottom: 0; }
+  table.tableau td:empty { display: none; }
+  /* Le statut d'une inscription se change du doigt : 44 px de haut, comme les boutons, et toute la largeur */
+  table.tableau select.statut { width: 100%; min-height: 44px; font-size: 0.9rem; }
+  .cellule-actions { flex-direction: row; flex-wrap: wrap; justify-content: flex-start; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }

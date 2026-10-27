@@ -3932,6 +3932,10 @@ a:focus-visible {
   .site-footer__inner { flex-direction: column; align-items: flex-start; }
   .mobile-cta { display: block; }
   #contact-float { bottom: 88px; }
+  /* Sur les fiches et l'inscription, le bouton flottant s'appelle #whatsapp-float : seul
+     #contact-float était relevé, et le bouton d'aide passait SOUS la barre « S'inscrire »
+     (mesuré à 360 px : bouton 660-716, barre 669-740 — un liseré visible, rien à toucher). */
+  #whatsapp-float { bottom: 88px; }
   .fiche-hero { padding: 28px 0 40px; }
   .fiche-facts { grid-template-columns: 1fr; }
   .fiche-hero__actions .button { width: 100%; }

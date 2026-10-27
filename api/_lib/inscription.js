@@ -40,6 +40,17 @@ const CHAMPS_LIBRES = ['motivation', 'objectifs', 'professionDetail'];
 
 const refus = erreur => ({ resultat: { ok: false, erreur }, ligne: null, alerter: false });
 
+/* Ce que la requête brute garde en mémoire, pour comparer plus tard avec ce
+   que le serveur a recalculé : les champs du formulaire du site (script.js) et
+   rien d'autre. Ni la position envoyée pour reconnaître le pays — elle ne sert
+   qu'à cela, et les mentions légales promettent de ne pas la conserver —, ni
+   des clés inventées qui gonfleraient la ligne, puis chaque sauvegarde. */
+const CHAMPS_CONSERVES = ['horodateur', 'formationId', 'sessionId', 'nom', 'prenom', 'telephone', 'email', 'age',
+  'profession', 'niveauCanva', 'motivation', 'objectifs', 'modePaiement', 'telPaiement', 'statut', 'source',
+  'formationTitle', 'formationSlug', 'sessionLabel', 'sessionStartDate', 'niveau', 'professionDetail', 'montant',
+  'currency', 'pays', 'paysCode', 'countryCode', 'telephoneInternational', 'dateInscription', 'pageUrl'];
+const chargeConservee = d => Object.fromEntries(CHAMPS_CONSERVES.filter(c => Object.prototype.hasOwnProperty.call(d, c)).map(c => [c, d[c]]));
+
 /** Toute valeur devient du texte, tronqué. Une liste ou un objet : null (refus). */
 function nettoyer(charge) {
   if (!charge || typeof charge !== 'object' || Array.isArray(charge)) return null;
@@ -56,7 +67,7 @@ function nettoyer(charge) {
 /** L'adresse du visiteur n'est jamais gardée : seulement une empreinte salée. */
 const empreinte = (ip, sel) => crypto.createHmac('sha256', String(sel)).update(String(ip || '')).digest('hex').slice(0, 32);
 
-async function recevoirInscription(db, chargeBrute, { ip = '', sel = 'local', paysIp = '' } = {}) {
+async function recevoirInscription(db, chargeBrute, { ip = '', sel = 'local', paysIp = '', catalogue: fourni = null } = {}) {
   const d = nettoyer(chargeBrute);
   if (!d) return refus('Un champ du formulaire est illisible.');
 
@@ -67,7 +78,8 @@ async function recevoirInscription(db, chargeBrute, { ip = '', sel = 'local', pa
   if (!d.formationId) return refus('La formation est obligatoire.');
 
   // --- 2. Ce qui existe vraiment, et ce qui est ouvert
-  const catalogue = await lireCatalogue(db);
+  // Le catalogue gardé quelques secondes par le gestionnaire (api/index.js), ou lu ici
+  const catalogue = fourni || await lireCatalogue(db);
   const formation = catalogue.formations.find(f => f.formId === d.formationId);
   if (!formation || formation.active === false) return refus('Cette formation n’existe pas.');
   const pays = trouverPays(catalogue, d.paysCode);
@@ -122,7 +134,7 @@ async function recevoirInscription(db, chargeBrute, { ip = '', sel = 'local', pa
     source: d.source || null,
     page_url: d.pageUrl || null,
     empreinte_ip: empreinte(ip, sel),
-    charge: JSON.stringify(d)
+    charge: JSON.stringify(chargeConservee(d))
   };
 
   // --- 3. Le volume : comptages et écriture sous un même verrou
@@ -163,6 +175,6 @@ async function recevoirInscription(db, chargeBrute, { ip = '', sel = 'local', pa
 }
 
 module.exports = {
-  recevoirInscription, nettoyer, empreinte,
+  recevoirInscription, nettoyer, empreinte, chargeConservee,
   INSCRIPTIONS_PAR_JOUR, ALERTES_PAR_JOUR, PAR_CONNEXION_PAR_HEURE
 };

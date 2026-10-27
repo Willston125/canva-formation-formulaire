@@ -23,7 +23,7 @@
 'use strict';
 
 const { FORMATION, SESSION, PAYS, MOYEN_PAIEMENT, REALISATION, ANNONCE, colonnes } = require('./champs');
-const { lireCatalogue, compterInscrits, objetSession } = require('./catalogue');
+const { lireCatalogue, objetSession } = require('./catalogue');
 const { joursDepuisHoraires, seancesDepuisDuree, seancesPossibles, NOMS_JOURS } = require('./calendrier');
 const { dateEnFrancais } = require('./prix');
 const { alerteMoyensPaiement, envoyer: envoyerCourriel } = require('./courriel');
@@ -473,10 +473,15 @@ async function enregistrerSession(tx, donnees) {
 
 async function supprimerSession(tx, id) {
   if (!id) throw new Error('Identifiant manquant.');
-  const inscrits = (await compterInscrits(tx))[id] || 0;
+  /* Toute inscription qui n'est pas annulée, pas seulement les confirmées : la
+     confirmation du tableau de bord promet « la suppression sera refusée dès
+     qu'il y a un inscrit », et une session supprimée sous des inscriptions « En
+     attente » les laissait orphelines (aucune clé étrangère ne les retient). */
+  const inscrits = (await tx.query(
+    `select count(*)::int as n from inscriptions where session_id = $1 and statut <> 'Annulé'`, [String(id)])).rows[0].n;
   if (inscrits > 0) {
-    throw new Error('Cette session compte ' + inscrits + ' inscrit(s). '
-      + 'Fermez les inscriptions plutôt que de la supprimer.');
+    throw new Error('Cette session compte ' + inscrits + ' inscription(s) non annulée(s). '
+      + 'Fermez les inscriptions plutôt que de la supprimer, ou passez d’abord ces inscriptions en « Annulé ».');
   }
   if (!(await tx.query('delete from sessions where id = $1 returning id', [String(id)])).rows.length) {
     throw new Error('Session introuvable.');
@@ -540,7 +545,7 @@ async function ecrireMoyens(tx, code, brute) {
   return { avant, apres, change };
 }
 
-async function enregistrerPays(tx, donnees) {
+async function enregistrerPays(tx, donnees, { creation = false } = {}) {
   const p = estObjet(donnees) ? Object.assign({}, donnees) : null;
   if (!p || !p.code) throw new Error('Le code du pays est obligatoire.');
   p.code = String(p.code).trim().toUpperCase();
@@ -549,7 +554,16 @@ async function enregistrerPays(tx, donnees) {
   }
   if (!p.nom) throw new Error('Le nom du pays est obligatoire.');
   if (!p.devise) throw new Error('La devise est obligatoire : sans elle, aucun tarif n’est lisible.');
-  const existe = (await tx.query('select 1 from pays where code = $1 for update', [p.code])).rows.length > 0;
+  const enBase = (await tx.query('select nom, indicatif from pays where code = $1 for update', [p.code])).rows[0] || null;
+  const existe = Boolean(enBase);
+  /* « Nouveau pays » avec un code déjà pris n'en crée pas un second : il
+     ÉCRASAIT le premier, qui perdait son numéro WhatsApp et ses moyens de
+     paiement sous un message « Pays mis à jour » (audit du 27/10/2026). */
+  if (creation && existe) {
+    throw new Error('Le code « ' + p.code + ' » est déjà celui de ' + (enBase.nom || 'un autre pays')
+      + ' : le créer de nouveau effacerait son contact et ses moyens de paiement. '
+      + 'Ouvrez ce pays pour le modifier, ou choisissez un autre code.');
+  }
 
   /* L'indicatif s'affiche collé devant le numéro que tape le candidat. Y glisser
      un numéro complet produit un téléphone inutilisable — « +269 474 26 883801234 »
@@ -565,6 +579,27 @@ async function enregistrerPays(tx, donnees) {
   // La feuille acceptait un pays sans indicatif ; le formulaire, lui, ne savait plus composer le numéro
   if ((!existe || possede(p, 'indicatif')) && !p.indicatif) {
     throw new Error('L’indicatif est obligatoire : +253, +269…');
+  }
+
+  /* UN NUMÉRO DE CONTACT SE RATTACHE À SON PAYS. Le lien WhatsApp est
+     international : sans l'indicatif il ne mène nulle part, et avec celui d'un
+     autre pays il envoie les messages — et les paiements annoncés — à l'autre
+     marché, ce que le propriétaire ne veut jamais. Le numéro affiché doit être
+     le même que celui du lien, avec ou sans l'indicatif. Les formats mal formés
+     sont laissés aux règles plus bas, qui disent mieux ce qui ne va pas. */
+  const chiffresIndicatif = String(p.indicatif || (enBase && enBase.indicatif) || '').replace(/\D/g, '');
+  const numeroWhatsapp = String(p.whatsappNumber === undefined || p.whatsappNumber === null ? '' : p.whatsappNumber).trim();
+  if (/^\d{6,15}$/.test(numeroWhatsapp)) {
+    if (chiffresIndicatif && !numeroWhatsapp.startsWith(chiffresIndicatif)) {
+      throw new Error('Le numéro WhatsApp « ' + numeroWhatsapp + ' » ne commence pas par l’indicatif de ce pays (+'
+        + chiffresIndicatif + ') : les messages partiraient vers un autre pays. Un numéro WhatsApp s’écrit avec '
+        + 'son indicatif, comme ' + chiffresIndicatif + '4742688.');
+    }
+    const affiche = String(p.whatsappDisplay || '').replace(/\D/g, '');
+    if (affiche && !(numeroWhatsapp.endsWith(affiche) || affiche.endsWith(numeroWhatsapp))) {
+      throw new Error('Le numéro affiché « ' + String(p.whatsappDisplay).trim() + ' » n’est pas celui du lien WhatsApp ('
+        + numeroWhatsapp + ') : le visiteur lirait un numéro et écrirait à un autre. Corrigez l’un des deux.');
+    }
   }
 
   // Un motif de numéro invalide bloquerait toutes les inscriptions du pays
@@ -841,17 +876,23 @@ async function ecrire(db, qui, action, travail) {
 function commande(action, travail, reponse) {
   return async (db, d, qui, options) => {
     const r = await ecrire(db, qui, action, tx => travail(tx, d));
-    if (r.apres) await r.apres(options || {}, qui);
+    if (r.apres) await r.apres(options || {}, qui, db);
     return Object.assign({ ok: true }, reponse ? reponse(r) : {}, { catalogue: await lireCatalogue(db) });
   };
 }
 
 /* L'alerte part APRÈS l'écriture validée, et son échec ne l'annule pas : le
    numéro est enregistré, et le journal en garde la trace de toute façon. */
-async function prevenirMoyens(r, options, qui) {
+async function prevenirMoyens(r, options, qui, db) {
   const a = alerteMoyensPaiement({ code: r.cible, nom: r.nom, avant: r.moyens.avant, apres: r.moyens.apres, qui });
   const envoi = await (options.envoyer || envoyerCourriel)({ sujet: a.sujet, texte: a.texte, html: a.html });
-  if (!envoi.envoye) console.error('[alerte paiement]', envoi.erreur);
+  if (!envoi.envoye) {
+    console.error('[alerte paiement]', envoi.erreur);
+    // Comme pour les inscriptions : une alerte perdue laisse une trace que le tableau de bord montre
+    try {
+      await noter(db, 'site', 'alerte.echec', 'moyens-paiement:' + r.cible, { erreur: String(envoi.erreur || 'inconnue').slice(0, 300) });
+    } catch (e) { /* le changement est déjà enregistré et journalisé */ }
+  }
 }
 
 const avecCree = r => ({ cree: r.cree });
@@ -863,8 +904,8 @@ const ECRITURES = {
   'admin.session.save': commande('admin.session.save', (tx, d) => enregistrerSession(tx, d.donnees), avecCree),
   'admin.session.delete': commande('admin.session.delete', (tx, d) => supprimerSession(tx, d.id)),
   'admin.pays.save': commande('admin.pays.save', async (tx, d) => {
-    const r = await enregistrerPays(tx, d.donnees);
-    if (r.moyens && r.moyens.change) r.apres = (options, qui) => prevenirMoyens(r, options, qui);
+    const r = await enregistrerPays(tx, d.donnees, { creation: d.creation === true });
+    if (r.moyens && r.moyens.change) r.apres = (options, qui, base) => prevenirMoyens(r, options, qui, base);
     return r;
   }, avecCree),
   'admin.pays.delete': commande('admin.pays.delete', (tx, d) => supprimerPays(tx, d.code)),

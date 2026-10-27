@@ -51,6 +51,14 @@ const neuve = (autres = {}) => Object.assign({}, VALABLE, { telephone: String(nu
   verifier('pays du catalogue', [l.pays, l.pays_code], ['Comores', 'KM']);
   verifier('la requête brute est conservée à part', l.charge.formationId, 'canva-pro');
 
+  /* La position envoyée pour reconnaître le pays ne sert qu'à cela : les mentions
+     légales promettent de ne pas la conserver. Les clés inventées non plus — elles
+     gonfleraient la ligne, puis chaque sauvegarde envoyée par e-mail. */
+  await recevoir(neuve({ position: '-11.70,43.26', cleInventee: 'x'.repeat(250) }));
+  const avecPosition = await derniere();
+  verifier('la position envoyée n’est pas conservée', Object.keys(avecPosition.charge).filter(c => /position|inventee/i.test(c)), []);
+  verifier('mais le reste de la requête l’est', [avecPosition.charge.formationId, avecPosition.charge.paysCode], ['canva-pro', 'KM']);
+
   // ------------------------------- 2. Ce que le navigateur ne décide plus ---
 
   /* Audit S1 et S8 : statut, montant, devise, titre et date forgés. */

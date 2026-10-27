@@ -346,7 +346,13 @@
            tableau de bord acceptait bien un fichier, enregistrait bien son
            adresse, et ne changeait rien sur aucune fiche. */
         const affiche = formation.poster || formation.image || '';
-        if (affiche) {
+        /* L'affiche ne se remplace qu'une fois le SERVEUR entendu. Avant, c'étaient les valeurs du fichier
+           formations-data.js qui la posaient — des adresses Google Drive, l'ANCIENNE affiche (ancien prix,
+           ancienne date) —, et sur un réseau lent un premier visiteur la voyait longtemps, après avoir
+           envoyé son adresse à Google. La page porte déjà, dès son chargement, l'affiche de la dernière
+           mise en ligne : elle reste en place jusqu'à la réponse (audit du 27/10/2026). */
+        const serveurEntendu = Boolean(common?.marcheActif?.()) && common.marcheActif().source !== 'indisponible';
+        if (affiche && serveurEntendu) {
             document.querySelectorAll('#poster-section img, #poster-validation').forEach(img => {
                 img.alt = `Affiche de la formation ${formation.title}`;
                 if (img.getAttribute('src') === affiche) return;
@@ -362,7 +368,7 @@
         if (formation.title) {
             document.title = generique
                 ? `${formation.title} — Inscription | Cineworld Académie`
-                : `${formation.title} — Fiche formation & inscription | Cineworld Académie`;
+                : `${formation.title} — Formation | Cineworld Académie`;
         }
 
         document.querySelectorAll('[data-whatsapp-float], .fiche-hero__actions [data-whatsapp-message]').forEach(lien => {
@@ -1476,6 +1482,19 @@
     async function handleSubmit(e) {
         e.preventDefault();
 
+        /* La touche Entrée — ou « Aller » d'un clavier de téléphone — envoie le formulaire depuis
+           N'IMPORTE quelle étape, le bouton « Envoyer » n'étant masqué qu'à la vue. Avec un brouillon
+           restauré (cases d'accord déjà cochées), une inscription incomplète partait au premier
+           Entrée dans « Nom » (audit du 27/10/2026). Avant la dernière étape, Entrée vaut
+           « Continuer » : on valide l'étape en cours et on avance, sans rien envoyer. */
+        if (currentStep < TOTAL_STEPS) {
+            if (validateSection(currentStep)) goToStep(currentStep + 1);
+            return;
+        }
+        // À l'envoi, toutes les étapes comptent : on revient sur la première qui ne tient plus
+        for (let etape = 1; etape < TOTAL_STEPS; etape++) {
+            if (!validateSection(etape)) { goToStep(etape); return; }
+        }
         if (!validateSection(4)) return;
 
         const conditionsCheckbox = document.getElementById('conditions');
@@ -1690,12 +1709,20 @@ ${data.prenom}`;
     }
 
     // ====== AUTO-SAVE ======
+    /* Combien de temps un brouillon reste sur l'appareil. Il garde un nom, un téléphone, un e-mail,
+       un moyen et un numéro de paiement : sur un téléphone prêté ou dans un cybercafé, le suivant
+       retrouverait le formulaire prérempli. Passé ce délai, il est effacé sans être lu. */
+    const DUREE_BROUILLON = 7 * 24 * 3600 * 1000;
+
     function saveData() {
         try {
+            /* Une inscription déjà envoyée n'a plus de brouillon : un clic sur « S'inscrire » en
+               recréait un, avec toutes les réponses qui restent à l'écran derrière la confirmation. */
+            if (isAlreadyRegistered()) return;
             const data = getFormData();
             const conditionsChecked = document.getElementById('conditions').checked;
             const remboursementChecked = document.getElementById('remboursement')?.checked || false;
-            localStorage.setItem(draftKey(selectedFormation), JSON.stringify({ ...data, conditions: conditionsChecked, remboursement: remboursementChecked }));
+            localStorage.setItem(draftKey(selectedFormation), JSON.stringify({ ...data, conditions: conditionsChecked, remboursement: remboursementChecked, t: Date.now() }));
         } catch (e) { /* silent */ }
     }
 
@@ -1706,6 +1733,8 @@ ${data.prenom}`;
 
             const data = JSON.parse(saved);
             if (!data) return;
+            // Un brouillon sans date (d'avant ce délai) ou trop ancien est effacé, pas restauré
+            if (!Number.isFinite(data.t) || Date.now() - data.t > DUREE_BROUILLON) { clearSavedData(); return; }
 
             // Le brouillon est déjà propre à cette formation ; seule la session choisie est reprise
             // (si l'URL n'en impose pas une autre).
@@ -1808,13 +1837,27 @@ ${data.prenom}`;
         if (!trafficSource) {
             const referrer = document.referrer;
             if (referrer) {
-                if (referrer.includes('facebook.com')) trafficSource = 'Facebook (Auto)';
+                let hote = '';
+                try { hote = new URL(referrer).hostname; } catch (e) { /* adresse illisible */ }
+                if (!hote || hote === window.location.hostname) {
+                    /* Venu d'une autre page du site : ce n'est pas une source. Elle s'écrasait pourtant —
+                       une publicité Facebook sur l'accueil, puis la fiche, puis l'inscription, et la
+                       source devenait « cineworldacademie.com » (audit du 27/10/2026). */
+                } else if (referrer.includes('facebook.com')) trafficSource = 'Facebook (Auto)';
                 else if (referrer.includes('instagram.com')) trafficSource = 'Instagram (Auto)';
                 else if (referrer.includes('linkedin.com')) trafficSource = 'LinkedIn (Auto)';
                 else if (referrer.includes('tiktok.com')) trafficSource = 'TikTok (Auto)';
-                else trafficSource = new URL(referrer).hostname;
+                else trafficSource = hote;
             }
         }
+
+        /* La PREMIÈRE source de la visite est gardée le temps de l'onglet : une page suivante, sans
+           paramètre ni référent externe, la reprend au lieu d'envoyer « Direct ». */
+        const CLE_SOURCE = 'impactali_source';
+        try {
+            if (trafficSource) sessionStorage.setItem(CLE_SOURCE, trafficSource);
+            else trafficSource = sessionStorage.getItem(CLE_SOURCE) || '';
+        } catch (e) { /* stockage refusé : la source vaut pour cette page */ }
 
         if (trafficSource) {
             const hiddenSourceInput = document.getElementById('source-tracking');

@@ -115,7 +115,9 @@
         const classes = ['course-card', `course-card--${variant}`, formation.featured && variant !== 'dark' ? 'course-card--featured' : '', options.extraClass || '']
             .filter(Boolean).join(' ');
 
-        return `<article class="${classes}" data-training-slug="${escapeHtml(formation.slug)}" data-family="${escapeHtml(formation.family || '')}">
+        /* Les copies du carrousel (celles d'avant et d'après, qui permettent de boucler) sont masquées
+           aux lecteurs d'écran EN ENTIER : seul leur lien l'était, et chaque titre se lisait trois fois. */
+        return `<article class="${classes}" data-training-slug="${escapeHtml(formation.slug)}" data-family="${escapeHtml(formation.family || '')}"${accessible ? '' : ' aria-hidden="true"'}>
             <div class="course-card__media">
                 <img src="${escapeHtml(formation.image)}" alt="${escapeHtml(formation.imageAlt || '')}" loading="lazy" decoding="async" width="760" height="950">
                 <div class="course-card__badges">${cardBadges(formation)}</div>

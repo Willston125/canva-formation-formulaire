@@ -163,7 +163,21 @@ const erreurDe = r => (r.ok ? 'accepté' : r.erreur);
 
   verifier('une session avec un inscrit confirmé ne se supprime pas',
     erreurDe(await admin('admin.session.delete', { id: 'canva-pro-2026-11' })),
-    'Cette session compte 1 inscrit(s). Fermez les inscriptions plutôt que de la supprimer.');
+    'Cette session compte 1 inscription(s) non annulée(s). Fermez les inscriptions plutôt que de la supprimer, ou passez d’abord ces inscriptions en « Annulé ».');
+  /* Audit du 27/10/2026 : le tableau de bord promet « la suppression sera
+     refusée dès qu'il y a un inscrit », mais le serveur ne comptait que les
+     confirmés — une session sous des inscriptions « En attente » partait, et
+     ses candidats restaient orphelins. */
+  await admin('admin.session.save', { donnees: Object.assign({}, sessionNeuve, { id: 'sess-essai3' }) });
+  await db.exec(`insert into inscriptions (form_id, nom, telephone, statut, session_id)
+    values ('montage-video', 'EN ATTENTE', '3277777', 'En attente', 'sess-essai3')`);
+  verifier('une inscription seulement « En attente » la retient aussi',
+    /1 inscription\(s\) non annulée\(s\)/.test(erreurDe(await admin('admin.session.delete', { id: 'sess-essai3' }))), true);
+  await db.exec(`update inscriptions set statut = 'Annulé' where session_id = 'sess-essai3'`);
+  verifier('une session dont toutes les inscriptions sont annulées se supprime',
+    (await admin('admin.session.delete', { id: 'sess-essai3' })).ok, true);
+  // La ligne d'essai ne doit pas retenir la formation « montage-video », supprimée plus bas
+  await db.exec(`delete from inscriptions where nom = 'EN ATTENTE'`);
   verifier('une session sans inscrit confirmé se supprime', (await admin('admin.session.delete', { id: 'sess-essai1' })).ok, true);
   verifier('une session inconnue : « introuvable »', erreurDe(await admin('admin.session.delete', { id: 'sess-essai1' })), 'Session introuvable.');
 
@@ -203,6 +217,31 @@ const erreurDe = r => (r.ok ? 'accepté' : r.erreur);
     /ne respecte pas le format accepté/.test(erreurDe(await admin('admin.pays.save', { donnees: Object.assign({}, km, { exempleTelephone: '12' }) }))), true);
   verifier('un numéro WhatsApp avec des lettres aussi',
     /ne prend que des chiffres/.test(erreurDe(await admin('admin.pays.save', { donnees: Object.assign({}, km, { whatsappNumber: '269XXXXXXX' }) }))), true);
+
+  /* Audit du 27/10/2026. Deux pièges qui fabriquaient un site faux sans rien dire :
+     « Nouveau pays » avec un code déjà pris écrasait le pays (son contact et ses
+     moyens de paiement disparaissaient sous « Pays mis à jour »), et un numéro
+     de contact pouvait appartenir à un autre pays que celui où il s'affiche. */
+  const avantCreation = await paysDe('KM');
+  const doublon = await admin('admin.pays.save', { creation: true, donnees: { code: 'km', nom: 'Comores bis', devise: 'KMF', indicatif: '+269' } });
+  verifier('un nouveau pays dont le code existe déjà est refusé, en nommant le pays',
+    [doublon.ok, /déjà celui de Comores/.test(String(doublon.erreur))], [false, true]);
+  verifier('et le pays existant reste intact : nom, contact, moyens de paiement',
+    JSON.stringify(await paysDe('KM')), JSON.stringify(avantCreation));
+  verifier('modifier ce même pays (sans « création ») passe toujours',
+    (await admin('admin.pays.save', { donnees: Object.assign({}, km) })).ok, true);
+  verifier('un numéro WhatsApp d’un autre pays est refusé',
+    /ne commence pas par l’indicatif de ce pays \(\+269\)/.test(erreurDe(await admin('admin.pays.save', {
+      donnees: Object.assign({}, km, { whatsappNumber: '25377145306', whatsappDisplay: '+253 77 14 53 06' }) }))), true);
+  verifier('un numéro sans indicatif aussi',
+    /ne commence pas par l’indicatif/.test(erreurDe(await admin('admin.pays.save', {
+      donnees: Object.assign({}, km, { whatsappNumber: '4742688', whatsappDisplay: '474 26 88' }) }))), true);
+  verifier('un numéro affiché qui n’est pas celui du lien aussi',
+    /n’est pas celui du lien WhatsApp/.test(erreurDe(await admin('admin.pays.save', {
+      donnees: Object.assign({}, km, { whatsappNumber: '2694742688', whatsappDisplay: '+269 380 46 48' }) }))), true);
+  verifier('le numéro affiché sans l’indicatif passe : c’est le même numéro',
+    (await admin('admin.pays.save', { donnees: Object.assign({}, km, { whatsappNumber: '2694742688', whatsappDisplay: '474 26 88' }) })).ok, true);
+  await admin('admin.pays.save', { donnees: Object.assign({}, km, { whatsappDisplay: '+269 474 26 88' }) });
   // La page Contact en fait un bouton : un lien « javascript: » s'exécuterait au clic
   verifier('un lien de carte qui n’est pas https:// aussi',
     /commence par https:\/\//.test(erreurDe(await admin('admin.pays.save', { donnees: Object.assign({}, km, { carte: 'javascript:alert(1)' }) }))), true);

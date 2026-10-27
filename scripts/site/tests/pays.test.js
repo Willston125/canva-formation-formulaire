@@ -89,6 +89,16 @@ verifier('arrondie au kilomètre avant de partir',
 verifier('sans numéro, un lien de contact devient un e-mail, jamais un WhatsApp sans destinataire',
   /if \(numero\) return `https:\/\/wa\.me\/\$\{numero\}/.test(commun) && /mailto:\$\{adresse\}/.test(commun), true);
 
+/* La localisation est le seul recours quand l'adresse IP ne dit rien d'utile.
+   Si la politique de permissions l'interdit (geolocation=()), le bouton répond
+   « refusée » à tout le monde, sans que rien ne le dise : constaté en
+   production le 27/10/2026, trois jours après sa mise en ligne. */
+const politique = JSON.parse(lire('vercel.json')).headers.flatMap(h => h.headers)
+  .find(h => h.key === 'Permissions-Policy').value;
+verifier('la politique de permissions laisse le site se localiser', /geolocation=\(self\)/.test(politique), true);
+verifier('mais n’ouvre la localisation à aucun tiers', /geolocation=\([^)]*(\*|https?:)/.test(politique), false);
+verifier('ni la caméra ni le micro', [/camera=\(\)/.test(politique), /microphone=\(\)/.test(politique)], [true, true]);
+
 /* Un numéro glissé dans le champ « indicatif » produit un téléphone
    inutilisable : le tableau de bord doit le refuser. */
 const essaisIndicatif = [['+269 474 26 88', false], ['269', false], ['+2 6 9', false], ['+269', true], ['+253', true]];

@@ -20,6 +20,13 @@
   var etat = {
     catalogue: { formations: [], sessions: [], pays: [], portfolio: [], annonces: [], reglages: {} },
     inscriptions: [],
+    /* Combien d'inscriptions existent EN TOUT : la liste n'en reçoit que les 500
+       plus récentes. Et pourquoi elles n'ont pas pu être lues, le cas échéant :
+       une lecture ratée ne doit jamais s'afficher « Aucune inscription ». */
+    inscriptionsTotal: null,
+    inscriptionsErreur: '',
+    /** Ce qui doit marcher sans qu'on le regarde : sauvegarde e-mail, alertes d'inscription (admin.sante). */
+    sante: null,
     vue: 'apercu',
     filtreInscriptions: '',
     /** Onglet Audience : période et pays choisis, et les compteurs reçus pour cette période. */
@@ -453,9 +460,64 @@
   function rafraichirTout(catalogueFrais) {
     return (catalogueFrais ? Promise.resolve() : appeler('admin.catalogue', {}))
       .then(function () { return appeler('admin.inscriptions', {}); })
-      .then(function (d) { etat.inscriptions = d.inscriptions || []; })
-      .catch(function (err) { afficherMessage('#erreur-globale', messageLisible(err)); })
+      .then(function (d) {
+        etat.inscriptions = d.inscriptions || [];
+        etat.inscriptionsTotal = typeof d.total === 'number' ? d.total : etat.inscriptions.length;
+        etat.inscriptionsErreur = '';
+      })
+      .catch(function (err) {
+        /* Une lecture ratée n'est PAS « aucune inscription » : le message global
+           disparaissait au premier changement d'onglet, et la liste vide disait
+           alors à l'administrateur qu'il n'y avait personne. */
+        etat.inscriptionsErreur = messageLisible(err);
+        afficherMessage('#erreur-globale', messageLisible(err));
+      })
+      .then(chargerSante)
       .then(function () { rendre(); });
+  }
+
+  /**
+   * L'état de la sauvegarde e-mail et des alertes d'inscription. Ne bloque
+   * jamais le reste : sans lui — ancienne API, panne —, le tableau de bord
+   * marche, simplement sans bandeau.
+   */
+  function chargerSante() {
+    return appeler('admin.sante', {})
+      .then(function (d) { etat.sante = { sauvegarde: d.sauvegarde || null, alertesEchouees: d.alertesEchouees || 0 }; })
+      .catch(function () { /* pas de bandeau plutôt qu'un faux bandeau */ });
+  }
+
+  /**
+   * Les alertes de santé, en clair. Du 24 au 27 octobre 2026, ni la sauvegarde
+   * par e-mail ni les alertes d'inscription ne partaient (clé d'envoi refusée
+   * pour le nouveau domaine) et le tableau de bord n'en disait rien.
+   * @returns {{genre: string, texte: string}[]}
+   */
+  function messagesSante() {
+    var s = etat.sante;
+    var m = [];
+    if (s && s.sauvegarde) {
+      var derniere = s.sauvegarde.derniereReussie ? new Date(s.sauvegarde.derniereReussie) : null;
+      var heures = derniere ? (Date.now() - derniere.getTime()) / 3600000 : Infinity;
+      if (heures > 36) {
+        m.push({ genre: 'sauvegarde', texte: 'La sauvegarde quotidienne ne part plus par e-mail : '
+          + (derniere ? 'la dernière a été envoyée le ' + dateHeureFr(derniere.toISOString()) + '.' : 'aucune n’a encore été envoyée.')
+          + (s.sauvegarde.derniereErreur ? ' Dernière erreur : ' + s.sauvegarde.derniereErreur + '.' : '')
+          + ' Vos inscriptions n’ont plus de copie hors de la base.' });
+      }
+    }
+    if (s && s.alertesEchouees > 0) {
+      m.push({ genre: 'alertes', texte: s.alertesEchouees + ' alerte(s) d’inscription n’ont pas pu partir par e-mail ces 14 derniers jours : '
+        + 'les inscriptions sont bien enregistrées, mais vous n’en avez pas été prévenu. Consultez l’onglet Inscriptions.' });
+    }
+    return m;
+  }
+
+  /** Les bandeaux d'alerte, du ou des genres demandés (tous si aucun). */
+  function bandeauxSante(genres) {
+    return messagesSante().filter(function (x) { return !genres || genres.indexOf(x.genre) >= 0; }).map(function (x) {
+      return '<div class="message message--erreur" role="alert">' + echapper(x.texte) + '</div>';
+    }).join('');
   }
 
   function allerA(vue) {
@@ -517,9 +579,13 @@
       + '<span class="material-symbols-outlined" aria-hidden="true">add</span>Nouvelle annonce</button>';
     actions.pays = '<button class="bouton bouton--primaire" type="button" id="btn-nouveau-pays">'
       + '<span class="material-symbols-outlined" aria-hidden="true">add</span>Nouveau pays</button>';
-    actions.inscriptions = etat.inscriptions.length
-      ? '<button class="bouton bouton--discret" type="button" id="btn-export">'
-        + '<span class="material-symbols-outlined" aria-hidden="true">download</span>Exporter (CSV)</button>' : '';
+    /* « Actualiser » aussi ici : les nouvelles inscriptions n'apparaissaient qu'après
+       celui de la vue d'ensemble, et rien ne le disait. */
+    actions.inscriptions = '<button class="bouton bouton--discret" type="button" id="btn-inscriptions-actualiser">'
+      + '<span class="material-symbols-outlined" aria-hidden="true">refresh</span>Actualiser</button>'
+      + (etat.inscriptions.length
+        ? '<button class="bouton bouton--discret" type="button" id="btn-export">'
+          + '<span class="material-symbols-outlined" aria-hidden="true">download</span>Exporter (CSV)</button>' : '');
     actions.apercu = '<button class="bouton bouton--discret" type="button" id="btn-rafraichir">'
       + '<span class="material-symbols-outlined" aria-hidden="true">refresh</span>Actualiser</button>';
     $('#actions-vue').innerHTML = actions[etat.vue] || '';
@@ -532,6 +598,10 @@
     if ((b = $('#btn-nouvelle-annonce'))) b.addEventListener('click', function () { ouvrirAnnonce(null); });
     if ((b = $('#btn-annonces-actualiser'))) b.addEventListener('click', function () { chargerResultatsAnnonces(); });
     if ((b = $('#btn-export'))) b.addEventListener('click', exporterCsv);
+    if ((b = $('#btn-inscriptions-actualiser'))) b.addEventListener('click', function () {
+      afficherMessage('#succes-globale', 'Actualisation…', 1200);
+      rafraichirTout();
+    });
     if ((b = $('#btn-audience-actualiser'))) b.addEventListener('click', function () { chargerAudience(); });
     if ((b = $('#btn-rafraichir'))) b.addEventListener('click', function () {
       afficherMessage('#succes-globale', 'Actualisation…', 1200);
@@ -561,10 +631,19 @@
       return n + (typeof x.placesTotal === 'number' ? Math.max(0, x.placesTotal - compterSession(x.id)) : 0);
     }, 0);
 
+    /* Les alertes en tête : sauvegarde qui ne part plus, alertes perdues, inscriptions
+       illisibles — ce qu'il faut savoir AVANT de regarder les chiffres. */
+    $('#apercu-sante').innerHTML = bandeauxSante()
+      + (etat.inscriptionsErreur
+        ? '<div class="message message--erreur" role="alert">Les inscriptions n’ont pas pu être lues : '
+          + echapper(etat.inscriptionsErreur) + ' Les chiffres ci-dessous sont peut-être incomplets : utilisez « Actualiser ».</div>' : '');
+    var nbInscriptions = etat.inscriptionsErreur && !etat.inscriptions.length ? '—'
+      : (etat.inscriptionsTotal !== null ? etat.inscriptionsTotal : etat.inscriptions.length);
+
     $('#cartes-apercu').innerHTML = [
       carte(f.filter(function (x) { return x.active !== false; }).length, 'Formations publiées', 'accent'),
       carte(ouvertes.length, 'Sessions ouvertes', ''),
-      carte(etat.inscriptions.length, 'Inscriptions reçues', ''),
+      carte(nbInscriptions, 'Inscriptions reçues', ''),
       carte(placesRestantes, 'Places encore libres', placesRestantes === 0 && aVenir.length ? 'alerte' : '')
     ].join('');
 
@@ -578,7 +657,10 @@
           echapper(dateHeureFr(i['Horodatage réception'] || i.dateInscription)),
           boutonWhatsapp(i)];
       })
-    ) : vide('inbox', 'Aucune inscription pour le moment.');
+    ) : (etat.inscriptionsErreur
+      // Noms d'icône LITTÉRAUX : le relevé de la police d'icônes ne lit pas une expression (scripts/fetch-fonts.js)
+      ? vide('error', 'Les inscriptions n’ont pas pu être lues.')
+      : vide('inbox', 'Aucune inscription pour le moment.'));
   }
 
   function carte(valeur, libelle, variante) {
@@ -593,7 +675,9 @@
       + '</tr></thead><tbody>'
       + lignes.map(function (l) {
         return '<tr>' + l.map(function (c, i) {
-          return '<td' + (i === l.length - 1 ? ' style="text-align:right"' : '') + '>' + c + '</td>';
+          /* Le nom de la colonne accompagne chaque cellule : sur téléphone, le tableau devient une pile de
+             cartes (admin.css) et la cellule s'y présente sous son propre intitulé. */
+          return '<td data-label="' + echapper(entetes[i] || '') + '"' + (i === l.length - 1 ? ' style="text-align:right"' : '') + '>' + c + '</td>';
         }).join('') + '</tr>';
       }).join('')
       + '</tbody></table></div></div>';
@@ -1057,7 +1141,8 @@
 
       { section: 'Diffusion' },
       { cle: 'pays', libelle: 'Pays visés', type: 'paysListe',
-        aide: 'Aucun coché = tous les visiteurs, y compris ceux des pays où vous n’êtes pas encore ouvert.' },
+        aide: 'Aucun coché = tous les visiteurs, y compris ceux des pays où vous n’êtes pas encore ouvert. '
+          + 'Une affiche qui porte un prix, un lieu ou un numéro ne doit viser que son pays.' },
       { cle: 'debut', libelle: 'Du', type: 'date', aide: 'Vide = dès l’enregistrement.' },
       { cle: 'fin', libelle: 'Au (inclus)', type: 'date', aide: 'Vide = sans date de fin.' },
       { cle: 'active', libelle: 'Annonce active', type: 'bool',
@@ -1277,6 +1362,15 @@
             + 'Créez plutôt un nouveau pays, puis supprimez celui-ci.');
           return;
         }
+        /* Un NOUVEAU pays dont le code est déjà pris écrasait le premier : son numéro
+           WhatsApp et ses moyens de paiement disparaissaient, sous « Pays mis à jour ». */
+        var dejaLa = !p ? trouverPays(valeurs.code) : null;
+        if (dejaLa) {
+          fini('Le code « ' + valeurs.code + ' » est déjà celui de ' + (dejaLa.nom || 'un autre pays')
+            + ' : le créer de nouveau effacerait son contact et ses moyens de paiement. '
+            + 'Ouvrez ce pays pour le modifier, ou choisissez un autre code.');
+          return;
+        }
         /* L'indicatif s'affiche collé devant le numéro que tape le candidat.
            Y glisser un numéro complet produit un téléphone inutilisable dans la
            feuille — « +269 474 26 883801234 » — sans que rien ne le signale. */
@@ -1343,7 +1437,7 @@
           }
         }
 
-        appeler('admin.pays.save', { donnees: valeurs }).then(function (d) {
+        appeler('admin.pays.save', { donnees: valeurs, creation: !p }).then(function (d) {
           viderCorbeilleImages();
           fermerPanneau();
           afficherMessage('#succes-globale', d.cree
@@ -1593,7 +1687,9 @@
        sessions créées avant les tarifs par pays : un candidat comorien se verrait
        donc proposer une session qui se tient à Djibouti. On le signale, avec de
        quoi y remédier d'un clic plutôt qu'en rouvrant chaque session. */
-    var sansPays = s.filter(function (x) { return !x.pays; });
+    /* Une session EN LIGNE sans pays est voulue : elle s'adresse à tous. Seules celles
+       qui se tiennent quelque part doivent être rattachées à un pays. */
+    var sansPays = s.filter(function (x) { return !x.pays && x.mode !== 'En ligne'; });
     var avis = '';
     if (sansPays.length && pays.length > 1) {
       var reference = paysDefaut();
@@ -1650,7 +1746,18 @@
       })
     );
     var rattacher = $('#btn-rattacher-sessions');
-    if (rattacher) rattacher.addEventListener('click', function () { rattacherSessions(sansPays); });
+    if (rattacher) {
+      rattacher.addEventListener('click', function () {
+        var reference = paysDefaut();
+        // Un seul geste ne retire pas ces sessions aux autres pays sans qu'on l'ait confirmé
+        confirmer('Rattacher ces ' + sansPays.length + ' session(s) à ' + (reference ? reference.nom : 'ce pays')
+          + ' ? Elles ne seront plus proposées dans les autres pays.', function (fini) {
+          fermerConfirmation();
+          rattacherSessions(sansPays);
+          fini();
+        });
+      });
+    }
 
     $$('[data-modifier-session]').forEach(function (b) {
       b.addEventListener('click', function () { ouvrirSession(b.dataset.modifierSession); });
@@ -1891,11 +1998,25 @@
       ? etat.inscriptions.filter(function (i) { return i.formationId === etat.filtreInscriptions; })
       : etat.inscriptions;
 
+    /* Trois choses à dire avant la liste : une lecture ratée, une liste tronquée (le serveur
+       n'en rend que 500), et des alertes d'inscription perdues. */
+    var avis = bandeauxSante(['alertes']);
+    if (etat.inscriptionsErreur) {
+      avis += '<div class="message message--erreur" role="alert">Les inscriptions n’ont pas pu être lues : '
+        + echapper(etat.inscriptionsErreur) + ' Ce que vous voyez est peut-être incomplet : utilisez « Actualiser ».</div>';
+    }
+    if (etat.inscriptionsTotal !== null && etat.inscriptionsTotal > etat.inscriptions.length) {
+      avis += '<div class="message message--erreur" role="status">Seules les ' + etat.inscriptions.length
+        + ' inscriptions les plus récentes, sur ' + etat.inscriptionsTotal + ', sont affichées et exportées : '
+        + 'les plus anciennes ne se voient plus ici.</div>';
+    }
     if (!liste.length) {
-      $('#liste-inscriptions').innerHTML = vide('group', 'Aucune inscription à afficher.');
+      $('#liste-inscriptions').innerHTML = avis + (etat.inscriptionsErreur
+        ? vide('error', 'Impossible de lire les inscriptions pour le moment.')
+        : vide('group', 'Aucune inscription à afficher.'));
       return;
     }
-    $('#liste-inscriptions').innerHTML = tableau(
+    $('#liste-inscriptions').innerHTML = avis + tableau(
       ['Candidat', 'Formation', 'Paiement', 'Statut', 'Reçue le', 'Relance'],
       liste.map(function (i) {
         return [
@@ -3845,7 +3966,11 @@
       // Nouveau moyen : l'intitulé enregistré part du nom affiché
       if (!m.value) m.value = m.label;
       return m;
-    }).filter(function (m) { return m.label || m.value; });
+    }).filter(function (m) {
+      /* Une ligne où l'on a saisi un numéro mais pas de nom partait en silence, sous
+         « Pays mis à jour » : le serveur l'aurait refusée. On la lui laisse donc. */
+      return m.label || m.value || m.number || m.accountName || m.recipient || m.place || m.phone || m.numberLabel;
+    });
   }
 
   function lireChamps(champs, form) {

@@ -44,6 +44,9 @@
             .forEach(cle => localStorage.removeItem(cle));
     } catch (e) { /* stockage indisponible */ }
     let MARCHE = null;
+    /* Le dernier appel au serveur a-t-il échoué (réseau, panne) ? Distingue « rien n'a pu être
+       évalué » de « évalué : aucun pays ». Remis à faux au début de chaque appel. */
+    let ECHEC_RESEAU = false;
     /* Les annonces de la fenêtre d'arrivée (annonces.js), déjà triées par le
        serveur pour CE marché : null tant qu'il n'a pas répondu. */
     let ANNONCES = null;
@@ -76,11 +79,22 @@
         return MARCHE;
     }
 
-    /** La position mémorisée (« -11.70,43.25 »), ou ''. Le formulaire l'envoie avec l'inscription. */
+    /* Combien de temps une position reconnue reste mémorisée : elle part dans chaque
+       adresse du catalogue et chaque inscription, et un appareil prêté ou revendu ne
+       doit pas la garder indéfiniment. Passé ce délai, le visiteur se relocalise d'un geste. */
+    const DUREE_POSITION = 30 * 24 * 3600 * 1000;
+
+    /** La position mémorisée (« -11.70,43.25 »), ou '' si absente, illisible ou trop ancienne. Le formulaire l'envoie avec l'inscription. */
     function positionMemorisee() {
         try {
-            const valeur = localStorage.getItem(CLE_POSITION) || '';
-            return /^-?\d{1,2}(\.\d{1,2})?,-?\d{1,3}(\.\d{1,2})?$/.test(valeur) ? valeur : '';
+            const brut = localStorage.getItem(CLE_POSITION);
+            if (!brut) return '';
+            let gardee = null;
+            try { gardee = JSON.parse(brut); } catch (e) { /* ancien format, ou illisible */ }
+            const valable = gardee && typeof gardee.p === 'string' && Number.isFinite(gardee.t) && Date.now() - gardee.t < DUREE_POSITION
+                && /^-?\d{1,2}(\.\d{1,2})?,-?\d{1,3}(\.\d{1,2})?$/.test(gardee.p);
+            if (!valable) { localStorage.removeItem(CLE_POSITION); return ''; }
+            return gardee.p;
         } catch (e) { return ''; }
     }
 
@@ -100,19 +114,27 @@
      */
     function localiser() {
         if (!localisationPossible()) return Promise.resolve('echec');
-        return new Promise(resolve => {
+        const demande = new Promise(resolve => {
             navigator.geolocation.getCurrentPosition(
                 p => resolve(`${p.coords.latitude.toFixed(2)},${p.coords.longitude.toFixed(2)}`),
                 erreur => resolve(erreur && erreur.code === 1 ? 'refus' : 'echec'),
                 { enableHighAccuracy: false, timeout: 20000, maximumAge: 600000 }
             );
-        }).then(position => {
+        });
+        /* Firefox n'appelle AUCUNE des deux fonctions quand on ferme l'invite sans répondre, et le
+           délai ci-dessus ne court qu'une fois la permission donnée : le bouton restait désactivé
+           jusqu'au rechargement. Un délai de sécurité rend la main. */
+        const delaiMax = new Promise(resolve => window.setTimeout(() => resolve('echec'), 45000));
+        return Promise.race([demande, delaiMax]).then(position => {
             if (position === 'refus' || position === 'echec') return position;
             return refreshPlaces(true, position).then(() => {
+                /* Une panne du réseau pendant l'appel n'a rien évalué : ce n'est pas « votre position
+                   ne se trouve dans aucun pays ». On le dit comme un échec, et on garde l'état d'avant. */
+                if (ECHEC_RESEAU) return 'echec';
                 const trouve = Boolean(MARCHE && MARCHE.code);
                 // Une position qui ne mène à aucun pays ouvert ne sert à rien : on l'oublie
                 try {
-                    if (trouve) localStorage.setItem(CLE_POSITION, position);
+                    if (trouve) localStorage.setItem(CLE_POSITION, JSON.stringify({ p: position, t: Date.now() }));
                     else localStorage.removeItem(CLE_POSITION);
                 } catch (e) { /* stockage indisponible : la position vaut pour cette page */ }
                 document.dispatchEvent(new CustomEvent('impactali:pays', { detail: { pays: paysActif() } }));
@@ -898,6 +920,7 @@
         const url = ENDPOINTS.registration;
         if (!url) return Promise.resolve(false);
         const positionEnvoyee = position === undefined ? positionMemorisee() : position;
+        ECHEC_RESEAU = false;
 
         const appliquer = donnees => {
             // Les textes sont indépendants du catalogue : ils s'appliquent même
@@ -924,17 +947,17 @@
                 /* Un relevé ne vaut que pour la position qui l'a obtenu : sans
                    cette garde, une localisation rejouerait l'offre d'avant. */
                 if (cache && cache.horodatage > modifieLe && (cache.position || '') === positionEnvoyee) {
-                    /* AFFICHER D'ABORD, VÉRIFIER ENSUITE. Le relevé retenu est
-                       posé tout de suite, même s'il a passé sa minute : il vaut
-                       toujours mieux que les valeurs du fichier, qui datent du
-                       dernier déploiement. Auparavant, un cache expiré était
-                       purement ignoré, et la page affichait ses valeurs
-                       d'origine pendant tout l'aller-retour vers Google.
-                       On n'abrège la suite que si le relevé est encore frais ;
-                       sinon on l'affiche ET on interroge quand même la feuille,
-                       qui corrigera en silence ce qui a bougé. */
-                    const pose = appliquer(cache.releve);
-                    if (Date.now() - cache.horodatage < DUREE_CACHE) return Promise.resolve(pose);
+                    /* AFFICHER D'ABORD, VÉRIFIER ENSUITE — mais seulement ce qui est COMMUN à
+                       tous les pays. Un relevé frais (moins d'une minute) est posé en entier et
+                       dispense d'interroger le serveur. Un relevé plus ancien ne pose que les
+                       textes et les visuels : son pays, ses sessions, ses tarifs et son numéro
+                       WhatsApp sont peut-être ceux d'un AUTRE pays — l'appareil a pu voyager,
+                       être prêté, changer de réseau — et ils s'affichaient sans limite d'âge,
+                       définitivement si le serveur ne répondait pas (audit du 27/10/2026).
+                       Ils attendent la réponse du serveur : en attendant, la page est neutre. */
+                    if (Date.now() - cache.horodatage < DUREE_CACHE) return Promise.resolve(appliquer(cache.releve));
+                    appliquerTextes(cache.releve && cache.releve.textes);
+                    appliquerImages(cache.releve && cache.releve.images, cache.releve && cache.releve.cadrages);
                 }
             } catch (e) { /* cache illisible : on interroge */ }
         }
@@ -964,6 +987,7 @@
                 return appliquer(donnees);
             })
             .catch(() => {
+                ECHEC_RESEAU = true;
                 /* Serveur injoignable : la page reste NEUTRE (hors marché), jamais
                    un pays deviné. Sans cette issue, elle attendrait indéfiniment. */
                 if (!MARCHE) {
@@ -1485,9 +1509,14 @@
                 '<span class="pays-pied__label">Pays</span>'
                 + '<span class="pays-pied__aide">Service momentanément indisponible : actualisez la page dans un instant.</span>';
         } else {
+            /* Deux cas qui ne se disent pas pareil : un pays RECONNU où l'académie n'est pas encore
+               présente, et un pays que le serveur n'a pas pu lire du tout (réseau étranger, VPN). */
+            const phrase = MARCHE.source === 'hors-marche'
+                ? 'Nous ne proposons pas encore de formation sur place dans votre pays : les formations s’affichent en ligne, sans tarif local. En voyage ? Activez la localisation.'
+                : 'Votre pays n’a pas pu être reconnu : les formations s’affichent en ligne, sans tarif local.';
             boite.innerHTML =
                 '<span class="pays-pied__label">Pays</span>'
-                + '<span class="pays-pied__aide">Votre pays n’a pas été reconnu : les formations s’affichent en ligne, sans tarif local.</span>'
+                + `<span class="pays-pied__aide">${phrase}</span>`
                 + (localisationPossible() ? boutonLocalisation('pays-pied__bouton') : '');
         }
         hote.appendChild(boite);
@@ -1507,8 +1536,24 @@
     const ISSUES_LOCALISATION = {
         ailleurs: 'Votre position ne se trouve dans aucun pays où nos formations sont proposées sur place.',
         refus: 'Localisation refusée. Autorisez-la dans les réglages du navigateur, puis réessayez.',
-        echec: 'Position introuvable pour le moment. Réessayez dans un instant.'
+        echec: 'La localisation n’a pas abouti (position introuvable, ou réseau coupé). Réessayez dans un instant.'
     };
+
+    /* Une zone d'annonce pour les lecteurs d'écran : le pied de page est redessiné quand le pays
+       est reconnu, et l'ancien bouton — donc le focus et son message — disparaît avec lui. */
+    function annoncerAuxLecteurs(texte) {
+        let zone = document.getElementById('annonce-pays');
+        if (!zone) {
+            zone = document.createElement('div');
+            zone.id = 'annonce-pays';
+            zone.setAttribute('role', 'status');
+            zone.setAttribute('aria-live', 'polite');
+            zone.style.cssText = 'position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap';
+            document.body.appendChild(zone);
+        }
+        zone.textContent = '';
+        window.setTimeout(() => { zone.textContent = texte; }, 50);
+    }
 
     /* Un seul écouteur pour tous les boutons, y compris ceux qu'une page dessine
        plus tard (formulaire, page contact). Une localisation réussie redessine
@@ -1526,6 +1571,12 @@
         localiser().then(issue => {
             boutons.forEach(b => { b.disabled = false; b.removeAttribute('aria-busy'); });
             ecrire(ISSUES_LOCALISATION[issue] || '');
+            if (issue === 'trouve') {
+                const nom = MARCHE && MARCHE.nom ? MARCHE.nom : 'votre pays';
+                annoncerAuxLecteurs('Pays reconnu : ' + nom + '. Les formations, tarifs et contacts de ce pays s’affichent.');
+            } else if (ISSUES_LOCALISATION[issue]) {
+                annoncerAuxLecteurs(ISSUES_LOCALISATION[issue]);
+            }
         });
     });
 

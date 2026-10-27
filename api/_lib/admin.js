@@ -90,6 +90,42 @@ async function lireInscriptions(db, formationId) {
   });
 }
 
+/** Combien d'inscriptions en tout : la liste n'en rend que les 500 plus récentes. */
+async function compterInscriptions(db, formationId) {
+  const { rows } = await db.query(
+    'select count(*)::int as n from inscriptions where ($1::text is null or form_id = $1)', [formationId || null]);
+  return rows[0].n;
+}
+
+const enIso = d => (d ? new Date(d).toISOString() : null);
+
+/**
+ * Ce qui doit marcher sans que personne ne le regarde : la sauvegarde envoyée
+ * par e-mail chaque nuit, et les alertes d'inscription. Du 24 au 27 octobre
+ * 2026, ni l'une ni les autres ne partaient (clé d'envoi refusée pour le
+ * nouveau domaine) et rien ne le disait — le tableau de bord, lui, affichait
+ * « tout va bien ». Une table absente (migration non collée) ne casse rien.
+ */
+async function lireSante(db) {
+  const sante = { sauvegarde: null, alertesEchouees: 0 };
+  try {
+    const { rows: [s] } = await db.query(
+      'select max(faite_le) filter (where envoyee) as reussie, max(faite_le) as tentee from sauvegardes');
+    const { rows: [derniere] } = await db.query('select envoyee, erreur from sauvegardes order by faite_le desc, id desc limit 1');
+    sante.sauvegarde = {
+      derniereReussie: enIso(s && s.reussie),
+      derniereTentative: enIso(s && s.tentee),
+      derniereErreur: derniere && !derniere.envoyee ? (derniere.erreur || 'envoi refusé') : null
+    };
+  } catch (e) { /* table absente : rien à montrer */ }
+  try {
+    const { rows: [a] } = await db.query(
+      `select count(*)::int as n from journal where action = 'alerte.echec' and quand > now() - interval '14 days'`);
+    sante.alertesEchouees = a.n;
+  } catch (e) { /* idem */ }
+  return sante;
+}
+
 async function changerStatut(db, id, statut, qui) {
   if (!FORMAT_ID.test(String(id || ''))) throw new Error('Inscription introuvable.');
   if (STATUTS.indexOf(statut) < 0) throw new Error('Statut inconnu : ' + statut + '.');
@@ -103,7 +139,11 @@ async function changerStatut(db, id, statut, qui) {
 const COMMANDES = Object.assign({
   'admin.login': async db => ({ ok: true, version: 'supabase', catalogue: await lireCatalogue(db) }),
   'admin.catalogue': async db => ({ ok: true, catalogue: await lireCatalogue(db) }),
-  'admin.inscriptions': async (db, d) => ({ ok: true, inscriptions: await lireInscriptions(db, d.formationId) }),
+  'admin.inscriptions': async (db, d) => {
+    const inscriptions = await lireInscriptions(db, d.formationId);
+    return { ok: true, inscriptions, total: await compterInscriptions(db, d.formationId) };
+  },
+  'admin.sante': async db => Object.assign({ ok: true }, await lireSante(db)),
   'admin.inscription.statut': async (db, d, qui) => changerStatut(db, d.ligne, d.statut, qui)
 }, ECRITURES, PHOTOS, MESURES);
 
@@ -152,4 +192,4 @@ async function executer(db, charge, jeton, options) {
   }
 }
 
-module.exports = { executer, administrateur, lireInscriptions, changerStatut, STATUTS, SUPABASE_URL };
+module.exports = { executer, administrateur, lireInscriptions, compterInscriptions, lireSante, changerStatut, STATUTS, SUPABASE_URL };
