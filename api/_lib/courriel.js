@@ -157,8 +157,15 @@ async function envoyer({ a = EMAIL_PRO, sujet, texte, html, repondreA = null, pi
       });
       if (r.ok) return { envoye: true, erreur: null };
       const detail = await r.text().catch(() => '');
-      // « The … domain is not verified » : 403 chez Resend, parfois 422
-      const domaineRefuse = (r.status === 403 || r.status === 422) && /domain/i.test(detail);
+      /* Resend refuse l'EXPÉDITEUR, pas la clé. Deux formes, toutes deux en 403
+         (parfois 422) : « The … domain is not verified », et, pour une clé
+         limitée à un autre domaine, « This API key is not authorized to send
+         emails from … » — SANS le mot « domain ». Le repli ne reconnaissait que
+         la première : du 24 au 27 octobre 2026, aucune alerte ni sauvegarde
+         n'est partie. Une clé invalide ou révoquée (401) n'est pas un refus
+         d'expéditeur. */
+      const domaineRefuse = (r.status === 403 || r.status === 422)
+        && /domain|not authorized to send|not verified|from address/i.test(detail);
       return { envoye: false, erreur: 'Resend ' + r.status + ' ' + detail.slice(0, 160), domaineRefuse };
     } catch (e) {
       return { envoye: false, erreur: (e && (e.name || e.message)) || 'erreur réseau' };

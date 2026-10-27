@@ -81,8 +81,24 @@ const LIGNE = {
   const repli = await envoyer({ sujet: 's', texte: 't' }, 'cle-des-epreuves');
   verifier('domaine refusé : l’envoi passe par l’expéditeur de secours', [repli, expediteurs.length], [{ envoye: true, erreur: null }, 2]);
   verifier('le secours garde le nom de l’académie', /^Inscriptions Cineworld Académie </.test(expediteurs[1] || ''), true);
+  /* Le VRAI message de Resend pour une clé limitée à un autre domaine, relevé
+     dans le journal de production le 27/10/2026 : il ne contient pas le mot
+     « domain ». Le repli ne s'y déclenchait pas, et rien ne partait plus. */
+  const reels = [];
+  global.fetch = async (url, options) => {
+    const from = JSON.parse(options.body).from;
+    reels.push(from);
+    return /cineworldacademie\.com/.test(from)
+      ? { ok: false, status: 403, text: async () => '{"message":"This API key is not authorized to send emails from cineworldacademie.com","statusCode":403}' }
+      : { ok: true, text: async () => '{"id":"essai"}' };
+  };
+  const reel = await envoyer({ sujet: 's', texte: 't' }, 'cle-des-epreuves');
+  verifier('clé limitée à un autre domaine : l’envoi passe par l’expéditeur de secours', [reel, reels.length], [{ envoye: true, erreur: null }, 2]);
+  verifier('et c’est bien l’ancien domaine qui sert', /infos@impactali\.site/.test(reels[1] || ''), true);
   global.fetch = async () => ({ ok: false, status: 403, text: async () => 'API key is invalid' });
   verifier('une clé refusée ne déclenche pas le repli', (await envoyer({ sujet: 's', texte: 't' }, 'cle-des-epreuves')).envoye, false);
+  global.fetch = async () => ({ ok: false, status: 401, text: async () => '{"message":"API key is invalid"}' });
+  verifier('une clé invalide (401) non plus', (await envoyer({ sujet: 's', texte: 't' }, 'cle-des-epreuves')).envoye, false);
 
   /* Resend refuse (quota, clé révoquée) : l'échec est rendu, jamais levé. */
   global.fetch = async () => ({ ok: false, status: 429, text: async () => 'daily quota exceeded' });
