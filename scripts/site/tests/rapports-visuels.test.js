@@ -38,10 +38,10 @@ const RAPPORTS_ATTENDUS = {
   /* La page d'inscription générique et le gabarit gardent la clé commune ; elle
      sert aussi de repli aux fiches, qui portent chacune la leur. */
   'fiche.formateur.photo': '3/4',
-  /* Le logo, en-tête et pied de chaque page : le sceau rond de Cineworld
-     Académie, carré — 46 × 46 en haut, 64 × 64 en bas. La feuille de style fixe
-     les deux côtés : un logo d'un autre rapport serait contenu, pas déformé. */
-  'marque.logo': '1/1',
+  /* Le logo, en-tête et pied de chaque page : le logo officiel du 28/10/2026 sur
+     sa pastille blanche, 522 × 144 (scripts/marque/generer.js). La feuille de
+     style ne fixe que sa hauteur : la largeur suit ce rapport. */
+  'marque.logo': '261/72',
   // Les pages L'association et Contact : cadres fixés par aspect-ratio ou par leurs côtés
   'association.photo': '3/2',
   'association.terrain': '4/3',

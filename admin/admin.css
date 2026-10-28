@@ -89,7 +89,7 @@ h1, h2, h3 { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; font-weigh
   text-align: center;
 }
 
-.connexion__logo { height: 72px; width: 72px; margin-bottom: 18px; }
+.connexion__logo { height: 64px; width: auto; max-width: 100%; margin-bottom: 18px; }
 .connexion__carte h1 { font-size: 1.4rem; margin-bottom: 6px; }
 .connexion__aide { margin: 0 0 24px; color: var(--texte-doux); font-size: 0.88rem; }
 .connexion__retour {
@@ -250,14 +250,8 @@ h1, h2, h3 { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; font-weigh
 }
 
 .barre__marque { display: flex; align-items: center; gap: 10px; padding: 0 8px 26px; }
-.barre__marque img { height: 40px; width: 40px; }
-.barre__nom {
-  display: flex; flex-direction: column; gap: 3px;
-  color: var(--texte);
-  font: 800 0.86rem/1 'Plus Jakarta Sans', system-ui, sans-serif;
-  letter-spacing: 0.05em; text-transform: uppercase;
-}
-.barre__nom span { color: var(--brand); font-size: 0.6em; font-weight: 700; letter-spacing: 0.36em; }
+/* Le logo officiel porte le nom : il est seul, sur sa pastille blanche (scripts/marque/generer.js) */
+.barre__marque img { height: 44px; width: auto; }
 
 .barre__nav { display: flex; flex-direction: column; gap: 3px; flex: 1; }
 

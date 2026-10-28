@@ -1,19 +1,25 @@
-/* Fabrique les fichiers de marque Cineworld Académie depuis le sceau source.
+/* Fabrique les fichiers de marque Cineworld Académie depuis le logo officiel.
  *
- *   node scripts/marque/generer.js [chemin/vers/le/sceau.png]
+ *   node scripts/marque/generer.js [chemin/vers/le/logo.png]
  *
- * Source par défaut : scripts/marque/sceau-source.png, le sceau tel que le
- * publiait l'ancien site cineworldacademie.com (1024 px, fond transparent).
- * Quand la version haute définition arrive, il suffit de la passer en argument
- * — ou de la poser à la place de sceau-source.png — puis de relancer : tout ce
- * qui suit est refait, rien n'est retouché à la main.
+ * Source par défaut : scripts/marque/logo-source.png, le logo officiel (monogramme
+ * CW et « Cineworld ACADÉMIE », bordeaux et or, fond transparent), remis par le
+ * propriétaire le 28/10/2026. Il remplace l'ancien sceau rond, qui portait
+ * « DJIBOUTI ». Quand une nouvelle version arrive, il suffit de la passer en
+ * argument — ou de la poser à la place de logo-source.png — puis de relancer :
+ * tout ce qui suit est refait, rien n'est retouché à la main.
+ *
+ * Le logo officiel est conçu pour un fond clair : son bordeaux se perd sur le
+ * noir du site. Décision du propriétaire (28/10/2026) : il reste INTACT, posé
+ * sur une pastille blanche arrondie, cuite dans l'image pour qu'il soit le même
+ * partout (en-tête, pied de page, tableau de bord, données de Google).
  *
  * Produit :
- * - assets/brand/cineworld-sceau.webp       le sceau, détouré, 240 px (en-tête, pied de page, admin) ;
- * - assets/brand/icone-32|180|192.png       le sceau sur la tuile sombre du site ;
- * - favicon.ico                             la même tuile, 48 px (PNG dans l'ICO) ;
- * - assets/images/partage-cineworld.jpg     l'aperçu des liens partagés, 1200 × 630,
- *                                           photographié par Chrome depuis partage.html.
+ * - assets/brand/cineworld-logo.webp       le logo sur sa pastille, 522 × 144 ;
+ * - assets/brand/icone-32|180|192.png      le monogramme CW sur une tuile blanche ;
+ * - favicon.ico                            la même tuile, 48 px (PNG dans l'ICO) ;
+ * - assets/images/partage-cineworld.jpg    l'aperçu des liens partagés, 1200 × 630,
+ *                                          photographié par Chrome depuis partage.html.
  *
  * Le dossier scripts/ n'est jamais déployé (.vercelignore) : la source et cet
  * outillage restent dans le dépôt sans être servis. */
@@ -26,8 +32,9 @@ const { execFileSync } = require('child_process');
 const sharp = require('sharp');
 
 const RACINE = path.resolve(__dirname, '..', '..');
-const SOURCE = path.resolve(process.argv[2] || path.join(__dirname, 'sceau-source.png'));
-const FOND = '#050709'; // le fond du site : la tuile des icônes est la même
+const SOURCE = path.resolve(process.argv[2] || path.join(__dirname, 'logo-source.png'));
+const BLANC = { r: 255, g: 255, b: 255, alpha: 1 };
+const TRANSPARENT = { r: 0, g: 0, b: 0, alpha: 0 };
 const CHROME = [
   'C:/Program Files/Google/Chrome/Application/chrome.exe',
   'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',
@@ -36,19 +43,55 @@ const CHROME = [
 
 const vers = (...p) => path.join(RACINE, ...p);
 
-/** Le sceau seul, marges transparentes retirées. */
-async function sceauDetoure() {
-  return sharp(SOURCE).ensureAlpha().trim({ threshold: 1 }).png().toBuffer();
+/** Le logo seul, marges transparentes retirées. */
+async function logoDetoure() {
+  return sharp(SOURCE).ensureAlpha().trim({ threshold: 20 }).png().toBuffer();
 }
 
-/** Le sceau centré sur la tuile sombre, à `cote` px, occupant `part` du côté. */
-async function tuile(sceau, cote, part) {
-  const interieur = Math.round(cote * part);
-  const pose = await sharp(sceau).resize(interieur, interieur, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } }).png().toBuffer();
-  return sharp({ create: { width: cote, height: cote, channels: 4, background: FOND } })
-    .composite([{ input: pose, gravity: 'center' }])
-    .png({ compressionLevel: 9 })
+/**
+ * Le monogramme CW : la partie gauche du logo, jusqu'à la colonne la plus vide
+ * entre la pointe du V et le « C » de Cineworld (cherchée, pas supposée : une
+ * nouvelle version du logo peut la déplacer).
+ */
+async function monogramme(logo) {
+  const { data, info } = await sharp(logo).raw().toBuffer({ resolveWithObject: true });
+  const colonne = x => { let s = 0; for (let y = 0; y < info.height; y++) s += data[(y * info.width + x) * 4 + 3]; return s; };
+  let coupe = 0;
+  let minimum = Infinity;
+  for (let x = Math.round(info.width * 0.25); x < Math.round(info.width * 0.5); x++) {
+    const v = colonne(x);
+    if (v < minimum) { minimum = v; coupe = x; }
+  }
+  return sharp(logo).extract({ left: 0, top: 0, width: coupe, height: info.height }).trim({ threshold: 20 }).png().toBuffer();
+}
+
+/** Un rectangle blanc arrondi, en masque SVG. */
+const arrondi = (largeur, hauteur, rayon) =>
+  Buffer.from(`<svg width="${largeur}" height="${hauteur}"><rect width="100%" height="100%" rx="${rayon}" fill="#fff"/></svg>`);
+
+/** Le logo sur sa pastille blanche : hauteur du logo, marges, rayon. */
+async function pastille(logo, hauteurLogo, margeX, margeY, rayon) {
+  const pose = await sharp(logo).resize({ height: hauteurLogo }).png().toBuffer();
+  const { width } = await sharp(pose).metadata();
+  const L = width + 2 * margeX;
+  const H = hauteurLogo + 2 * margeY;
+  return sharp({ create: { width: L, height: H, channels: 4, background: TRANSPARENT } })
+    .composite([{ input: arrondi(L, H, rayon) }, { input: pose, left: margeX, top: margeY }])
+    .png()
     .toBuffer();
+}
+
+/** Le monogramme centré sur une tuile blanche, à `cote` px, occupant `part` du côté. */
+async function tuile(mono, cote, part, opaque) {
+  const interieur = Math.round(cote * part);
+  const pose = await sharp(mono).resize(interieur, interieur, { fit: 'contain', background: TRANSPARENT }).png().toBuffer();
+  const fond = opaque
+    // iOS remplit la transparence d'une icône d'écran d'accueil en noir, et arrondit lui-même
+    ? sharp({ create: { width: cote, height: cote, channels: 4, background: BLANC } })
+    : sharp({ create: { width: cote, height: cote, channels: 4, background: TRANSPARENT } })
+      .composite([{ input: arrondi(cote, cote, Math.round(cote * 0.22)) }]);
+  const tuileBlanche = await fond.png().toBuffer();
+  return sharp(tuileBlanche).composite([{ input: pose, gravity: 'center' }]).png({ compressionLevel: 9 }).toBuffer();
 }
 
 /** Un fichier ICO à une seule image, PNG embarqué (lu par tous les navigateurs actuels). */
@@ -85,22 +128,21 @@ function photographierPartage() {
 }
 
 (async () => {
-  if (!fs.existsSync(SOURCE)) throw new Error('Sceau introuvable : ' + SOURCE);
-  const sceau = await sceauDetoure();
+  if (!fs.existsSync(SOURCE)) throw new Error('Logo introuvable : ' + SOURCE);
+  const logo = await logoDetoure();
+  const mono = await monogramme(logo);
 
-  await sharp(sceau).resize(240, 240, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
-    .webp({ quality: 90, alphaQuality: 100 })
-    .toFile(vers('assets', 'brand', 'cineworld-sceau.webp'));
+  // 522 × 144 : affiché à 44 px de haut dans l'en-tête, net sur un écran à haute densité
+  await sharp(await pastille(logo, 104, 22, 20, 24)).webp({ quality: 92, alphaQuality: 100 })
+    .toFile(vers('assets', 'brand', 'cineworld-logo.webp'));
 
-  /* Aux petites tailles, le texte du sceau devient illisible : on garde
-     l'anneau et le chameau aussi grands que possible. */
-  for (const [cote, part] of [[32, 0.94], [180, 0.84], [192, 0.84]]) {
-    fs.writeFileSync(vers('assets', 'brand', `icone-${cote}.png`), await tuile(sceau, cote, part));
+  for (const [cote, part, opaque] of [[32, 0.86, false], [180, 0.72, true], [192, 0.72, true]]) {
+    fs.writeFileSync(vers('assets', 'brand', `icone-${cote}.png`), await tuile(mono, cote, part, opaque));
   }
-  fs.writeFileSync(vers('favicon.ico'), ico(await tuile(sceau, 48, 0.94), 48));
+  fs.writeFileSync(vers('favicon.ico'), ico(await tuile(mono, 48, 0.86, false), 48));
 
   const capture = photographierPartage();
-  await sharp(capture).flatten({ background: FOND }).jpeg({ quality: 86, mozjpeg: true })
+  await sharp(capture).flatten({ background: '#050709' }).jpeg({ quality: 86, mozjpeg: true })
     .toFile(vers('assets', 'images', 'partage-cineworld.jpg'));
 
   console.log('Marque refaite depuis', path.relative(RACINE, SOURCE));

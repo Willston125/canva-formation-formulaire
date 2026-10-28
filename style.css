@@ -5172,37 +5172,18 @@ body:has(#already-registered-card:not(.hidden)) #mobile-progress {
    Cineworld Académie — logotype, domaines, pied de page
    ========================================= */
 
-/* ---------- Logotype : le sceau, puis le nom écrit ----------
-   Le sceau est rond et carré : son texte n'est plus lisible à cette taille,
-   le nom écrit à côté prend le relais. Il suit la taille de .brand, que les
-   requêtes de largeur réduisent déjà. */
+/* ---------- Logotype ----------
+   Le logo officiel (28/10/2026) porte le monogramme ET le nom : plus de nom écrit
+   à côté. Conçu pour un fond clair, il est posé sur sa pastille blanche, cuite
+   dans l'image (scripts/marque/generer.js) : seule sa hauteur se règle ici. */
 .brand img {
-  height: 46px;
-  width: 46px;
+  height: 44px;
+  width: auto;
   display: block;
-  object-fit: contain;
-}
-
-.brand { gap: 11px; }
-
-.brand__nom {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  color: var(--color-white);
-  font: 800 1.04em/1 'Plus Jakarta Sans', system-ui, sans-serif;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-}
-
-.brand__nom span {
-  color: var(--brand);
-  font: 700 0.6em/1 'Plus Jakarta Sans', system-ui, sans-serif;
-  letter-spacing: 0.36em;
 }
 
 @media (max-width: 767px) {
-  .brand img { height: 38px; width: 38px; }
+  .brand img { height: 36px; }
 }
 
 /* ---------- Section Domaines ---------- */
@@ -5305,11 +5286,12 @@ body:has(#already-registered-card:not(.hidden)) #mobile-progress {
   max-width: 340px;
 }
 
+.site-footer__logo { align-self: flex-start; }
+
 .site-footer__logo img {
-  height: 64px;
-  width: 64px;
+  height: 56px;
+  width: auto;
   display: block;
-  object-fit: contain;
 }
 
 .site-footer__baseline {
