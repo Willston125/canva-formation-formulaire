@@ -101,7 +101,7 @@ Le **numéro WhatsApp général** des Réglages n'est plus montré à personne :
 le numéro du pays du visiteur l'est.
 
 **Un changement de moyen de paiement vous est signalé par e-mail**, sur
-cineworld@cineworldacademie.com, avec l'ancien et le nouveau numéro côte à côte. Si vous
+contact@cineworldacademie.com, avec l'ancien et le nouveau numéro côte à côte. Si vous
 recevez ce message sans avoir rien changé, changez aussitôt le mot de passe de
 votre compte Supabase.
 

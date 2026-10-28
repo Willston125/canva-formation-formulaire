@@ -65,7 +65,7 @@ const LIGNE = {
   verifier('il passe par l’API de Resend', appels[0] && appels[0].url, 'https://api.resend.com/emails');
   verifier('avec la clé en en-tête, jamais dans l’adresse', appels[0] && appels[0].options.headers.Authorization, 'Bearer cle-des-epreuves');
   verifier('au nom de Cineworld Académie, sur son domaine', parti && parti.from, 'Inscriptions Cineworld Académie <inscriptions@cineworldacademie.com>');
-  verifier('vers la boîte de l’académie', parti && parti.to, ['cineworld@cineworldacademie.com']);
+  verifier('vers la boîte de l’académie', parti && parti.to, ['contact@cineworldacademie.com']);
   verifier('en répondant au candidat', parti && parti.reply_to, 'awa@exemple.test');
 
   /* Le domaine refusé par Resend pour cette clé : l'e-mail repart aussitôt

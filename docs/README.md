@@ -52,7 +52,7 @@ répond « Une table manque dans la base ».
 **Le projet gratuit de Supabase se met en pause après une semaine sans activité,
 et n'a aucune sauvegarde.** La tâche quotidienne (`api/quotidien.js`) traite les
 deux : elle écrit une ligne chaque nuit et envoie une copie complète à
-cineworld@cineworldacademie.com. **Gardez ces e-mails**, ce sont les seules sauvegardes.
+contact@cineworldacademie.com. **Gardez ces e-mails**, ce sont les seules sauvegardes.
 
 **Les fiches sont générées.** `formations/<slug>/index.html` et
 `inscription/index.html` ne se modifient **jamais** à la main : on édite

@@ -84,7 +84,7 @@ Users). La création de comptes est fermée.
 
 **Chaque écriture est notée au journal** (qui, quoi, quand), dans la même
 transaction que l'écriture. Un changement de **moyen de paiement** envoie en plus
-un e-mail à cineworld@cineworldacademie.com, avant et après côte à côte : un numéro de
+un e-mail à contact@cineworldacademie.com, avant et après côte à côte : un numéro de
 paiement est ce qu'un intrus changerait en premier.
 
 ---
@@ -108,7 +108,7 @@ resté une semaine sans activité. Chaque nuit (3 h, heure universelle),
 `api/quotidien.js` :
 
 1. exporte toutes les tables et envoie la copie, en pièce jointe, à
-   cineworld@cineworldacademie.com (les photos y sont listées, pas jointes) ;
+   contact@cineworldacademie.com (les photos y sont listées, pas jointes) ;
 2. **écrit** une ligne dans la table `sauvegardes` — une écriture est la seule
    activité que Supabase ne peut pas ignorer.
 

@@ -15,8 +15,8 @@
    les visiteurs (EMAIL_PUBLIC), et l'expéditeur est sur cineworldacademie.com,
    domaine que le propriétaire avait déjà configuré chez Resend pour l'ancien
    site. */
-const EMAIL_PRO = 'cineworld@cineworldacademie.com';
-const EMAIL_PUBLIC = 'cineworld@cineworldacademie.com';
+const EMAIL_PRO = 'contact@cineworldacademie.com';
+const EMAIL_PUBLIC = 'contact@cineworldacademie.com';
 const EXPEDITEUR = 'Inscriptions Cineworld Académie <inscriptions@cineworldacademie.com>';
 /* Le repli : si Resend refuse ce domaine pour la clé du site (vérifié sur un
    autre compte, par exemple), l'e-mail repart aussitôt depuis l'ancien domaine

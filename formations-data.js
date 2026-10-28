@@ -544,5 +544,5 @@ window.SITE_CONTACT = Object.freeze({
   /* Voie de contact publique du site. WhatsApp ne paraît plus qu'au moment de
      l'inscription, avec le numéro du pays du candidat : partout ailleurs, c'est
      cette adresse qui est proposée. Elle se change depuis le tableau de bord. */
-  contactEmail: 'cineworld@cineworldacademie.com'
+  contactEmail: 'contact@cineworldacademie.com'
 });

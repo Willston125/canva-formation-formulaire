@@ -169,7 +169,7 @@ const neuve = (autres = {}) => Object.assign({}, VALABLE, { telephone: String(nu
     select 'canva-pro', 'Remplissage ' || g, now() from generate_series(1, $1) g`, [INSCRIPTIONS_PAR_JOUR - dejaAujourdhui]);
   const auPlafond = await recevoir(neuve(), '10.0.0.1');
   verifier('au plafond du jour : refusée', auPlafond.resultat.ok, false);
-  verifier('avec un message qui renvoie vers l’e-mail', /cineworld@cineworldacademie\.com/.test(auPlafond.resultat.erreur), true);
+  verifier('avec un message qui renvoie vers l’e-mail', /contact@cineworldacademie\.com/.test(auPlafond.resultat.erreur), true);
   verifier('rien n’a été écrit au-delà', await compter(), INSCRIPTIONS_PAR_JOUR);
 
   /* Les alertes : seulement les 60 premières de la journée (quota de Resend). */
