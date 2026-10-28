@@ -396,7 +396,9 @@ async function principal() {
      date de modification : on n'en connaît pas de fiable, et l'inventer ferait
      passer pour récente une page qui ne l'est pas. */
   const adresses = ['/', ...formations.filter(f => f.slug).map(f => `/formations/${f.slug}/`),
-    '/association/', '/production/', '/contact/', '/entreprises/'];
+    /* « /association/ » et « /production/ » : masquées le 28/10/2026 jusqu'à leur finalisation
+       (redirigées vers l'accueil dans vercel.json, sauf ?apercu). À remettre ici en les réactivant. */
+    '/contact/', '/entreprises/'];
   /* « /mentions-legales/ » n'y figure pas : la page est en « noindex », et un plan du site qui liste une page
      qu'il interdit d'indexer fait signaler une erreur par la Search Console. */
   fs.writeFileSync(path.join(ROOT, 'sitemap.xml'),

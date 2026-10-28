@@ -81,6 +81,18 @@
     { "source": "/formations/2", "destination": "/formations/identite-visuelle/", "permanent": true },
     { "source": "/formations/3", "destination": "/formations/photo-video/", "permanent": true },
     { "source": "/formations/4", "destination": "/formations/marketing-digital/", "permanent": true },
+    {
+      "source": "/association(.*)",
+      "missing": [{ "type": "query", "key": "apercu" }],
+      "destination": "/",
+      "permanent": false
+    },
+    {
+      "source": "/production(.*)",
+      "missing": [{ "type": "query", "key": "apercu" }],
+      "destination": "/",
+      "permanent": false
+    },
     { "source": "/production/:projet(.+)", "destination": "/production/", "permanent": true },
     { "source": "/a-propos", "destination": "/association/", "permanent": true },
     { "source": "/maintenance", "destination": "/", "permanent": true }

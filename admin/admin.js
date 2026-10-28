@@ -2733,7 +2733,7 @@
 
     /* Les pages parcourues. La fiche formation sert d'exemple pour tout le
        gabarit : ses textes partagés valent pour les six fiches. */
-    var pages = ['/', '/association/', '/production/', '/contact/', '/entreprises/', '/mentions-legales/'];
+    var pages = ['/', '/association/?apercu', '/production/?apercu', '/contact/', '/entreprises/', '/mentions-legales/'];
     var premiere = (etat.catalogue.formations || []).filter(function (f) { return f.hasDetailPage !== false; })[0];
     pages.push(premiere ? premiere.href : '/formations/canva-pro/');
 
@@ -2785,7 +2785,7 @@
        Chaque formation porte désormais sa propre clé de photo de formateur : ne
        lire qu'une fiche ne montrait que la sienne, et les cinq autres restaient
        invisibles depuis cet écran — donc irremplaçables. */
-    var pages = ['/', '/association/', '/contact/', '/entreprises/', '/inscription/'];
+    var pages = ['/', '/association/?apercu', '/contact/', '/entreprises/', '/inscription/'];
     (etat.catalogue.formations || [])
       .filter(function (f) { return f.hasDetailPage !== false && f.href; })
       .forEach(function (f) { if (pages.indexOf(f.href) < 0) pages.push(f.href); });
