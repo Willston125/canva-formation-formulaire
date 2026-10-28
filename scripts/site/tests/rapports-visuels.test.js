@@ -38,10 +38,10 @@ const RAPPORTS_ATTENDUS = {
   /* La page d'inscription générique et le gabarit gardent la clé commune ; elle
      sert aussi de repli aux fiches, qui portent chacune la leur. */
   'fiche.formateur.photo': '3/4',
-  /* Le logo, en-tête et pied de chaque page : le logo officiel du 28/10/2026 sur
-     sa pastille blanche, 522 × 144 (scripts/marque/generer.js). La feuille de
+  /* Le logo, en-tête et pied de chaque page : le logo officiel du 28/10/2026 en
+     version blanche (fond sombre), 515 × 112 (scripts/marque/generer.js). La feuille de
      style ne fixe que sa hauteur : la largeur suit ce rapport. */
-  'marque.logo': '261/72',
+  'marque.logo': '515/112',
   // Les pages L'association et Contact : cadres fixés par aspect-ratio ou par leurs côtés
   'association.photo': '3/2',
   'association.terrain': '4/3',

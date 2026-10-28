@@ -10,12 +10,14 @@
  * tout ce qui suit est refait, rien n'est retouché à la main.
  *
  * Le logo officiel est conçu pour un fond clair : son bordeaux se perd sur le
- * noir du site. Décision du propriétaire (28/10/2026) : il reste INTACT, posé
- * sur une pastille blanche arrondie, cuite dans l'image pour qu'il soit le même
- * partout (en-tête, pied de page, tableau de bord, données de Google).
+ * noir du site. Décision du propriétaire (28/10/2026) : sur fond SOMBRE, la
+ * version blanche (le bordeaux devient blanc cassé #F6F5EF, l'or reste or) ; sur
+ * fond BLANC, la version officielle en couleurs, intacte.
  *
  * Produit :
- * - assets/brand/cineworld-logo.webp       le logo sur sa pastille, 522 × 144 ;
+ * - assets/brand/cineworld-logo-blanc.webp       version blanche, pour les fonds sombres du site ;
+ * - assets/brand/cineworld-logo-couleur.webp  version officielle, pour les fonds clairs
+ *                                          (données de Google, qui l'affiche sur du blanc) ;
  * - assets/brand/icone-32|180|192.png      le monogramme CW sur une tuile blanche ;
  * - favicon.ico                            la même tuile, 48 px (PNG dans l'ICO) ;
  * - assets/images/partage-cineworld.jpg    l'aperçu des liens partagés, 1200 × 630,
@@ -69,16 +71,20 @@ async function monogramme(logo) {
 const arrondi = (largeur, hauteur, rayon) =>
   Buffer.from(`<svg width="${largeur}" height="${hauteur}"><rect width="100%" height="100%" rx="${rayon}" fill="#fff"/></svg>`);
 
-/** Le logo sur sa pastille blanche : hauteur du logo, marges, rayon. */
-async function pastille(logo, hauteurLogo, margeX, margeY, rayon) {
-  const pose = await sharp(logo).resize({ height: hauteurLogo }).png().toBuffer();
-  const { width } = await sharp(pose).metadata();
-  const L = width + 2 * margeX;
-  const H = hauteurLogo + 2 * margeY;
-  return sharp({ create: { width: L, height: H, channels: 4, background: TRANSPARENT } })
-    .composite([{ input: arrondi(L, H, rayon) }, { input: pose, left: margeX, top: margeY }])
-    .png()
-    .toBuffer();
+/**
+ * La version blanche, pour les fonds sombres : chaque pixel bordeaux (vert faible
+ * devant le rouge) devient blanc cassé, transparence conservée — les bords
+ * adoucis restent adoucis. L'or (vert proche du rouge) ne bouge pas.
+ */
+async function versionBlanche(logo) {
+  const { data, info } = await sharp(logo).raw().toBuffer({ resolveWithObject: true });
+  const sortie = Buffer.from(data);
+  for (let i = 0; i < sortie.length; i += 4) {
+    const r = sortie[i];
+    const g = sortie[i + 1];
+    if (sortie[i + 3] && r > 0 && g / r < 0.5) { sortie[i] = 0xF6; sortie[i + 1] = 0xF5; sortie[i + 2] = 0xEF; }
+  }
+  return sharp(sortie, { raw: info }).png().toBuffer();
 }
 
 /** Le monogramme centré sur une tuile blanche, à `cote` px, occupant `part` du côté. */
@@ -132,9 +138,11 @@ function photographierPartage() {
   const logo = await logoDetoure();
   const mono = await monogramme(logo);
 
-  // 522 × 144 : affiché à 44 px de haut dans l'en-tête, net sur un écran à haute densité
-  await sharp(await pastille(logo, 104, 22, 20, 24)).webp({ quality: 92, alphaQuality: 100 })
-    .toFile(vers('assets', 'brand', 'cineworld-logo.webp'));
+  // 112 px de haut : affiché entre 32 et 48 px, net sur un écran à haute densité
+  await sharp(await versionBlanche(logo)).resize({ height: 112 }).webp({ quality: 92, alphaQuality: 100 })
+    .toFile(vers('assets', 'brand', 'cineworld-logo-blanc.webp'));
+  await sharp(logo).resize({ height: 224 }).webp({ quality: 92, alphaQuality: 100 })
+    .toFile(vers('assets', 'brand', 'cineworld-logo-couleur.webp'));
 
   for (const [cote, part, opaque] of [[32, 0.86, false], [180, 0.72, true], [192, 0.72, true]]) {
     fs.writeFileSync(vers('assets', 'brand', `icone-${cote}.png`), await tuile(mono, cote, part, opaque));
