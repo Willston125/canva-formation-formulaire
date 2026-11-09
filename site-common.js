@@ -1366,7 +1366,41 @@
         }, true);
     }
 
+    /* ====== SOURCE DE LA VISITE ======
+       D'où vient le visiteur : le code `?source=` d'un lien de campagne (ex. `?source=fb-p3`),
+       sinon le réseau qui l'envoie (référent externe). Relevée dès la PREMIÈRE page de la
+       visite, quelle qu'elle soit, et gardée le temps de l'onglet. Jusqu'au 09/11/2026, seules
+       les pages du formulaire la relevaient : un visiteur arrivé par l'accueil puis passé par
+       une fiche était compté « Direct ». Le formulaire la reprend (script.js). */
+    const CLE_SOURCE = 'impactali_source';
+
+    function sourceDeVisite() {
+        let source = '';
+        try { source = new URLSearchParams(window.location.search).get('source') || ''; } catch (e) { /* adresse illisible */ }
+        const referent = document.referrer;
+        if (!source && referent) {
+            let hote = '';
+            try { hote = new URL(referent).hostname; } catch (e) { /* adresse illisible */ }
+            if (!hote || hote === window.location.hostname) {
+                /* Venu d'une autre page du site : ce n'est pas une source. Elle s'écrasait pourtant —
+                   une publicité Facebook sur l'accueil, puis la fiche, puis l'inscription, et la
+                   source devenait le nom du site (audit du 27/10/2026). */
+            } else if (referent.includes('facebook.com')) source = 'Facebook (Auto)';
+            else if (referent.includes('instagram.com')) source = 'Instagram (Auto)';
+            else if (referent.includes('linkedin.com')) source = 'LinkedIn (Auto)';
+            else if (referent.includes('tiktok.com')) source = 'TikTok (Auto)';
+            else source = hote;
+        }
+        try {
+            if (source) sessionStorage.setItem(CLE_SOURCE, source);
+            else source = sessionStorage.getItem(CLE_SOURCE) || '';
+        } catch (e) { /* stockage refusé : la source vaut pour cette page */ }
+        return source;
+    }
+    sourceDeVisite();
+
     window.SiteCommon = Object.freeze({
+        sourceDeVisite,
         mesurer,
         mesurerAnnonce,
         annoncesDuVisiteur,

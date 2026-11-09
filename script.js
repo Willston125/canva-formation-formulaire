@@ -1829,36 +1829,11 @@ ${data.prenom}`;
     // ====== START ======
     document.addEventListener('DOMContentLoaded', init);
 
-    // ====== TRACKING INTELLIGENT DES SOURCES ======
+    // ====== SOURCE DE LA VISITE ======
+    /* Relevée par site-common.js dès la première page de la visite, accueil compris, et gardée
+       le temps de l'onglet : le formulaire n'a plus qu'à la reprendre. */
     function captureTrafficSource() {
-        const urlParams = new URLSearchParams(window.location.search);
-        let trafficSource = urlParams.get('source'); // Cherche ?source=...
-
-        if (!trafficSource) {
-            const referrer = document.referrer;
-            if (referrer) {
-                let hote = '';
-                try { hote = new URL(referrer).hostname; } catch (e) { /* adresse illisible */ }
-                if (!hote || hote === window.location.hostname) {
-                    /* Venu d'une autre page du site : ce n'est pas une source. Elle s'écrasait pourtant —
-                       une publicité Facebook sur l'accueil, puis la fiche, puis l'inscription, et la
-                       source devenait « cineworldacademie.com » (audit du 27/10/2026). */
-                } else if (referrer.includes('facebook.com')) trafficSource = 'Facebook (Auto)';
-                else if (referrer.includes('instagram.com')) trafficSource = 'Instagram (Auto)';
-                else if (referrer.includes('linkedin.com')) trafficSource = 'LinkedIn (Auto)';
-                else if (referrer.includes('tiktok.com')) trafficSource = 'TikTok (Auto)';
-                else trafficSource = hote;
-            }
-        }
-
-        /* La PREMIÈRE source de la visite est gardée le temps de l'onglet : une page suivante, sans
-           paramètre ni référent externe, la reprend au lieu d'envoyer « Direct ». */
-        const CLE_SOURCE = 'impactali_source';
-        try {
-            if (trafficSource) sessionStorage.setItem(CLE_SOURCE, trafficSource);
-            else trafficSource = sessionStorage.getItem(CLE_SOURCE) || '';
-        } catch (e) { /* stockage refusé : la source vaut pour cette page */ }
-
+        const trafficSource = common?.sourceDeVisite ? common.sourceDeVisite() : '';
         if (trafficSource) {
             const hiddenSourceInput = document.getElementById('source-tracking');
             if (hiddenSourceInput) {
